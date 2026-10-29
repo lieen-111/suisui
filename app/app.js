@@ -51,16 +51,33 @@
     ['motion', 'autoArchive', 'lockNotify', 'installDismissed'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
+  function applySaved(saved) {
+    if (!saved || !Array.isArray(saved.tasks)) return false;
+    state.tasks = uniqueTasks(saved.tasks);
+    state.archive = uniqueTasks(saved.archive, normalizeArchived).slice(-ARCHIVE_LIMIT);
+    state.settings = cleanSettings(saved.settings);
+    // Records from schema 1 have no day marker: treat them as today so nothing is archived on upgrade.
+    state.day = typeof saved.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(saved.day) ? saved.day : dayKey();
+    return true;
+  }
+  // Android app shell (android/): the native side keeps a copy for the lock-screen card and may change it
+  // (a "完成" tap on the lock screen). The wallpaper photo stays in localStorage only.
+  const ANDROID = window.SuiSuiAndroid || null;
+  let lastNativeRaw = '';
+  function readNative() { try { return ANDROID ? ANDROID.load() || '' : ''; } catch { return ''; } }
+  let hadSaved = false;
   try {
-    const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-    if (saved && Array.isArray(saved.tasks)) {
-      state.tasks = uniqueTasks(saved.tasks);
-      state.archive = uniqueTasks(saved.archive, normalizeArchived).slice(-ARCHIVE_LIMIT);
-      state.settings = cleanSettings(saved.settings);
-      // Records from schema 1 have no day marker: treat them as today so nothing is archived on upgrade.
-      state.day = typeof saved.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(saved.day) ? saved.day : dayKey();
-    }
+    const local = JSON.parse(localStorage.getItem(STORE) || 'null');
+    const nativeRaw = readNative();
+    const native = nativeRaw ? JSON.parse(nativeRaw) : null;
+    if (native && Array.isArray(native.tasks)) {
+      lastNativeRaw = nativeRaw;
+      native.settings = { ...(native.settings || {}), photo: local?.settings?.photo || '' };
+      hadSaved = applySaved(native);
+    } else hadSaved = applySaved(local);
   } catch { storageOK = false; }
+  // On Android the lock-screen card is the main feature, so it starts switched on.
+  if (ANDROID && !hadSaved) state.settings.lockNotify = true;
 
   function icon(name, attrs = '') { return `<i data-lucide="${name}" ${attrs}></i>`; }
   function icons(root = document) { window.lucide.createIcons({ root, attrs: { 'aria-hidden': 'true' } }); }
@@ -70,9 +87,26 @@
     state.schema = SCHEMA;
     try { localStorage.setItem(STORE, JSON.stringify(state)); storageOK = true; }
     catch { storageOK = false; }
+    if (ANDROID) {
+      try { lastNativeRaw = JSON.stringify({ ...state, settings: { ...state.settings, photo: '' } }); ANDROID.save(lastNativeRaw); } catch { /* bridge unavailable */ }
+    }
     $('storage-status').textContent = storageCopy();
     scheduleLockNotification();
   }
+  // Called by the Android shell when the lock-screen card changed the data (or on resume).
+  window.suisuiNativeChanged = () => {
+    if (!ANDROID || busy) return;
+    const raw = readNative();
+    if (!raw || raw === lastNativeRaw) return;
+    try {
+      const native = JSON.parse(raw);
+      native.settings = { ...(native.settings || {}), photo: state.settings.photo };
+      if (!applySaved(native)) return;
+      lastNativeRaw = raw;
+      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* ignore */ }
+      editing = null; render(); applySettings();
+    } catch { /* ignore malformed */ }
+  };
   function pending() { return state.tasks.filter(t => !t.done).sort((a, b) => Number(b.pinned) - Number(a.pinned)); }
   function setView(view) {
     if (!['tasks', 'preview', 'settings'].includes(view)) view = 'preview';
@@ -228,7 +262,7 @@
   /* ---------- Lock-screen notification (web): the closest a home-screen web app gets to the lock screen ---------- */
   // Set by the embedded preview build (Claude artifact), where installing, notifications and downloads are unavailable.
   const PREVIEW = !!window.SUISUI_PREVIEW;
-  const notifySupported = () => !PREVIEW && 'Notification' in window && 'serviceWorker' in navigator && window.isSecureContext;
+  const notifySupported = () => !PREVIEW && !ANDROID && 'Notification' in window && 'serviceWorker' in navigator && window.isSecureContext;
   const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   let notifyTimer = null, lastNotified = '';
@@ -266,6 +300,17 @@
     const toggle = $('notify-toggle'), status = $('notify-status'), test = $('notify-test');
     toggle.checked = !!state.settings.lockNotify;
     let copy;
+    if (ANDROID) {
+      let allowed = false;
+      try { allowed = ANDROID.notificationsAllowed(); } catch { /* ignore */ }
+      toggle.disabled = false;
+      test.hidden = !(state.settings.lockNotify && !allowed);
+      test.lastChild.textContent = '打开通知权限';
+      status.textContent = !state.settings.lockNotify ? '开启后，锁屏上会常驻“今天的待办”卡片，每件都有“完成”按钮，亮屏直接点。'
+        : allowed ? '已开启：锁屏上常驻今天的待办，点“✓”即可完成。若锁屏看不到，请在系统设置里允许碎碎清单在锁屏显示通知。'
+        : '还没有通知权限，锁屏卡片无法显示。点下方按钮去开启。';
+      return;
+    }
     if (!notifySupported()) {
       toggle.disabled = true;
       copy = PREVIEW ? '这是预览页。用 iPhone Safari 打开正式网站并添加到主屏幕后可开启。' : isIOS() && !isStandalone() ? '需要先“添加到主屏幕”，再从桌面图标打开（iOS 16.4 及以上）。' : '当前浏览器不支持网页通知。';
@@ -280,6 +325,12 @@
     test.hidden = !(state.settings.lockNotify && notifySupported() && Notification.permission === 'granted');
   }
   async function enableLockNotify(on) {
+    if (ANDROID) {
+      state.settings.lockNotify = on; save(); renderNotifySetting();
+      if (on) { try { ANDROID.requestNotificationPermission(); } catch { /* ignore */ } }
+      showToast(on ? '已开启锁屏待办卡片' : '已关闭锁屏待办卡片');
+      return;
+    }
     if (!on) {
       state.settings.lockNotify = false; save();
       try { (await (await navigator.serviceWorker.ready).getNotifications({ tag: 'suisui-today' })).forEach(n => n.close()); await navigator.clearAppBadge?.(); } catch { /* ignore */ }
@@ -301,6 +352,7 @@
   }
   async function exportBackup() {
     if (PREVIEW) { showToast('预览页不能下载文件，请在正式网站导出'); return; }
+    if (ANDROID) { try { ANDROID.exportBackup(JSON.stringify(backupPayload(), null, 2), `suisui-backup-${dayKey()}.json`); } catch { showToast('导出失败，请重试'); } return; }
     const name = `suisui-backup-${dayKey()}.json`;
     const blob = new Blob([JSON.stringify(backupPayload(), null, 2)], { type: 'application/json' });
     try {
@@ -356,7 +408,7 @@
 
   /* ---------- Install guidance: the web app only becomes durable and notifiable from the Home Screen ---------- */
   function renderInstallBanner() {
-    const show = !PREVIEW && !state.settings.installDismissed && !isStandalone() && (isIOS() || !!installPrompt);
+    const show = !PREVIEW && !ANDROID && !state.settings.installDismissed && !isStandalone() && (isIOS() || !!installPrompt);
     $('install-banner').hidden = !show;
     $('install-native').hidden = !installPrompt;
     $('install-howto').hidden = !!installPrompt;
@@ -508,7 +560,10 @@
   $('card-text').addEventListener('change', () => { state.settings.cardText = $('card-text').value; applyCardAppearance(); save(); });
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));
-  $('notify-test').addEventListener('click', () => { updateLockNotification(true); showToast(pending().length ? '已刷新锁屏通知，锁屏即可看到' : '全部完成，没有需要提醒的事项'); });
+  window.suisuiAndroidPermission = granted => { renderNotifySetting(); if (!granted && state.settings.lockNotify) showToast('没有通知权限，锁屏卡片无法显示'); };
+  window.suisuiExportDone = ok => showToast(ok ? '已导出待办备份' : '没有导出');
+  $('notify-test').addEventListener('click', () => {
+    if (ANDROID) { try { ANDROID.openNotificationSettings(); } catch { /* ignore */ } return; } updateLockNotification(true); showToast(pending().length ? '已刷新锁屏通知，锁屏即可看到' : '全部完成，没有需要提醒的事项'); });
   $('reset-settings').addEventListener('click', () => {
     const { autoArchive, lockNotify, installDismissed } = state.settings;
     state.settings = { ...defaults, autoArchive, lockNotify, installDismissed }; save(); applySettings(); showToast('已恢复默认外观');

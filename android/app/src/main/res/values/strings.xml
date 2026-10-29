@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">碎碎清单</string>
+    <string name="channel_name">锁屏待办卡片</string>
+    <string name="channel_description">在锁屏上显示今天的待办，可直接点完成。</string>
+</resources>

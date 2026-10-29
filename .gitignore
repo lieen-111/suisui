@@ -11,3 +11,7 @@ ios/*.log
 DerivedData/
 AuthKey_*.p8
 runtime/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
