@@ -1,0 +1,18 @@
+# Diagnostic: which hosted runners start for this account, and which Xcode versions they carry.
+name: Runner check
+on:
+  push:
+    paths: [".github/workflows/runner-check.yml"]
+  workflow_dispatch:
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - run: |
+          uname -a
+          if [ "$(uname)" = "Darwin" ]; then sw_vers; ls /Applications | grep -i xcode; xcodebuild -version; fi
