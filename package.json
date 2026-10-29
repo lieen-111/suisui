@@ -1,0 +1,22 @@
+{
+  "name": "suisui-locktodo-prototype",
+  "version": "0.3.0",
+  "private": true,
+  "description": "碎碎清单：可用的 PWA 测试版 + 原生 iOS 锁屏工程（小组件 / 实时活动）。",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/server.cjs",
+    "test": "node scripts/verify.cjs",
+    "test:completion": "node scripts/verify-completion.cjs",
+    "test:pwa": "node scripts/verify-pwa.cjs",
+    "capture": "node scripts/capture.cjs",
+    "test:beta": "node scripts/verify-beta.cjs",
+    "test:all": "node scripts/verify.cjs && node scripts/verify-completion.cjs && node scripts/verify-beta.cjs && node scripts/verify-pwa.cjs",
+    "check:swift": "python scripts/check-swift-syntax.py"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

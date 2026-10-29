@@ -1,0 +1,430 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T11:34:31+08:00",
+  "title": "Design System: 碎碎清单",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Pine Green",
+        "canonical": "#13765b",
+        "tonalRamp": [
+          "oklch(15% .04 165)",
+          "oklch(26% .04 165)",
+          "oklch(38% .04 165)",
+          "oklch(49% .04 165)",
+          "oklch(61% .04 165)",
+          "oklch(72% .04 165)",
+          "oklch(84% .04 165)",
+          "oklch(95% .04 165)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Pine Wash",
+        "canonical": "#e9f3ee",
+        "tonalRamp": [
+          "oklch(15% .01 155)",
+          "oklch(26% .01 155)",
+          "oklch(38% .01 155)",
+          "oklch(49% .01 155)",
+          "oklch(61% .01 155)",
+          "oklch(72% .01 155)",
+          "oklch(84% .01 155)",
+          "oklch(95% .01 155)"
+        ]
+      },
+      "rose": {
+        "role": "secondary",
+        "displayName": "Berry Rose",
+        "canonical": "#b14c6b",
+        "tonalRamp": [
+          "oklch(15% .06 1)",
+          "oklch(26% .06 1)",
+          "oklch(38% .06 1)",
+          "oklch(49% .06 1)",
+          "oklch(61% .06 1)",
+          "oklch(72% .06 1)",
+          "oklch(84% .06 1)",
+          "oklch(95% .06 1)"
+        ]
+      },
+      "rose-soft": {
+        "role": "secondary",
+        "displayName": "Berry Wash",
+        "canonical": "#f9edf1",
+        "tonalRamp": [
+          "oklch(15% .01 350)",
+          "oklch(26% .01 350)",
+          "oklch(38% .01 350)",
+          "oklch(49% .01 350)",
+          "oklch(61% .01 350)",
+          "oklch(72% .01 350)",
+          "oklch(84% .01 350)",
+          "oklch(95% .01 350)"
+        ]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Lake Blue",
+        "canonical": "#226a9a",
+        "tonalRamp": [
+          "oklch(15% .05 242)",
+          "oklch(26% .05 242)",
+          "oklch(38% .05 242)",
+          "oklch(49% .05 242)",
+          "oklch(61% .05 242)",
+          "oklch(72% .05 242)",
+          "oklch(84% .05 242)",
+          "oklch(95% .05 242)"
+        ]
+      },
+      "blue-soft": {
+        "role": "secondary",
+        "displayName": "Lake Wash",
+        "canonical": "#eaf2f8",
+        "tonalRamp": [
+          "oklch(15% .01 242)",
+          "oklch(26% .01 242)",
+          "oklch(38% .01 242)",
+          "oklch(49% .01 242)",
+          "oklch(61% .01 242)",
+          "oklch(72% .01 242)",
+          "oklch(84% .01 242)",
+          "oklch(95% .01 242)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Workspace Ink",
+        "canonical": "#222c28",
+        "tonalRamp": [
+          "oklch(15% .01 163)",
+          "oklch(26% .01 163)",
+          "oklch(38% .01 163)",
+          "oklch(49% .01 163)",
+          "oklch(61% .01 163)",
+          "oklch(72% .01 163)",
+          "oklch(84% .01 163)",
+          "oklch(95% .01 163)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Quiet Text",
+        "canonical": "#626f68",
+        "tonalRamp": [
+          "oklch(15% .01 155)",
+          "oklch(26% .01 155)",
+          "oklch(38% .01 155)",
+          "oklch(49% .01 155)",
+          "oklch(61% .01 155)",
+          "oklch(72% .01 155)",
+          "oklch(84% .01 155)",
+          "oklch(95% .01 155)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "canonical": "#e7ece8",
+        "tonalRamp": [
+          "oklch(15% .005 150)",
+          "oklch(26% .005 150)",
+          "oklch(38% .005 150)",
+          "oklch(49% .005 150)",
+          "oklch(61% .005 150)",
+          "oklch(72% .005 150)",
+          "oklch(84% .005 150)",
+          "oklch(95% .005 150)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Soft Surface",
+        "canonical": "#f5f7f5",
+        "tonalRamp": [
+          "oklch(15% .003 145)",
+          "oklch(26% .003 145)",
+          "oklch(38% .003 145)",
+          "oklch(49% .003 145)",
+          "oklch(61% .003 145)",
+          "oklch(72% .003 145)",
+          "oklch(84% .003 145)",
+          "oklch(95% .003 145)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#fff",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#fafbfa",
+        "tonalRamp": [
+          "oklch(15% .001 145)",
+          "oklch(26% .001 145)",
+          "oklch(38% .001 145)",
+          "oklch(49% .001 145)",
+          "oklch(61% .001 145)",
+          "oklch(72% .001 145)",
+          "oklch(84% .001 145)",
+          "oklch(95% .001 145)"
+        ]
+      },
+      "preview": {
+        "role": "neutral",
+        "displayName": "Preview Ground",
+        "canonical": "#eef2ee",
+        "tonalRamp": [
+          "oklch(15% .005 145)",
+          "oklch(26% .005 145)",
+          "oklch(38% .005 145)",
+          "oklch(49% .005 145)",
+          "oklch(61% .005 145)",
+          "oklch(72% .005 145)",
+          "oklch(84% .005 145)",
+          "oklch(95% .005 145)"
+        ]
+      },
+      "card-base": {
+        "role": "neutral",
+        "displayName": "Checklist Pine",
+        "canonical": "#112b24",
+        "tonalRamp": [
+          "oklch(15% .025 167)",
+          "oklch(26% .025 167)",
+          "oklch(38% .025 167)",
+          "oklch(49% .025 167)",
+          "oklch(61% .025 167)",
+          "oklch(72% .025 167)",
+          "oklch(84% .025 167)",
+          "oklch(95% .025 167)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Clock",
+        "purpose": "Prominent lock-screen time with tabular numerals."
+      },
+      "headline": {
+        "displayName": "Section Heading",
+        "purpose": "Task and appearance view headings."
+      },
+      "title": {
+        "displayName": "Wordmark",
+        "purpose": "Application header name."
+      },
+      "body": {
+        "displayName": "Task Text",
+        "purpose": "Wrapping titles in the complete editable list."
+      },
+      "label": {
+        "displayName": "Control Label",
+        "purpose": "Primary actions and compact controls."
+      },
+      "meta": {
+        "displayName": "Metadata",
+        "purpose": "Group labels and preview support text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "phone",
+        "value": "0 18px 38px -20px #152f2c66",
+        "purpose": "Desktop phone preview."
+      },
+      {
+        "name": "segment",
+        "value": "0 1px 3px #183b2520",
+        "purpose": "Selected segmented-control item."
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 28px #152e2730",
+        "purpose": "Temporary undo and status notice."
+      },
+      {
+        "name": "dialog",
+        "value": "0 20px 60px #16302430",
+        "purpose": "Prototype information modal."
+      }
+    ],
+    "motion": [
+      {
+        "name": "check-state",
+        "value": "background .15s, border-color .15s",
+        "purpose": "Completion-circle hover."
+      },
+      {
+        "name": "switch-state",
+        "value": "background .2s; transform .2s",
+        "purpose": "Toggle track and thumb."
+      },
+      {
+        "name": "task-shatter",
+        "value": "780-960ms outExpo; opacity 700ms inQuad after 140ms",
+        "purpose": "Anime.js shards; skipped when motion is off or reduced motion is requested."
+      },
+      {
+        "name": "task-reflow",
+        "value": "370ms outExpo",
+        "purpose": "Remaining rows settle into place; completed card rows move to the end in completion order."
+      },
+      {
+        "name": "completion-strike",
+        "value": "420ms outCubic; opacity to .5 over 460ms outQuad",
+        "purpose": "Completed rows remain crossed out and half opaque in the scrollable card."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-desktop",
+        "value": "min-width: 1400px"
+      },
+      {
+        "name": "tablet",
+        "value": "761px to 1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "max-width: 760px"
+      },
+      {
+        "name": "small-mobile",
+        "value": "max-width: 350px"
+      },
+      {
+        "name": "short-mobile",
+        "value": "max-width: 760px and max-height: 700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compact accent action for adding or saving a task.",
+      "html": "<button class=\"ds-primary\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>添加</button>",
+      "css": ".ds-primary{display:inline-flex;gap:5px;align-items:center;background:var(--accent,#13765b);color:#fff;border:0;border-radius:5px;font:550 12px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:32px;padding:0 12px;cursor:pointer;letter-spacing:0}.ds-primary svg{width:15px;height:15px}.ds-primary:hover{filter:brightness(.95)}.ds-primary:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}.ds-primary:disabled{opacity:.5;cursor:default}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Bordered appearance-reset action.",
+      "html": "<button class=\"ds-secondary\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M3 11a9 9 0 1 1 2.7 6.4M3 3v8h8\"/></svg>恢复默认外观</button>",
+      "css": ".ds-secondary{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border:1px solid #d7e0d9;border-radius:6px;font:400 12px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:40px;background:none;color:var(--ink,#222c28);cursor:pointer;letter-spacing:0}.ds-secondary svg{width:15px;height:15px}.ds-secondary:hover{filter:brightness(.95)}.ds-secondary:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Quiet command with a named tooltip and accessible label.",
+      "html": "<button class=\"ds-icon\" aria-label=\"导出待办\" title=\"导出待办\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3\"/></svg></button>",
+      "css": ".ds-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;background:none;cursor:pointer;border-radius:6px;color:var(--muted,#626f68)}.ds-icon svg{width:20px;height:20px}.ds-icon:hover{background:var(--surface,#f5f7f5);filter:brightness(.95)}.ds-icon:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    },
+    {
+      "name": "Task Input",
+      "kind": "input",
+      "refersTo": "input-task",
+      "description": "New-task field surface; accent border indicates focus within.",
+      "html": "<label class=\"ds-input\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg><input aria-label=\"新的待办事项\" placeholder=\"接下来，要做什么？\" maxlength=\"120\"/></label>",
+      "css": ".ds-input{display:flex;gap:10px;align-items:center;background:#f1f5f2;border:1px solid #e0e8e2;border-radius:8px;padding:13px 14px 10px;max-width:360px}.ds-input svg{width:18px;height:18px;color:var(--accent,#13765b);flex:none}.ds-input input{width:100%;min-width:0;border:0;outline:none;background:transparent;font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:32px;color:var(--ink,#222c28);caret-color:var(--accent,#13765b);letter-spacing:0}.ds-input input::placeholder{color:#6b766f}.ds-input:focus-within{border-color:var(--accent,#13765b)}"
+    },
+    {
+      "name": "Navigation Destination",
+      "kind": "nav",
+      "refersTo": "nav-selected",
+      "description": "Selected desktop rail destination; mobile removes the tile fill.",
+      "html": "<button class=\"ds-nav\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\"/><path d=\"M12 18h.01\"/></svg><span>锁屏</span></button>",
+      "css": ".ds-nav{width:62px;min-height:62px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:var(--accent,#13765b);background:var(--accent-soft,#e9f3ee);border:0;border-radius:8px;font:550 11px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;cursor:pointer;letter-spacing:0}.ds-nav svg{width:22px;height:22px}.ds-nav:hover{filter:brightness(.95)}.ds-nav:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}@media(max-width:760px){.ds-nav{background:none;width:80px;min-height:51px;gap:4px;font-size:10px}}"
+    },
+    {
+      "name": "Filter Tab",
+      "kind": "nav",
+      "refersTo": "filter-selected",
+      "description": "Underlined list filter with a visible pending count.",
+      "html": "<div class=\"ds-filter-track\"><button class=\"ds-filter\" aria-pressed=\"true\">全部 <span>6</span></button></div>",
+      "css": ".ds-filter-track{border-bottom:1px solid var(--line,#e7ece8);width:240px}.ds-filter{display:flex;align-items:center;gap:6px;font:650 13px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;padding:0 1px 14px;border:0;border-bottom:2px solid var(--accent,#13765b);color:var(--accent,#13765b);min-height:42px;background:none;cursor:pointer;letter-spacing:0}.ds-filter span{font-size:11px;min-width:12px}.ds-filter:hover{filter:brightness(.95)}.ds-filter:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    },
+    {
+      "name": "Task Row",
+      "kind": "custom",
+      "refersTo": "task-row",
+      "description": "Unframed pending-task row with circular completion and group metadata.",
+      "html": "<div class=\"ds-task\"><button class=\"ds-check\" aria-label=\"完成：整理今天的拍摄素材\"><span></span></button><div class=\"ds-task-body\"><div class=\"ds-task-title\">整理今天的拍摄素材</div><div class=\"ds-task-meta\"><span></span>工作</div></div><button class=\"ds-task-edit\" aria-label=\"编辑待办\" title=\"编辑\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"m16 3 5 5M3 21l4-1 14-14a2.1 2.1 0 0 0-3-3L4 17l-1 4Z\"/></svg></button></div>",
+      "css": ".ds-task{display:flex;align-items:center;gap:10px;min-height:77px;border-bottom:1px solid var(--line,#e7ece8);max-width:390px;color:var(--ink,#222c28);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;letter-spacing:0}.ds-check{align-self:stretch;display:flex;align-items:center;justify-content:center;width:32px;flex:none;background:none;border:0;cursor:pointer}.ds-check span{display:block;width:21px;height:21px;border:1.5px solid #93a69a;border-radius:50%;transition:background .15s,border-color .15s}.ds-check:hover span{background:var(--accent-soft,#e9f3ee);border-color:var(--accent,#13765b)}.ds-task-body{flex:1;min-width:0;padding:16px 0}.ds-task-title{font-size:14px;line-height:1.65;overflow-wrap:anywhere}.ds-task-meta{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted,#626f68);margin-top:5px}.ds-task-meta span{width:5px;height:5px;border-radius:50%;background:var(--accent,#13765b)}.ds-task-edit{display:flex;align-items:center;justify-content:center;width:30px;height:40px;background:none;border:0;border-radius:6px;color:var(--muted,#626f68);cursor:pointer}.ds-task-edit svg{width:15px;height:15px}.ds-task-edit:hover{background:var(--surface,#f5f7f5);filter:brightness(.95)}.ds-check:focus-visible,.ds-task-edit:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-check span{transition:none}}"
+    },
+    {
+      "name": "Lock-Screen Activity",
+      "kind": "card",
+      "refersTo": "activity-card",
+      "description": "Fixed-height translucent card with an internally scrolling task list; completed rows remain crossed out and half opaque.",
+      "html": "<section class=\"ds-activity\"><div class=\"ds-activity-heading\"><span>今天的待办</span><span class=\"ds-activity-count\">0/6</span></div><div class=\"ds-activity-list\" tabindex=\"0\" role=\"region\" aria-label=\"待办清单，可上下滚动\" tabindex=\"0\" role=\"region\" aria-label=\"待办清单，可上下滚动\"><button class=\"ds-lock-task\"><span class=\"ds-lock-check\"></span><span>把锁屏待办的想法做出来</span></button><button class=\"ds-lock-task\"><span class=\"ds-lock-check\"></span><span>整理今天的拍摄素材</span></button><button class=\"ds-lock-task\"><span class=\"ds-lock-check\"></span><span>给家里打个电话</span></button></div><button class=\"ds-activity-footer\"><span>还有 3 项待办</span><span>全部清单 ›</span></button></section>",
+      "css": ".ds-activity{height:160px;max-width:338px;border-radius:18px;background:var(--card-bg,rgba(17,43,36,.85));backdrop-filter:blur(var(--card-blur,24px)) saturate(var(--card-saturate,.85));-webkit-backdrop-filter:blur(var(--card-blur,24px)) saturate(var(--card-saturate,.85));padding:10px 12px 0;overflow:hidden;color:var(--card-ink,#f4fbf7);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;letter-spacing:0}.ds-activity-heading{display:flex;align-items:center;justify-content:space-between;font-size:11px;height:22px;margin-bottom:2px}.ds-activity-heading>span:first-child{font-weight:550}.ds-activity-count{font-size:10px;color:var(--card-muted,#e0eae4)}.ds-activity-list{height:90px;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:thin}.ds-lock-task{display:flex;align-items:center;gap:7px;height:30px;width:100%;text-align:left;font-family:inherit;font-size:12px;font-weight:400;padding:0;border:0;background:none;color:inherit;cursor:pointer}.ds-lock-check{width:15px;height:15px;border:1.5px solid var(--card-check,#c6eed2);border-radius:50%;flex:none}.ds-lock-task>span:last-child{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;line-height:1.6;flex:1;min-width:0}.ds-lock-task:hover .ds-lock-check{background:#b9ebcb38}.ds-activity-footer{display:flex;align-items:center;justify-content:space-between;border:0;border-top:1px solid var(--card-rule,#d4eddf40);height:33px;width:100%;padding:0;font:400 9px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:none;color:var(--card-muted,#e0eae4);cursor:pointer}.ds-activity-footer:hover{filter:brightness(.95)}.ds-lock-task:focus-visible,.ds-activity-footer:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    },
+    {
+      "name": "Material Segments",
+      "kind": "custom",
+      "refersTo": "segmented",
+      "description": "Three material choices use a white active segment on a pale track.",
+      "html": "<div class=\"ds-segmented\" role=\"group\" aria-label=\"待办框材质\"><button class=\"ds-segment ds-segment-active\" aria-pressed=\"true\">磨砂</button><button class=\"ds-segment\" aria-pressed=\"false\">玻璃</button><button class=\"ds-segment\" aria-pressed=\"false\">平面</button></div>",
+      "css": ".ds-segmented{display:flex;background:#edf1ee;border-radius:6px;padding:3px;gap:3px;max-width:360px}.ds-segment{flex:1;font:400 12px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:36px;border-radius:4px;border:0;background:none;color:var(--ink,#222c28);cursor:pointer;letter-spacing:0}.ds-segment-active{background:#fff;color:var(--accent,#13765b);box-shadow:0 1px 3px #183b2520}.ds-segment:hover{filter:brightness(.95)}.ds-segment:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    },
+    {
+      "name": "Undo Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Temporary status with undo after completing or deleting a task.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><span>已完成一项待办</span><button class=\"ds-undo\">撤销</button><button class=\"ds-close\" aria-label=\"关闭通知\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></div>",
+      "css": ".ds-toast{display:flex;align-items:center;gap:18px;background:#233b30;color:#fff;padding:9px 10px 9px 18px;border-radius:8px;max-width:390px;box-shadow:0 8px 28px #152e2730;font:400 13px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;letter-spacing:0}.ds-toast>span{min-width:0;overflow-wrap:anywhere}.ds-undo{color:#b9f3cd;font:400 13px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:36px;flex:none;border:0;background:none;cursor:pointer}.ds-close{color:#def1e3;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:none;cursor:pointer}.ds-close svg{width:20px;height:20px}.ds-close:hover{background:var(--surface,#f5f7f5)}.ds-undo:hover,.ds-close:hover{filter:brightness(.95)}.ds-undo:focus-visible,.ds-close:focus-visible{outline:3px solid var(--accent,#13765b);outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Photo, Clock, Checklist",
+    "overview": "The implemented prototype follows the user's lock-screen reference: a real photograph, a prominent clock, and a translucent checklist. A quiet white task workspace makes the full list editable beside that preview on larger screens. The name remains provisional.\n\nThe interface is compact and practical. System Chinese typography, restrained green actions, rose life labels, fine dividers, and small icon controls support repeated task work. Completing an item breaks the task into fragments, then moves its crossed-out, half-opacity record to the end of the card list. This document records the web prototype in `outputs/locktodo`; it does not specify a built native iOS interface.",
+    "keyCharacteristics": [
+      "Photographic wallpaper with a large white clock.",
+      "Translucent task box with independently adjustable material, color, transparency, and text tone.",
+      "Light workspace with restrained color and fine dividers.",
+      "Compact task rows with visible completion, edit, and pin controls.",
+      "Reversible completion with optional shattering feedback."
+    ],
+    "rules": [
+      {
+        "name": "The Independent Appearance Rule",
+        "body": "Changing the application accent must not change the checklist material, base color, transparency, or text mode. These are separate settings in the implementation.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** preserve the photographic wallpaper, prominent clock, and translucent checklist reference.",
+      "**Do** keep the complete editable task list accessible from the bounded preview.",
+      "**Do** keep material, color, transparency, and text mode independent.",
+      "**Do** retain visible focus treatments and reduced-motion behavior.",
+      "**Do** keep completed tasks reversible through undo or restore."
+    ],
+    "donts": [
+      "**Don't** replace the photograph with an abstract decorative background.",
+      "**Don't** turn the task workspace into a marketing hero or a stack of decorative cards.",
+      "**Don't** imply that the browser preview installs or modifies a native iPhone lock screen.",
+      "**Don't** truncate the full editable task title just because preview rows truncate.",
+      "**Don't** infer wallpaper-aware text contrast from the automatic base-color calculation."
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+Origin: Unsplash.
+Source URL: https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=85
+Retrieved: 2026-10-29.
+Use: photographic mountain lake wallpaper for the user-requested lock-screen to-do interaction prototype.
+No image generation prompt; sourced photograph.

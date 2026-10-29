@@ -1,0 +1,13 @@
+node_modules/
+test-results/
+*.log
+.DS_Store
+Thumbs.db
+pwa-test-results/
+ios/SuiSui.xcodeproj/
+ios/build/
+ios/*.log
+*.xcuserstate
+DerivedData/
+AuthKey_*.p8
+runtime/

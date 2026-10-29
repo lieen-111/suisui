@@ -1,0 +1,56 @@
+{
+  "id": "./",
+  "name": "碎碎清单",
+  "short_name": "碎碎清单",
+  "description": "亮屏就能看到的待办清单：完成时碎裂、划线后排到最后。可离线使用。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafbfa",
+  "theme_color": "#f8f9f8",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "添加待办",
+      "short_name": "添加",
+      "url": "./?view=tasks",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "锁屏效果",
+      "short_name": "锁屏",
+      "url": "./?view=preview",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

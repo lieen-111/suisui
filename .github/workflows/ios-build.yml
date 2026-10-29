@@ -1,0 +1,62 @@
+# Compiles the native app on a GitHub-hosted Mac and runs the shared-logic unit tests.
+# No Apple account needed: the build is unsigned and targets the iOS Simulator.
+name: iOS build check
+
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios-build.yml"]
+  pull_request:
+    paths: ["ios/**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          NAME=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+          echo "Using simulator: $NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build app + widgets (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project SuiSui.xcodeproj -scheme SuiSui \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tee build.log | grep -E 'error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+
+      - name: Unit tests (list rules, backup format, Live Activity payload size)
+        run: |
+          set -o pipefail
+          xcodebuild -project SuiSui.xcodeproj -scheme SuiSui \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            CODE_SIGNING_ALLOWED=NO test | tee test.log | grep -E 'error:|Test Case .* (passed|failed)|TEST (SUCCEEDED|FAILED)' || true
+          grep -q 'TEST SUCCEEDED' test.log
+
+      - name: Keep logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            ios/build.log
+            ios/test.log

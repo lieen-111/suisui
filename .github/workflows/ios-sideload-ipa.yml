@@ -1,0 +1,76 @@
+# Builds an IPA for installing on your own iPhone with a FREE Apple ID — no paid developer account, no Mac.
+# Download the "SuiSui-sideload" artifact from the run, then sign and install it on Windows with
+# Sideloadly (or AltStore / SideStore). See ios/免费装到自己手机.md.
+#
+# The binary is ad-hoc signed with its entitlements (App Group, Live Activities) so the sideloading tool
+# keeps them when it re-signs with your Apple ID. Optional repo variable BUNDLE_ID (must be unique);
+# defaults to io.github.<your-github-name>.suisui
+name: iOS sideload IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios-sideload-ipa.yml"]
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ios
+    env:
+      BUNDLE_ID: ${{ vars.BUNDLE_ID || format('io.github.{0}.suisui', github.repository_owner) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build for iPhone (unsigned)
+        run: |
+          set -o pipefail
+          BID=$(echo "$BUNDLE_ID" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9.\n-' '-')
+          echo "BID=$BID" >> "$GITHUB_ENV"
+          xcodebuild -project SuiSui.xcodeproj -scheme SuiSui -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            BASE_BUNDLE_ID="$BID" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build \
+            | tee build.log | grep -E 'error:|BUILD (SUCCEEDED|FAILED)' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+
+      - name: Embed entitlements (ad-hoc) and package IPA
+        run: |
+          APP=build/Build/Products/Release-iphoneos/SuiSui.app
+          APPEX="$APP/PlugIns/SuiSuiWidgets.appex"
+          for f in App/SuiSui.entitlements Widgets/SuiSuiWidgets.entitlements; do
+            sed "s/\$(APP_GROUP_ID)/group.$BID/g" "$f" > "$RUNNER_TEMP/$(basename "$f")"
+          done
+          codesign --force --sign - --entitlements "$RUNNER_TEMP/SuiSuiWidgets.entitlements" "$APPEX"
+          codesign --force --sign - --entitlements "$RUNNER_TEMP/SuiSui.entitlements" "$APP"
+          codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "group.$BID"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/SuiSui-${{ github.run_number }}.ipa" Payload)
+          ls -la "$GITHUB_WORKSPACE"/*.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuiSui-sideload
+          path: SuiSui-*.ipa
+          retention-days: 30
+
+      - name: Keep logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sideload-build-log
+          path: ios/build.log
