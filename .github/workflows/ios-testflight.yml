@@ -19,7 +19,8 @@ on:
 
 jobs:
   upload:
-    runs-on: macos-26
+    # Intel runner by default (arm64 hosted Macs were capacity-constrained on 2026-10-29); override with MAC_RUNNER.
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26-intel' }}
     timeout-minutes: 45
     defaults:
       run:

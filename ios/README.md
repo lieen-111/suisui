@@ -97,4 +97,5 @@ cd ios && xcodegen generate && open SuiSui.xcodeproj
 
 - 已完成：全部 Swift 源码、工程描述、隐私清单、图标、单元测试、两条云端流水线。
 - 已验证：所有 Swift 文件通过语法解析（`python scripts/check-swift-syntax.py`）；数据规则与网页版逐条对照编写。
-- **未验证**：类型检查与编译（需要 Xcode）、真机、锁屏实际显示效果。开发环境没有 Mac，也没有连接 GitHub。第一次运行 `iOS build check` 若报错，把日志交给 Claude 修即可。
+- **已验证（2026-10-29）**：GitHub Actions 云端 Mac 上编译通过（模拟器 + 真机架构），9 项单元测试通过，免费自签 IPA 打包成功。
+- **未验证**：真机安装、锁屏实际显示和勾选效果。

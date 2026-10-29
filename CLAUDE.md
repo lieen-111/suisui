@@ -3,7 +3,7 @@
 Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-29 round 2:
 
 - The web app is a usable beta (import/export, daily rollover, repeat, history, lock-screen notification, install guidance). A web app CANNOT put checkable to-dos on the iOS Lock Screen; that is an Apple platform limit.
-- The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). It has been syntax-checked only: never compiled, never run on a device. Treat the first CI build log as the next task, and never claim the native app works until a build and device test confirm it.
+- The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). 2026-10-29: it COMPILES on GitHub Actions (Intel macOS runner) for simulator and device, and the 9 unit tests pass; the sideload IPA workflow succeeds. It has NOT run on a physical iPhone yet, so lock-screen behavior is unverified. Repo: github.com/lieen-111/suisui.
 - Distribution without the App Store = TestFlight (paid Apple Developer Program, no Mac required, GitHub Actions workflows provided). See `ios/README.md` and `落地路线.md`.
 
 Read `README.md`, `HANDOFF.md`, `PRODUCT.md`, and `DESIGN.md` before changing behavior. The user communicates in Chinese. Work in the existing project, preserve unrelated changes, and implement requested changes through verification.
@@ -83,7 +83,7 @@ Screenshots and tests here are browser evidence, not physical-iPhone, Safari or 
 
 ## Native Work
 
-Written, not built. Do not claim it compiles or runs until the `iOS build check` workflow passes and a device test confirms it. Lock-screen buttons need an unlocked (authenticated) device; Live Activities last 8 hours; widgets/Live Activities cannot run the shatter animation. Change `BASE_BUNDLE_ID` in `ios/project.yml` (or the `BUNDLE_ID` repo variable) before signing.
+Builds and unit tests pass in CI; not yet device-tested. arm64 hosted macOS runners queued indefinitely on 2026-10-29, so workflows default to `macos-26-intel` (override with repo variable `MAC_RUNNER`). Artifact downloads are blocked from the Claude sandbox; the user downloads IPAs from the Actions page. Lock-screen buttons need an unlocked (authenticated) device; Live Activities last 8 hours; widgets/Live Activities cannot run the shatter animation. Change `BASE_BUNDLE_ID` in `ios/project.yml` (or the `BUNDLE_ID` repo variable) before signing.
 
 ## Handoff Limits
 
