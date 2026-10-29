@@ -26,7 +26,7 @@ import java.util.Calendar
  */
 object LockCard {
     private const val CHANNEL = "lock_card"
-    private const val NOTIFICATION_ID = 1001
+    const val NOTIFICATION_ID = 1001
     private const val ACCENT = 0xFF13765B.toInt()
     const val ACTION_COMPLETE = "io.github.lieen111.suisui.COMPLETE"
 
@@ -51,17 +51,26 @@ object LockCard {
         nm.createNotificationChannel(channel)
     }
 
+    private fun settingOn(s: org.json.JSONObject?, key: String) = s?.optJSONObject("settings")?.optBoolean(key, false) == true
+
+    /** Redraws the card (and starts/stops the lock view service) from the current data. */
     @SuppressLint("MissingPermission")
     fun update(ctx: Context) {
         val nm = NotificationManagerCompat.from(ctx)
         val s = TodoStore.state(ctx)
-        val enabled = s?.optJSONObject("settings")?.optBoolean("lockNotify", false) ?: false
-        if (s == null || !enabled) { nm.cancel(NOTIFICATION_ID); return }
-        ensureChannel(ctx)
+        ScreenService.sync(ctx)
+        if (s == null || (!settingOn(s, "lockNotify") && !ScreenService.running && !ScreenService.enabled(ctx))) {
+            nm.cancel(NOTIFICATION_ID); return
+        }
         if (!notificationsAllowed(ctx)) return
+        try { nm.notify(NOTIFICATION_ID, current(ctx)) } catch (e: SecurityException) { /* permission revoked */ }
+        scheduleMidnight(ctx)
+    }
 
-        val open = TodoStore.pending(s)
-        val done = TodoStore.done(s)
+    /** The notification to show: the to-do card, or a quiet line when only the lock view is enabled. */
+    fun current(ctx: Context): android.app.Notification {
+        ensureChannel(ctx)
+        val s = TodoStore.state(ctx)
         val openApp = PendingIntent.getActivity(
             ctx, 0,
             Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
@@ -75,12 +84,17 @@ object LockCard {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        if (s == null || !settingOn(s, "lockNotify")) {
+            return builder.setContentTitle("碎碎清单锁屏已开启").setContentText("亮屏即可看到今天的待办").setOngoing(true).build()
+        }
 
+        val open = TodoStore.pending(s)
+        val done = TodoStore.done(s)
         if (open.isEmpty()) {
             builder.setContentTitle(if (done.isEmpty()) "今天还没有待办" else "今天的事，圆满完成。")
                 .setContentText(if (done.isEmpty()) "打开碎碎清单添加一件" else "完成了 ${done.size} 件")
-                .setOngoing(false)
-                .setAutoCancel(true)
+                .setOngoing(ScreenService.running)
+                .setAutoCancel(!ScreenService.running)
         } else {
             val style = NotificationCompat.InboxStyle()
             open.take(5).forEach { style.addLine("○  " + it.optString("title")) }
@@ -111,8 +125,7 @@ object LockCard {
                 )
             }
         }
-        try { nm.notify(NOTIFICATION_ID, builder.build()) } catch (e: SecurityException) { /* permission revoked */ }
-        scheduleMidnight(ctx)
+        return builder.build()
     }
 
     private fun short(title: String) = if (title.length > 7) title.take(7) + "…" else title

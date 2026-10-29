@@ -9,4 +9,10 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+    <style name="Theme.SuiSui.Lock" parent="Theme.SuiSui">
+        <item name="android:windowBackground">@color/lock_ground</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+    <color name="lock_ground">#2F594C</color>
 </resources>

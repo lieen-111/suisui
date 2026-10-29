@@ -8,7 +8,7 @@
   const groups = { work: '工作', life: '生活' };
   const repeats = { none: '仅一次', daily: '每天' };
   const palette = { green: ['#13765b', '#e9f3ee'], rose: ['#b14c6b', '#f9edf1'], blue: ['#226a9a', '#eaf2f8'] };
-  const defaults = { accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, installDismissed: false };
+  const defaults = { accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true, done: false },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work', pinned: false, done: false },
@@ -48,7 +48,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['motion', 'autoArchive', 'lockNotify', 'installDismissed'].forEach(k => { s[k] = !!s[k]; });
+    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'installDismissed', 'androidSetupSeen'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -77,7 +77,9 @@
     } else hadSaved = applySaved(local);
   } catch { storageOK = false; }
   // On Android the lock-screen card is the main feature, so it starts switched on.
-  if (ANDROID && !hadSaved) state.settings.lockNotify = true;
+  if (ANDROID && !hadSaved) { state.settings.lockNotify = true; state.settings.lockScreen = true; }
+  let LOCK_MODE = false;
+  try { LOCK_MODE = !!ANDROID && (ANDROID.isLockMode() || new URLSearchParams(location.search).get('mode') === 'lock'); } catch { LOCK_MODE = false; }
 
   function icon(name, attrs = '') { return `<i data-lucide="${name}" ${attrs}></i>`; }
   function icons(root = document) { window.lucide.createIcons({ root, attrs: { 'aria-hidden': 'true' } }); }
@@ -306,6 +308,7 @@
       toggle.disabled = false;
       test.hidden = !(state.settings.lockNotify && !allowed);
       test.lastChild.textContent = '打开通知权限';
+      renderAndroidLock();
       status.textContent = !state.settings.lockNotify ? '开启后，锁屏上会常驻“今天的待办”卡片，每件都有“完成”按钮，亮屏直接点。'
         : allowed ? '已开启：锁屏上常驻今天的待办，点“✓”即可完成。若锁屏看不到，请在系统设置里允许碎碎清单在锁屏显示通知。'
         : '还没有通知权限，锁屏卡片无法显示。点下方按钮去开启。';
@@ -324,6 +327,26 @@
     status.textContent = copy;
     test.hidden = !(state.settings.lockNotify && notifySupported() && Notification.permission === 'granted');
   }
+  function androidPermissions() {
+    try { return JSON.parse(ANDROID.permissions()); } catch { return { notifications: false, overlay: false, lockScreenRunning: false, brand: '' }; }
+  }
+  function renderAndroidLock() {
+    if (!ANDROID) return;
+    const p = androidPermissions();
+    $('android-lock-settings').hidden = false;
+    $('lockscreen-toggle').checked = !!state.settings.lockScreen;
+    $('lockscreen-status').textContent = !state.settings.lockScreen ? '开启后，熄屏再亮屏会先显示碎碎清单的锁屏：壁纸、时钟和待办，点圆圈完成，上滑进入手机。'
+      : p.overlay && p.notifications ? '已开启。熄屏后再亮屏试试；若没出现，点“检查锁屏权限”，按品牌打开“锁屏显示”和“后台弹出界面”。'
+      : '还差权限：点“检查锁屏权限”，按提示打开。';
+    const steps = { notify: p.notifications, overlay: p.overlay };
+    Object.entries(steps).forEach(([key, ok]) => {
+      const li = $(`setup-${key}`);
+      li.classList.toggle('done', !!ok);
+      li.querySelector('button').textContent = ok ? '已开启' : '去开启';
+      li.querySelector('button').disabled = !!ok;
+    });
+  }
+  function openAndroidSetup() { renderAndroidLock(); $('android-setup').showModal(); icons($('android-setup')); }
   async function enableLockNotify(on) {
     if (ANDROID) {
       state.settings.lockNotify = on; save(); renderNotifySetting();
@@ -560,6 +583,25 @@
   $('card-text').addEventListener('change', () => { state.settings.cardText = $('card-text').value; applyCardAppearance(); save(); });
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));
+  if (ANDROID) {
+    $('lockscreen-toggle').addEventListener('change', () => {
+      state.settings.lockScreen = $('lockscreen-toggle').checked; save(); renderAndroidLock();
+      if (state.settings.lockScreen) { const p = androidPermissions(); if (!p.overlay || !p.notifications) openAndroidSetup(); else showToast('已开启锁屏显示，熄屏后再亮屏看看'); }
+      else showToast('已关闭锁屏显示');
+    });
+    $('open-android-setup').addEventListener('click', openAndroidSetup);
+    $('close-android-setup').addEventListener('click', () => $('android-setup').close());
+    $('finish-android-setup').addEventListener('click', () => { state.settings.androidSetupSeen = true; save(); $('android-setup').close(); showToast('设置好了，熄屏后再亮屏看看'); });
+    $('android-setup').addEventListener('click', event => {
+      const step = event.target.closest('[data-setup]')?.dataset.setup;
+      try {
+        if (step === 'notify') ANDROID.requestNotificationPermission();
+        if (step === 'overlay') ANDROID.openOverlaySettings();
+        if (step === 'brand') ANDROID.openAppPermissions();
+      } catch { /* ignore */ }
+    });
+    window.suisuiAndroidResume = () => { renderNotifySetting(); save(); };
+  }
   window.suisuiAndroidPermission = granted => { renderNotifySetting(); if (!granted && state.settings.lockNotify) showToast('没有通知权限，锁屏卡片无法显示'); };
   window.suisuiExportDone = ok => showToast(ok ? '已导出待办备份' : '没有导出');
   $('notify-test').addEventListener('click', () => {
@@ -611,9 +653,22 @@
     $('lock-time').textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     if (rollover()) render();
   }
-  const initialView = new URLSearchParams(location.search).get('view');
+  // Lock mode (Android LockActivity): only the designed lock screen, over the system lock screen.
+  if (LOCK_MODE) {
+    document.body.classList.add('lock-mode');
+    $('lock-exit').hidden = false;
+    const leave = openApp => { try { ANDROID.unlock(openApp); } catch { /* ignore */ } };
+    $('lock-exit').addEventListener('click', () => leave(false));
+    ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', event => { event.stopImmediatePropagation(); leave(true); }, true));
+    let startY = null;
+    $('lockscreen').addEventListener('touchstart', event => { startY = event.target.closest('#activity') ? null : event.touches[0].clientY; }, { passive: true });
+    $('lockscreen').addEventListener('touchend', event => { if (startY !== null && startY - event.changedTouches[0].clientY > 90) leave(false); startY = null; });
+    window.suisuiLockShown = () => { $('activity-list').scrollTop = 0; clock(); };
+  }
+  const initialView = LOCK_MODE ? 'preview' : new URLSearchParams(location.search).get('view');
   rollover({ announce: false });
   setView(initialView || 'preview'); render(); applySettings(); clock(); save(); renderInstallBanner();
+  if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);
   if (isStandalone()) requestPersistence();
   else navigator.storage?.persisted?.().then(value => { persisted = value; $('storage-status').textContent = storageCopy(); }).catch(() => {});
   setInterval(clock, 30000);

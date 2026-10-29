@@ -40,7 +40,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
     <main class="workspace">
       <header class="app-header">
-        <div class="wordmark"><a href="./">碎碎清单</a><button class="prototype-label" id="header-about" aria-label="关于测试版">测试版</button></div>
+        <div class="wordmark"><a href="./">碎碎清单</a><button class="prototype-label" id="header-about" aria-label="关于碎碎清单">v1.0</button></div>
         <button class="icon-button add-top" id="add-top" aria-label="添加待办" title="添加待办"><i data-lucide="plus"></i></button>
         <div class="header-date" id="header-date"></div>
       </header>
@@ -147,6 +147,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <label class="setting-row" for="notify-toggle"><span>离开应用时，把待办放到锁屏通知</span><input type="checkbox" id="notify-toggle" class="switch"></label>
             <p class="setting-note" id="notify-status" role="status"></p>
             <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新锁屏通知</button>
+            <div class="android-only" id="android-lock-settings" hidden>
+              <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
+              <p class="setting-note" id="lockscreen-status"></p>
+              <button class="secondary-button inline" id="open-android-setup"><i data-lucide="shield-check"></i>检查锁屏权限</button>
+            </div>
           </fieldset>
           <fieldset><legend>每日整理</legend>
             <label class="setting-row" for="archive-toggle"><span>每天自动把前一天完成的事移入历史</span><input type="checkbox" id="archive-toggle" class="switch"></label>
@@ -179,6 +184,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             </div>
             <div class="phone-bottom"><span><i data-lucide="flashlight"></i></span><span><i data-lucide="camera"></i></span></div>
             <div class="home-indicator"></div>
+            <button class="lock-exit" id="lock-exit" hidden><span class="lock-exit-bar"></span><span>上滑或轻点进入手机</span></button>
           </div>
           <div class="preview-footer"><span id="preview-footer-copy">碎碎清单 · 示例待办</span><button class="text-button" id="preview-list-button">查看全部<i data-lucide="arrow-up-right"></i></button></div>
         </section>
@@ -189,7 +195,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <div id="fragments" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" hidden><span id="toast-message"></span><button id="undo-button">撤销</button><button id="close-toast" class="icon-button" aria-label="关闭通知"><i data-lucide="x"></i></button></div>
   <dialog id="about-dialog" aria-labelledby="about-title">
-    <div class="dialog-heading"><h2 id="about-title">关于碎碎清单测试版</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
+    <div class="dialog-heading"><h2 id="about-title">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>现在这个网页版能做到</h3>
     <p>清单、碎裂完成、每日重复、历史、备份导入导出，离线可用。添加到主屏幕后，可以开启“锁屏提醒”：离开应用时，未完成事项会出现在锁屏通知里，点通知回到清单。</p>
@@ -208,6 +214,16 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <li><span>4</span><p>以后从桌面的“碎碎清单”图标打开。第一次打开请保持联网，等“关于”里显示可离线使用。</p></li>
     </ol>
     <p class="setting-note">从桌面图标打开的碎碎清单与 Safari 里的网页，数据彼此独立。请从图标开始正式记录。</p>
+  </dialog>
+  <dialog id="android-setup" aria-labelledby="android-setup-title">
+    <div class="dialog-heading"><h2 id="android-setup-title">让碎碎清单出现在锁屏</h2><button class="icon-button" id="close-android-setup" aria-label="关闭"><i data-lucide="x"></i></button></div>
+    <p>亮屏时先看到碎碎清单的锁屏：壁纸、时钟和今天的待办，点圆圈直接完成，上滑进入手机。需要打开下面几项权限，完成后回到这里会自动打勾。</p>
+    <ol class="setup-steps">
+      <li id="setup-notify"><span class="setup-mark"></span><div><strong>通知</strong><p>用来在锁屏常驻待办卡片，并让锁屏服务保持运行。</p></div><button class="secondary-button" data-setup="notify">去开启</button></li>
+      <li id="setup-overlay"><span class="setup-mark"></span><div><strong>显示在其他应用上层</strong><p>熄屏时把碎碎清单放到锁屏前面。</p></div><button class="secondary-button" data-setup="overlay">去开启</button></li>
+      <li id="setup-brand"><span class="setup-mark manual"></span><div><strong>锁屏显示、后台弹出界面、省电无限制</strong><p id="setup-brand-copy">小米、红米、OPPO、vivo、荣耀等手机还需要在应用权限里手动打开这几项，否则锁屏可能不出现或被系统关掉。</p></div><button class="secondary-button" data-setup="brand">打开权限页</button></li>
+    </ol>
+    <div class="dialog-actions"><button class="primary-button" id="finish-android-setup">完成</button></div>
   </dialog>
   <dialog id="import-dialog" aria-labelledby="import-title">
     <div class="dialog-heading"><h2 id="import-title">导入备份</h2><button class="icon-button" id="import-cancel" aria-label="取消导入"><i data-lucide="x"></i></button></div>

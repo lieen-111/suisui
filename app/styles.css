@@ -334,3 +334,32 @@ dialog h3+p{margin-top:4px}
   .mini-card .lock-empty{color:var(--card-ink)}
 }
 @media(max-width:350px){.settings-preview{margin-left:-15px;margin-right:-15px;padding-left:12px;padding-right:12px}.mini-tag{left:12px}}
+
+/* Android lock mode: the designed lock screen shown over the system lock screen */
+.lock-exit{display:none}
+body.lock-mode{background:#2f594c;overflow:hidden}
+body.lock-mode .navigation,body.lock-mode .app-header,body.lock-mode .install-banner,body.lock-mode .editor,body.lock-mode .settings-panel,body.lock-mode .preview-topline,body.lock-mode .preview-footer,body.lock-mode .phone-top,body.lock-mode .phone-bottom,body.lock-mode .home-indicator,body.lock-mode .toast .icon-button{display:none!important}
+body.lock-mode .app-shell{display:block;padding:0;min-height:100svh}
+body.lock-mode .workspace-body{display:block;min-height:0}
+body.lock-mode .preview-panel{display:block!important;position:static;height:auto;padding:0;border:0;background:none;overflow:visible}
+body.lock-mode .lockscreen{width:100%;max-width:none;height:100svh;min-height:0;aspect-ratio:auto;border-radius:0;box-shadow:none}
+body.lock-mode .lock-clock{padding-top:max(64px,9svh);margin-top:0}
+body.lock-mode #lock-time{font-size:88px}
+body.lock-mode .activity-position{left:18px;right:18px;bottom:132px}
+body.lock-mode .lock-exit{display:flex;position:absolute;left:50%;bottom:28px;transform:translateX(-50%);flex-direction:column;align-items:center;gap:10px;color:#fff;font-size:12px;text-shadow:0 1px 6px #0f2a2499;padding:10px 24px}
+body.lock-mode .lock-exit-bar{width:120px;height:4px;border-radius:3px;background:#fff;opacity:.9}
+body.lock-mode .toast{bottom:96px}
+@media(max-height:700px){body.lock-mode .lock-clock{padding-top:40px}body.lock-mode #lock-time{font-size:70px}body.lock-mode .activity-position{bottom:104px}}
+
+/* Android permission setup */
+.setup-steps{list-style:none;padding:0;margin:16px 0 4px;display:grid;gap:12px}
+.setup-steps li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:8px}
+.setup-steps li strong{font-size:13px;color:var(--ink)}
+.setup-steps li p{margin:3px 0 0;font-size:11px;line-height:1.6}
+.setup-steps .secondary-button{min-height:32px;padding:6px 10px;font-size:11px;white-space:nowrap}
+.setup-mark{width:20px;height:20px;border-radius:50%;border:1.5px solid #93a69a;margin-top:1px;position:relative}
+.setup-steps li.done .setup-mark{background:var(--accent);border-color:var(--accent)}
+.setup-steps li.done .setup-mark:after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.setup-mark.manual{border-style:dashed}
+.android-only{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+@media(max-width:350px){.setup-steps li{grid-template-columns:22px 1fr}.setup-steps .secondary-button{grid-column:2}}

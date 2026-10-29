@@ -2,11 +2,13 @@ package io.github.lieen111.suisui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -24,13 +26,18 @@ import androidx.webkit.WebViewAssetLoader
 import org.json.JSONObject
 
 /**
- * Hosts the existing web app (bundled from ../app) in a WebView and connects it to the native
- * lock-screen card through the `SuiSuiAndroid` JavaScript bridge.
+ * Hosts the bundled web app (../app) in a WebView and connects it to native features through the
+ * `SuiSuiAndroid` JavaScript bridge. MainActivity is the normal app; LockActivity shows the same page
+ * in lock mode on top of the system lock screen.
  */
-class MainActivity : ComponentActivity() {
-    private lateinit var web: WebView
+open class WebHostActivity : ComponentActivity() {
+    protected lateinit var web: WebView
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingExport: String? = null
+
+    /** Lock mode: full-screen lock view over the keyguard, no system-bar padding. */
+    protected open val lockMode = false
+    protected open val startPath = "index.html"
 
     private val pickFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         fileCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
@@ -47,28 +54,34 @@ class MainActivity : ComponentActivity() {
         js("window.suisuiExportDone && window.suisuiExportDone($ok)")
     }
 
-    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         LockCard.update(this)
-        js("window.suisuiAndroidPermission && window.suisuiAndroidPermission(${granted && LockCard.notificationsAllowed(this)})")
+        js("window.suisuiAndroidPermission && window.suisuiAndroidPermission(${LockCard.notificationsAllowed(this)})")
     }
+
+    protected open fun configureWindow() {}
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        configureWindow()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val root = FrameLayout(this)
-        root.setBackgroundColor(0xFFFAFBFA.toInt())
+        root.setBackgroundColor(if (lockMode) 0xFF2F594C.toInt() else 0xFFFAFBFA.toInt())
         web = WebView(this)
+        web.setBackgroundColor(if (lockMode) 0xFF2F594C.toInt() else 0xFFFAFBFA.toInt())
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
-        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            insets
+        if (!lockMode) {
+            ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+                view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                insets
+            }
         }
         WindowCompat.getInsetsController(window, root).apply {
-            isAppearanceLightStatusBars = true
-            isAppearanceLightNavigationBars = true
+            isAppearanceLightStatusBars = !lockMode
+            isAppearanceLightNavigationBars = !lockMode
         }
 
         val assets = WebViewAssetLoader.Builder()
@@ -79,7 +92,6 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             allowFileAccess = false
             allowContentAccess = true
-            mediaPlaybackRequiresUserGesture = true
         }
         web.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
@@ -102,20 +114,14 @@ class MainActivity : ComponentActivity() {
             }
         }
         web.addJavascriptInterface(Bridge(), "SuiSuiAndroid")
-        if (savedInstanceState == null) web.loadUrl("https://appassets.androidplatform.net/assets/index.html")
-        else web.restoreState(savedInstanceState)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        web.saveState(outState)
+        web.loadUrl("https://appassets.androidplatform.net/assets/$startPath")
     }
 
     override fun onResume() {
         super.onResume()
         TodoStore.onChange = { js("window.suisuiNativeChanged && window.suisuiNativeChanged()") }
         LockCard.update(this)
-        js("window.suisuiNativeChanged && window.suisuiNativeChanged()")
+        js("window.suisuiNativeChanged && window.suisuiNativeChanged(); window.suisuiAndroidResume && window.suisuiAndroidResume()")
     }
 
     override fun onPause() {
@@ -123,34 +129,68 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
-    private fun js(code: String) {
+    protected fun js(code: String) {
         if (::web.isInitialized) web.post { web.evaluateJavascript(code, null) }
+    }
+
+    protected fun requestNotificationsIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33 && !LockCard.permissionGranted(this)) {
+            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    /** Leave the lock view: ask the system to dismiss the keyguard (PIN / fingerprint / face), then close. */
+    protected fun leaveLock(openApp: Boolean) {
+        val done = {
+            if (openApp) startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            finish()
+        }
+        val km = getSystemService(KeyguardManager::class.java)
+        if (km != null && km.isKeyguardLocked) {
+            km.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
+                override fun onDismissSucceeded() { done() }
+                override fun onDismissCancelled() { /* stay on the lock view */ }
+                override fun onDismissError() { finish() }
+            })
+        } else done()
     }
 
     /** Methods called from app.js. They run on a background thread; UI work is posted to the main thread. */
     inner class Bridge {
+        private val ctx get() = this@WebHostActivity
+
         @JavascriptInterface
-        fun load(): String = TodoStore.read(this@MainActivity) ?: ""
+        fun load(): String = TodoStore.read(ctx) ?: ""
 
         @JavascriptInterface
         fun save(json: String) {
-            // Validate before overwriting what the lock-screen card reads.
             if (runCatching { JSONObject(json) }.isFailure) return
-            TodoStore.write(this@MainActivity, json)
-            LockCard.update(this@MainActivity)
+            TodoStore.write(ctx, json)
+            LockCard.update(ctx)
         }
 
         @JavascriptInterface
-        fun notificationsAllowed(): Boolean = LockCard.notificationsAllowed(this@MainActivity)
+        fun isLockMode(): Boolean = lockMode
+
+        @JavascriptInterface
+        fun notificationsAllowed(): Boolean = LockCard.notificationsAllowed(ctx)
+
+        @JavascriptInterface
+        fun permissions(): String = JSONObject()
+            .put("notifications", LockCard.notificationsAllowed(ctx))
+            .put("overlay", Settings.canDrawOverlays(ctx))
+            .put("lockScreenRunning", ScreenService.running)
+            .put("brand", (Build.MANUFACTURER ?: "").lowercase())
+            .toString()
 
         @JavascriptInterface
         fun requestNotificationPermission() {
             runOnUiThread {
-                if (Build.VERSION.SDK_INT >= 33 && !LockCard.permissionGranted(this@MainActivity)) {
+                if (Build.VERSION.SDK_INT >= 33 && !LockCard.permissionGranted(ctx)) {
                     askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
-                    if (!LockCard.notificationsAllowed(this@MainActivity)) openNotificationSettings()
-                    js("window.suisuiAndroidPermission && window.suisuiAndroidPermission(${LockCard.notificationsAllowed(this@MainActivity)})")
+                    if (!LockCard.notificationsAllowed(ctx)) openNotificationSettings()
+                    js("window.suisuiAndroidPermission && window.suisuiAndroidPermission(${LockCard.notificationsAllowed(ctx)})")
                 }
             }
         }
@@ -158,10 +198,31 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface
         fun openNotificationSettings() {
             runOnUiThread {
-                runCatching {
-                    startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
-                }
+                runCatching { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)) }
             }
+        }
+
+        /** "显示在其他应用上层": lets the app put its lock view in front when the screen turns off. */
+        @JavascriptInterface
+        fun openOverlaySettings() {
+            runOnUiThread {
+                runCatching { startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
+            }
+        }
+
+        /** Brand permission pages ("锁屏显示", "后台弹出界面"), falling back to the app details page. */
+        @JavascriptInterface
+        fun openAppPermissions() {
+            runOnUiThread {
+                val miui = Intent("miui.intent.action.APP_PERM_EDITOR").putExtra("extra_pkgname", packageName)
+                val details = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                if (runCatching { startActivity(miui) }.isFailure) runCatching { startActivity(details) }
+            }
+        }
+
+        @JavascriptInterface
+        fun unlock(openApp: Boolean) {
+            runOnUiThread { if (lockMode) leaveLock(openApp) }
         }
 
         @JavascriptInterface
@@ -172,5 +233,34 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun version(): String = runCatching { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }.getOrDefault("")
+    }
+}
+
+class MainActivity : WebHostActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // The lock-screen card needs notification permission; ask on first launch (Android 13+).
+        requestNotificationsIfNeeded()
+    }
+}
+
+/** Shown over the system lock screen when the screen turns off, so waking the phone shows 碎碎清单. */
+class LockActivity : WebHostActivity() {
+    override val lockMode = true
+    override val startPath = "index.html?mode=lock"
+
+    override fun configureWindow() {
+        if (Build.VERSION.SDK_INT >= 27) {
+            setShowWhenLocked(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        js("window.suisuiNativeChanged && window.suisuiNativeChanged(); window.suisuiLockShown && window.suisuiLockShown()")
     }
 }
