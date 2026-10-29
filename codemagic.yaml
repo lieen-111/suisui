@@ -1,0 +1,52 @@
+# Codemagic (codemagic.io) — backup cloud Mac if GitHub's macOS runners are unavailable.
+# Sign in to Codemagic with GitHub, add the lieen-111/suisui repository, and start the "sideload-ipa" workflow.
+# Produces the same unsigned-but-entitled IPA as .github/workflows/ios-sideload-ipa.yml, plus simulator unit tests.
+workflows:
+  sideload-ipa:
+    name: 碎碎清单 · 编译检查 + 自签 IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      xcode: latest
+      vars:
+        BID: io.github.lieen-111.suisui
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+    scripts:
+      - name: Generate Xcode project
+        working_directory: ios
+        script: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Unit tests on the simulator
+        working_directory: ios
+        script: |
+          set -o pipefail
+          NAME=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+          xcodebuild -project SuiSui.xcodeproj -scheme SuiSui \
+            -destination "platform=iOS Simulator,name=$NAME" \
+            BASE_BUNDLE_ID="$BID" CODE_SIGNING_ALLOWED=NO test 2>&1 | tee test.log | grep -E 'error:|Test Case .* (passed|failed)|TEST (SUCCEEDED|FAILED)' || true
+          grep -q 'TEST SUCCEEDED' test.log
+      - name: Build for iPhone and package IPA
+        working_directory: ios
+        script: |
+          set -o pipefail
+          xcodebuild -project SuiSui.xcodeproj -scheme SuiSui -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            BASE_BUNDLE_ID="$BID" CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-1}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build \
+            2>&1 | tee build.log | grep -E 'error:|BUILD (SUCCEEDED|FAILED)' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+          APP=build/Build/Products/Release-iphoneos/SuiSui.app
+          for f in App/SuiSui.entitlements Widgets/SuiSuiWidgets.entitlements; do
+            sed "s/\$(APP_GROUP_ID)/group.$BID/g" "$f" > "/tmp/$(basename "$f")"
+          done
+          codesign --force --sign - --entitlements /tmp/SuiSuiWidgets.entitlements "$APP/PlugIns/SuiSuiWidgets.appex"
+          codesign --force --sign - --entitlements /tmp/SuiSui.entitlements "$APP"
+          mkdir -p ipa/Payload && cp -R "$APP" ipa/Payload/
+          (cd ipa && zip -qry "../SuiSui-${BUILD_NUMBER:-1}.ipa" Payload)
+    artifacts:
+      - ios/SuiSui-*.ipa
+      - ios/*.log
