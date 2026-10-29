@@ -11,7 +11,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-26
+    # Apple-silicon (arm64) hosted Macs were capacity-constrained on 2026-10-29; Intel Macs are the default.
+    # Override with the repository variable MAC_RUNNER (e.g. macos-26) when arm64 capacity returns.
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-15-intel' }}
     timeout-minutes: 30
     defaults:
       run:
