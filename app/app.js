@@ -28,7 +28,7 @@
     { id: 'seed-6', title: '读完床头的那一章', group: 'life' }
   ].map(normalizeTask);
   let state = { schema: SCHEMA, tasks: examples(), archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey() };
-  let filter = 'all', editing = null, toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
+  let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
   const completing = new Set();
   const isBusy = () => completing.size > 0;
@@ -135,6 +135,9 @@
   } catch { storageOK = false; }
   // On Android the lock screen is the main feature, so it starts switched on.
   if (ANDROID && !hadSaved) { state.settings.lockNotify = true; state.settings.lockScreen = true; }
+  // Android 1.1+: the window shows the phone's own wallpaper behind the page, so previews use the real wallpaper.
+  let SYSTEM_WALLPAPER = false;
+  try { SYSTEM_WALLPAPER = !!ANDROID && !!ANDROID.hasSystemWallpaper(); } catch { SYSTEM_WALLPAPER = false; }
   let LOCK_MODE = false;
   try { LOCK_MODE = !!ANDROID && (ANDROID.isLockMode() || new URLSearchParams(location.search).get('mode') === 'lock'); } catch { LOCK_MODE = false; }
 
@@ -163,7 +166,7 @@
       if (!applySaved(native)) return;
       lastNativeRaw = raw;
       try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* ignore */ }
-      editing = null; render(); applySettings();
+      closeEdit(); render(); applySettings();
     } catch { /* ignore malformed */ }
   };
 
@@ -174,15 +177,122 @@
   /** Lock card order: today's pending (pinned first), then finished items in completion order. */
   function cardTasks() { return [...pending(), ...doneList()]; }
 
+  const isPhone = () => matchMedia('(max-width:760px)').matches;
   function setView(view) {
     if (!['tasks', 'settings'].includes(view)) view = 'tasks';
+    closeAdd();
     document.body.dataset.view = view;
     document.querySelectorAll('.nav-button[data-view]').forEach(b => { b.classList.toggle('selected', b.dataset.view === view); b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
     const settings = view === 'settings';
     $('settings-panel').hidden = !settings;
     $('tasks-panel').hidden = settings;
-    if (matchMedia('(max-width:760px)').matches) window.scrollTo({ top: 0, behavior: 'instant' });
+    if (settings) openSettingsPage('index');
+    else updateWallpaperHole();
+    if (isPhone()) window.scrollTo({ top: 0, behavior: 'instant' });
   }
+  /* Settings: an index of four pages instead of one long scroll. */
+  const SETTINGS_TITLES = { index: '设置', look: '外观', lock: '锁屏与隐私', list: '分组与每日整理', data: '数据与备份' };
+  function openSettingsPage(page) {
+    if (!SETTINGS_TITLES[page]) page = 'index';
+    settingsPage = page;
+    document.body.dataset.settingsPage = page;
+    $('settings-index').hidden = page !== 'index';
+    document.querySelectorAll('.settings-page').forEach(p => { p.hidden = p.dataset.page !== page; });
+    $('settings-title').textContent = SETTINGS_TITLES[page];
+    $('settings-back').hidden = page === 'index';
+    $('settings-scroll').scrollTop = 0;
+    if (page === 'index') renderSettingsSummary();
+    if (page === 'lock') renderNotifySetting();
+    updateWallpaperHole();
+    icons($('settings-panel'));
+  }
+  // Android: leave a transparent hole where the settings preview is, so the real wallpaper shows in it.
+  function updateWallpaperHole() {
+    const on = SYSTEM_WALLPAPER && !LOCK_MODE && document.body.dataset.view === 'settings' && ['index', 'look', 'lock'].includes(settingsPage);
+    document.documentElement.classList.toggle('wallpaper-hole', on);
+  }
+  function themeName() {
+    const s = state.settings;
+    const hit = Object.values(THEMES).find(t => ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText', 'accent'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase()));
+    return hit ? hit.name : '自定义';
+  }
+  function renderSettingsSummary() {
+    const s = state.settings;
+    $('sum-look').textContent = `${themeName()}主题 · 锁屏显示 ${s.density === 'compact' ? 4 : 3} 条`;
+    const lockOn = ANDROID ? (s.lockScreen ? '亮屏显示已开启' : s.lockNotify ? '锁屏卡片已开启' : '未开启') : (s.lockNotify ? '锁屏通知已开启' : '锁屏通知未开启');
+    $('sum-lock').textContent = `${lockOn}${s.lockPrivacy ? ' · 隐藏内容' : ''}`;
+    $('sum-list').textContent = `${state.groups.length} 个分组 · ${s.autoArchive ? '每天自动整理' : '不自动整理'}`;
+  }
+
+  /* ---------- Add sheet (phones) / inline form (wider screens) ---------- */
+  let addGroupId = '';
+  function renderAddChips() {
+    if (!state.groups.some(g => g.id === addGroupId)) addGroupId = state.groups[0].id;
+    $('task-group').value = addGroupId;
+    $('add-group-chips').innerHTML = icon('folder') + state.groups.map(g => `<button type="button" class="chip${g.id === addGroupId ? ' active' : ''}" data-add-group="${esc(g.id)}" aria-pressed="${g.id === addGroupId}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</button>`).join('');
+    const when = $('task-when').value, repeat = $('task-repeat').value;
+    const dateless = repeat === 'daily' || repeat === 'weekdays';
+    document.querySelectorAll('[data-add-when]').forEach(b => { const on = b.dataset.addWhen === when; b.classList.toggle('active', on && !dateless); b.setAttribute('aria-pressed', String(on)); b.disabled = dateless; });
+    document.querySelectorAll('[data-add-repeat]').forEach(b => { const on = b.dataset.addRepeat === repeat; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+    $('task-date').hidden = when !== 'pick' || dateless;
+  }
+  function openAdd() {
+    if (document.body.dataset.view !== 'tasks') setView('tasks');
+    if (filter !== 'all' && state.groups.some(g => g.id === filter)) addGroupId = filter;
+    renderAddChips();
+    if (isPhone()) { document.body.classList.add('adding'); $('add-backdrop').hidden = false; }
+    else $('add-form').scrollIntoView({ block: 'nearest' });
+    $('task-input').focus();
+  }
+  function closeAdd() {
+    if (!document.body.classList.contains('adding')) return false;
+    document.body.classList.remove('adding'); $('add-backdrop').hidden = true; $('form-error').textContent = '';
+    if (document.activeElement === $('task-input')) $('task-input').blur();
+    return true;
+  }
+  // iOS keeps the layout viewport under the keyboard; lift the sheet by the covered height.
+  if (window.visualViewport) {
+    const lift = () => { const covered = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop); document.documentElement.style.setProperty('--kb', `${Math.round(covered)}px`); };
+    visualViewport.addEventListener('resize', lift); visualViewport.addEventListener('scroll', lift);
+  }
+
+  /* ---------- Edit sheet ---------- */
+  function editChips(task, group, repeat) {
+    $('edit-group-chips').innerHTML = state.groups.map(g => `<button type="button" class="chip${g.id === group ? ' active' : ''}" data-edit-group="${esc(g.id)}" aria-pressed="${g.id === group}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</button>`).join('');
+    document.querySelectorAll('[data-edit-repeat]').forEach(b => { const on = b.dataset.editRepeat === repeat; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+    const form = $('edit-form'), dateless = repeat === 'daily' || repeat === 'weekdays', date = $('edit-date').value, today = dayKey();
+    form.elements.group.value = group; form.elements.repeat.value = repeat;
+    $('edit-date').disabled = dateless;
+    document.querySelectorAll('[data-edit-when]').forEach(b => { b.disabled = dateless; const on = !dateless && (b.dataset.editWhen === 'today' ? (!date || date === today) : date === addDays(today, 1)); b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+    $('edit-date-field').querySelector('span').textContent = repeat === 'weekly' ? '从哪天' : '日期';
+  }
+  function openEdit(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    editing = id;
+    const form = $('edit-form');
+    form.dataset.editId = id;
+    $('edit-title').value = task.title;
+    $('edit-date').value = task.date || '';
+    $('edit-pinned').checked = task.pinned;
+    $('edit-delete').dataset.id = id;
+    editChips(task, groupOf(task.group).id, task.repeat);
+    if (!$('edit-sheet').open) $('edit-sheet').showModal();
+    icons($('edit-sheet'));
+    if (!isPhone()) $('edit-title').focus();
+  }
+  function closeEdit() {
+    editing = null;
+    if ($('edit-sheet').open) { $('edit-sheet').close(); return true; }
+    return false;
+  }
+  // Android back button: close what is open before leaving the app.
+  window.suisuiBack = () => {
+    for (const d of document.querySelectorAll('dialog[open]')) { d.close(); return true; }
+    if (closeAdd()) return true;
+    if (document.body.dataset.view === 'settings') { settingsPage !== 'index' ? openSettingsPage('index') : setView('tasks'); return true; }
+    return false;
+  };
   function showToast(message, undo = null) {
     clearTimeout(toastTimer);
     undoAction = undo;
@@ -192,8 +302,6 @@
     toastTimer = setTimeout(hideToast, undo ? 8000 : 4500);
   }
   function hideToast() { $('toast').hidden = true; clearTimeout(toastTimer); undoAction = null; }
-  function groupOptions(selected) { return state.groups.map(g => `<option value="${esc(g.id)}" ${groupOf(selected).id === g.id ? 'selected' : ''}>${esc(g.name)}</option>`).join(''); }
-  function repeatOptions(selected) { return Object.entries(repeats).map(([v, l]) => `<option value="${v}" ${selected === v ? 'selected' : ''}>${l}</option>`).join(''); }
   function metaFlags(t) {
     const g = groupOf(t.group), today = dayKey();
     let flags = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
@@ -202,9 +310,9 @@
     if (t.pinned) flags += `<span class="meta-flag">${icon('pin')}置顶</span>`;
     return flags;
   }
+  // Tap the circle to finish; tap the text to edit (group, date, repeat, pin, delete in one sheet).
   function row(t) {
-    if (editing === t.id) return `<form class="edit-form" data-edit-id="${esc(t.id)}"><label class="sr-only" for="edit-title">编辑待办</label><input id="edit-title" name="title" value="${esc(t.title)}" maxlength="120" required><div class="edit-controls"><select name="group" aria-label="分组">${groupOptions(t.group)}</select><select name="repeat" aria-label="重复">${repeatOptions(t.repeat)}</select><input type="date" name="date" aria-label="日期" value="${esc(t.date)}" ${t.repeat !== 'none' ? 'disabled' : ''}><span class="edit-spacer"></span><button type="button" class="text-button" data-action="delete" data-id="${esc(t.id)}">删除</button><button type="button" class="text-button" data-action="cancel-edit">取消</button><button class="primary-button">保存</button></div></form>`;
-    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}" data-task-id="${esc(t.id)}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><div class="task-body"><div class="task-title">${esc(t.title)}</div><div class="task-meta">${metaFlags(t)}</div></div><div class="task-actions"><button class="icon-button ${t.pinned ? 'pinned' : ''}" data-action="pin" data-id="${esc(t.id)}" aria-label="${t.pinned ? '取消置顶' : '置顶'}：${esc(t.title)}" title="${t.pinned ? '取消置顶' : '置顶'}">${icon('pin')}</button><button class="icon-button" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}" title="编辑">${icon('pencil')}</button></div></div>`;
+    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}${t.pinned ? ' is-pinned' : ''}" data-task-id="${esc(t.id)}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><button class="task-body" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}"><span class="task-title">${esc(t.title)}</span><span class="task-meta">${metaFlags(t)}</span></button></div>`;
   }
   function renderFilters(todo) {
     if (filter !== 'all' && !state.groups.some(g => g.id === filter)) filter = 'all';
@@ -217,10 +325,14 @@
     const todo = pending(), done = doneList(), upcoming = later();
     const inFilter = t => filter === 'all' || groupOf(t.group).id === filter;
     const visible = todo.filter(inFilter);
-    $('progress-copy').textContent = todo.length ? `还有 ${todo.length} 件事，完成了 ${done.length} 件。` : (done.length ? `今天的 ${done.length} 件事，都完成了。` : '给今天留下一件想做的事。');
+    const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
+    const total = todo.length + done.length;
+    $('progress-number').textContent = total ? `${done.length}/${total}` : '0';
+    $('progress-arc').style.strokeDasharray = `${total ? (done.length / total) * 97.4 : 0} 97.4`;
     renderFilters(todo);
-    const selectedGroup = $('task-group').value;
-    $('task-group').innerHTML = groupOptions(selectedGroup || state.groups[0].id);
+    renderAddChips();
+    if (editing && !state.tasks.some(t => t.id === editing)) closeEdit();
     $('pending-count').textContent = String(visible.length);
     $('task-list').innerHTML = visible.length ? visible.map(row).join('') : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
     const laterVisible = upcoming.filter(inFilter);
@@ -233,6 +345,7 @@
     renderArchive();
     renderGroupSettings();
     renderPreview();
+    if (settingsPage === 'index') renderSettingsSummary();
     icons();
     $('storage-status').textContent = storageCopy();
   }
@@ -286,6 +399,9 @@
       if (img.getAttribute('src') !== src) img.src = src;
       img.classList.toggle('monochrome', s.wallpaper === 'mono');
     });
+    document.documentElement.classList.toggle('system-wallpaper', SYSTEM_WALLPAPER);
+    $('wallpaper-fieldset').hidden = SYSTEM_WALLPAPER;
+    $('mini-tag-label').textContent = SYSTEM_WALLPAPER ? '实时预览 · 你的壁纸' : '实时预览';
     document.querySelectorAll('[name="accent"]').forEach(i => { i.checked = i.value === s.accent; });
     document.querySelectorAll('[data-density]').forEach(b => { b.classList.toggle('active', b.dataset.density === s.density); b.setAttribute('aria-pressed', String(b.dataset.density === s.density)); });
     document.querySelectorAll('[data-wallpaper]').forEach(b => { b.classList.toggle('active', b.dataset.wallpaper === s.wallpaper); b.setAttribute('aria-pressed', String(b.dataset.wallpaper === s.wallpaper)); });
@@ -303,6 +419,7 @@
     renderNotifySetting();
     applyCardAppearance();
     renderPreview();
+    if (settingsPage === 'index') renderSettingsSummary();
     icons();
   }
   function applyCardAppearance() {
@@ -536,7 +653,7 @@
       mergeGroups(pendingImport.groups);
     }
     if ($('import-settings').checked && pendingImport.settings) state.settings = cleanSettings({ ...pendingImport.settings, photo: state.settings.photo, wallpaper: pendingImport.settings.wallpaper === 'custom' ? state.settings.wallpaper : pendingImport.settings.wallpaper });
-    pendingImport = null; filter = 'all'; editing = null;
+    pendingImport = null; filter = 'all'; closeEdit();
     $('import-dialog').close();
     save(); render(); applySettings();
     showToast(mode === 'replace' ? '已用备份替换清单' : '已合并备份', () => { state = before; save(); render(); applySettings(); });
@@ -599,7 +716,7 @@
     if (!state.tasks.includes(task) || task.done) { render(); return; }
     task.done = true;
     task.completedAt = Math.max(Date.now(), ...state.tasks.map(t => (t.completedAt || 0) + 1));
-    if (editing === id) editing = null;
+    if (editing === id) closeEdit();
     save(); render();
     $('completed-section').open = true;
     if (state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -663,6 +780,18 @@
     const b = event.target.closest('button');
     if (!b) return;
     if (b.dataset.view) setView(b.dataset.view);
+    if (b.dataset.settingsPage) openSettingsPage(b.dataset.settingsPage);
+    if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
+    if (b.dataset.addWhen) {
+      $('task-when').value = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
+      if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); try { d.showPicker(); } catch { d.focus(); } }
+    }
+    if (b.dataset.addRepeat) { $('task-repeat').value = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
+    if (b.dataset.editGroup || b.dataset.editRepeat || b.dataset.editWhen) {
+      const form = $('edit-form'), task = state.tasks.find(t => t.id === form.dataset.editId);
+      if (b.dataset.editWhen) $('edit-date').value = b.dataset.editWhen === 'tomorrow' ? addDays(dayKey(), 1) : '';
+      editChips(task, b.dataset.editGroup || form.elements.group.value, b.dataset.editRepeat || form.elements.repeat.value);
+    }
     if (b.dataset.filter) { filter = b.dataset.filter; editing = null; render(); }
     if (b.dataset.density) { state.settings.density = b.dataset.density; save(); applySettings(); }
     if (b.dataset.wallpaper) { state.settings.wallpaper = b.dataset.wallpaper; save(); applySettings(); }
@@ -678,10 +807,10 @@
     switch (b.dataset.action) {
       case 'complete': complete(id, b); break;
       case 'pin': if (task) { task.pinned = !task.pinned; save(); render(); } break;
-      case 'edit': editing = id; render(); $('edit-title')?.focus(); break;
-      case 'cancel-edit': editing = null; render(); break;
+      case 'edit': openEdit(id); break;
+      case 'cancel-edit': closeEdit(); break;
       case 'restore': if (task) { task.done = false; save(); render(); const restored = [...$('activity-list').querySelectorAll('button')].find(el => el.dataset.id === id); if (b.classList.contains('lock-task')) restored?.focus({ preventScroll: true }); showToast('已恢复到待完成'); } break;
-      case 'delete': if (task) { const index = state.tasks.indexOf(task); state.tasks.splice(index, 1); editing = null; save(); render(); showToast('已删除待办', () => { state.tasks.splice(index, 0, task); save(); render(); }); } break;
+      case 'delete': if (task) { const index = state.tasks.indexOf(task); state.tasks.splice(index, 1); closeEdit(); save(); render(); showToast('已删除待办', () => { state.tasks.splice(index, 0, task); save(); render(); }); } break;
       case 'unarchive': {
         const index = state.archive.findIndex(t => t.id === id);
         if (index < 0) break;
@@ -700,12 +829,6 @@
     if (when === 'pick') return isDayKey($('task-date').value) ? $('task-date').value : null;
     return '';
   }
-  $('task-when').addEventListener('change', () => {
-    const pick = $('task-when').value === 'pick';
-    $('task-date').hidden = !pick;
-    if (pick) { $('task-date').min = dayKey(); if (!$('task-date').value) $('task-date').value = addDays(dayKey(), 2); $('task-date').focus(); }
-  });
-  $('task-repeat').addEventListener('change', () => { $('task-when').disabled = $('task-repeat').value === 'daily' || $('task-repeat').value === 'weekdays'; });
   $('add-form').addEventListener('submit', event => {
     event.preventDefault();
     const title = $('task-input').value.trim();
@@ -713,15 +836,17 @@
     const date = chosenDate();
     if (date === null) { $('form-error').textContent = '请选择一个日期。'; return; }
     const repeat = repeats[$('task-repeat').value] ? $('task-repeat').value : 'none';
-    const task = normalizeTask({ id: newId(), title, group: $('task-group').value, repeat, repeatDay: weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
+    const task = normalizeTask({ id: newId(), title, group: addGroupId, repeat, repeatDay: weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
     state.tasks.push(task);
-    filter = 'all'; $('task-input').value = ''; $('form-error').textContent = '';
+    if (filter !== 'all' && filter !== task.group) filter = 'all';
+    $('task-input').value = ''; $('form-error').textContent = '';
+    // Back to the defaults for the next one; the group stays (people add several to one group).
+    $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
     save(); render(); $('task-input').focus();
     showToast(dueToday(task) ? '待办已添加' : `已添加到“以后”：${repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}`);
     requestPersistence();
   });
   function onEditSubmit(event) {
-    if (!event.target.matches('.edit-form')) return;
     event.preventDefault();
     const task = state.tasks.find(t => t.id === event.target.dataset.editId);
     const data = new FormData(event.target), title = String(data.get('title')).trim();
@@ -729,22 +854,18 @@
     const repeat = repeats[data.get('repeat')] ? data.get('repeat') : 'none';
     const date = isDayKey(data.get('date')) ? data.get('date') : '';
     task.title = title.slice(0, 120);
+    task.pinned = data.get('pinned') === 'on';
     task.group = groupOf(data.get('group')).id;
     if (repeat === 'weekly' && task.repeat !== 'weekly') task.repeatDay = weekday(date || dayKey());
     task.repeat = repeat;
     task.date = repeat === 'none' ? date : '';
     if (repeat !== 'weekly') task.repeatDay = null;
-    editing = null;
-    save(); render(); showToast('已保存修改');
+    closeEdit();
+    save(); render(); showToast(dueToday(task) ? '已保存修改' : `已保存，${task.repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}出现`);
   }
-  $('task-list').addEventListener('submit', onEditSubmit);
-  $('later-list').addEventListener('submit', onEditSubmit);
-  document.addEventListener('change', event => {
-    if (event.target.matches('.edit-form select[name="repeat"]')) {
-      const dateInput = event.target.form.querySelector('input[name="date"]');
-      dateInput.disabled = event.target.value !== 'none';
-    }
-  });
+  $('edit-form').addEventListener('submit', onEditSubmit);
+  $('edit-sheet').addEventListener('close', () => { editing = null; });
+  $('edit-date').addEventListener('change', () => { const f = $('edit-form'); editChips(null, f.elements.group.value, f.elements.repeat.value); });
   $('group-list').addEventListener('change', event => {
     const input = event.target.closest('.group-name');
     if (!input) return;
@@ -759,10 +880,18 @@
   $('add-group').addEventListener('click', addGroup);
   $('undo-button').addEventListener('click', () => { const action = undoAction; hideToast(); action?.(); });
   $('close-toast').addEventListener('click', hideToast);
-  ['add-top', 'see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', () => { setView('tasks'); if (id === 'add-top') $('task-input').focus(); }));
+  ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', () => setView('tasks')));
+  $('fab-add').addEventListener('click', openAdd);
+  $('add-backdrop').addEventListener('click', closeAdd);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAdd(); });
+  // Swipe the sheet down to close it.
+  let sheetStart = null;
+  $('add-form').addEventListener('touchstart', event => { sheetStart = event.target.closest('.sheet-grip, .add-input-line') ? event.touches[0].clientY : null; }, { passive: true });
+  $('add-form').addEventListener('touchend', event => { if (sheetStart !== null && event.changedTouches[0].clientY - sheetStart > 60) closeAdd(); sheetStart = null; });
+  $('settings-back').addEventListener('click', () => openSettingsPage('index'));
   const openAbout = () => $('about-dialog').showModal();
   $('about-button').addEventListener('click', openAbout);
-  $('header-about').addEventListener('click', openAbout);
+  $('about-row').addEventListener('click', openAbout);
   $('close-about').addEventListener('click', () => $('about-dialog').close());
   document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog && (event.offsetX < 0 || event.offsetY < 0 || event.offsetX > dialog.offsetWidth || event.offsetY > dialog.offsetHeight)) dialog.close(); }));
   document.querySelectorAll('[name="accent"]').forEach(input => input.addEventListener('change', () => { state.settings.accent = input.value; save(); applySettings(); }));
@@ -816,13 +945,12 @@
   });
   $('reset-button').addEventListener('click', () => {
     const previous = structuredClone({ tasks: state.tasks, groups: state.groups });
-    state.tasks = examples(); state.groups = structuredClone(DEFAULT_GROUPS); editing = null; filter = 'all'; save(); render();
+    state.tasks = examples(); state.groups = structuredClone(DEFAULT_GROUPS); closeEdit(); filter = 'all'; save(); render();
     showToast('已恢复示例清单', () => { state.tasks = previous.tasks; state.groups = previous.groups; save(); render(); });
   });
   $('clear-done').addEventListener('click', moveDoneToArchive);
   $('export-button').addEventListener('click', exportBackup);
-  $('settings-export').addEventListener('click', exportBackup);
-  ['import-button', 'settings-import'].forEach(id => $(id).addEventListener('click', () => $('import-file').click()));
+  $('import-button').addEventListener('click', () => $('import-file').click());
   $('import-file').addEventListener('change', event => { openImport(event.target.files[0]); event.target.value = ''; });
   $('import-merge').addEventListener('click', () => applyImport('merge'));
   $('import-replace').addEventListener('click', () => applyImport('replace'));
@@ -860,7 +988,8 @@
     window.suisuiLockShown = () => { $('activity-list').scrollTop = 0; clock(); };
   }
   rollover({ announce: false });
-  setView(LOCK_MODE ? 'tasks' : new URLSearchParams(location.search).get('view')); render(); applySettings(); clock(); save(); renderInstallBanner();
+  const params = new URLSearchParams(location.search);
+  setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();
   if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);
   if (isStandalone()) requestPersistence();
   else navigator.storage?.persisted?.().then(value => { persisted = value; $('storage-status').textContent = storageCopy(); }).catch(() => {});

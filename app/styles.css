@@ -431,3 +431,110 @@ body.lock-mode .completion-note{display:none}
 .add-options{flex-wrap:wrap;gap:8px}
 .add-options .primary-button{flex:none;white-space:nowrap;margin-left:auto}
 .add-selects{flex:1 1 200px}
+
+/* 1.1: thumb-first phone layout — add button in the tab bar, add/edit sheets, settings in pages, phone wallpaper */
+.nav-add{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;flex:none}
+.nav-add svg{width:22px;height:22px;stroke-width:2.2}
+.today-top{align-items:center}
+.today-top h1{font-size:30px;margin-bottom:4px}
+.progress-ring{position:relative;width:48px;height:48px;flex:none;display:grid;place-items:center}
+.progress-ring svg{position:absolute;inset:0;width:48px;height:48px;transform:rotate(-90deg)}
+.progress-ring circle{fill:none;stroke:var(--line);stroke-width:3}
+.progress-ring #progress-arc{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:0 97.4;transition:stroke-dasharray .4s ease}
+.progress-ring span{font-size:11px;font-weight:650;color:var(--accent);font-variant-numeric:tabular-nums}
+.filter-tabs{gap:8px;border:0;margin-bottom:18px;overflow-x:auto;scrollbar-width:none;padding:2px 1px}
+.filter-tabs::-webkit-scrollbar{display:none}
+.filter-tabs button{min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:18px;background:#fff;white-space:nowrap;flex:none}
+.filter-tabs button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.filter-tabs button.active .dot{box-shadow:0 0 0 1.5px #fff}
+.chip-row{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;min-width:0}
+.chip-row::-webkit-scrollbar{display:none}
+.chip-row>svg{width:15px;height:15px;color:var(--muted);margin-right:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 13px;border-radius:17px;border:1px solid #dce5de;background:#fff;font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
+.chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.chip:disabled{opacity:.4}
+.chip-date{border:1px solid #dce5de;border-radius:17px;min-height:34px;padding:0 10px;font-size:12px;background:#fff;color:var(--ink);flex:none}
+.chip-date:disabled{opacity:.4}
+.add-form{padding:12px 14px}
+.add-input-line .add-submit{flex:none;min-height:36px;padding:0 16px;font-size:13px;border-radius:18px}
+.add-options{display:grid;gap:6px;margin:10px 0 0 28px;justify-content:stretch}
+.add-form .form-error{margin:6px 0 0 28px}
+.sheet-grip{display:none}
+.task-row{gap:2px;min-height:64px;align-items:stretch}
+.check-task{width:46px;margin-left:-8px}
+.check-circle{width:22px;height:22px}
+.task-body{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;text-align:left;padding:13px 0;min-width:0;flex:1;color:inherit}
+.task-body:hover{filter:none}
+.task-body:hover .task-title{color:var(--accent)}
+.task-title{display:block;font-size:15px}
+.task-meta{flex-wrap:wrap}
+.task-row.is-pinned .task-title{font-weight:600}
+.later-section .task-row{min-height:58px}
+dialog.sheet{max-width:480px}
+#edit-form{padding:0;border:0}
+#edit-title{width:100%;min-height:46px;padding:10px 12px;border:1px solid #d7e0d9;border-radius:10px;font-size:16px;margin:16px 0 8px;color:var(--ink)}
+#edit-title:focus{border-color:var(--accent);outline:0}
+.edit-field{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:6px;min-height:48px;font-size:13px;color:var(--muted)}
+.edit-pin{min-height:48px;color:var(--muted)}
+#edit-form .dialog-actions{justify-content:space-between;margin-top:14px}
+.text-button.danger{color:#a82d3c;font-size:13px;padding:0 6px}
+.settings-top{display:flex;align-items:center;gap:6px;margin-bottom:24px}
+.settings-top h1{margin:0}
+.settings-back{margin-left:-12px}
+.settings-back svg{width:24px;height:24px}
+.settings-index{display:grid;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.settings-index button{display:grid;grid-template-columns:22px minmax(0,1fr) 16px;align-items:center;gap:14px;padding:12px 16px;text-align:left;min-height:64px;border-bottom:1px solid var(--line)}
+.settings-index button:last-child{border-bottom:0}
+.settings-index button>svg:first-child{color:var(--accent)}
+.settings-index button>svg:last-child{width:16px;height:16px;color:#9aa8a0}
+.settings-index strong{display:block;font-size:14px;font-weight:600;color:var(--ink)}
+.settings-index small{display:block;font-size:11px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settings-page>fieldset:first-child,.settings-page>.settings-group:first-child{margin-top:0;padding-top:0;border:0}
+@media(max-width:760px){
+  .app-shell{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+  .navigation{justify-content:space-around;align-items:center}
+  .nav-button{width:72px}
+  .nav-add{width:56px;height:56px;border-radius:50%;margin-top:-30px;box-shadow:0 10px 22px -8px #0b2f2299,0 0 0 5px #fafbfa}
+  .nav-add svg{width:26px;height:26px}
+  .editor{padding-top:22px}
+  .today-top{margin-bottom:18px}
+  .add-form{position:fixed;left:0;right:0;bottom:0;z-index:95;margin:0;border:0;border-radius:20px 20px 0 0;background:#fff;padding:8px 16px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -14px 40px #16302430;transform:translateY(110%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s .24s}
+  body.adding .add-form{transform:translateY(calc(-1 * var(--kb,0px)));visibility:visible;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s}
+  .add-form:focus-within{border-color:transparent}
+  .sheet-grip{display:block;width:40px;height:4px;border-radius:2px;background:#d3dcd6;margin:0 auto 10px}
+  .add-input-line{background:#f3f6f4;border-radius:12px;padding:6px 6px 6px 12px}
+  .add-input-line input{font-size:16px;min-height:38px}
+  .add-options{margin:10px 0 0;gap:8px}
+  .add-form .form-error{margin:6px 0 0}
+  .sheet-backdrop{position:fixed;inset:0;z-index:94;background:#1b2e2547}
+  body.adding .toast{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
+  .toast{bottom:calc(100px + env(safe-area-inset-bottom))}
+  .task-title{font-size:15px}
+  dialog.sheet{margin:auto 0 0;width:100%;max-width:none;border-radius:20px 20px 0 0;padding:8px 18px calc(16px + env(safe-area-inset-bottom));max-height:88svh;overflow-y:auto}
+  dialog.sheet .sheet-grip{margin-bottom:8px}
+  #edit-form .dialog-actions .primary-button{min-height:44px;padding:0 26px;font-size:14px;border-radius:22px}
+  /* Settings: fixed title + live preview on top, the controls scroll underneath */
+  body[data-view=settings]{height:100svh;overflow:hidden}
+  body[data-view=settings] .app-shell{height:100%;min-height:0;display:flex;flex-direction:column}
+  body[data-view=settings] .workspace,body[data-view=settings] .workspace-body,body[data-view=settings] .settings-panel{flex:1;min-height:0;display:flex;flex-direction:column}
+  body[data-view=settings] .settings-panel{padding:0}
+  body[data-view=settings] .workspace-body{align-items:stretch}
+  .settings-top{flex:none;margin:0;padding:10px 22px 10px;min-height:58px;background:#fafbfa}
+  .settings-top h1{font-size:22px}
+  .settings-preview{position:relative;top:auto;margin:0;flex:none;height:206px;box-shadow:none}
+  body[data-settings-page=list] .settings-preview,body[data-settings-page=data] .settings-preview{display:none}
+  .settings-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:20px 22px 28px;background:#fafbfa;box-shadow:0 -1px 0 var(--line)}
+}
+@media(max-width:350px){.settings-top,.settings-scroll{padding-left:15px;padding-right:15px}.check-task{width:40px}}
+/* Android: the phone's own wallpaper shows through the page wherever it is transparent */
+html.wallpaper-hole,html.wallpaper-hole body{background:transparent}
+html.wallpaper-hole .settings-preview{background:transparent}
+html.wallpaper-hole .mini-wallpaper{display:none}
+html.wallpaper-hole .mini-shade{background:linear-gradient(180deg,#00000038 0%,#0000 42%,#0000002e 100%)}
+html.wallpaper-hole .navigation{background:#fff;backdrop-filter:none}
+html.system-wallpaper body.lock-mode{background:transparent}
+html.system-wallpaper body.lock-mode .lockscreen{background:transparent}
+html.system-wallpaper body.lock-mode .wallpaper{display:none}
+html.system-wallpaper body.lock-mode .wallpaper-shade{background:linear-gradient(180deg,#00000052 0%,#0000 38%,#0000 60%,#0000005c 100%)}
+.update-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:14px;padding:5px 10px;white-space:nowrap}
+.update-chip svg{width:13px;height:13px}

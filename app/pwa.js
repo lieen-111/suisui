@@ -20,8 +20,12 @@
     else if (registration?.waiting) status.textContent = '新版已就绪';
     else if (ready) status.textContent = navigator.onLine ? '已准备好，可离线使用' : '离线可用';
   };
+  // Visible prompt in the header; the button in “关于” does the same.
+  const chip = document.getElementById('update-chip');
+  chip?.addEventListener('click', () => update.click());
   const showUpdate = () => {
     update.hidden = !registration.waiting;
+    if (chip) chip.hidden = !registration.waiting;
     renderStatus();
   };
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -31,6 +35,7 @@
     if (!registration?.waiting) return;
     applyingUpdate = true;
     update.disabled = true;
+    if (chip) chip.disabled = true;
     renderStatus();
     registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
   });

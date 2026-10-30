@@ -33,27 +33,31 @@ const bridgeStub = (lock) => `
     await page.reload({ waitUntil: 'networkidle' });
 
     // Dates: tomorrow goes to "以后", picked date shows its label, today stays on today's list.
+    const closeSheet = async () => { await page.locator('#add-backdrop').click(); await page.locator('#add-form').waitFor({ state: 'hidden' }); };
+    await page.locator('#fab-add').click();
     await page.locator('#task-input').fill('明天交方案');
-    await page.locator('#task-when').selectOption('tomorrow');
+    await page.locator('[data-add-when=tomorrow]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.match(await page.locator('#toast-message').textContent(), /以后.*明天/);
     assert.equal(await page.locator('#task-list .task-row', { hasText: '明天交方案' }).count(), 0);
     assert.equal(await page.locator('#later-list .task-row', { hasText: '明天交方案' }).locator('.meta-flag', { hasText: '明天' }).count(), 1);
-    await page.locator('#task-when').selectOption('pick');
+    await page.locator('[data-add-when=pick]').click();
     await page.locator('#task-date').fill('2026-11-05');
     await page.locator('#task-input').fill('交房租');
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#later-list .task-row', { hasText: '交房租' }).locator('.meta-flag', { hasText: '11月5日' }).count(), 1);
     assert.equal(await page.locator('.lock-task', { hasText: '交房租' }).count(), 0, 'Future tasks stay off the lock card');
     // Weekly on Friday shows today; weekdays not shown on Saturday.
-    await page.locator('#task-when').selectOption('today');
-    await page.locator('#task-repeat').selectOption('weekly');
+    await page.locator('[data-add-when=today]').click();
+    await page.locator('[data-add-repeat=weekly]').click();
     await page.locator('#task-input').fill('周五复盘');
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#task-list .task-row', { hasText: '周五复盘' }).locator('.meta-flag', { hasText: '每五' }).count(), 1);
-    await page.locator('#task-repeat').selectOption('weekdays');
+    await page.locator('[data-add-repeat=weekdays]').click();
+    assert.equal(await page.locator('[data-add-when=tomorrow]').isDisabled(), true, 'Daily-type repeats have no date');
     await page.locator('#task-input').fill('打卡');
     await page.locator('#add-form button[type=submit]').click();
+    await closeSheet();
     await page.locator('#task-list .task-row', { hasText: '打卡' }).locator('[data-action=complete]').click();
     await page.locator('#task-list .task-row', { hasText: '周五复盘' }).locator('[data-action=complete]').click();
     // Saturday: tomorrow's task is due, weekday/weekly ones reset but move to "以后".
@@ -78,6 +82,7 @@ const bridgeStub = (lock) => `
 
     // Groups: create, rename, recolor, use, delete (tasks move), undo.
     await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=list]').click();
     await page.locator('#add-group').click();
     const input = page.locator('.group-name').last();
     await input.fill('学习');
@@ -86,13 +91,16 @@ const bridgeStub = (lock) => `
     await page.locator(`.group-color[data-group-id="${newId}"][data-group-color="#226a9a"]`).click();
     await page.locator('.nav-button[data-view=tasks]').click();
     assert.equal(await page.locator('#filter-tabs button', { hasText: '学习' }).count(), 1);
-    await page.locator('#task-group').selectOption(newId);
+    await page.locator('#fab-add').click();
+    await page.locator(`[data-add-group="${newId}"]`).click();
     await page.locator('#task-input').fill('背单词');
     await page.locator('#add-form button[type=submit]').click();
+    await closeSheet();
     await page.locator(`[data-filter="${newId}"]`).click();
     assert.equal(await page.locator('#task-list .task-row').count(), 1);
     assert.equal(await page.locator('#task-list .task-row .task-meta').first().evaluate(el => el.textContent.includes('学习')), true);
     await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=list]').click();
     await page.locator(`[data-group-delete="${newId}"]`).click();
     assert.match(await page.locator('#toast-message').textContent(), /已删除“学习”，1 件移到“工作”/);
     await page.locator('#undo-button').click();
@@ -118,6 +126,7 @@ const bridgeStub = (lock) => `
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
     await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=look]').click();
     assert.equal(await page.locator('#more-appearance').evaluate(d => d.open), false, 'Detailed appearance is folded by default');
     await page.locator('[data-theme-preset=mist]').click();
     assert.equal(await page.locator('[data-theme-preset=mist]').getAttribute('aria-pressed'), 'true');
@@ -167,6 +176,7 @@ const bridgeStub = (lock) => `
     const wp = await web.newPage(); watch(wp);
     await wp.goto(url, { waitUntil: 'networkidle' });
     await wp.locator('.nav-button[data-view=settings]').click();
+    await wp.locator('[data-settings-page=lock]').click();
     await wp.locator('#privacy-toggle').check();
     const content = await wp.evaluate(() => window.suisui.notificationContent());
     assert.equal(content.body, '打开碎碎清单查看');
@@ -174,7 +184,60 @@ const bridgeStub = (lock) => `
     await web.close();
   }
 
+  /* 1.1: edit sheet (pin, group, repeat), Android phone wallpaper in previews, back button closes layers */
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await context.addInitScript(bridgeStub(false).replace('version: () =>', 'hasSystemWallpaper: () => true, version: () =>'));
+    const page = await context.newPage(); watch(page);
+    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.locator('#android-setup[open]').waitFor(); // first run explains the lock-screen permissions
+    await page.locator('#finish-android-setup').click();
+    assert.equal(await page.locator('.task-row .icon-button').count(), 0, 'Rows have no tiny icon buttons; tap the text to edit');
+    await page.locator('.task-row', { hasText: '给家里打个电话' }).locator('.task-body').click();
+    assert.equal(await page.locator('#edit-sheet').evaluate(d => d.open), true);
+    await page.locator('[data-edit-group=work]').click();
+    await page.locator('[data-edit-repeat=daily]').click();
+    assert.equal(await page.locator('#edit-date').isDisabled(), true);
+    await page.locator('#edit-pinned').check();
+    await page.locator('.edit-form button.primary-button').click();
+    const row = page.locator('#task-list .task-row').nth(1);
+    assert.match(await row.textContent(), /给家里打个电话/, 'Pinned rows move up');
+    assert.match(await row.locator('.task-meta').textContent(), /工作.*每天.*置顶/);
+    // Back: closes the sheet, then the settings page, then settings.
+    await page.locator('.task-row').first().locator('.task-body').click();
+    assert.equal(await page.evaluate(() => window.suisuiBack()), true);
+    assert.equal(await page.locator('#edit-sheet').evaluate(d => d.open), false);
+    await page.locator('#fab-add').click();
+    assert.equal(await page.evaluate(() => window.suisuiBack()), true);
+    await page.locator('#add-form').waitFor({ state: 'hidden' });
+    await page.locator('.nav-button[data-view=settings]').click();
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), true, 'Settings preview shows the phone wallpaper');
+    assert.equal(await page.locator('#mini-wallpaper').isVisible(), false);
+    assert.equal(await page.locator('#settings-preview').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
+    for (const sel of ['.app-header', '.settings-top', '#settings-scroll', '.navigation']) assert.notEqual(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${sel} stays opaque`);
+    await page.locator('[data-settings-page=look]').click();
+    assert.equal(await page.locator('#wallpaper-fieldset').isVisible(), false, 'No wallpaper picker when the real wallpaper is used');
+    assert.equal(await page.evaluate(() => window.suisuiBack()), true);
+    assert.equal(await page.locator('#settings-index').isVisible(), true);
+    await page.locator('[data-settings-page=data]').click();
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), false, 'No preview, no hole');
+    assert.equal(await page.evaluate(() => window.suisuiBack()), true);
+    assert.equal(await page.evaluate(() => window.suisuiBack()), true);
+    assert.equal(await page.locator('#tasks-panel').isVisible(), true);
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), false, 'List paints its own background');
+    assert.equal(await page.evaluate(() => window.suisuiBack()), false, 'Nothing open: leave the app');
+    await context.close();
+    const lock = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await lock.addInitScript(bridgeStub(true).replace('version: () =>', 'hasSystemWallpaper: () => true, version: () =>'));
+    const lp = await lock.newPage(); watch(lp);
+    await lp.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
+    assert.equal(await lp.locator('#wallpaper').isVisible(), false, 'Lock view sits on the phone wallpaper');
+    assert.equal(await lp.locator('#lockscreen').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+    await lock.close();
+  }
+
   assert.deepEqual(errors, []);
-  console.log('PASS: list-first phones without fake lock screen, dates/later/overdue, weekdays/weekly repeats, edit date, custom groups (add/rename/recolor/filter/delete/undo), theme presets + folded settings, rapid completion, lock-screen privacy (lock view, reveal, notification text, preview), 320/390/430 layouts.');
+  console.log('PASS: edit sheet + back button + phone wallpaper (1.1), list-first phones without fake lock screen, dates/later/overdue, weekdays/weekly repeats, edit date, custom groups (add/rename/recolor/filter/delete/undo), theme presets + folded settings, rapid completion, lock-screen privacy (lock view, reveal, notification text, preview), 320/390/430 layouts.');
   await browser.close();
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { await browser?.close(); });

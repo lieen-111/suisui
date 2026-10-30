@@ -1,6 +1,6 @@
 # Continue This Project
 
-Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-30 (1.0):
+Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-30 (1.1: bottom-bar add button + add/edit sheets, settings split into pages, Android shows the phone's own wallpaper behind previews and the lock view):
 
 - The web app is a usable beta (import/export, daily rollover, repeat, history, lock-screen notification, install guidance). A web app CANNOT put checkable to-dos on the iOS Lock Screen; that is an Apple platform limit.
 - The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). 2026-10-29: it COMPILES on GitHub Actions (Intel macOS runner) for simulator and device, and the 9 unit tests pass; the sideload IPA workflow succeeds. It has NOT run on a physical iPhone yet, so lock-screen behavior is unverified. Repo: github.com/lieen-111/suisui.
@@ -38,7 +38,7 @@ The PWA has Home Screen metadata, PNG icons, offline shell caching and opt-in up
 - `scripts/verify.cjs`: broad behavior verification.
 - `scripts/verify-completion.cjs`: completion sorting, scrolling, animation, restore tests.
 - `scripts/verify-pwa.cjs`: starts an isolated server, tests offline reload and completion, data persistence, update lifecycle, cache replacement, icons and mobile overflow. No public server needed.
-- `scripts/verify-v1.cjs`: 1.0 review fixes: list-first phone layout (no fake phone chrome), dates/later/overdue, weekdays/weekly repeats, custom groups, theme presets, rapid completion, lock-screen privacy.
+- `scripts/verify-v1.cjs`: 1.1 edit sheet / back button / phone-wallpaper hole, plus 1.0 review fixes: list-first phone layout (no fake phone chrome), dates/later/overdue, weekdays/weekly repeats, custom groups, theme presets, rapid completion, lock-screen privacy.
 - `app/privacy.html`: privacy policy (linked from settings and About).
 - `scripts/verify-beta.cjs`: import merge/replace/undo, backup round trip, new-day rollover (Playwright clock), daily repeat, history, iPhone install banner, notification content/refresh (permission stubbed), schema-1 upgrade.
 - `scripts/check-swift-syntax.py`: tree-sitter syntax check of `ios/` (no Xcode needed; not a type check).

@@ -4,10 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
@@ -18,6 +21,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -66,18 +70,37 @@ open class WebHostActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         configureWindow()
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // The phone's own wallpaper shows through (themes.xml: windowShowWallpaper), so everything here is
+        // transparent; the page paints its own background and leaves holes where the wallpaper should show.
         val root = FrameLayout(this)
-        root.setBackgroundColor(if (lockMode) 0xFF2F594C.toInt() else 0xFFFAFBFA.toInt())
         web = WebView(this)
-        web.setBackgroundColor(if (lockMode) 0xFF2F594C.toInt() else 0xFFFAFBFA.toInt())
+        web.setBackgroundColor(Color.TRANSPARENT)
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
         if (!lockMode) {
-            ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
-                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-                view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            // Opaque strips behind the status and navigation bars; the web view sits between them.
+            val canvas = 0xFFFAFBFA.toInt()
+            val top = View(this).apply { setBackgroundColor(canvas) }
+            val bottom = View(this).apply { setBackgroundColor(canvas) }
+            root.addView(top, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, Gravity.TOP))
+            root.addView(bottom, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, Gravity.BOTTOM))
+            ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+                val below = maxOf(bars.bottom, ime.bottom)
+                top.layoutParams = (top.layoutParams as FrameLayout.LayoutParams).apply { height = bars.top }
+                bottom.layoutParams = (bottom.layoutParams as FrameLayout.LayoutParams).apply { height = below }
+                web.layoutParams = (web.layoutParams as FrameLayout.LayoutParams).apply { setMargins(bars.left, bars.top, bars.right, below) }
                 insets
             }
+            // Back closes the open sheet / settings page first (handled by the page), then leaves the app.
+            onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    web.evaluateJavascript("(window.suisuiBack && window.suisuiBack()) ? 1 : 0") { handled ->
+                        if (handled != "1") { isEnabled = false; onBackPressedDispatcher.onBackPressed(); isEnabled = true }
+                    }
+                }
+            })
         }
         WindowCompat.getInsetsController(window, root).apply {
             isAppearanceLightStatusBars = !lockMode
@@ -230,6 +253,10 @@ open class WebHostActivity : ComponentActivity() {
             pendingExport = json
             runOnUiThread { createDocument.launch(fileName) }
         }
+
+        /** The window shows the phone's wallpaper behind the page (themes.xml). */
+        @JavascriptInterface
+        fun hasSystemWallpaper(): Boolean = true
 
         @JavascriptInterface
         fun version(): String = runCatching { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }.getOrDefault("")

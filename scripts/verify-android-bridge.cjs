@@ -43,6 +43,7 @@ let browser;
 
   // Wallpaper photos stay out of the native copy.
   await page.locator('.nav-button[data-view=settings]').click();
+  await page.locator('[data-settings-page=look]').click();
   await page.locator('#wallpaper-file').setInputFiles(require('node:path').resolve(__dirname, '../app/assets/lake.jpg'));
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => JSON.parse(window.__native.raw).settings.photo), '');
@@ -70,13 +71,16 @@ let browser;
 
   // Turning the card off and on asks for permission through the bridge.
   await page.locator('.nav-button[data-view=settings]').click();
+  await page.locator('[data-settings-page=lock]').click();
   await page.locator('#notify-toggle').uncheck();
   assert.equal(await page.evaluate(() => JSON.parse(window.__native.raw).settings.lockNotify), false);
   await page.locator('#notify-toggle').check();
   assert.equal(await page.evaluate(() => window.__native.permissionAsked), 1);
 
   // Export goes through the native file picker.
-  await page.locator('#settings-export').click();
+  await page.locator('#settings-back').click();
+  await page.locator('[data-settings-page=data]').click();
+  await page.locator('#export-button').click();
   const exported = await page.evaluate(() => window.__native.exports[0]);
   assert.match(exported.name, /^suisui-backup-\d{4}-\d{2}-\d{2}\.json$/);
   assert.equal(JSON.parse(exported.json).tasks.length, 6);

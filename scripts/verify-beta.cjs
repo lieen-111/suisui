@@ -57,6 +57,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.locator('#toast-message', { hasText: '不是有效的 JSON' }).waitFor();
     assert.equal(await page.locator('#import-dialog').evaluate(d => d.open), false);
     // Round trip: export then re-import replace keeps everything.
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=data]').click();
     const wait = page.waitForEvent('download');
     await page.locator('#export-button').click();
     const exported = JSON.parse(fs.readFileSync(await (await wait).path(), 'utf8'));
@@ -96,16 +97,21 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.locator('#undo-button').click();
     assert.equal(await page.locator('.done-row:not(.archive-row)').count(), 2);
     // Auto archive off: next day keeps finished one-offs in the card.
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=list]').click();
     await page.locator('#archive-toggle').uncheck();
     await page.clock.setSystemTime(new Date('2026-10-31T08:00:00'));
     await page.clock.runFor(31000);
     assert.equal(await page.locator('.lock-task.is-done').count(), 1, 'Auto-archive can be turned off');
     // Repeat option from the add form and edit form.
     await page.locator('.nav-button[data-view=tasks]').click();
+    await page.locator('#fab-add').click();
     await page.locator('#task-input').fill('每天喝水');
-    await page.locator('#task-repeat').selectOption('daily');
+    await page.locator('[data-add-repeat=daily]').click();
     await page.locator('#add-form button[type=submit]').click();
+    assert.equal(await page.locator('#add-form').isVisible(), true, 'Sheet stays open for the next item');
+    assert.equal(await page.locator('[data-add-repeat=none]').getAttribute('aria-pressed'), 'true', 'Repeat resets after adding');
+    await page.locator('#add-backdrop').click();
+    await page.locator('#add-form').waitFor({ state: 'hidden', timeout: 2000 }); // tap outside closes the sheet
     assert.equal(await page.locator('.task-row', { hasText: '每天喝水' }).locator('.meta-flag', { hasText: '每天' }).count(), 1);
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
@@ -114,7 +120,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow ${view} ${width}`);
       }
     }
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     await page.screenshot({ path: path.join(review, 'beta-settings-390.png'), fullPage: true });
     await page.locator('.nav-button[data-view=tasks]').click();
     await page.screenshot({ path: path.join(review, 'beta-tasks-430.png'), fullPage: true });
@@ -135,7 +141,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('#install-dialog').evaluate(d => d.open), true);
     await page.screenshot({ path: path.join(review, 'beta-install-steps-390.png') });
     await page.locator('#close-install').click();
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=lock]').click();
     assert.equal(await page.locator('#notify-toggle').isDisabled(), true);
     assert.match(await page.locator('#notify-status').textContent(), /添加到主屏幕/);
     await page.locator('#install-later').click();
@@ -162,7 +168,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(content.title, '今天还有 6 件待办');
     assert.equal(content.body.split('\n').length, 6);
     assert(content.body.startsWith('○ 把锁屏待办的想法做出来'), 'Pinned first in notification');
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=lock]').click();
     await page.locator('#notify-toggle').check();
     await page.locator('#notify-test').waitFor({ state: 'visible' });
     assert.match(await page.locator('#notify-status').textContent(), /已开启/);
@@ -204,7 +210,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     const mini = page.locator('#settings-preview');
     assert.equal(await mini.isVisible(), true, 'Mini preview shown in phone settings');
     assert.equal(await page.locator('.mini-row').count(), 3);
@@ -213,10 +219,11 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.locator('[data-card-color="#f5f7f3"]').click();
     const same = await page.evaluate(() => ['--card-bg', '--card-blur', '--card-ink'].every(k => document.getElementById('mini-card').style.getPropertyValue(k) === document.getElementById('activity').style.getPropertyValue(k)));
     assert(same, 'Mini preview uses the same card appearance');
+    const before = await mini.boundingBox();
     await page.locator('#intensity').scrollIntoViewIfNeeded();
-    assert(await page.evaluate(() => scrollY > 300), 'Settings actually scrolled');
+    assert(await page.locator('#settings-scroll').evaluate(el => el.scrollTop > 300), 'Settings actually scrolled');
     const box = await mini.boundingBox();
-    assert(box && box.y >= -1 && box.y < 10, 'Mini preview stays pinned while scrolling settings');
+    assert(box && Math.abs(box.y - before.y) < 1 && box.y < 140, 'Mini preview stays in place while the settings scroll under it');
     await page.screenshot({ path: path.join(review, 'beta-settings-preview-390.png') });
     await page.locator('[data-density=compact]').scrollIntoViewIfNeeded();
     await page.locator('[data-density=compact]').click();
@@ -226,7 +233,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     for (const width of [320, 430]) { await page.setViewportSize({ width, height: 700 }); assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Settings preview fits ${width}`); }
     await page.setViewportSize({ width: 1280, height: 820 });
     assert.equal(await mini.isVisible(), false, 'Wide screens use the side preview instead');
-    await page.locator('#archive-toggle').scrollIntoViewIfNeeded();
+    await page.locator('#reset-settings').scrollIntoViewIfNeeded();
     const lock = await page.locator('#lockscreen').boundingBox();
     assert(lock && lock.y >= 0 && lock.y + lock.height <= 820, 'Side preview stays fully in view while scrolling settings');
     await page.screenshot({ path: path.join(review, 'beta-settings-desktop-scrolled.png') });

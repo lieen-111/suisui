@@ -48,9 +48,12 @@ const server = http.createServer((req, res) => {
           assert.equal(size, icon.sizes);
         }
         await page.locator('.nav-button[data-view="tasks"]').click();
+        await page.locator('#fab-add').click();
         await page.locator('#task-input').fill('PWA offline persistence');
         await page.locator('#add-form button[type="submit"]').click();
+        await page.locator('#add-backdrop').click();
         await page.locator('.nav-button[data-view="settings"]').click();
+        await page.locator('[data-settings-page="look"]').click();
         await page.locator('#more-appearance').evaluate(d => { d.open = true; });
         await page.locator('[data-material="glass"]').click();
         await context.setOffline(true);
@@ -72,8 +75,7 @@ const server = http.createServer((req, res) => {
         await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
         await page.waitForFunction(() => !document.getElementById('pwa-update').hidden);
         assert.equal(await page.evaluate(() => localStorage.getItem('suisui-locktodo-v1')), saved);
-        await page.locator('#header-about').click();
-        await page.locator('#pwa-update').click();
+        await page.locator('#update-chip').click(); // header prompt; same as the button in “关于”
         await page.waitForFunction(async () => (await caches.keys()).some(key => key.endsWith('test-2')));
         await page.waitForFunction(() => document.getElementById('offline-status')?.textContent.includes('已准备好'));
         assert.equal(await page.evaluate(() => localStorage.getItem('suisui-locktodo-v1')), saved);
@@ -83,7 +85,7 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.locator('.lock-task.is-done').count(), 1);
         for (const width of [320, 390, 430, 1440]) {
           await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
-          await page.locator('#header-about').click();
+          await page.evaluate(() => document.getElementById('about-dialog').showModal());
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
           await page.locator('#close-about').click();
         }
