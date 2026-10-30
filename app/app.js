@@ -225,7 +225,7 @@
   }
   // Android: leave a transparent hole where the settings preview is, so the real wallpaper shows in it.
   function updateWallpaperHole() {
-    const on = useSystemWallpaper() && !LOCK_MODE && document.body.dataset.view === 'settings' && ['index', 'look', 'lock'].includes(settingsPage);
+    const on = useSystemWallpaper() && !LOCK_MODE && document.body.dataset.view === 'settings' && ['look', 'lock'].includes(settingsPage);
     document.documentElement.classList.toggle('wallpaper-hole', on);
   }
   function themeName() {
@@ -235,10 +235,20 @@
   }
   function renderSettingsSummary() {
     const s = state.settings;
-    $('sum-look').textContent = `${themeName()}主题 · ${FONTS[s.font]} · ${TEXT_SIZES[s.textSize][0]}字号 · 锁屏 ${s.density === 'compact' ? 4 : 3} 条`;
-    const lockOn = ANDROID ? (s.lockScreen ? '亮屏显示已开启' : s.lockNotify ? '锁屏卡片已开启' : '未开启') : (s.lockNotify ? '锁屏通知已开启' : '锁屏通知未开启');
-    $('sum-lock').textContent = `${lockOn}${s.lockPrivacy ? ' · 隐藏内容' : ''}`;
-    $('sum-list').textContent = `${state.groups.length} 个分组 · ${s.autoArchive ? '每天自动整理' : '不自动整理'}`;
+    // Bento cards: each one shows its current state, not just a label.
+    $('tile-look-title').textContent = `${themeName()}`;
+    $('sum-look').textContent = `${FONTS[s.font]} · ${TEXT_SIZES[s.textSize][0]}字号 · 锁屏 ${s.density === 'compact' ? 4 : 3} 条`;
+    const photo = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).thumb;
+    const img = $('tile-look-photo');
+    if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;
+    $('tile-look-card').style.background = $('mini-card').style.getPropertyValue('--card-bg') || s.cardColor;
+    const on = ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
+    $('tile-lock-state').textContent = on ? '已开启' : '未开启';
+    $('settings-index').querySelector('.tile-lock').classList.toggle('on', on);
+    $('sum-lock').textContent = s.lockPrivacy ? '隐藏内容 · 只显示件数' : ANDROID ? (s.lockScreen ? '亮屏直接显示' : '锁屏卡片') : '锁屏通知';
+    $('tile-list-count').textContent = String(state.groups.length);
+    $('tile-list-dots').innerHTML = state.groups.map(g => `<span style="background:${g.color}" title="${esc(g.name)}"></span>`).join('');
+    $('sum-list').textContent = s.autoArchive ? '每天自动整理' : '不自动整理';
   }
 
   /* ---------- Add sheet (phones) / inline form (wider screens) ---------- */

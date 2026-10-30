@@ -811,3 +811,49 @@ body.lock-mode .activity.compact .lock-task{font-size:calc(14px * var(--ts))}
 .a-small{font-size:13px;color:var(--label2,var(--muted))}
 .a-large{font-size:22px;color:var(--label2,var(--muted))}
 .type-settings .setting-row{border-top:.5px solid var(--sep,var(--line))}
+
+/* 1.3 · settings home as a bento grid: every card shows its live state */
+.settings-index.bento{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:none;border:0;border-radius:0;overflow:visible}
+.bento .tile{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:148px;padding:16px;border-radius:24px;background:var(--cell);text-align:left;color:var(--ink);box-shadow:0 1px 0 #0000000a,0 10px 30px -22px #0b2a2066;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s;border:0}
+.bento .tile:before{display:none}
+.bento .tile:active{transform:scale(.97)}
+.bento .tile:hover{filter:none;box-shadow:0 1px 0 #0000000a,0 16px 34px -20px #0b2a2080}
+.tile-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--label2,var(--muted));letter-spacing:.02em}
+.tile-head svg{width:15px;height:15px}
+.tile-big{display:flex;align-items:baseline;gap:3px;font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.tile-big em{font-style:normal;font-size:15px;font-weight:600;color:var(--label2,var(--muted))}
+.bento small{display:block;font-size:12px;line-height:1.4;color:var(--label2,var(--muted))}
+/* appearance: full width, the current wallpaper with a little glass card */
+.tile-look{grid-column:1/-1;min-height:178px!important;color:#fff!important;background:linear-gradient(150deg,#1b6e56,#08291f)!important}
+.tile-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.tile-photo.monochrome{filter:grayscale(1)}
+.tile-look:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#0000 30%,#000a 100%),linear-gradient(90deg,#0006,#0000 60%)}
+.tile-look .tile-head{color:#ffffffd9}
+.tile-look-card{position:absolute;right:16px;top:16px;width:118px;padding:12px 12px 8px;border-radius:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 24px -12px #0009,inset 0 0 0 1px #ffffff26;display:grid;gap:7px}
+.tile-look-card i{display:flex;align-items:center;gap:6px;height:8px}
+.tile-look-card i:before{content:"";width:8px;height:8px;border-radius:50%;border:1.4px solid #c6eed2;flex:none}
+.tile-look-card i:after{content:"";height:4px;flex:1;border-radius:2px;background:#ffffff80}
+.tile-look-card i:nth-child(2):after{max-width:70%}
+.tile-look-card i:nth-child(3):after{max-width:55%}
+.tile-foot strong{display:block;font-size:26px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
+.tile-look small{color:#ffffffc7}
+.bento .tile>svg.tile-go{position:absolute;right:16px;bottom:16px;width:30px!important;height:30px!important;padding:7px;box-sizing:border-box;border-radius:50%;background:#ffffff26;color:#fff;backdrop-filter:blur(8px)}
+/* lock: lights up when on */
+.tile-lock.on{background:linear-gradient(155deg,var(--accent-fill,#13765b),#0a3a2d)!important;color:#fff!important}
+.tile-lock.on .tile-head,.tile-lock.on small{color:#ffffffc7}
+.tile-pulse{position:absolute;right:16px;top:18px;width:10px;height:10px;border-radius:50%;background:#c7c7cc}
+.tile-lock.on .tile-pulse{background:#7fe0b4;box-shadow:0 0 0 0 #7fe0b480;animation:tile-pulse 2.2s infinite}
+@keyframes tile-pulse{0%{box-shadow:0 0 0 0 #7fe0b480}70%{box-shadow:0 0 0 10px #7fe0b400}100%{box-shadow:0 0 0 0 #7fe0b400}}
+.tile-dots{display:flex;gap:0}
+.tile-dots span{width:20px;height:20px;border-radius:50%;border:2.5px solid var(--cell);margin-left:-6px}
+.tile-dots span:first-child{margin-left:0}
+.tile-about{flex-direction:column}
+.tile-logo{position:absolute;right:14px;top:14px;width:40px;height:40px;border-radius:11px;box-shadow:0 6px 14px -8px #0b2a20aa}
+.tile-version{font-size:26px}
+@media(prefers-reduced-motion:reduce){.tile-lock.on .tile-pulse{animation:none}}
+@media(prefers-color-scheme:dark){.bento .tile{box-shadow:inset 0 0 0 1px #ffffff10}}
+@media(max-width:350px){.bento .tile{min-height:132px;padding:14px}.tile-big{font-size:26px}.tile-look-card{width:96px}}
+body[data-settings-page=index] .settings-preview{display:none}
+.bento .tile-head svg{color:inherit}
+.bento .tile-look .tile-head svg{color:#fff}
+.bento .tile-look .tile-foot strong{color:#fff;font-size:26px;font-weight:700}

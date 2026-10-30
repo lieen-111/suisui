@@ -97,12 +97,37 @@
             </div>
           </div>
           <div class="settings-scroll" id="settings-scroll">
-            <nav class="settings-index" id="settings-index" aria-label="设置分类">
-              <button data-settings-page="look"><i data-lucide="palette"></i><span><strong>外观</strong><small id="sum-look"></small></span><i data-lucide="chevron-right"></i></button>
-              <button data-settings-page="lock"><i data-lucide="lock-keyhole"></i><span><strong>锁屏与隐私</strong><small id="sum-lock"></small></span><i data-lucide="chevron-right"></i></button>
-              <button data-settings-page="list"><i data-lucide="folders"></i><span><strong>分组与每日整理</strong><small id="sum-list"></small></span><i data-lucide="chevron-right"></i></button>
-              <button data-settings-page="data"><i data-lucide="hard-drive-download"></i><span><strong>数据与备份</strong><small>只保存在这台手机上</small></span><i data-lucide="chevron-right"></i></button>
-              <button id="about-row"><i data-lucide="info"></i><span><strong>关于与反馈</strong><small id="sum-about">碎碎清单 1.3</small></span><i data-lucide="chevron-right"></i></button>
+            <nav class="settings-index bento" id="settings-index" aria-label="设置分类">
+              <button class="tile tile-look" data-settings-page="look">
+                <img class="tile-photo" id="tile-look-photo" alt="">
+                <span class="tile-head"><i data-lucide="palette"></i>外观</span>
+                <span class="tile-look-card" id="tile-look-card" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="tile-foot"><strong id="tile-look-title"></strong><small id="sum-look"></small></span>
+                <i data-lucide="arrow-up-right" class="tile-go"></i>
+              </button>
+              <button class="tile tile-lock" data-settings-page="lock">
+                <span class="tile-head"><i data-lucide="lock-keyhole"></i>锁屏</span>
+                <span class="tile-big" id="tile-lock-state"></span>
+                <small id="sum-lock"></small>
+                <span class="tile-pulse" aria-hidden="true"></span>
+              </button>
+              <button class="tile tile-list" data-settings-page="list">
+                <span class="tile-head"><i data-lucide="folders"></i>分组</span>
+                <span class="tile-big"><span id="tile-list-count"></span><em>个</em></span>
+                <span class="tile-dots" id="tile-list-dots" aria-hidden="true"></span>
+                <small id="sum-list"></small>
+              </button>
+              <button class="tile tile-data" data-settings-page="data">
+                <span class="tile-head"><i data-lucide="shield-check"></i>数据</span>
+                <span class="tile-big">本机</span>
+                <small>不上传 · 可导出备份</small>
+              </button>
+              <button class="tile tile-about" id="about-row">
+                <img src="icons/icon-192.png" alt="" class="tile-logo">
+                <span class="tile-head">关于</span>
+                <span class="tile-big tile-version" id="sum-about">1.3</span>
+                <small>意见反馈 · 隐私政策</small>
+              </button>
             </nav>
             <div class="settings-page" data-page="look" hidden>
             <fieldset><legend>主题</legend>

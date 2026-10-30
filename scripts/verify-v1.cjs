@@ -231,11 +231,14 @@ const bridgeStub = (lock) => `
     assert.equal(await page.evaluate(() => window.suisuiBack()), true);
     await page.locator('#add-form').waitFor({ state: 'hidden' });
     await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=lock]').click();
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), true, 'Settings preview shows the phone wallpaper');
     assert.equal(await page.locator('#mini-wallpaper').isVisible(), false);
     assert.equal(await page.locator('#settings-preview').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
     for (const sel of ['.app-header', '.settings-top', '#settings-scroll', '.navigation']) assert.notEqual(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${sel} stays opaque`);
+    await page.locator('#settings-back').click();
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), false, 'Settings home has no preview');
     await page.locator('[data-settings-page=look]').click();
     assert.equal(await page.locator('[data-wallpaper=system]').getAttribute('aria-pressed'), 'true', 'Phone wallpaper is the default in the Android app');
     await page.locator('[data-wallpaper=aurora]').click();
