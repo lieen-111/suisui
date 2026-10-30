@@ -20,7 +20,15 @@
     lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'blue' },
     plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'rose' }
   };
-  const defaults = { tipsSeen: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  // Built-in wallpaper library (scripts/make-wallpapers.py makes the generated ones). "system" = the phone's own wallpaper (Android app).
+  const WALLPAPERS = [
+    { id: 'lake', name: '湖畔', src: 'assets/lake.jpg', thumb: 'assets/lake.jpg', pos: '52% 82%' },
+    { id: 'mono', name: '黑白', src: 'assets/lake.jpg', thumb: 'assets/lake.jpg', pos: '52% 82%', mono: true },
+    ...[['mist', '晨雾'], ['dusk', '暮山'], ['forest', '深林'], ['sea', '海面'], ['night', '月夜'], ['aurora', '极光'], ['dunes', '沙丘'], ['pine', '松绿']]
+      .map(([id, name]) => ({ id, name, src: `assets/wallpapers/${id}.jpg`, thumb: `assets/wallpapers/${id}-thumb.jpg`, pos: '50% 60%' }))
+  ];
+  const wallpaperOf = id => WALLPAPERS.find(w => w.id === id) || WALLPAPERS[0];
+  const defaults = { tipsSeen: false, wallpaperPicked: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -97,7 +105,7 @@
     const s = { ...defaults, ...(raw && typeof raw === 'object' ? raw : {}) };
     if (!palette[s.accent]) s.accent = defaults.accent;
     if (!['compact', 'comfortable'].includes(s.density)) s.density = defaults.density;
-    if (!['lake', 'mono', 'custom'].includes(s.wallpaper)) s.wallpaper = 'lake';
+    if (!['system', 'custom'].includes(s.wallpaper) && !WALLPAPERS.some(w => w.id === s.wallpaper)) s.wallpaper = 'lake';
     if (typeof s.photo !== 'string' || !/^data:image\/(jpeg|png|webp);base64,/.test(s.photo)) s.photo = '';
     if (s.wallpaper === 'custom' && !s.photo) s.wallpaper = 'lake';
     s.intensity = Math.min(3, Math.max(1, Number(s.intensity) || 2));
@@ -105,7 +113,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen'].forEach(k => { s[k] = !!s[k]; });
+    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -140,6 +148,9 @@
   // Android 1.1+: the window shows the phone's own wallpaper behind the page, so previews use the real wallpaper.
   let SYSTEM_WALLPAPER = false;
   try { SYSTEM_WALLPAPER = !!ANDROID && !!ANDROID.hasSystemWallpaper(); } catch { SYSTEM_WALLPAPER = false; }
+  // Until the user picks one from the library, the Android app uses the phone's own wallpaper.
+  if (SYSTEM_WALLPAPER && !state.settings.wallpaperPicked) state.settings.wallpaper = 'system';
+  const useSystemWallpaper = () => SYSTEM_WALLPAPER && state.settings.wallpaper === 'system';
   let LOCK_MODE = false;
   try { LOCK_MODE = !!ANDROID && (ANDROID.isLockMode() || new URLSearchParams(location.search).get('mode') === 'lock'); } catch { LOCK_MODE = false; }
 
@@ -210,7 +221,7 @@
   }
   // Android: leave a transparent hole where the settings preview is, so the real wallpaper shows in it.
   function updateWallpaperHole() {
-    const on = SYSTEM_WALLPAPER && !LOCK_MODE && document.body.dataset.view === 'settings' && ['index', 'look', 'lock'].includes(settingsPage);
+    const on = useSystemWallpaper() && !LOCK_MODE && document.body.dataset.view === 'settings' && ['index', 'look', 'lock'].includes(settingsPage);
     document.documentElement.classList.toggle('wallpaper-hole', on);
   }
   function themeName() {
@@ -398,17 +409,20 @@
     root.setProperty('--accent', dark ? colors[2] : colors[0]);
     root.setProperty('--accent-fill', colors[0]);
     root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
+    const paper = s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper);
     ['wallpaper', 'mini-wallpaper'].forEach(id => {
-      const img = $(id), src = s.wallpaper === 'custom' && s.photo ? s.photo : 'assets/lake.jpg';
-      if (img.getAttribute('src') !== src) img.src = src;
-      img.classList.toggle('monochrome', s.wallpaper === 'mono');
+      const img = $(id);
+      if (img.getAttribute('src') !== paper.src) img.src = paper.src;
+      img.style.objectPosition = paper.pos;
+      img.classList.toggle('monochrome', !!paper.mono);
     });
-    document.documentElement.classList.toggle('system-wallpaper', SYSTEM_WALLPAPER);
-    $('wallpaper-fieldset').hidden = SYSTEM_WALLPAPER;
-    $('mini-tag-label').textContent = SYSTEM_WALLPAPER ? '实时预览 · 你的壁纸' : '实时预览';
+    document.documentElement.classList.toggle('system-wallpaper', useSystemWallpaper());
+    updateWallpaperHole();
+    $('mini-tag-label').textContent = useSystemWallpaper() ? '实时预览 · 手机壁纸' : '实时预览';
+    renderWallpaperLibrary();
     document.querySelectorAll('[name="accent"]').forEach(i => { i.checked = i.value === s.accent; });
     document.querySelectorAll('[data-density]').forEach(b => { b.classList.toggle('active', b.dataset.density === s.density); b.setAttribute('aria-pressed', String(b.dataset.density === s.density)); });
-    document.querySelectorAll('[data-wallpaper]').forEach(b => { b.classList.toggle('active', b.dataset.wallpaper === s.wallpaper); b.setAttribute('aria-pressed', String(b.dataset.wallpaper === s.wallpaper)); });
+
     document.querySelectorAll('[data-theme-preset]').forEach(b => {
       const t = THEMES[b.dataset.themePreset];
       const on = ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText', 'accent'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase());
@@ -425,6 +439,15 @@
     renderPreview();
     if (settingsPage === 'index') renderSettingsSummary();
     icons();
+  }
+  function renderWallpaperLibrary() {
+    const s = state.settings, list = $('wallpaper-library');
+    const tile = (id, name, inner, extra = '') => `<button class="wallpaper-choice${extra}${s.wallpaper === id ? ' active' : ''}" data-wallpaper="${id}" aria-pressed="${s.wallpaper === id}" aria-label="${name}壁纸">${inner}<span>${name}</span></button>`;
+    list.innerHTML = (SYSTEM_WALLPAPER ? tile('system', '手机壁纸', `<i data-lucide="smartphone"></i>`, ' system') : '') +
+      (s.photo ? tile('custom', '我的照片', `<img src="${esc(s.photo)}" alt="" loading="lazy">`) : '') +
+      WALLPAPERS.map(w => tile(w.id, w.name, `<img src="${w.thumb}" alt="" loading="lazy" style="object-position:${w.pos}">`, w.mono ? ' mono' : '')).join('');
+    $('wallpaper-legend').textContent = SYSTEM_WALLPAPER ? '锁屏壁纸' : '预览壁纸';
+    $('wallpaper-note').textContent = SYSTEM_WALLPAPER ? '默认用你手机自己的壁纸；也可以给碎碎清单的锁屏单独换一张。' : '网页读不到手机壁纸，这里只影响预览。可以选一张和你锁屏一样的照片来对照。';
   }
   function applyCardAppearance() {
     const s = state.settings;
@@ -857,7 +880,7 @@
     }
     if (b.dataset.filter) { filter = b.dataset.filter; editing = null; render(); }
     if (b.dataset.density) { state.settings.density = b.dataset.density; save(); applySettings(); }
-    if (b.dataset.wallpaper) { state.settings.wallpaper = b.dataset.wallpaper; save(); applySettings(); }
+    if (b.dataset.wallpaper) { state.settings.wallpaper = b.dataset.wallpaper; state.settings.wallpaperPicked = true; save(); applySettings(); icons($('wallpaper-library')); }
     if (b.dataset.material) { state.settings.cardMaterial = b.dataset.material; save(); applyCardAppearance(); applySettings(); }
     if (b.dataset.cardColor) { state.settings.cardColor = b.dataset.cardColor; save(); applySettings(); }
     if (b.dataset.themePreset) {
@@ -1005,7 +1028,7 @@
     $('wallpaper-error').textContent = '';
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024) { $('wallpaper-error').textContent = '请选择 3MB 以内的 JPG、PNG 或 WebP 图片。'; return; }
     const reader = new FileReader();
-    reader.onload = () => { state.settings.photo = reader.result; state.settings.wallpaper = 'custom'; save(); applySettings(); if (!storageOK) $('wallpaper-error').textContent = '图片太大，本机存储放不下，请换一张小一些的照片。'; };
+    reader.onload = () => { state.settings.photo = reader.result; state.settings.wallpaper = 'custom'; state.settings.wallpaperPicked = true; save(); applySettings(); if (!storageOK) $('wallpaper-error').textContent = '图片太大，本机存储放不下，请换一张小一些的照片。'; };
     reader.onerror = () => { $('wallpaper-error').textContent = '未能读取这张图片，请重新选择。'; };
     reader.readAsDataURL(file);
     event.target.value = '';

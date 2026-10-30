@@ -237,7 +237,12 @@ const bridgeStub = (lock) => `
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
     for (const sel of ['.app-header', '.settings-top', '#settings-scroll', '.navigation']) assert.notEqual(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${sel} stays opaque`);
     await page.locator('[data-settings-page=look]').click();
-    assert.equal(await page.locator('#wallpaper-fieldset').isVisible(), false, 'No wallpaper picker when the real wallpaper is used');
+    assert.equal(await page.locator('[data-wallpaper=system]').getAttribute('aria-pressed'), 'true', 'Phone wallpaper is the default in the Android app');
+    await page.locator('[data-wallpaper=aurora]').click();
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), false, 'A library wallpaper replaces the phone wallpaper');
+    assert.match(await page.locator('#mini-wallpaper').getAttribute('src'), /wallpapers\/aurora\.jpg/);
+    await page.locator('[data-wallpaper=system]').click();
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), true);
     assert.equal(await page.evaluate(() => window.suisuiBack()), true);
     assert.equal(await page.locator('#settings-index').isVisible(), true);
     await page.locator('[data-settings-page=data]').click();
@@ -258,6 +263,22 @@ const bridgeStub = (lock) => `
   }
 
   assert.deepEqual(errors, []);
+  /* Wallpaper library on the web: every wallpaper loads, choice persists */
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const page = await context.newPage(); watch(page);
+    await page.goto(url + '/?view=settings&page=look', { waitUntil: 'networkidle' });
+    assert.equal(await page.locator('#wallpaper-library .wallpaper-choice').count(), 10);
+    assert.equal(await page.locator('[data-wallpaper=system]').count(), 0, 'No phone-wallpaper option where it cannot work');
+    const broken = await page.locator('#wallpaper-library img').evaluateAll(async imgs => { await Promise.all(imgs.map(i => i.decode().catch(() => {}))); return imgs.filter(i => !i.naturalWidth).length; });
+    assert.equal(broken, 0, 'All thumbnails load');
+    await page.locator('[data-wallpaper=dusk]').click();
+    await page.reload({ waitUntil: 'networkidle' });
+    assert.match(await page.locator('#wallpaper').getAttribute('src'), /wallpapers\/dusk\.jpg/, 'Choice persists');
+    assert.equal(await page.locator('#wallpaper').evaluate(async i => { await i.decode(); return i.naturalWidth; }), 1080);
+    await context.close();
+  }
+
   /* Dark mode follows the system */
   {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, colorScheme: 'dark' });

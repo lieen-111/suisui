@@ -115,13 +115,12 @@
               </div>
             </fieldset>
             <fieldset><legend>锁屏显示条数</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
-              <button data-density="comfortable">舒适 · 3 条</button><button data-density="compact">紧凑 · 4 条</button>
+              <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
             </div></fieldset>
-            <fieldset id="wallpaper-fieldset"><legend>预览壁纸</legend><p class="setting-note">只影响预览。手机锁屏上的卡片总是叠在你自己的锁屏壁纸上，可以选一张和锁屏一样的照片来对照。</p><div class="wallpaper-controls">
-              <button class="wallpaper-choice" data-wallpaper="lake" aria-label="湖畔壁纸"><img src="assets/lake.jpg" alt="山间湖泊壁纸"><span>湖畔</span></button>
-              <button class="wallpaper-choice mono" data-wallpaper="mono" aria-label="黑白壁纸"><img src="assets/lake.jpg" alt="黑白山间湖泊壁纸"><span>黑白</span></button>
-              <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>选取照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
-            </div><p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
+            <fieldset id="wallpaper-fieldset"><legend id="wallpaper-legend">预览壁纸</legend><p class="setting-note" id="wallpaper-note"></p>
+              <div class="wallpaper-library" id="wallpaper-library" role="group" aria-label="壁纸库"></div>
+              <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>用自己的照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
+              <p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
             <details class="more-appearance" id="more-appearance"><summary><i data-lucide="chevron-right"></i>更多外观设置</summary>
             <fieldset class="card-settings"><legend>待办框</legend>
               <div class="setting-label">材质</div>
@@ -231,8 +230,10 @@
       <div class="dialog-actions"><button type="button" class="text-button danger" data-action="delete" id="edit-delete"><i data-lucide="trash-2"></i>删除</button><button class="primary-button">保存</button></div>
     </form>
   </dialog>
-  <dialog id="about-dialog" aria-labelledby="about-title">
-    <div class="dialog-heading"><h2 id="about-title">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
+  <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.2</span></div></div>
+    <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
     <p>安卓 App：熄屏后再亮屏，先看到碎碎清单的锁屏，点圆圈完成，上滑进入手机；也可以只用锁屏通知卡片。iPhone：添加到主屏幕后可开启锁屏通知；原生版提供锁屏小组件。</p>
@@ -240,9 +241,10 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.2 · 示例壁纸照片来自 Unsplash</p>
+    <p class="dialog-meta">碎碎清单 1.2 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
-  <dialog id="install-dialog" aria-labelledby="install-title">
+  <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
     <div class="dialog-heading"><h2 id="install-title">添加到主屏幕</h2><button class="icon-button" id="close-install" aria-label="关闭"><i data-lucide="x"></i></button></div>
     <ol class="install-steps">
       <li><span>1</span><p>用 iPhone 自带的 <strong>Safari</strong> 打开本页（微信、小红书里请先点右上角，选择“在浏览器打开”）。</p></li>
@@ -252,7 +254,8 @@
     </ol>
     <p class="setting-note">从桌面图标打开的碎碎清单与 Safari 里的网页，数据彼此独立。请从图标开始正式记录。</p>
   </dialog>
-  <dialog id="android-setup" aria-labelledby="android-setup-title">
+  <dialog id="android-setup" class="sheet" aria-labelledby="android-setup-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
     <div class="dialog-heading"><h2 id="android-setup-title">让碎碎清单出现在锁屏</h2><button class="icon-button" id="close-android-setup" aria-label="关闭"><i data-lucide="x"></i></button></div>
     <p>亮屏时先看到碎碎清单的锁屏：壁纸、时钟和今天的待办，点圆圈直接完成，上滑进入手机。需要打开下面几项权限，完成后回到这里会自动打勾。</p>
     <ol class="setup-steps">
@@ -262,7 +265,8 @@
     </ol>
     <div class="dialog-actions"><button class="primary-button" id="finish-android-setup">完成</button></div>
   </dialog>
-  <dialog id="import-dialog" aria-labelledby="import-title">
+  <dialog id="import-dialog" class="sheet" aria-labelledby="import-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
     <div class="dialog-heading"><h2 id="import-title">导入备份</h2><button class="icon-button" id="import-cancel" aria-label="取消导入"><i data-lucide="x"></i></button></div>
     <p id="import-summary"></p>
     <label class="setting-row" id="import-settings-row" for="import-settings"><span>同时导入外观设置</span><input type="checkbox" id="import-settings" class="switch"></label>
