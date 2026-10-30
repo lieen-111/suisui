@@ -15,8 +15,10 @@ android {
         versionName = "1.0.0"
     }
 
-    // Test-only key, committed on purpose so every CI build can update the installed app without
-    // losing data. Replace with a private key (kept out of the repo) before any public release.
+    // Release key comes from CI secrets (ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PASSWORD), never from the repo.
+    // Without them the build falls back to the public TEST key, which is fine for trying the app but
+    // must not be used for public distribution (anyone could sign a fake update with it).
+    val releaseStore = System.getenv("SUISUI_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
     signingConfigs {
         create("test") {
             storeFile = file("../keystore/suisui-test.jks")
@@ -24,12 +26,20 @@ android {
             keyAlias = "suisui"
             keyPassword = "suisui-test"
         }
+        if (releaseStore != null) {
+            create("private") {
+                storeFile = releaseStore
+                storePassword = System.getenv("SUISUI_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SUISUI_KEY_ALIAS") ?: "suisui"
+                keyPassword = System.getenv("SUISUI_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("test")
+            signingConfig = signingConfigs.getByName(if (releaseStore != null) "private" else "test")
         }
         debug {
             signingConfig = signingConfigs.getByName("test")

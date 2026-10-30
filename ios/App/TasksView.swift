@@ -4,14 +4,15 @@ import SwiftUI
 struct TasksView: View {
     @EnvironmentObject private var model: TodoModel
     @State private var newTitle = ""
-    @State private var newGroup: TaskGroup = .work
+    @State private var newGroup = "work"
     @State private var newRepeat: RepeatRule = .none
-    @State private var filter: TaskGroup?
+    @State private var newTomorrow = false
+    @State private var filter: String?
     @State private var editing: TodoItem?
     @State private var showHistory = false
     @FocusState private var inputFocused: Bool
 
-    private var visiblePending: [TodoItem] { model.pending.filter { filter == nil || $0.group == filter } }
+    private var visiblePending: [TodoItem] { model.pending.filter { filter == nil || model.doc.group($0.group).id == filter } }
 
     private var progressCopy: String {
         let open = model.pending.count, done = model.done.count
@@ -30,9 +31,9 @@ struct TasksView: View {
 
                 Section {
                     Picker("分组", selection: $filter) {
-                        Text("全部 \(model.pending.count)").tag(TaskGroup?.none)
-                        ForEach(TaskGroup.allCases) { g in
-                            Text("\(g.label) \(model.pending.filter { $0.group == g }.count)").tag(TaskGroup?.some(g))
+                        Text("全部 \(model.pending.count)").tag(String?.none)
+                        ForEach(model.doc.groups) { g in
+                            Text("\(g.name) \(model.pending.filter { model.doc.group($0.group).id == g.id }.count)").tag(String?.some(g.id))
                         }
                     }
                     .pickerStyle(.segmented)
@@ -49,6 +50,16 @@ struct TasksView: View {
                     Text("待完成").textCase(nil)
                 }
 
+                if !model.later.isEmpty {
+                    Section {
+                        ForEach(model.later) { task in
+                            TaskRow(task: task) { editing = task }
+                        }
+                    } header: {
+                        Text("以后").textCase(nil)
+                    }
+                }
+
                 if !model.done.isEmpty {
                     Section {
                         ForEach(model.done) { task in DoneRow(task: task) }
@@ -60,7 +71,7 @@ struct TasksView: View {
                         }
                         .textCase(nil)
                     } footer: {
-                        Text("已完成的事项第二天会自动移入历史；“每天”重复的事项第二天回到待完成。")
+                        Text("已完成的事项第二天会自动移入历史；重复的事项到下次该做的那天回到待完成。")
                     }
                 }
 
@@ -93,9 +104,14 @@ struct TasksView: View {
             }
             HStack(spacing: 8) {
                 Picker("分组", selection: $newGroup) {
-                    ForEach(TaskGroup.allCases) { Text($0.label).tag($0) }
+                    ForEach(model.doc.groups) { Text($0.name).tag($0.id) }
                 }
                 .pickerStyle(.menu)
+                Picker("日期", selection: $newTomorrow) {
+                    Text("今天").tag(false); Text("明天").tag(true)
+                }
+                .pickerStyle(.menu)
+                .disabled(newRepeat != .none)
                 Picker("重复", selection: $newRepeat) {
                     ForEach(RepeatRule.allCases) { Text($0.label).tag($0) }
                 }
@@ -112,7 +128,7 @@ struct TasksView: View {
     }
 
     private func submit() {
-        if model.add(newTitle, group: newGroup, repeatRule: newRepeat) {
+        if model.add(newTitle, group: newGroup, repeatRule: newRepeat, date: newTomorrow && newRepeat == .none ? DayKey.adding(days: 1) : "") {
             newTitle = ""
             filter = nil
             inputFocused = true
@@ -161,9 +177,13 @@ struct TaskRow: View {
                     }
                 }
                 HStack(spacing: 6) {
-                    Circle().fill(task.group == .work ? Color(hex: "#13765b") : Color(hex: "#b14c6b")).frame(width: 5, height: 5)
-                    Text(task.group.label)
-                    if task.repeatRule == .daily { Label("每天", systemImage: "repeat").labelStyle(.titleAndIcon) }
+                    Circle().fill(Color(hex: model.doc.group(task.group).color)).frame(width: 5, height: 5)
+                    Text(model.doc.group(task.group).name)
+                    if task.repeatRule != .none { Label(repeatText, systemImage: "repeat").labelStyle(.titleAndIcon) }
+                    if task.repeatRule == .none && !task.date.isEmpty && task.date != DayKey.today() {
+                        Label(dateText, systemImage: "calendar").labelStyle(.titleAndIcon)
+                            .foregroundStyle(task.date < DayKey.today() ? Color(hex: "#b14c6b") : Color.secondary)
+                    }
                     if task.pinned { Label("置顶", systemImage: "pin.fill").labelStyle(.titleAndIcon).foregroundStyle(.tint) }
                 }
                 .font(.caption2)
@@ -190,6 +210,19 @@ struct TaskRow: View {
         }
     }
 
+    private var repeatText: String {
+        guard task.repeatRule == .weekly else { return task.repeatRule.label }
+        let names = ["日", "一", "二", "三", "四", "五", "六"]
+        return "每周" + names[min(max(task.repeatDay ?? 1, 0), 6)]
+    }
+
+    private var dateText: String {
+        if task.date == DayKey.adding(days: 1) { return "明天" }
+        let parts = task.date.split(separator: "-")
+        let label = parts.count == 3 ? "\(Int(parts[1]) ?? 0)月\(Int(parts[2]) ?? 0)日" : task.date
+        return task.date < DayKey.today() ? "已过期 · " + label : label
+    }
+
     private func completeTapped() {
         guard !shattering else { return }
         guard model.doc.settings.motion, !reduceMotion else { model.complete(task.id); return }
@@ -214,7 +247,7 @@ struct DoneRow: View {
             .accessibilityLabel("恢复：\(task.title)")
             Text(task.title).strikethrough().foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if task.repeatRule == .daily {
+            if task.repeatRule != .none {
                 Image(systemName: "repeat").font(.caption).foregroundStyle(.secondary).accessibilityLabel("明天自动重新出现")
             }
         }
@@ -251,15 +284,21 @@ struct EditTaskSheet: View {
     @Environment(\.dismiss) private var dismiss
     let task: TodoItem
     @State private var title = ""
-    @State private var group: TaskGroup = .work
+    @State private var group = "work"
     @State private var repeatRule: RepeatRule = .none
+    @State private var hasDate = false
+    @State private var date = Date()
 
     var body: some View {
         NavigationStack {
             Form {
                 TextField("待办内容", text: $title, axis: .vertical)
-                Picker("分组", selection: $group) { ForEach(TaskGroup.allCases) { Text($0.label).tag($0) } }
+                Picker("分组", selection: $group) { ForEach(model.doc.groups) { Text($0.name).tag($0.id) } }
                 Picker("重复", selection: $repeatRule) { ForEach(RepeatRule.allCases) { Text($0.label).tag($0) } }
+                if repeatRule == .none {
+                    Toggle("指定日期", isOn: $hasDate)
+                    if hasDate { DatePicker("日期", selection: $date, displayedComponents: .date) }
+                }
                 Section {
                     Button("删除这件事", role: .destructive) { model.delete(task.id); dismiss() }
                 }
@@ -269,11 +308,19 @@ struct EditTaskSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") { model.update(task.id, title: title, group: group, repeatRule: repeatRule); dismiss() }
+                    Button("保存") {
+                        model.update(task.id, title: title, group: group, repeatRule: repeatRule, date: hasDate ? DayKey.today(date) : "")
+                        dismiss()
+                    }
                         .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .onAppear { title = task.title; group = task.group; repeatRule = task.repeatRule }
+            .onAppear {
+                title = task.title; group = model.doc.group(task.group).id; repeatRule = task.repeatRule
+                hasDate = !task.date.isEmpty
+                let parts = task.date.split(separator: "-").compactMap { Int($0) }
+                if parts.count == 3, let d = Calendar.current.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) { date = d }
+            }
         }
         .presentationDetents([.medium])
     }

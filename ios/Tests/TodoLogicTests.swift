@@ -63,7 +63,8 @@ final class TodoLogicTests: XCTestCase {
         let d = try TodoRepository.decode(Data(json.utf8))
         XCTAssertEqual(d.tasks.map(\.id), ["seed-1", "x"])
         XCTAssertEqual(d.tasks[0].repeatRule, .daily)
-        XCTAssertEqual(d.tasks[1].group, .work)
+        XCTAssertEqual(d.tasks[1].group, "other", "Unknown group ids are kept, like the web app")
+        XCTAssertEqual(d.group(d.tasks[1].group).id, "work", "and shown under the first group")
         XCTAssertEqual(d.archive.first?.done, true)
         XCTAssertEqual(d.settings.cardColor, "#f5f7f3")
         XCTAssertEqual(d.settings.cardTransparency, 90)
@@ -104,5 +105,42 @@ final class TodoLogicTests: XCTestCase {
         XCTAssertFalse(HexColor.prefersLightInk("#f5f7f3", mode: "auto"))
         XCTAssertFalse(HexColor.prefersLightInk("#999999", mode: "auto"), "Mid-gray favors dark ink, as in verify.cjs")
         XCTAssertTrue(HexColor.prefersLightInk("#999999", mode: "light"))
+    }
+
+    func testDatesAndRepeatsDecideTodaysList() {
+        let calendar = Calendar(identifier: .gregorian)
+        let friday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 30, hour: 9))!
+        let saturday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 31, hour: 9))!
+        let tasks = [
+            TodoItem(id: "undated", title: "随时"),
+            TodoItem(id: "tomorrow", title: "明天", date: "2026-10-31"),
+            TodoItem(id: "overdue", title: "过期", date: "2026-10-28"),
+            TodoItem(id: "weekdays", title: "工作日", repeatRule: .weekdays),
+            TodoItem(id: "weekly-fri", title: "每周五", repeatRule: .weekly, repeatDay: 5)
+        ]
+        XCTAssertEqual(Set(TodoLogic.pending(tasks, on: friday).map(\.id)), ["undated", "overdue", "weekdays", "weekly-fri"])
+        XCTAssertEqual(TodoLogic.later(tasks, on: friday).map(\.id), ["tomorrow"])
+        XCTAssertEqual(Set(TodoLogic.pending(tasks, on: saturday).map(\.id)), ["undated", "tomorrow", "overdue"])
+        XCTAssertEqual(Set(TodoLogic.later(tasks, on: saturday).map(\.id)), ["weekdays", "weekly-fri"])
+    }
+
+    func testWebBackupWithGroupsDatesAndPrivacy() throws {
+        let json = """
+        {"app":"suisui","version":2,"groups":[{"id":"g-1","name":"学习","color":"#226a9a"},{"id":"work","name":"工作","color":"#13765b"}],
+         "tasks":[{"id":"x","title":"背单词","group":"g-1","repeat":"weekly","repeatDay":3},{"id":"y","title":"交房租","group":"work","date":"2026-11-05"}],
+         "settings":{"lockPrivacy":true}}
+        """
+        let d = try TodoRepository.decode(Data(json.utf8))
+        XCTAssertEqual(d.groups.map(\.name), ["学习", "工作"])
+        XCTAssertEqual(d.tasks[0].repeatRule, .weekly)
+        XCTAssertEqual(d.tasks[0].repeatDay, 3)
+        XCTAssertEqual(d.tasks[1].date, "2026-11-05")
+        XCTAssertTrue(d.settings.lockPrivacy)
+        let state = CardContent.state(for: d)
+        XCTAssertTrue(state.items.isEmpty, "Privacy keeps titles out of the Live Activity payload")
+        XCTAssertTrue(state.style.privacy)
+        let again = try TodoRepository.decode(try TodoRepository.backupData(d))
+        XCTAssertEqual(again.groups, d.groups)
+        XCTAssertEqual(again.tasks, d.tasks)
     }
 }

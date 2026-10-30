@@ -85,7 +85,7 @@ struct AddTaskIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let doc = TodoRepository.mutate {
-            TodoLogic.add(title: text, group: .work, repeatRule: daily ? .daily : .none, in: &$0)
+            TodoLogic.add(title: text, group: $0.groups.first?.id ?? "work", repeatRule: daily ? .daily : .none, in: &$0)
         }
         await LiveActivityController.update(doc)
         TodoRepository.reloadWidgets()

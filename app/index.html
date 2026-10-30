@@ -19,22 +19,11 @@
   <script src="pwa.js" defer></script>
 </head>
 <body>
-<!--
-THESIS: Tasks shatter on completion, then remain crossed out and translucent.
-OWN-WORLD: Reference-led iPhone wallpaper and translucent list, white task workspace,
-emerald actions, rose life labels, system Chinese typography.
-STORY: Add a task, complete it from the preview, undo or review the full list.
-FIRST VIEWPORT: Narrow navigation, editable full list, photographic lock-screen preview.
-Mobile opens the lock screen and keeps list and appearance one tap away.
-FORM: User-pinned screenshot overrides seed 318bbc55. Static code-led prototype.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
--->
   <div class="app-shell">
     <nav class="navigation" aria-label="主导航">
       <a class="brand" href="./" aria-label="碎碎清单首页"><i data-lucide="square-check-big"></i></a>
-      <button class="nav-button" data-view="tasks" aria-label="全部清单"><i data-lucide="list-todo"></i><span>清单</span></button>
-      <button class="nav-button selected" data-view="preview" aria-label="锁屏预览"><i data-lucide="smartphone"></i><span>锁屏</span></button>
-      <button class="nav-button" data-view="settings" aria-label="外观设置"><i data-lucide="sliders-horizontal"></i><span>设置</span></button>
+      <button class="nav-button selected" data-view="tasks" aria-label="清单"><i data-lucide="list-todo"></i><span>清单</span></button>
+      <button class="nav-button" data-view="settings" aria-label="设置"><i data-lucide="sliders-horizontal"></i><span>设置</span></button>
       <button class="nav-button about-button" id="about-button" aria-label="关于碎碎清单"><i data-lucide="info"></i><span>关于</span></button>
     </nav>
 
@@ -63,24 +52,28 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             </div>
             <input type="file" id="import-file" accept="application/json,.json" hidden>
           </div>
-          <div class="filter-tabs" role="group" aria-label="筛选分组">
-            <button data-filter="all" class="active">全部 <span id="count-all"></span></button>
-            <button data-filter="work"><span class="dot work-dot"></span>工作 <span id="count-work"></span></button>
-            <button data-filter="life"><span class="dot life-dot"></span>生活 <span id="count-life"></span></button>
-          </div>
+          <div class="filter-tabs" id="filter-tabs" role="group" aria-label="筛选分组"></div>
           <form id="add-form" class="add-form">
             <div class="add-input-line"><i data-lucide="plus"></i><input id="task-input" aria-label="新的待办事项" placeholder="接下来，要做什么？" maxlength="120" autocomplete="off" required></div>
             <div class="add-options">
               <label class="sr-only" for="task-group">待办分组</label>
-              <div class="add-selects"><select id="task-group"><option value="work">工作</option><option value="life">生活</option></select>
+              <div class="add-selects"><select id="task-group"></select>
+              <label class="sr-only" for="task-when">日期</label>
+              <select id="task-when"><option value="today">今天</option><option value="tomorrow">明天</option><option value="pick">选日期</option></select>
+              <label class="sr-only" for="task-date">指定日期</label>
+              <input type="date" id="task-date" hidden>
               <label class="sr-only" for="task-repeat">重复</label>
-              <select id="task-repeat"><option value="none">仅一次</option><option value="daily">每天</option></select></div>
+              <select id="task-repeat"><option value="none">不重复</option><option value="daily">每天</option><option value="weekdays">工作日</option><option value="weekly">每周</option></select></div>
               <button class="primary-button" type="submit"><i data-lucide="plus"></i>添加</button>
             </div>
           </form>
           <p class="form-error" id="form-error" role="alert"></p>
-          <div class="list-heading"><span>待完成</span><span id="pending-count"></span></div>
+          <div class="list-heading"><span>今天</span><span id="pending-count"></span></div>
           <div id="task-list" class="task-list"></div>
+          <details class="completed-section later-section" id="later-section" open hidden>
+            <summary><i data-lucide="chevron-right"></i><span>以后</span><span id="later-count">0</span></summary>
+            <div id="later-list"></div>
+          </details>
           <details class="completed-section" id="completed-section">
             <summary><i data-lucide="chevron-right"></i><span>已完成</span><span id="done-count">0</span></summary>
             <div class="completed-tools"><span>已完成的事项会在第二天自动移入历史</span><button type="button" class="text-button" id="clear-done"><i data-lucide="archive"></i>现在移入历史</button></div>
@@ -105,12 +98,30 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
               <div class="mini-footer"><span id="mini-remaining"></span><span>全部清单<i data-lucide="chevron-right"></i></span></div>
             </div>
           </div>
+          <fieldset><legend>主题</legend>
+            <div class="theme-presets" role="group" aria-label="主题">
+              <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
+              <button class="theme-chip" data-theme-preset="graphite" style="--chip:#202326"><span></span>石墨</button>
+              <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
+              <button class="theme-chip" data-theme-preset="lake" style="--chip:#294c64"><span></span>湖蓝</button>
+              <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
+            </div>
+          </fieldset>
+          <fieldset><legend>锁屏显示条数</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
+            <button data-density="comfortable">舒适 · 3 条</button><button data-density="compact">紧凑 · 4 条</button>
+          </div></fieldset>
+          <fieldset><legend>壁纸</legend><div class="wallpaper-controls">
+            <button class="wallpaper-choice" data-wallpaper="lake" aria-label="湖畔壁纸"><img src="assets/lake.jpg" alt="山间湖泊壁纸"><span>湖畔</span></button>
+            <button class="wallpaper-choice mono" data-wallpaper="mono" aria-label="黑白壁纸"><img src="assets/lake.jpg" alt="黑白山间湖泊壁纸"><span>黑白</span></button>
+            <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>选取照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
+          </div><p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
+          <details class="more-appearance" id="more-appearance"><summary><i data-lucide="chevron-right"></i>更多外观设置</summary>
           <fieldset class="card-settings"><legend>待办框</legend>
             <div class="setting-label">材质</div>
             <div class="segmented material-options" role="group" aria-label="待办框材质">
               <button data-material="frosted">磨砂</button><button data-material="glass">玻璃</button><button data-material="flat">平面</button>
             </div>
-            <div class="setting-row"><label for="card-color">底色</label><div class="color-picker"><input type="color" id="card-color" value="#112b24" aria-label="待办框底色"><output id="card-color-value">#112B24</output></div></div>
+            <div class="setting-row"><label for="card-color">待办框颜色</label><div class="color-picker"><input type="color" id="card-color" value="#112b24" aria-label="待办框底色"><output id="card-color-value">#112B24</output></div></div>
             <div class="card-presets" role="group" aria-label="待办框预设底色">
               <button data-card-color="#112b24" style="--preset:#112b24" aria-label="松绿底色" title="松绿"></button>
               <button data-card-color="#202326" style="--preset:#202326" aria-label="石墨底色" title="石墨"></button>
@@ -123,40 +134,41 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <div class="range-labels"><span>不透明</span><span>通透</span></div>
             <div class="setting-row"><label for="card-text">文字颜色</label><select id="card-text"><option value="auto">自动</option><option value="light">浅色</option><option value="dark">深色</option></select></div>
           </fieldset>
-          <fieldset><legend>锁屏清单密度</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
-            <button data-density="comfortable">舒适 · 3 条</button><button data-density="compact">紧凑 · 4 条</button>
-          </div></fieldset>
-          <fieldset><legend>壁纸</legend><div class="wallpaper-controls">
-            <button class="wallpaper-choice" data-wallpaper="lake" aria-label="湖畔壁纸"><img src="assets/lake.jpg" alt="山间湖泊壁纸"><span>湖畔</span></button>
-            <button class="wallpaper-choice mono" data-wallpaper="mono" aria-label="黑白壁纸"><img src="assets/lake.jpg" alt="黑白山间湖泊壁纸"><span>黑白</span></button>
-            <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>选取照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
-          </div><p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
           <fieldset><legend>完成反馈</legend>
             <label class="setting-row" for="motion-toggle"><span>碎裂动画</span><input type="checkbox" id="motion-toggle" class="switch"></label>
             <label class="setting-row" for="intensity"><span>碎裂幅度</span><output id="intensity-value">适中</output></label>
             <input type="range" id="intensity" min="1" max="3" step="1" aria-label="碎裂幅度">
           </fieldset>
-          <fieldset><legend>清单强调色</legend><div class="swatches">
+          <fieldset><legend>App 主色</legend><div class="swatches">
             <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i></label>
             <label class="swatch rose" title="莓红"><input type="radio" name="accent" value="rose" aria-label="莓红"><i data-lucide="check"></i></label>
             <label class="swatch blue" title="湖蓝"><input type="radio" name="accent" value="blue" aria-label="湖蓝"><i data-lucide="check"></i></label>
           </div></fieldset>
           <button class="secondary-button" id="reset-settings"><i data-lucide="rotate-ccw"></i>恢复默认外观</button>
-          <h2 class="settings-group">提醒与数据</h2>
+          </details>
+          <h2 class="settings-group">清单</h2>
+          <fieldset><legend>分组</legend>
+            <div id="group-list" class="group-list"></div>
+            <button class="secondary-button inline" id="add-group"><i data-lucide="plus"></i>新建分组</button>
+          </fieldset>
+          <fieldset><legend>每日整理</legend>
+            <label class="setting-row" for="archive-toggle"><span>每天自动把前一天完成的事移入历史</span><input type="checkbox" id="archive-toggle" class="switch"></label>
+            <p class="setting-note">重复的事项（每天、工作日、每周）完成后，到下一次该做的那天会自动回到待完成。</p>
+          </fieldset>
+          <h2 class="settings-group">锁屏与隐私</h2>
           <fieldset><legend>锁屏提醒</legend>
             <label class="setting-row" for="notify-toggle"><span>离开应用时，把待办放到锁屏通知</span><input type="checkbox" id="notify-toggle" class="switch"></label>
             <p class="setting-note" id="notify-status" role="status"></p>
             <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新锁屏通知</button>
+            <label class="setting-row" for="privacy-toggle"><span>锁屏隐藏待办内容</span><input type="checkbox" id="privacy-toggle" class="switch"></label>
+            <p class="setting-note">开启后，锁屏上只显示“还有几件”，内容要解锁后才能看到和勾选。别人拿到你的手机时更安心。</p>
             <div class="android-only" id="android-lock-settings" hidden>
               <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
               <p class="setting-note" id="lockscreen-status"></p>
               <button class="secondary-button inline" id="open-android-setup"><i data-lucide="shield-check"></i>检查锁屏权限</button>
             </div>
           </fieldset>
-          <fieldset><legend>每日整理</legend>
-            <label class="setting-row" for="archive-toggle"><span>每天自动把前一天完成的事移入历史</span><input type="checkbox" id="archive-toggle" class="switch"></label>
-            <p class="setting-note">“每天”重复的事项完成后，第二天会自动回到待完成。</p>
-          </fieldset>
+          <h2 class="settings-group">数据</h2>
           <fieldset><legend>数据与备份</legend>
             <p class="setting-note">待办只保存在这台设备上，没有上传到任何服务器。换手机或清除网站数据前，请先导出备份。</p>
             <div class="button-row">
@@ -164,15 +176,15 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
               <button class="secondary-button" id="settings-import"><i data-lucide="upload"></i>导入备份</button>
               <button class="secondary-button" id="settings-install"><i data-lucide="square-plus"></i>添加到主屏幕</button>
             </div>
+            <p class="setting-note links-row"><a href="privacy.html" target="_blank" rel="noopener">隐私政策</a><a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">意见反馈</a></p>
           </fieldset>
         </section>
 
-        <section class="preview-panel" id="preview-panel" aria-label="锁屏交互预览">
-          <div class="preview-topline"><h2>锁屏效果预览</h2><span><span class="status-dot"></span>可直接勾选</span></div>
+        <section class="preview-panel" id="preview-panel" aria-label="锁屏卡片预览">
+          <div class="preview-topline"><h2>锁屏卡片</h2><span><span class="status-dot"></span>和手机锁屏上的样子一致</span></div>
           <div class="lockscreen" id="lockscreen">
             <img src="assets/lake.jpg" class="wallpaper" id="wallpaper" alt="山间湖泊">
             <div class="wallpaper-shade"></div>
-            <div class="phone-top"><i data-lucide="signal"></i><div class="island"></div><span><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
             <div class="lock-clock"><i data-lucide="lock-keyhole"></i><div id="lock-date"></div><time id="lock-time">09:41</time></div>
             <div class="activity-position">
               <div class="activity" id="activity">
@@ -182,8 +194,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
               </div>
               <div class="completion-note" id="completion-note" aria-live="polite"></div>
             </div>
-            <div class="phone-bottom"><span><i data-lucide="flashlight"></i></span><span><i data-lucide="camera"></i></span></div>
-            <div class="home-indicator"></div>
             <button class="lock-exit" id="lock-exit" hidden><span class="lock-exit-bar"></span><span>上滑或轻点进入手机</span></button>
           </div>
           <div class="preview-footer"><span id="preview-footer-copy">碎碎清单 · 示例待办</span><button class="text-button" id="preview-list-button">查看全部<i data-lucide="arrow-up-right"></i></button></div>
@@ -197,13 +207,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <dialog id="about-dialog" aria-labelledby="about-title">
     <div class="dialog-heading"><h2 id="about-title">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
-    <h3>现在这个网页版能做到</h3>
-    <p>清单、碎裂完成、每日重复、历史、备份导入导出，离线可用。添加到主屏幕后，可以开启“锁屏提醒”：离开应用时，未完成事项会出现在锁屏通知里，点通知回到清单。</p>
-    <h3>网页做不到的</h3>
-    <p>“锁屏效果预览”是应用内画面，不会改动 iPhone 真正的锁屏。苹果不允许网页在锁屏放小组件，通知里也不能直接勾选。亮屏即可勾选需要原生 iOS 版（锁屏小组件与实时活动），正在开发。</p>
+    <h3>亮屏就能看到今天的待办</h3>
+    <p>安卓 App：熄屏后再亮屏，先看到碎碎清单的锁屏，点圆圈完成，上滑进入手机；也可以只用锁屏通知卡片。iPhone：添加到主屏幕后可开启锁屏通知；原生版提供锁屏小组件。</p>
     <h3>隐私</h3>
-    <p>没有账号，没有服务器，待办只存在这台设备的浏览器或主屏幕应用里，不会自动同步。换网址、换设备或清除网站数据可能无法找回，请定期在“设置”里导出备份。</p>
-    <p class="dialog-meta">背景照片来自 Unsplash。名称“碎碎清单”暂定。</p>
+    <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
+    <h3>意见反馈</h3>
+    <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
+    <p class="dialog-meta">碎碎清单 1.0 · 背景照片来自 Unsplash</p>
   </dialog>
   <dialog id="install-dialog" aria-labelledby="install-title">
     <div class="dialog-heading"><h2 id="install-title">添加到主屏幕</h2><button class="icon-button" id="close-install" aria-label="关闭"><i data-lucide="x"></i></button></div>

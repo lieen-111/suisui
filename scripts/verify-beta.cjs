@@ -19,7 +19,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.locator('[data-view=tasks]').click();
+    await page.locator('.nav-button[data-view=tasks]').click();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suisui-'));
     const backup = path.join(dir, 'backup.json');
     fs.writeFileSync(backup, JSON.stringify({ app: 'suisui', version: 2, tasks: [
@@ -47,7 +47,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('.lock-task').count(), 3, 'Imported data persists');
     const arrayFile = path.join(dir, 'array.json');
     fs.writeFileSync(arrayFile, JSON.stringify([{ id: 'n-1', title: '原生版导出的数组', group: 'work' }]));
-    await page.locator('[data-view=tasks]').click();
+    await page.locator('.nav-button[data-view=tasks]').click();
     await page.locator('#import-file').setInputFiles(arrayFile);
     await page.locator('#import-merge').click();
     assert.equal(await page.locator('.lock-task').count(), 4, 'Plain array backups import');
@@ -72,52 +72,49 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.goto(url, { waitUntil: 'networkidle' });
     await page.evaluate(store => { const s = JSON.parse(localStorage.getItem(store)); s.settings.motion = false; localStorage.setItem(store, JSON.stringify(s)); }, STORE);
     await page.reload({ waitUntil: 'networkidle' });
-    await page.locator('.lock-task[data-id=seed-4]').click(); // daily
-    await page.locator('.lock-task[data-id=seed-2]').click(); // one-off
+    await page.locator('.task-row[data-task-id=seed-4] [data-action=complete]').click(); // daily
+    await page.locator('.task-row[data-task-id=seed-2] [data-action=complete]').click(); // one-off
     assert.equal(await page.locator('.lock-task.is-done').count(), 2);
     await page.clock.setSystemTime(new Date('2026-10-30T07:30:00'));
     await page.clock.runFor(31000);
     await page.locator('#toast-message', { hasText: '新的一天' }).waitFor();
-    assert.match(await page.locator('#toast-message').textContent(), /1 件已完成移入历史，1 件每日事项已重置/);
+    assert.match(await page.locator('#toast-message').textContent(), /1 件已完成移入历史，1 件重复事项已重置/);
     assert.equal(await page.locator('.lock-task').count(), 5, 'Yesterday\'s one-off left the lock card');
     assert.equal(await page.locator('.lock-task.is-done').count(), 0, 'Daily item is pending again');
     assert.equal(await page.locator('.lock-task[data-id=seed-4]').getAttribute('data-action'), 'complete');
     assert.equal(await page.evaluate(store => JSON.parse(localStorage.getItem(store)).day, STORE), '2026-10-30');
-    await page.locator('[data-view=tasks]').click();
+    await page.locator('.nav-button[data-view=tasks]').click();
     await page.locator('#archive-section summary').click();
     await page.locator('[data-action=unarchive]').first().click();
     assert.equal(await page.locator('.lock-task').count(), 6, 'History item can be put back');
     // Manual "move to history" keeps daily items and is undoable.
-    await page.locator('.nav-button[data-view=preview]').click();
-    await page.locator('.lock-task[data-id=seed-1]').click();
-    await page.locator('.lock-task[data-id=seed-4]').click();
-    await page.locator('[data-view=tasks]').click();
+    await page.locator('.task-row[data-task-id=seed-1] [data-action=complete]').click();
+    await page.locator('.task-row[data-task-id=seed-4] [data-action=complete]').click();
     await page.locator('#completed-section').evaluate(el => { el.open = true; });
     await page.locator('#clear-done').click();
     assert.equal(await page.locator('.done-row:not(.archive-row)').count(), 1, 'Daily item stays until tomorrow');
     await page.locator('#undo-button').click();
     assert.equal(await page.locator('.done-row:not(.archive-row)').count(), 2);
     // Auto archive off: next day keeps finished one-offs in the card.
-    await page.locator('[data-view=settings]').click();
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     await page.locator('#archive-toggle').uncheck();
     await page.clock.setSystemTime(new Date('2026-10-31T08:00:00'));
     await page.clock.runFor(31000);
-    await page.locator('.nav-button[data-view=preview]').click();
     assert.equal(await page.locator('.lock-task.is-done').count(), 1, 'Auto-archive can be turned off');
     // Repeat option from the add form and edit form.
-    await page.locator('[data-view=tasks]').click();
+    await page.locator('.nav-button[data-view=tasks]').click();
     await page.locator('#task-input').fill('每天喝水');
     await page.locator('#task-repeat').selectOption('daily');
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('.task-row', { hasText: '每天喝水' }).locator('.meta-flag', { hasText: '每天' }).count(), 1);
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
-      for (const view of ['tasks', 'settings', 'preview']) {
+      for (const view of ['tasks', 'settings']) {
         await page.locator(`.nav-button[data-view=${view}]`).click();
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow ${view} ${width}`);
       }
     }
-    await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     await page.screenshot({ path: path.join(review, 'beta-settings-390.png'), fullPage: true });
     await page.locator('.nav-button[data-view=tasks]').click();
     await page.screenshot({ path: path.join(review, 'beta-tasks-430.png'), fullPage: true });
@@ -138,7 +135,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('#install-dialog').evaluate(d => d.open), true);
     await page.screenshot({ path: path.join(review, 'beta-install-steps-390.png') });
     await page.locator('#close-install').click();
-    await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     assert.equal(await page.locator('#notify-toggle').isDisabled(), true);
     assert.match(await page.locator('#notify-status').textContent(), /添加到主屏幕/);
     await page.locator('#install-later').click();
@@ -165,7 +162,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(content.title, '今天还有 6 件待办');
     assert.equal(content.body.split('\n').length, 6);
     assert(content.body.startsWith('○ 把锁屏待办的想法做出来'), 'Pinned first in notification');
-    await page.locator('[data-view=settings]').click();
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     await page.locator('#notify-toggle').check();
     await page.locator('#notify-test').waitFor({ state: 'visible' });
     assert.match(await page.locator('#notify-status').textContent(), /已开启/);
@@ -178,8 +175,6 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await hide(); await page.waitForTimeout(200);
     assert.equal(await page.evaluate(() => window.__shown.length), 1, 'Unchanged list does not re-notify');
     await page.evaluate(() => { delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange')); });
-    await page.locator('[data-view=preview]').click();
-    await page.locator('[data-view=settings]').click();
     await page.evaluate(() => document.querySelector('.lock-task').click());
     await page.waitForTimeout(1300);
     await hide(); await page.waitForTimeout(200);
@@ -209,7 +204,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     const mini = page.locator('#settings-preview');
     assert.equal(await mini.isVisible(), true, 'Mini preview shown in phone settings');
     assert.equal(await page.locator('.mini-row').count(), 3);

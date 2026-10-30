@@ -28,6 +28,21 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: Use the private signing key if configured
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "SUISUI_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "SUISUI_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "SIGNING=private" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_B64 secret; signing with the public test key (not for public distribution)."
+            echo "SIGNING=test" >> "$GITHUB_ENV"
+          fi
+
       - name: Build signed APK
         working-directory: android
         run: gradle assembleRelease --no-daemon --stacktrace
@@ -50,5 +65,6 @@ jobs:
           body: |
             用安卓手机浏览器打开下面的 suisui.apk 下载安装。
             首次安装需要允许“安装未知应用”。覆盖安装会保留待办数据。
+            签名：${{ env.SIGNING == 'private' && '正式密钥' || '测试密钥（仅供试用）' }}
           files: suisui.apk
           make_latest: true

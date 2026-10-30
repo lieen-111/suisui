@@ -1,11 +1,11 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-10-29-v1-0';
+const VERSION = '2026-10-30-v1-0-1';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
-  './', './index.html', './styles.css', './app.js', './pwa.js',
+  './', './index.html', './privacy.html', './styles.css', './app.js', './pwa.js',
   './manifest.webmanifest', './vendor/anime.umd.min.js', './vendor/lucide.min.js',
   './assets/lake.jpg', './icons/apple-touch-icon.png', './icons/icon-192.png',
   './icons/icon-512.png', './icons/icon-maskable-512.png'

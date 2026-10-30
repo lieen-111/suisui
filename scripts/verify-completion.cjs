@@ -59,9 +59,17 @@ let browser;
   assert.equal(await page.locator('.lock-task').last().getAttribute('data-id'), 'seed-1', 'Recompleted task is appended to the end again');
   assert.equal(await page.locator('.lock-task[data-id=seed-1]').evaluate(el => Number(getComputedStyle(el).opacity)), .5);
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+  // On phones the card lives on the real lock screen (Android lock view), so test it there.
+  await mobile.addInitScript(() => {
+    let raw = '';
+    window.SuiSuiAndroid = { load: () => raw, save: j => { raw = j; }, isLockMode: () => true, notificationsAllowed: () => true,
+      permissions: () => '{"notifications":true,"overlay":true}', requestNotificationPermission() {}, openNotificationSettings() {},
+      openOverlaySettings() {}, openAppPermissions() {}, unlock() {}, exportBackup() {}, version: () => 'test' };
+  });
   const mp = await mobile.newPage();
   mp.on('pageerror', e => errors.push(e.message));
-  await mp.goto(url, { waitUntil: 'networkidle' });
+  await mp.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
+  assert(await mp.locator('.lock-task').first().evaluate(el => el.getBoundingClientRect().height >= 44), 'Lock-screen rows are large enough to tap');
   const ml = mp.locator('#activity-list');
   const rect = await ml.boundingBox();
   const cdp = await mobile.newCDPSession(mp);

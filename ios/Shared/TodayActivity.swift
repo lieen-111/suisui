@@ -29,6 +29,8 @@ struct CardStyle: Codable, Hashable {
     var textMode: String
     var material: String
     var rows: Int
+    /// Lock-screen privacy: show only the count.
+    var privacy: Bool = false
 
     init(_ settings: AppSettings) {
         cardColor = settings.cardColor
@@ -36,6 +38,7 @@ struct CardStyle: Codable, Hashable {
         textMode = settings.cardText
         material = settings.cardMaterial
         rows = settings.rows
+        privacy = settings.lockPrivacy
     }
 }
 
@@ -48,7 +51,8 @@ enum CardContent {
         let ordered = TodoLogic.cardOrder(doc.tasks)
         let pageCount = max(1, Int((Double(ordered.count) / Double(rows)).rounded(.up)))
         let page = min(max(requested ?? doc.activityPage, 0), pageCount - 1)
-        let items = ordered.dropFirst(page * rows).prefix(rows).map {
+        let visible = doc.settings.lockPrivacy ? [] : ordered
+        let items = visible.dropFirst(page * rows).prefix(rows).map {
             CardItem(id: $0.id, title: String($0.title.prefix(titleLimit)), done: $0.done, pinned: $0.pinned)
         }
         return .init(items: Array(items), pendingCount: TodoLogic.pending(doc.tasks).count,

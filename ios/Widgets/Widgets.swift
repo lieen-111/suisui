@@ -70,7 +70,7 @@ struct LockWidgetView: View {
             .containerBackground(for: .widget) { AccessoryWidgetBackground() }
             .accessibilityLabel(TodoLogic.summary(entry.doc.tasks))
         case .accessoryInline:
-            Text(TodoLogic.summary(entry.doc.tasks))
+            Text(entry.doc.settings.lockPrivacy ? (open.isEmpty ? "今天的事都完成了" : "还有 \(open.count) 件待办") : TodoLogic.summary(entry.doc.tasks))
                 .widgetURL(URL(string: "suisui://tasks"))
                 .containerBackground(for: .widget) { Color.clear }
         default:
@@ -88,7 +88,7 @@ struct LockWidgetView: View {
             }
             .font(.system(size: 12, weight: .semibold))
             .widgetAccentable()
-            ForEach(open.prefix(2)) { task in
+            ForEach(entry.doc.settings.lockPrivacy ? [] : Array(open.prefix(2))) { task in
                 Button(intent: ToggleTaskIntent(taskID: task.id)) {
                     HStack(spacing: 5) {
                         Image(systemName: "circle").font(.system(size: 12))
@@ -99,6 +99,9 @@ struct LockWidgetView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("完成：\(task.title)")
+            }
+            if entry.doc.settings.lockPrivacy && !open.isEmpty {
+                Text("解锁后打开碎碎清单查看").font(.system(size: 12)).foregroundStyle(.secondary)
             }
             if open.isEmpty {
                 Text(doneCount > 0 ? "完成了 \(doneCount) 件，休息一下" : "打开碎碎清单添加一件")
@@ -139,7 +142,7 @@ struct HomeWidgetView: View {
         if family == .systemLarge { doc.settings.density = "compact" }
         var state = CardContent.state(for: doc, page: 0)
         switch family {
-        case .systemLarge:
+        case .systemLarge where !doc.settings.lockPrivacy:
             // Large widgets have room for more rows than the 160 pt Live Activity.
             state.items = TodoLogic.cardOrder(doc.tasks).prefix(9).map {
                 CardItem(id: $0.id, title: String($0.title.prefix(CardContent.titleLimit)), done: $0.done, pinned: $0.pinned)

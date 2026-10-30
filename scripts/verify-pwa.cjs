@@ -47,10 +47,11 @@ const server = http.createServer((req, res) => {
           }), icon.src);
           assert.equal(size, icon.sizes);
         }
-        await page.locator('[data-view="tasks"]').click();
+        await page.locator('.nav-button[data-view="tasks"]').click();
         await page.locator('#task-input').fill('PWA offline persistence');
         await page.locator('#add-form button[type="submit"]').click();
-        await page.locator('[data-view="settings"]').click();
+        await page.locator('.nav-button[data-view="settings"]').click();
+        await page.locator('#more-appearance').evaluate(d => { d.open = true; });
         await page.locator('[data-material="glass"]').click();
         await context.setOffline(true);
         await page.reload();
@@ -58,7 +59,8 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.locator('.lock-task').count(), 7);
         assert(await page.locator('#wallpaper').evaluate(img => img.complete && img.naturalWidth > 0));
         assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('suisui-locktodo-v1')).settings.cardMaterial), 'glass');
-        await page.locator('.lock-task').first().click();
+        await page.locator('.nav-button[data-view="tasks"]').click();
+        await page.locator('.task-row [data-action=complete]').first().click();
         await page.waitForTimeout(900);
         assert.equal(await page.locator('.lock-task.is-done').count(), 1);
         await page.screenshot({ path: path.join(results, `${name}-offline.png`), fullPage: true });

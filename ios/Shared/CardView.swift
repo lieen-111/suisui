@@ -53,7 +53,14 @@ struct TodayCardView: View {
             .font(.system(size: 12))
             .frame(height: 22)
 
-            if state.items.isEmpty {
+            if state.style.privacy {
+                HStack(spacing: 8) {
+                    Image(systemName: "lock").foregroundStyle(palette.check)
+                    Text(state.pendingCount > 0 ? "今天还有 \(state.pendingCount) 件待办 · 解锁查看" : "今天的事都完成了")
+                }
+                .font(.system(size: 13))
+                .frame(maxWidth: .infinity, minHeight: rowHeight * CGFloat(state.style.rows))
+            } else if state.items.isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle").foregroundStyle(palette.check)
                     Text("今天，留一点空白。")

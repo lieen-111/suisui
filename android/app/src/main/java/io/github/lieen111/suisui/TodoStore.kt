@@ -63,8 +63,23 @@ object TodoStore {
         return false
     }
 
+    /** Same as dueToday() in app.js: repeating tasks by weekday, one-off tasks when undated or due. */
+    fun dueToday(t: JSONObject, cal: Calendar = Calendar.getInstance()): Boolean {
+        val weekday = cal.get(Calendar.DAY_OF_WEEK) - 1 // 0 = Sunday, like JavaScript
+        return when (t.optString("repeat", "none")) {
+            "daily" -> true
+            "weekdays" -> weekday in 1..5
+            "weekly" -> weekday == t.optInt("repeatDay", weekday)
+            else -> {
+                val date = t.optString("date", "")
+                date.isEmpty() || date <= dayKey(cal)
+            }
+        }
+    }
+
+    /** Today's open tasks, pinned first. Tasks scheduled for later stay off the lock screen. */
     fun pending(s: JSONObject): List<JSONObject> {
-        val open = items(s).filter { !it.optBoolean("done") }
+        val open = items(s).filter { !it.optBoolean("done") && dueToday(it) }
         return open.filter { it.optBoolean("pinned") } + open.filter { !it.optBoolean("pinned") }
     }
 
@@ -99,7 +114,7 @@ object TodoStore {
             val t = tasks.optJSONObject(i) ?: continue
             val done = t.optBoolean("done")
             when {
-                done && t.optString("repeat") == "daily" -> { t.put("done", false); t.put("completedAt", 0); keep.put(t) }
+                done && t.optString("repeat", "none") != "none" -> { t.put("done", false); t.put("completedAt", 0); keep.put(t) }
                 done && autoArchive && t.optLong("completedAt", 0L) < cutoff -> { t.put("archivedAt", now); archive.put(t) }
                 else -> keep.put(t)
             }

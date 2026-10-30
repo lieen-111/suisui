@@ -17,8 +17,9 @@ struct SettingsView: View {
             Form {
                 Section {
                     Toggle("打开 App 时自动在锁屏显示", isOn: model.setting(\.liveActivityOnOpen))
+                    Toggle("锁屏隐藏待办内容", isOn: model.setting(\.lockPrivacy))
                 } header: { Text("锁屏") } footer: {
-                    Text("实时活动每次最长 8 小时。也可以用“快捷指令”自动化每天定时开启，见“锁屏”页。")
+                    Text("隐藏后锁屏只显示还有几件，内容要解锁后在 App 里看。实时活动每次最长 8 小时，也可以用“快捷指令”自动化每天定时开启，见“锁屏”页。")
                 }
 
                 Section {

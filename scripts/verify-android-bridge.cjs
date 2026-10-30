@@ -13,6 +13,11 @@ let browser;
       load: () => store.raw,
       save: json => { store.raw = json; store.saves++; sessionStorage.setItem('native', json); },
       notificationsAllowed: () => true,
+      isLockMode: () => false,
+      permissions: () => JSON.stringify({ notifications: true, overlay: false, lockScreenRunning: false, brand: 'xiaomi' }),
+      openOverlaySettings: () => { store.overlayOpened = (store.overlayOpened || 0) + 1; },
+      openAppPermissions: () => {},
+      unlock: () => {},
       requestNotificationPermission: () => { store.permissionAsked++; },
       openNotificationSettings: () => {},
       exportBackup: (json, name) => store.exports.push({ json, name }),
@@ -24,7 +29,13 @@ let browser;
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(url, { waitUntil: 'networkidle' });
 
+  // First launch guides through the lock-screen permissions.
+  await page.locator('#android-setup[open]').waitFor();
+  assert.equal(await page.locator('#setup-notify').evaluate(li => li.classList.contains('done')), true);
+  await page.locator('#finish-android-setup').click();
   const first = await page.evaluate(() => JSON.parse(window.__native.raw));
+  assert.equal(first.settings.lockScreen, true, 'Lock view starts on in the Android app');
+  assert.equal(first.settings.androidSetupSeen, true);
   assert.equal(first.settings.lockNotify, true, 'Lock-screen card starts on in the Android app');
   assert.equal(first.tasks.length, 6);
   assert.equal(await page.locator('#install-banner').isVisible(), false, 'No browser install banner inside the app');
@@ -47,8 +58,8 @@ let browser;
     sessionStorage.setItem('native', window.__native.raw);
     window.suisuiNativeChanged();
   });
-  await page.locator('.nav-button[data-view=preview]').click();
   assert.equal(await page.locator('.lock-task[data-id=seed-3]').getAttribute('aria-pressed'), 'true', 'Lock-screen completion shows in the app');
+  assert.equal(await page.locator('.done-row[data-completed-id=seed-3]').count(), 1);
   assert.equal(await page.locator('.lock-task').last().getAttribute('data-id'), 'seed-3', 'Completed item moved to the end');
   assert(await page.locator('#wallpaper').evaluate(img => img.src.startsWith('data:image/')), 'Photo kept after native reload');
 

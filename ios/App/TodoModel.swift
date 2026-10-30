@@ -30,6 +30,7 @@ final class TodoModel: ObservableObject {
     // MARK: Derived lists
 
     var pending: [TodoItem] { TodoLogic.pending(doc.tasks) }
+    var later: [TodoItem] { TodoLogic.later(doc.tasks) }
     var done: [TodoItem] { TodoLogic.done(doc.tasks) }
     var archive: [TodoItem] { doc.archive.sorted { ($0.archivedAt ?? 0) > ($1.archivedAt ?? 0) } }
 
@@ -53,18 +54,20 @@ final class TodoModel: ObservableObject {
     }
     func togglePin(_ id: String) { change { TodoLogic.togglePin(id, in: &$0) } }
     func delete(_ id: String) { change("已删除待办", undoable: true) { TodoLogic.delete(id, in: &$0) } }
-    func add(_ title: String, group: TaskGroup, repeatRule: RepeatRule) -> Bool {
+    func add(_ title: String, group: String, repeatRule: RepeatRule, date: String = "") -> Bool {
         let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return false }
-        change("待办已添加") { TodoLogic.add(title: clean, group: group, repeatRule: repeatRule, in: &$0) }
+        change(date.isEmpty || date <= DayKey.today() ? "待办已添加" : "已添加到“以后”") {
+            TodoLogic.add(title: clean, group: group, repeatRule: repeatRule, date: date, in: &$0)
+        }
         return true
     }
-    func update(_ id: String, title: String, group: TaskGroup, repeatRule: RepeatRule) {
-        change("已保存修改") { TodoLogic.update(id, title: title, group: group, repeatRule: repeatRule, in: &$0) }
+    func update(_ id: String, title: String, group: String, repeatRule: RepeatRule, date: String) {
+        change("已保存修改") { TodoLogic.update(id, title: title, group: group, repeatRule: repeatRule, date: date, in: &$0) }
     }
     func archiveDone() {
-        let count = doc.tasks.filter { $0.done && $0.repeatRule != .daily }.count
-        guard count > 0 else { show("每天重复的事项会在明天自动重置，不需要清理"); return }
+        let count = doc.tasks.filter { $0.done && $0.repeatRule == .none }.count
+        guard count > 0 else { show("重复的事项会在下次该做时自动重置，不需要清理"); return }
         change("已把 \(count) 件移入历史", undoable: true) { TodoLogic.archiveDone(in: &$0) }
     }
     func unarchive(_ id: String) { change("已放回待完成") { TodoLogic.unarchive(id, in: &$0) } }

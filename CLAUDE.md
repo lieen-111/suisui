@@ -1,10 +1,10 @@
 # Continue This Project
 
-Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-29 round 2:
+Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-30 (1.0):
 
 - The web app is a usable beta (import/export, daily rollover, repeat, history, lock-screen notification, install guidance). A web app CANNOT put checkable to-dos on the iOS Lock Screen; that is an Apple platform limit.
 - The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). 2026-10-29: it COMPILES on GitHub Actions (Intel macOS runner) for simulator and device, and the 9 unit tests pass; the sideload IPA workflow succeeds. It has NOT run on a physical iPhone yet, so lock-screen behavior is unverified. Repo: github.com/lieen-111/suisui.
-- Android (`android/`, added 2026-10-29): Kotlin shell that bundles `app/` in a WebView (WebViewAssetLoader, `SuiSuiAndroid` JS bridge) plus a native lock-screen notification card with per-task "✓" actions (`LockCard.kt`, `TodoStore.kt` mirrors the rollover/complete rules). Built by `.github/workflows/android-apk.yml` on ubuntu, signed with the committed TEST key `android/keystore/suisui-test.jks` (replace before public release), published to Releases; phone link: https://github.com/lieen-111/suisui/releases/latest/download/suisui.apk . First build succeeded; not yet tested on a device. `scripts/verify-android-bridge.cjs` simulates the bridge in Chromium.
+- Android (`android/`, added 2026-10-29): Kotlin shell that bundles `app/` in a WebView (WebViewAssetLoader, `SuiSuiAndroid` JS bridge) plus a native lock-screen notification card with per-task "✓" actions (`LockCard.kt`, `TodoStore.kt` mirrors the rollover/complete rules). Built by `.github/workflows/android-apk.yml` on ubuntu, signed with a private key from secrets `ANDROID_KEYSTORE_B64`/`ANDROID_KEYSTORE_PASSWORD` when set, else the committed TEST key `android/keystore/suisui-test.jks` (the proxy blocks writing secrets; the user adds them in the GitHub web UI), published to Releases; phone link: https://github.com/lieen-111/suisui/releases/latest/download/suisui.apk . First build succeeded; not yet tested on a device. `scripts/verify-android-bridge.cjs` simulates the bridge in Chromium.
 - Distribution without the App Store = TestFlight (paid Apple Developer Program, no Mac required, GitHub Actions workflows provided). See `ios/README.md` and `落地路线.md`.
 
 Read `README.md`, `HANDOFF.md`, `PRODUCT.md`, and `DESIGN.md` before changing behavior. The user communicates in Chinese. Work in the existing project, preserve unrelated changes, and implement requested changes through verification.
@@ -27,7 +27,7 @@ The PWA has Home Screen metadata, PNG icons, offline shell caching and opt-in up
 
 ## Source Map
 
-- `app/index.html`: task workspace, appearance settings, lock-screen simulation.
+- `app/index.html`: list-first task workspace, settings (mini live preview, themes, groups, privacy). The full lock card only renders in lock mode (`?mode=lock`, used by the Android LockActivity); there is no fake phone chrome.
 - `app/styles.css`: responsive layout and all visual states.
 - `app/app.js`: local state (schema 2), storage, task actions, sorting, animation, rollover, import/export, lock-screen notification, install banner. `window.suisui` exposes read-only helpers for tests.
 - `app/manifest.webmanifest`, `app/pwa.js`, `app/sw.js`, `app/icons/`: PWA installation and offline support. Increment the worker VERSION on every cached-resource change. Keep waiting-worker activation opt-in and preserve localStorage.
@@ -38,6 +38,8 @@ The PWA has Home Screen metadata, PNG icons, offline shell caching and opt-in up
 - `scripts/verify.cjs`: broad behavior verification.
 - `scripts/verify-completion.cjs`: completion sorting, scrolling, animation, restore tests.
 - `scripts/verify-pwa.cjs`: starts an isolated server, tests offline reload and completion, data persistence, update lifecycle, cache replacement, icons and mobile overflow. No public server needed.
+- `scripts/verify-v1.cjs`: 1.0 review fixes: list-first phone layout (no fake phone chrome), dates/later/overdue, weekdays/weekly repeats, custom groups, theme presets, rapid completion, lock-screen privacy.
+- `app/privacy.html`: privacy policy (linked from settings and About).
 - `scripts/verify-beta.cjs`: import merge/replace/undo, backup round trip, new-day rollover (Playwright clock), daily repeat, history, iPhone install banner, notification content/refresh (permission stubbed), schema-1 upgrade.
 - `scripts/check-swift-syntax.py`: tree-sitter syntax check of `ios/` (no Xcode needed; not a type check).
 - `ios/Shared/`: model (`Models.swift`), rules (`TodoLogic.swift`, mirrors app.js), App Group storage (`TodoRepository.swift`), Live Activity payload + controller (`TodayActivity.swift`), card view (`CardView.swift`), App Intents (`Intents.swift`). Compiled into app, widget extension and tests.

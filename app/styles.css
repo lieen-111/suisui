@@ -363,3 +363,71 @@ body.lock-mode .toast{bottom:96px}
 .setup-mark.manual{border-style:dashed}
 .android-only{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 @media(max-width:350px){.setup-steps li{grid-template-columns:22px 1fr}.setup-steps .secondary-button{grid-column:2}}
+
+/* 1.0: list-first, dates, groups, themes, privacy */
+.is-completing{visibility:hidden}
+.meta-flag.overdue{color:var(--rose)}
+.meta-flag.overdue svg{color:var(--rose)!important}
+.later-section{margin-top:18px}
+.later-section .task-row{min-height:64px}
+.later-section .task-title{color:var(--muted)}
+.add-selects select,.add-selects input[type=date]{max-width:118px}
+.add-selects input[type=date]{border:1px solid #dce5de;border-radius:5px;background:#fff;color:var(--ink);font-size:12px;padding:4px 6px}
+select:disabled{opacity:.5}
+.edit-controls{flex-wrap:wrap}
+.edit-controls input[type=date]{border:1px solid #dce5de;border-radius:5px;font-size:12px;padding:4px 6px;color:var(--ink);background:#fff}
+.edit-controls input[type=date]:disabled{opacity:.45}
+.edit-controls select{margin-right:0}
+.edit-spacer{flex:1}
+.theme-presets{display:flex;flex-wrap:wrap;gap:8px}
+.theme-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px 7px 8px;border:1px solid #d7e0d9;border-radius:20px;font-size:12px;min-height:36px;background:#fff}
+.theme-chip span{width:18px;height:18px;border-radius:50%;background:var(--chip);border:1px solid #0000001f}
+.theme-chip.active{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.more-appearance{margin:0 0 30px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.more-appearance>summary{display:flex;align-items:center;gap:7px;min-height:48px;font-size:13px;font-weight:600;cursor:pointer;list-style:none}
+.more-appearance>summary::-webkit-details-marker{display:none}
+.more-appearance>summary svg{width:15px;height:15px;transition:transform .2s;color:var(--muted)}
+.more-appearance[open]>summary svg{transform:rotate(90deg)}
+.more-appearance[open]{padding-bottom:22px}
+.more-appearance fieldset:first-of-type{margin-top:8px}
+.group-list{display:grid;gap:8px;margin-bottom:12px}
+.group-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto 36px;align-items:center;gap:10px;padding:6px 4px 6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.group-row .dot{width:8px;height:8px}
+.group-name{min-width:0;border:0;background:transparent;font-size:13px;color:var(--ink);padding:6px 0;outline:0}
+.group-name:focus{border-bottom:1px solid var(--accent)}
+.group-colors{display:flex;gap:5px}
+.group-color{width:18px;height:18px;border-radius:50%;background:var(--c);padding:0}
+.group-color.active{outline:2px solid var(--c);outline-offset:2px}
+.group-row .icon-button{width:36px;height:36px}
+.group-row .icon-button svg{width:15px;height:15px}
+.links-row{display:flex;gap:18px;margin-top:14px}
+.links-row a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+dialog p a{color:var(--accent);text-decoration:underline}
+.lock-private{height:100%;min-height:80px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:13px;color:var(--card-ink);flex-wrap:wrap}
+.lock-private svg{width:16px;height:16px;color:var(--card-check)}
+.lock-reveal{border:1px solid var(--card-rule);border-radius:14px;padding:4px 12px;font-size:11px;color:var(--card-ink);background:transparent}
+@media(max-width:420px){.group-row{grid-template-columns:8px minmax(0,1fr) 36px}.group-colors{grid-column:2/4;grid-row:2}}
+
+/* Lock mode: bigger, easier targets on the real lock screen (one-handed, in a hurry) */
+body.lock-mode .activity{height:auto;padding:14px 16px 0;border-radius:22px}
+body.lock-mode .activity-heading{height:30px;font-size:13px;margin-bottom:4px}
+body.lock-mode .activity-heading svg{width:16px;height:16px}
+body.lock-mode #activity-count{font-size:12px}
+body.lock-mode #activity-list{height:184px}
+body.lock-mode .activity.compact #activity-list{height:240px}
+body.lock-mode .lock-task{height:46px;font-size:15px;gap:12px}
+body.lock-mode .activity.compact .lock-task{height:40px;font-size:14px}
+body.lock-mode .lock-task .check-circle{width:22px;height:22px;border-width:1.8px}
+body.lock-mode .lock-task.is-done .check-circle svg{width:13px;height:13px}
+body.lock-mode .activity-footer{height:46px;font-size:12px}
+body.lock-mode .activity-footer svg{width:13px;height:13px}
+body.lock-mode .activity-position{bottom:118px}
+body.lock-mode .activity.is-private #activity-list{height:110px}
+body.lock-mode .lock-private{font-size:15px;gap:12px}
+body.lock-mode .lock-reveal{font-size:13px;padding:8px 18px;border-radius:18px}
+body.lock-mode .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top))}
+body.lock-mode .completion-note{display:none}
+@media(max-height:740px){body.lock-mode #activity-list{height:138px}body.lock-mode .activity.compact #activity-list{height:160px}body.lock-mode .activity-position{bottom:96px}}
+.add-options{flex-wrap:wrap;gap:8px}
+.add-options .primary-button{flex:none;white-space:nowrap;margin-left:auto}
+.add-selects{flex:1 1 200px}

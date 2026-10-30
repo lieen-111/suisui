@@ -5,8 +5,33 @@ import Foundation
 /// - completing again after a restore appends to the end again (monotonic completedAt);
 /// - on a new day, daily items reset and yesterday's finished one-offs move to history.
 enum TodoLogic {
-    static func pending(_ tasks: [TodoItem]) -> [TodoItem] {
-        stable(tasks.filter { !$0.done }) { $0.pinned && !$1.pinned }
+    /// Same as dueToday() in app.js.
+    static func dueToday(_ t: TodoItem, on date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        let weekday = DayKey.weekday(date, calendar: calendar)
+        switch t.repeatRule {
+        case .daily: return true
+        case .weekdays: return (1...5).contains(weekday)
+        case .weekly: return weekday == (t.repeatDay ?? weekday)
+        case .none: return t.date.isEmpty || t.date <= DayKey.today(date, calendar: calendar)
+        }
+    }
+
+    /// Today's open tasks (pinned first). Tasks scheduled for later stay off the lock screen.
+    static func pending(_ tasks: [TodoItem], on date: Date = Date()) -> [TodoItem] {
+        stable(tasks.filter { !$0.done && dueToday($0, on: date) }) { $0.pinned && !$1.pinned }
+    }
+
+    /// Open tasks that are not due today, in the order they come up.
+    static func later(_ tasks: [TodoItem], on date: Date = Date()) -> [TodoItem] {
+        func next(_ t: TodoItem) -> String {
+            if t.repeatRule == .none { return t.date }
+            for i in 1...7 {
+                let day = Calendar.current.date(byAdding: .day, value: i, to: date) ?? date
+                if dueToday(t, on: day) { return DayKey.today(day) }
+            }
+            return DayKey.adding(days: 7, to: date)
+        }
+        return tasks.filter { !$0.done && !dueToday($0, on: date) }.sorted { next($0) < next($1) }
     }
 
     static func done(_ tasks: [TodoItem]) -> [TodoItem] {
@@ -48,19 +73,29 @@ enum TodoLogic {
     }
 
     @discardableResult
-    static func add(title: String, group: TaskGroup, repeatRule: RepeatRule, in doc: inout TodoDocument) -> TodoItem? {
-        let item = TodoItem(title: title, group: group, repeatRule: repeatRule)
+    static func add(title: String, group: String, repeatRule: RepeatRule, date: String = "", in doc: inout TodoDocument) -> TodoItem? {
+        let weekday: Int = {
+            guard DayKey.isValid(date) else { return DayKey.weekday() }
+            let parts = date.split(separator: "-").compactMap { Int($0) }
+            let comps = DateComponents(year: parts[0], month: parts[1], day: parts[2])
+            return Calendar.current.date(from: comps).map { DayKey.weekday($0) } ?? DayKey.weekday()
+        }()
+        let item = TodoItem(title: title, group: doc.group(group).id, repeatRule: repeatRule,
+                            date: repeatRule == .none ? date : "", repeatDay: repeatRule == .weekly ? weekday : nil)
         guard !item.title.isEmpty else { return nil }
         doc.tasks.append(item)
         return item
     }
 
-    static func update(_ id: String, title: String, group: TaskGroup, repeatRule: RepeatRule, in doc: inout TodoDocument) {
+    static func update(_ id: String, title: String, group: String, repeatRule: RepeatRule, date: String = "", in doc: inout TodoDocument) {
         let clean = String(title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(TodoItem.maxTitleLength))
         guard let i = doc.tasks.firstIndex(where: { $0.id == id }), !clean.isEmpty else { return }
         doc.tasks[i].title = clean
-        doc.tasks[i].group = group
+        doc.tasks[i].group = doc.group(group).id
+        if repeatRule == .weekly && doc.tasks[i].repeatRule != .weekly { doc.tasks[i].repeatDay = DayKey.weekday() }
+        if repeatRule != .weekly { doc.tasks[i].repeatDay = nil }
         doc.tasks[i].repeatRule = repeatRule
+        doc.tasks[i].date = repeatRule == .none && DayKey.isValid(date) ? date : ""
     }
 
     static func delete(_ id: String, in doc: inout TodoDocument) {
@@ -70,7 +105,7 @@ enum TodoLogic {
     /// Moves finished one-off items to history now. Daily items stay until tomorrow resets them.
     @discardableResult
     static func archiveDone(in doc: inout TodoDocument, now: Double = Date.nowMillis) -> Int {
-        let finished = doc.tasks.filter { $0.done && $0.repeatRule != .daily }
+        let finished = doc.tasks.filter { $0.done && $0.repeatRule == .none }
         guard !finished.isEmpty else { return 0 }
         doc.archive.append(contentsOf: finished.map { var t = $0; t.archivedAt = now; return t })
         doc.archive = Array(doc.archive.suffix(TodoDocument.archiveLimit))
@@ -99,7 +134,7 @@ enum TodoLogic {
         var result = RolloverResult(changed: true)
         var keep: [TodoItem] = []
         for var t in doc.tasks {
-            if t.done && t.repeatRule == .daily {
+            if t.done && t.repeatRule != .none {
                 t.done = false; t.completedAt = 0; result.reset += 1; keep.append(t)
             } else if t.done && doc.settings.autoArchive && t.completedAt < cutoff {
                 t.archivedAt = now.timeIntervalSince1970 * 1000; doc.archive.append(t); result.archived += 1

@@ -90,6 +90,17 @@ object LockCard {
 
         val open = TodoStore.pending(s)
         val done = TodoStore.done(s)
+        // Privacy: on a secured lock screen Android shows the public version (count only, no buttons).
+        if (settingOn(s, "lockPrivacy")) {
+            val publicVersion = NotificationCompat.Builder(ctx, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_check)
+                .setColor(ACCENT)
+                .setContentTitle(if (open.isEmpty()) "今天的事都完成了" else "今天还有 ${open.size} 件待办")
+                .setContentText("解锁后查看")
+                .setShowWhen(false)
+                .build()
+            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publicVersion)
+        }
         if (open.isEmpty()) {
             builder.setContentTitle(if (done.isEmpty()) "今天还没有待办" else "今天的事，圆满完成。")
                 .setContentText(if (done.isEmpty()) "打开碎碎清单添加一件" else "完成了 ${done.size} 件")
