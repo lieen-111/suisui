@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7">
+  <title>碎碎清单 · 在 iPhone 上安装</title>
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <style>
+    :root{color-scheme:light dark;--bg:#f2f2f7;--cell:#fff;--ink:#1c1c1e;--muted:#6d6d72;--sep:#c6c6c8;--accent:#13765b;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif}
+    @media(prefers-color-scheme:dark){:root{--bg:#000;--cell:#1c1c1e;--ink:#f2f2f7;--muted:#8d8d93;--sep:#38383a;--accent:#5cc59c}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink)}
+    main{max-width:640px;margin:0 auto;padding:max(28px,env(safe-area-inset-top)) 16px 56px}
+    .hero{display:flex;align-items:center;gap:14px;margin:6px 4px 22px}
+    .hero img{width:58px;height:58px;border-radius:14px}
+    h1{font-size:28px;margin:0}
+    .hero p{margin:4px 0 0;color:var(--muted);font-size:14px}
+    h2{font-size:13px;font-weight:400;color:var(--muted);margin:28px 16px 7px}
+    .group{background:var(--cell);border-radius:12px;overflow:hidden}
+    .row{padding:13px 16px;font-size:16px;line-height:1.55;position:relative}
+    .row+.row:before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+    .row small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+    .step{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+    .step b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:14px}
+    .choice{display:grid;gap:12px}
+    .card{background:var(--cell);border-radius:16px;padding:16px}
+    .card h3{margin:0 0 6px;font-size:17px}
+    .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+    .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;background:#13765b1f;color:var(--accent);margin-bottom:8px}
+    .tag.warn{background:#ff9f0a26;color:#c46d00}
+    a.button{display:block;text-align:center;margin-top:12px;padding:13px;border-radius:12px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:16px}
+    a{color:var(--accent)}
+    .note{color:var(--muted);font-size:13px;line-height:1.6;margin:8px 16px 0}
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero"><img src="icons/icon-192.png" alt=""><div><h1>在 iPhone 上用</h1><p>两种免费方式，按你的情况选</p></div></div>
+
+  <div class="choice">
+    <div class="card"><span class="tag">最简单 · 不需要电脑</span><h3>网页版（添加到主屏幕）</h3><p>界面和功能完整，锁屏上能收到“今天的待办”通知；但要点进来才能勾选（苹果不允许网页在锁屏放按钮）。</p></div>
+    <div class="card"><span class="tag warn">锁屏能勾选 · 需要电脑一次</span><h3>原生版（免费 Apple ID 自签）</h3><p>锁屏小组件和锁屏卡片，亮屏直接点圆圈完成。第一次要在 Windows 或 Mac 电脑上用数据线设置约 30 分钟，之后在手机上就能更新和续签。</p></div>
+  </div>
+
+  <h2>网页版：三步</h2>
+  <div class="group">
+    <div class="row step"><b>1</b><div>用 iPhone 自带的 <strong>Safari</strong> 打开碎碎清单网站<small>在微信、小红书里打开的，先点右上角选“在浏览器打开”。</small></div></div>
+    <div class="row step"><b>2</b><div>点底部的“分享”按钮，选 <strong>添加到主屏幕</strong></div></div>
+    <div class="row step"><b>3</b><div>从桌面图标打开，设置 → 锁屏与隐私 → 打开“锁屏通知”<small>需要 iOS 16.4 或更高。</small></div></div>
+  </div>
+
+  <h2>原生版：第一次（需要电脑和数据线）</h2>
+  <div class="group">
+    <div class="row step"><b>1</b><div>iPhone 设置好锁屏密码，系统 iOS 17 或更高</div></div>
+    <div class="row step"><b>2</b><div>在电脑上按 <a href="https://sidestore.io" target="_blank" rel="noopener">SideStore 官网</a>的说明安装 SideStore（iOS 26 可用官网推荐的 iLoader 工具）<small>用免费 Apple ID 登录，建议单独注册一个，不用主账号。过程中按提示在手机上打开“开发者模式”和 VPN 类辅助 App。</small></div></div>
+    <div class="row step"><b>3</b><div>看到手机上的 SideStore 能打开，就可以拔掉数据线了</div></div>
+  </div>
+
+  <h2>原生版：之后都在手机上</h2>
+  <div class="group">
+    <div class="row step"><b>1</b><div>在 iPhone 上下载碎碎清单安装包<a class="button" href="https://github.com/lieen-111/suisui/releases/download/ios-latest/suisui.ipa">下载 suisui.ipa</a><small>下载后在“文件”App 里能找到。</small></div></div>
+    <div class="row step"><b>2</b><div>打开 SideStore → <strong>我的 App</strong> → 左上角 <strong>+</strong> → 选刚下载的 suisui.ipa<small>直接装到 SideStore 里，不要装进 LiveContainer，否则没有锁屏小组件。</small></div></div>
+    <div class="row step"><b>3</b><div>锁屏长按 → 自定 → 锁定屏幕 → 小组件区 → 选“碎碎清单”长条款</div></div>
+    <div class="row step"><b>4</b><div>每 7 天在 SideStore 里点一次 <strong>刷新</strong><small>忘了也没关系：App 会打不开，刷新后恢复，待办都在。有新版本时重复第 1、2 步，覆盖安装。</small></div></div>
+  </div>
+  <p class="note">免费 Apple ID 的规定：签名 7 天有效、最多同时 3 个自签 App。不要用网上的“免费签名 / 企业证书”网站：证书经常被苹果吊销，也可能夹带恶意程序。原生版尚未在真机上验证过，遇到问题请在 <a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">这里反馈</a>。</p>
+  <p class="note"><a href="./">← 返回碎碎清单</a></p>
+</main>
+</body>
+</html>

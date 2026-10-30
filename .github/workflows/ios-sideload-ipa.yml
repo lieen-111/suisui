@@ -13,6 +13,9 @@ on:
     branches: [main]
     paths: ["ios/**", ".github/workflows/ios-sideload-ipa.yml"]
 
+permissions:
+  contents: write
+
 jobs:
   ipa:
     # Apple-silicon (arm64) hosted Macs were capacity-constrained on 2026-10-29; Intel Macs are the default.
@@ -63,6 +66,23 @@ jobs:
           cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
           (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/SuiSui-${{ github.run_number }}.ipa" Payload)
           ls -la "$GITHUB_WORKSPACE"/*.ipa
+
+      # A fixed download link the phone can open directly (no GitHub login, no zip):
+      # https://github.com/<owner>/<repo>/releases/download/ios-latest/suisui.ipa
+      - name: Copy IPA for the phone download link
+        run: cp "$GITHUB_WORKSPACE"/SuiSui-*.ipa "$GITHUB_WORKSPACE/suisui.ipa"
+
+      - name: Publish to the ios-latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-latest
+          name: 碎碎清单 iPhone 安装包（自签用）
+          body: |
+            用 SideStore / Sideloadly 和免费 Apple ID 安装。步骤见仓库 ios/免费装到自己手机.md，或网站上的 iphone.html。
+            构建 ${{ github.run_number }}，未在真机验证。
+          files: suisui.ipa
+          make_latest: false
+          overwrite_files: true
 
       - uses: actions/upload-artifact@v4
         with:
