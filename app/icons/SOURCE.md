@@ -1,9 +1,5 @@
-# App Icons
+# Icons
 
-PNG icons rendered locally from the existing Lucide `square-check-big` glyph,
-using the application's green brand color (#13765b). No external image service
-was used. Lucide license is in ../vendor/LUCIDE-LICENSE.
-
-Sizes: 180 px (Apple touch icon), 192 px and 512 px (manifest), 512 px (maskable).
-The glyph fits within the central mask-safe area; all backgrounds are opaque.
-Reproduction script: work/create-pwa-icons.cjs in the development workspace.
+碎碎清单 logo (2026-10-30): a faceted check mark (晶面: the check is cut into four facets, like a shard of crystal — 碎) on a pine-green squircle.
+Source SVGs live in `design/logo/` (`suisui-logo.svg` rounded, `-square.svg` full-bleed for iOS / maskable, `-foreground.svg` for the Android adaptive icon, `suisui-glyph.svg` single-color mark).
+Re-render every PNG (web, Android mipmaps, iOS 1024) with Playwright: see `design/logo/README.md`.

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b6e56"/><stop offset=".55" stop-color="#0f4d3c"/><stop offset="1" stop-color="#08291f"/></linearGradient>
+<radialGradient id="glow" cx=".28" cy=".18" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="f1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3f5ec"/></linearGradient>
+<linearGradient id="f2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ecdc"/><stop offset="1" stop-color="#a7dcc4"/></linearGradient>
+<linearGradient id="f3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f4fbf7"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+<linearGradient id="f4" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#8fd2b5"/><stop offset="1" stop-color="#b5e5cf"/></linearGradient>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#021a13" flood-opacity=".38"/></filter></defs><rect width="1024" height="1024" rx="232" fill="url(#bg)"/><rect width="1024" height="1024" rx="232" fill="url(#glow)"/><g transform="translate(512 512) scale(1.14) translate(-526 -513)" filter="url(#sh)">
+<polygon points="292,520 380,432 470,560" fill="url(#f1)"/>
+<polygon points="292,520 470,560 450,690" fill="url(#f2)"/>
+<polygon points="450,690 470,560 694,336" fill="url(#f3)"/>
+<polygon points="450,690 694,336 760,402" fill="url(#f4)"/>
+</g></svg>

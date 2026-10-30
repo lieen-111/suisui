@@ -21,7 +21,7 @@
 <body>
   <div class="app-shell">
     <nav class="navigation" aria-label="主导航">
-      <a class="brand" href="./" aria-label="碎碎清单首页"><i data-lucide="square-check-big"></i></a>
+      <a class="brand" href="./" aria-label="碎碎清单首页"><img src="icons/icon-192.png" alt="" width="40" height="40"></a>
       <button class="nav-button selected" data-view="tasks" aria-label="清单"><i data-lucide="list-todo"></i><span>清单</span></button>
       <button class="nav-add" id="fab-add" aria-label="添加待办" title="添加待办"><i data-lucide="plus"></i></button>
       <button class="nav-button" data-view="settings" aria-label="设置"><i data-lucide="sliders-horizontal"></i><span>设置</span></button>
@@ -30,7 +30,7 @@
 
     <main class="workspace">
       <header class="app-header">
-        <div class="wordmark"><a href="./">碎碎清单</a><button class="update-chip" id="update-chip" hidden><i data-lucide="sparkles"></i>有新版本，点此更新</button></div>
+        <div class="wordmark"><a href="./"><img class="wordmark-logo" src="icons/icon-192.png" alt="" width="28" height="28">碎碎清单</a><button class="update-chip" id="update-chip" hidden><i data-lucide="sparkles"></i>有新版本，点此更新</button></div>
         <div class="header-date" id="header-date"></div>
       </header>
 
@@ -85,7 +85,7 @@
         </section>
 
         <section class="settings-panel" id="settings-panel" hidden aria-label="设置">
-          <div class="settings-top"><button class="icon-button settings-back" id="settings-back" aria-label="返回设置" hidden><i data-lucide="chevron-left"></i></button><h1 id="settings-title">设置</h1></div>
+          <div class="settings-top"><button class="settings-back" id="settings-back" aria-label="返回设置" hidden><i data-lucide="chevron-left"></i><span>设置</span></button><h1 id="settings-title">设置</h1></div>
           <div class="settings-preview" id="settings-preview" aria-hidden="true">
             <img src="assets/lake.jpg" class="mini-wallpaper" id="mini-wallpaper" alt="">
             <div class="mini-shade"></div>
@@ -102,7 +102,7 @@
               <button data-settings-page="lock"><i data-lucide="lock-keyhole"></i><span><strong>锁屏与隐私</strong><small id="sum-lock"></small></span><i data-lucide="chevron-right"></i></button>
               <button data-settings-page="list"><i data-lucide="folders"></i><span><strong>分组与每日整理</strong><small id="sum-list"></small></span><i data-lucide="chevron-right"></i></button>
               <button data-settings-page="data"><i data-lucide="hard-drive-download"></i><span><strong>数据与备份</strong><small>只保存在这台手机上</small></span><i data-lucide="chevron-right"></i></button>
-              <button id="about-row"><i data-lucide="info"></i><span><strong>关于与反馈</strong><small id="sum-about">碎碎清单 1.2</small></span><i data-lucide="chevron-right"></i></button>
+              <button id="about-row"><i data-lucide="info"></i><span><strong>关于与反馈</strong><small id="sum-about">碎碎清单 1.3</small></span><i data-lucide="chevron-right"></i></button>
             </nav>
             <div class="settings-page" data-page="look" hidden>
             <fieldset><legend>主题</legend>
@@ -232,7 +232,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.2</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.3</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -241,7 +241,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.2 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.3 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

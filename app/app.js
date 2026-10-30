@@ -470,6 +470,8 @@
     $('card-color').value = s.cardColor;
     $('card-color-value').textContent = s.cardColor.toUpperCase();
     $('card-transparency').value = s.cardTransparency;
+    $('card-transparency').style.setProperty('--fill', `${s.cardTransparency / 90 * 100}%`);
+    $('intensity').style.setProperty('--fill', `${(s.intensity - 1) / 2 * 100}%`);
     $('card-transparency-value').textContent = `${s.cardTransparency}%`;
     $('card-text').value = s.cardText;
     document.querySelectorAll('[data-material]').forEach(b => { b.classList.toggle('active', b.dataset.material === s.cardMaterial); b.setAttribute('aria-pressed', String(b.dataset.material === s.cardMaterial)); });

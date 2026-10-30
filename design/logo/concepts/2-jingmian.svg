@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#17644e"/><stop offset="1" stop-color="#0a3328"/></linearGradient></defs><rect width="1024" height="1024" rx="232" fill="url(#g)"/><polygon points="292,520 380,432 470,560" fill="#e9f7f0"/><polygon points="292,520 470,560 450,690" fill="#bfe6d4"/>
+<polygon points="450,690 470,560 694,336" fill="#ffffff"/><polygon points="450,690 694,336 760,402" fill="#9fd8bf"/></svg>
