@@ -1,6 +1,6 @@
 # Continue This Project
 
-Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-30 (1.1: bottom-bar add button + add/edit sheets, settings split into pages, Android shows the phone's own wallpaper behind previews and the lock view):
+Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-10-30 (1.2: swipe right/left to complete/delete with haptics, dark mode, gesture tips; 1.1: bottom-bar add button + add/edit sheets, settings split into pages, Android shows the phone's own wallpaper behind previews and the lock view):
 
 - The web app is a usable beta (import/export, daily rollover, repeat, history, lock-screen notification, install guidance). A web app CANNOT put checkable to-dos on the iOS Lock Screen; that is an Apple platform limit.
 - The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). 2026-10-29: it COMPILES on GitHub Actions (Intel macOS runner) for simulator and device, and the 9 unit tests pass; the sideload IPA workflow succeeds. It has NOT run on a physical iPhone yet, so lock-screen behavior is unverified. Repo: github.com/lieen-111/suisui.

@@ -203,6 +203,26 @@ const bridgeStub = (lock) => `
     const row = page.locator('#task-list .task-row').nth(1);
     assert.match(await row.textContent(), /给家里打个电话/, 'Pinned rows move up');
     assert.match(await row.locator('.task-meta').textContent(), /工作.*每天.*置顶/);
+    // Swipe: right finishes, left deletes with undo, a short drag springs back and does not open the editor.
+    const drag = async (nth, dx) => { const r = await page.locator('#task-list .task-row').nth(nth).boundingBox(); const y = r.y + r.height / 2; await page.mouse.move(r.x + 200, y); await page.mouse.down(); await page.mouse.move(r.x + 200 + dx, y, { steps: 8 }); await page.mouse.up(); };
+    assert.equal(await page.locator('#gesture-tips').isVisible(), true, 'First use shows the gesture tips');
+    const before = await page.locator('#task-list .task-row').count();
+    await drag(2, 40);
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('#edit-sheet').evaluate(d => d.open), false, 'Short drag is not a tap');
+    assert.equal(await page.locator('#task-list .task-row').count(), before);
+    await drag(2, 140);
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator('#task-list .task-row').count(), before - 1, 'Swipe right completes');
+    await drag(2, -140);
+    assert.equal(await page.locator('#task-list .task-row').count(), before - 2, 'Swipe left deletes');
+    assert.match(await page.locator('#toast-message').textContent(), /已删除/);
+    await page.locator('#undo-button').click();
+    assert.equal(await page.locator('#task-list .task-row').count(), before - 1, 'Delete undo');
+    await page.locator('#tips-close').click();
+    assert.equal(await page.locator('#gesture-tips').isVisible(), false);
+    await page.reload({ waitUntil: 'networkidle' });
+    assert.equal(await page.locator('#gesture-tips').isVisible(), false, 'Tips stay dismissed');
     // Back: closes the sheet, then the settings page, then settings.
     await page.locator('.task-row').first().locator('.task-body').click();
     assert.equal(await page.evaluate(() => window.suisuiBack()), true);
@@ -238,6 +258,19 @@ const bridgeStub = (lock) => `
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: edit sheet + back button + phone wallpaper (1.1), list-first phones without fake lock screen, dates/later/overdue, weekdays/weekly repeats, edit date, custom groups (add/rename/recolor/filter/delete/undo), theme presets + folded settings, rapid completion, lock-screen privacy (lock view, reveal, notification text, preview), 320/390/430 layouts.');
+  /* Dark mode follows the system */
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, colorScheme: 'dark' });
+    const page = await context.newPage(); watch(page);
+    await page.goto(url, { waitUntil: 'networkidle' });
+    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    assert.equal(bg, 'rgb(16, 20, 18)', 'Dark background');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#5cc59c', 'Lighter accent text on dark');
+    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(19, 118, 91)', 'Buttons keep the brand fill');
+    await page.screenshot({ path: path.join(review, 'v12-dark-390.png') });
+    await context.close();
+  }
+
+  console.log('PASS: swipe complete/delete/undo, gesture tips, dark mode (1.2), edit sheet + back button + phone wallpaper (1.1), list-first phones without fake lock screen, dates/later/overdue, weekdays/weekly repeats, edit date, custom groups (add/rename/recolor/filter/delete/undo), theme presets + folded settings, rapid completion, lock-screen privacy (lock view, reveal, notification text, preview), 320/390/430 layouts.');
   await browser.close();
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { await browser?.close(); });

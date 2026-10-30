@@ -61,6 +61,11 @@
             <input type="hidden" id="task-group"><input type="hidden" id="task-when" value="today"><input type="hidden" id="task-repeat" value="none">
             <p class="form-error" id="form-error" role="alert"></p>
           </form>
+          <div class="gesture-tips" id="gesture-tips" hidden>
+            <div class="tip-demo" aria-hidden="true"><span class="tip-demo-done"><i data-lucide="check"></i></span><span class="tip-demo-row"><span class="check-circle"></span><span class="tip-demo-line"></span></span></div>
+            <p><strong>三个手势就够了</strong><span>点圆圈完成，点文字编辑；右滑完成，左滑删除，删错了能撤销。</span></p>
+            <button class="icon-button" id="tips-close" aria-label="知道了，不再显示" title="知道了"><i data-lucide="x"></i></button>
+          </div>
           <div class="list-heading"><span>今天</span><span id="pending-count"></span></div>
           <div id="task-list" class="task-list"></div>
           <details class="completed-section later-section" id="later-section" open hidden>
@@ -97,7 +102,7 @@
               <button data-settings-page="lock"><i data-lucide="lock-keyhole"></i><span><strong>锁屏与隐私</strong><small id="sum-lock"></small></span><i data-lucide="chevron-right"></i></button>
               <button data-settings-page="list"><i data-lucide="folders"></i><span><strong>分组与每日整理</strong><small id="sum-list"></small></span><i data-lucide="chevron-right"></i></button>
               <button data-settings-page="data"><i data-lucide="hard-drive-download"></i><span><strong>数据与备份</strong><small>只保存在这台手机上</small></span><i data-lucide="chevron-right"></i></button>
-              <button id="about-row"><i data-lucide="info"></i><span><strong>关于与反馈</strong><small id="sum-about">碎碎清单 1.1</small></span><i data-lucide="chevron-right"></i></button>
+              <button id="about-row"><i data-lucide="info"></i><span><strong>关于与反馈</strong><small id="sum-about">碎碎清单 1.2</small></span><i data-lucide="chevron-right"></i></button>
             </nav>
             <div class="settings-page" data-page="look" hidden>
             <fieldset><legend>主题</legend>
@@ -235,7 +240,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.1 · 示例壁纸照片来自 Unsplash</p>
+    <p class="dialog-meta">碎碎清单 1.2 · 示例壁纸照片来自 Unsplash</p>
   </dialog>
   <dialog id="install-dialog" aria-labelledby="install-title">
     <div class="dialog-heading"><h2 id="install-title">添加到主屏幕</h2><button class="icon-button" id="close-install" aria-label="关闭"><i data-lucide="x"></i></button></div>

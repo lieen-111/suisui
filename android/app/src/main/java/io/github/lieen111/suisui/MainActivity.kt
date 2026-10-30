@@ -4,12 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -79,7 +81,7 @@ open class WebHostActivity : ComponentActivity() {
         setContentView(root)
         if (!lockMode) {
             // Opaque strips behind the status and navigation bars; the web view sits between them.
-            val canvas = 0xFFFAFBFA.toInt()
+            val canvas = if (isNight()) 0xFF101412.toInt() else 0xFFFAFBFA.toInt()
             val top = View(this).apply { setBackgroundColor(canvas) }
             val bottom = View(this).apply { setBackgroundColor(canvas) }
             root.addView(top, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, Gravity.TOP))
@@ -103,8 +105,8 @@ open class WebHostActivity : ComponentActivity() {
             })
         }
         WindowCompat.getInsetsController(window, root).apply {
-            isAppearanceLightStatusBars = !lockMode
-            isAppearanceLightNavigationBars = !lockMode
+            isAppearanceLightStatusBars = !lockMode && !isNight()
+            isAppearanceLightNavigationBars = !lockMode && !isNight()
         }
 
         val assets = WebViewAssetLoader.Builder()
@@ -151,6 +153,8 @@ open class WebHostActivity : ComponentActivity() {
         TodoStore.onChange = null
         super.onPause()
     }
+
+    private fun isNight() = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
     protected fun js(code: String) {
         if (::web.isInitialized) web.post { web.evaluateJavascript(code, null) }
@@ -252,6 +256,15 @@ open class WebHostActivity : ComponentActivity() {
         fun exportBackup(json: String, fileName: String) {
             pendingExport = json
             runOnUiThread { createDocument.launch(fileName) }
+        }
+
+        /** Short system haptic: "tick" when a swipe arms, "done" when a task is finished. */
+        @JavascriptInterface
+        fun haptic(kind: String) {
+            runOnUiThread {
+                val effect = if (kind == "done" && Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.CLOCK_TICK
+                web.performHapticFeedback(effect)
+            }
         }
 
         /** The window shows the phone's wallpaper behind the page (themes.xml). */

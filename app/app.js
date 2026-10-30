@@ -9,7 +9,9 @@
   const GROUP_COLORS = ['#13765b', '#b14c6b', '#226a9a', '#b7791f', '#6b5ca5', '#4a5a55'];
   const repeats = { none: '不重复', daily: '每天', weekdays: '工作日', weekly: '每周' };
   const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  const palette = { green: ['#13765b', '#e9f3ee'], rose: ['#b14c6b', '#f9edf1'], blue: ['#226a9a', '#eaf2f8'] };
+  // [fill, soft background, text on dark, soft background on dark]
+  const palette = { green: ['#13765b', '#e9f3ee', '#5cc59c', '#1a362c'], rose: ['#b14c6b', '#f9edf1', '#e78ea9', '#3a2430'], blue: ['#226a9a', '#eaf2f8', '#78b6e2', '#1b3142'] };
+  const darkScheme = matchMedia('(prefers-color-scheme: dark)');
   // One-tap looks; the detailed controls stay under “更多外观设置”.
   const THEMES = {
     pine: { name: '松林', cardColor: '#112b24', cardMaterial: 'frosted', cardTransparency: 15, cardText: 'auto', accent: 'green' },
@@ -18,7 +20,7 @@
     lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'blue' },
     plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'rose' }
   };
-  const defaults = { accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  const defaults = { tipsSeen: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -103,7 +105,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen'].forEach(k => { s[k] = !!s[k]; });
+    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -332,6 +334,7 @@
     $('progress-arc').style.strokeDasharray = `${total ? (done.length / total) * 97.4 : 0} 97.4`;
     renderFilters(todo);
     renderAddChips();
+    $('gesture-tips').hidden = !!state.settings.tipsSeen || !todo.length;
     if (editing && !state.tasks.some(t => t.id === editing)) closeEdit();
     $('pending-count').textContent = String(visible.length);
     $('task-list').innerHTML = visible.length ? visible.map(row).join('') : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
@@ -391,9 +394,10 @@
       : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span></div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
   function applySettings() {
-    const s = state.settings, colors = palette[s.accent];
-    document.documentElement.style.setProperty('--accent', colors[0]);
-    document.documentElement.style.setProperty('--accent-soft', colors[1]);
+    const s = state.settings, colors = palette[s.accent], dark = darkScheme.matches, root = document.documentElement.style;
+    root.setProperty('--accent', dark ? colors[2] : colors[0]);
+    root.setProperty('--accent-fill', colors[0]);
+    root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
     ['wallpaper', 'mini-wallpaper'].forEach(id => {
       const img = $(id), src = s.wallpaper === 'custom' && s.photo ? s.photo : 'assets/lake.jpg';
       if (img.getAttribute('src') !== src) img.src = src;
@@ -709,6 +713,7 @@
     const source = button.classList.contains('lock-task') ? button : button.closest('.task-row');
     completing.add(id);
     button.disabled = true;
+    haptic('done');
     let animationError = false;
     try { await shatter(source); } catch { animationError = true; }
     document.querySelectorAll('.task-row, .lock-task').forEach(el => positions.set(positionKey(el), el.getBoundingClientRect().top));
@@ -775,6 +780,64 @@
     showToast(`已删除“${group?.name || '分组'}”${moved ? `，${moved} 件移到“${fallback.name}”` : ''}`, () => { Object.assign(state, before); save(); render(); });
   }
 
+  /* ---------- Feel: haptics, swipe rows ---------- */
+  // A short tick when a gesture arms and when a task is done. Android app: native haptics; Android Chrome: vibrate.
+  function haptic(kind = 'tick') {
+    try { if (ANDROID?.haptic) ANDROID.haptic(kind); else navigator.vibrate?.(kind === 'done' ? 14 : 6); } catch { /* optional */ }
+  }
+  function deleteTask(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    const index = state.tasks.indexOf(task);
+    state.tasks.splice(index, 1); closeEdit(); save(); render();
+    showToast('已删除待办', () => { state.tasks.splice(Math.min(index, state.tasks.length), 0, task); save(); render(); });
+  }
+  // Swipe a row right to finish it, left to delete it (undo in the toast). Vertical scrolling is untouched.
+  const SWIPE_ARM = 84;
+  let swipe = null, swallowClick = false;
+  function endSwipe(commit) {
+    if (!swipe) return;
+    const { row, dx, armed } = swipe;
+    swipe = null;
+    row.classList.remove('swiping');
+    if (commit && armed) {
+      swallowClick = true; setTimeout(() => { swallowClick = false; }, 350);
+      row.style.removeProperty('--dx'); delete row.dataset.swipe; row.classList.remove('armed');
+      const id = row.dataset.taskId;
+      if (dx > 0) complete(id, row.querySelector('.check-task'));
+      else { haptic('done'); deleteTask(id); }
+      return;
+    }
+    if (Math.abs(dx) > 6) { swallowClick = true; setTimeout(() => { swallowClick = false; }, 350); }
+    row.classList.add('settling'); row.style.setProperty('--dx', '0px');
+    setTimeout(() => { row.classList.remove('settling', 'armed'); delete row.dataset.swipe; row.style.removeProperty('--dx'); }, 220);
+  }
+  document.addEventListener('pointerdown', event => {
+    const row = event.target.closest('#task-list .task-row, #later-list .task-row');
+    if (!row || event.button !== 0 || completing.has(row.dataset.taskId) || LOCK_MODE) return;
+    swipe = { row, x: event.clientX, y: event.clientY, dx: 0, horizontal: null, armed: false, pointer: event.pointerId };
+  });
+  document.addEventListener('pointermove', event => {
+    if (!swipe || event.pointerId !== swipe.pointer) return;
+    const dx = event.clientX - swipe.x, dy = event.clientY - swipe.y;
+    if (swipe.horizontal === null) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      swipe.horizontal = Math.abs(dx) > Math.abs(dy) * 1.3;
+      if (!swipe.horizontal) { swipe = null; return; }
+      swipe.row.classList.add('swiping');
+      try { swipe.row.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+    }
+    const limit = swipe.row.clientWidth * .6;
+    swipe.dx = Math.max(-limit, Math.min(limit, dx));
+    swipe.row.dataset.swipe = swipe.dx > 0 ? 'done' : 'delete';
+    swipe.row.style.setProperty('--dx', `${swipe.dx}px`);
+    const armed = Math.abs(swipe.dx) >= SWIPE_ARM;
+    if (armed !== swipe.armed) { swipe.armed = armed; swipe.row.classList.toggle('armed', armed); if (armed) haptic(); }
+  });
+  document.addEventListener('pointerup', event => { if (swipe && event.pointerId === swipe.pointer) endSwipe(swipe.horizontal === true); });
+  document.addEventListener('pointercancel', () => endSwipe(false));
+  document.addEventListener('click', event => { if (swallowClick && event.target.closest('.task-row')) { event.stopPropagation(); event.preventDefault(); } }, true);
+
   /* ---------- Events ---------- */
   document.addEventListener('click', (event) => {
     const b = event.target.closest('button');
@@ -810,7 +873,7 @@
       case 'edit': openEdit(id); break;
       case 'cancel-edit': closeEdit(); break;
       case 'restore': if (task) { task.done = false; save(); render(); const restored = [...$('activity-list').querySelectorAll('button')].find(el => el.dataset.id === id); if (b.classList.contains('lock-task')) restored?.focus({ preventScroll: true }); showToast('已恢复到待完成'); } break;
-      case 'delete': if (task) { const index = state.tasks.indexOf(task); state.tasks.splice(index, 1); closeEdit(); save(); render(); showToast('已删除待办', () => { state.tasks.splice(index, 0, task); save(); render(); }); } break;
+      case 'delete': deleteTask(id); break;
       case 'unarchive': {
         const index = state.archive.findIndex(t => t.id === id);
         if (index < 0) break;
@@ -843,6 +906,8 @@
     // Back to the defaults for the next one; the group stays (people add several to one group).
     $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
     save(); render(); $('task-input').focus();
+    const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
+    if (added && state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) window.anime.animate(added, { opacity: [0, 1], y: [-10, 0], duration: 360, ease: 'outCubic' });
     showToast(dueToday(task) ? '待办已添加' : `已添加到“以后”：${repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}`);
     requestPersistence();
   });
@@ -882,6 +947,8 @@
   $('close-toast').addEventListener('click', hideToast);
   ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', () => setView('tasks')));
   $('fab-add').addEventListener('click', openAdd);
+  $('tips-close').addEventListener('click', () => { state.settings.tipsSeen = true; save(); render(); });
+  darkScheme.addEventListener?.('change', applySettings);
   $('add-backdrop').addEventListener('click', closeAdd);
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAdd(); });
   // Swipe the sheet down to close it.
@@ -929,8 +996,8 @@
     updateLockNotification(true); showToast(pending().length ? '已刷新锁屏通知，锁屏即可看到' : '全部完成，没有需要提醒的事项');
   });
   $('reset-settings').addEventListener('click', () => {
-    const { autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen } = state.settings;
-    state.settings = { ...defaults, autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen }; save(); applySettings(); showToast('已恢复默认外观');
+    const { autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, tipsSeen } = state.settings;
+    state.settings = { ...defaults, autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, tipsSeen }; save(); applySettings(); showToast('已恢复默认外观');
   });
   $('wallpaper-file').addEventListener('change', event => {
     const file = event.target.files[0];
