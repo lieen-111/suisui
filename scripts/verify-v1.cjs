@@ -279,6 +279,25 @@ const bridgeStub = (lock) => `
     await context.close();
   }
 
+  /* Font and text size apply to the list, the lock card and the preview, and persist */
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const page = await context.newPage(); watch(page);
+    await page.goto(url + '/?view=settings&page=look', { waitUntil: 'networkidle' });
+    const size = sel => page.locator(sel).first().evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const before = await size('.mini-row');
+    await page.locator('[data-font=song]').click();
+    await page.locator('#text-size').evaluate(el => { el.value = '3'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    assert.equal(await page.locator('#text-size-value').textContent(), '特大');
+    assert(await size('.mini-row') > before * 1.2, 'Preview text grows');
+    assert.match(await page.locator('.mini-row').first().evaluate(el => getComputedStyle(el).fontFamily), /Song|Serif|serif/);
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.locator('.nav-button[data-view=tasks]').click();
+    assert(Math.abs(await size('.task-title') - 15 * 1.26) < .5, 'List text uses the saved size');
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Large text still fits');
+    await context.close();
+  }
+
   /* Dark mode follows the system */
   {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, colorScheme: 'dark' });

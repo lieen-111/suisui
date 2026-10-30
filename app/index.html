@@ -114,6 +114,17 @@
                 <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
               </div>
             </fieldset>
+            <fieldset class="type-settings"><legend>字体与字号</legend>
+              <div class="font-presets" role="group" aria-label="字体">
+                <button class="font-chip" data-font="system"><span class="font-sample" style="font-family:var(--font-system)">Aa 碎碎</span>默认</button>
+                <button class="font-chip" data-font="song"><span class="font-sample" style="font-family:var(--font-song)">Aa 碎碎</span>宋体</button>
+                <button class="font-chip" data-font="kai"><span class="font-sample" style="font-family:var(--font-kai)">Aa 碎碎</span>楷体</button>
+                <button class="font-chip" data-font="round"><span class="font-sample" style="font-family:var(--font-round)">Aa 碎碎</span>圆体</button>
+              </div>
+              <label class="setting-row" for="text-size"><span>字号</span><output id="text-size-value">标准</output></label>
+              <div class="text-size-row"><span class="a-small" aria-hidden="true">A</span><input type="range" id="text-size" min="0" max="3" step="1" aria-label="字号"><span class="a-large" aria-hidden="true">A</span></div>
+              <p class="setting-note">清单、锁屏卡片和预览一起变化。字体用的是手机自带的，没有的会自动换成最接近的。</p>
+            </fieldset>
             <fieldset><legend>锁屏显示条数</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
               <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
             </div></fieldset>

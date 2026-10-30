@@ -28,7 +28,9 @@
       .map(([id, name]) => ({ id, name, src: `assets/wallpapers/${id}.jpg`, thumb: `assets/wallpapers/${id}-thumb.jpg`, pos: '50% 60%' }))
   ];
   const wallpaperOf = id => WALLPAPERS.find(w => w.id === id) || WALLPAPERS[0];
-  const defaults = { tipsSeen: false, wallpaperPicked: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  const FONTS = { system: '默认', song: '宋体', kai: '楷体', round: '圆体' };
+  const TEXT_SIZES = [['小', .9], ['标准', 1], ['大', 1.12], ['特大', 1.26]];
+  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -109,6 +111,8 @@
     if (typeof s.photo !== 'string' || !/^data:image\/(jpeg|png|webp);base64,/.test(s.photo)) s.photo = '';
     if (s.wallpaper === 'custom' && !s.photo) s.wallpaper = 'lake';
     s.intensity = Math.min(3, Math.max(1, Number(s.intensity) || 2));
+    if (!FONTS[s.font]) s.font = 'system';
+    s.textSize = Number.isInteger(s.textSize) && s.textSize >= 0 && s.textSize <= 3 ? s.textSize : 1;
     if (!['frosted', 'glass', 'flat'].includes(s.cardMaterial)) s.cardMaterial = defaults.cardMaterial;
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
@@ -231,7 +235,7 @@
   }
   function renderSettingsSummary() {
     const s = state.settings;
-    $('sum-look').textContent = `${themeName()}主题 · 锁屏显示 ${s.density === 'compact' ? 4 : 3} 条`;
+    $('sum-look').textContent = `${themeName()}主题 · ${FONTS[s.font]} · ${TEXT_SIZES[s.textSize][0]}字号 · 锁屏 ${s.density === 'compact' ? 4 : 3} 条`;
     const lockOn = ANDROID ? (s.lockScreen ? '亮屏显示已开启' : s.lockNotify ? '锁屏卡片已开启' : '未开启') : (s.lockNotify ? '锁屏通知已开启' : '锁屏通知未开启');
     $('sum-lock').textContent = `${lockOn}${s.lockPrivacy ? ' · 隐藏内容' : ''}`;
     $('sum-list').textContent = `${state.groups.length} 个分组 · ${s.autoArchive ? '每天自动整理' : '不自动整理'}`;
@@ -416,6 +420,12 @@
       img.style.objectPosition = paper.pos;
       img.classList.toggle('monochrome', !!paper.mono);
     });
+    root.setProperty('--app-font', `var(--font-${s.font})`);
+    root.setProperty('--ts', String(TEXT_SIZES[s.textSize][1]));
+    document.querySelectorAll('[data-font]').forEach(b => { b.classList.toggle('active', b.dataset.font === s.font); b.setAttribute('aria-pressed', String(b.dataset.font === s.font)); });
+    $('text-size').value = s.textSize;
+    $('text-size').style.setProperty('--fill', `${s.textSize / 3 * 100}%`);
+    $('text-size-value').textContent = TEXT_SIZES[s.textSize][0];
     document.documentElement.classList.toggle('system-wallpaper', useSystemWallpaper());
     updateWallpaperHole();
     $('mini-tag-label').textContent = useSystemWallpaper() ? '实时预览 · 手机壁纸' : '实时预览';
@@ -881,6 +891,8 @@
       editChips(task, b.dataset.editGroup || form.elements.group.value, b.dataset.editRepeat || form.elements.repeat.value);
     }
     if (b.dataset.filter) { filter = b.dataset.filter; editing = null; render(); }
+    if (b.dataset.font) { state.settings.font = b.dataset.font; save(); applySettings(); }
+    if (b.dataset.font) { state.settings.font = b.dataset.font; save(); applySettings(); }
     if (b.dataset.density) { state.settings.density = b.dataset.density; save(); applySettings(); }
     if (b.dataset.wallpaper) { state.settings.wallpaper = b.dataset.wallpaper; state.settings.wallpaperPicked = true; save(); applySettings(); icons($('wallpaper-library')); }
     if (b.dataset.material) { state.settings.cardMaterial = b.dataset.material; save(); applyCardAppearance(); applySettings(); }
@@ -987,6 +999,7 @@
   $('close-about').addEventListener('click', () => $('about-dialog').close());
   document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog && (event.offsetX < 0 || event.offsetY < 0 || event.offsetX > dialog.offsetWidth || event.offsetY > dialog.offsetHeight)) dialog.close(); }));
   document.querySelectorAll('[name="accent"]').forEach(input => input.addEventListener('change', () => { state.settings.accent = input.value; save(); applySettings(); }));
+  $('text-size').addEventListener('input', () => { state.settings.textSize = Number($('text-size').value); save(); applySettings(); });
   $('motion-toggle').addEventListener('change', () => { state.settings.motion = $('motion-toggle').checked; save(); applySettings(); });
   $('intensity').addEventListener('input', () => { state.settings.intensity = Number($('intensity').value); save(); applySettings(); });
   $('card-color').addEventListener('input', () => { state.settings.cardColor = $('card-color').value; applyCardAppearance(); save(); });
