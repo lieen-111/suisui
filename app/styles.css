@@ -1012,3 +1012,71 @@ body.lock-mode .lock-timer svg{width:13px;height:13px}
   @media(max-width:760px){body[data-view=review]{background:#000}}
 }
 .review-chart .bar.is-top i{background:var(--accent-fill,var(--accent))!important}
+
+/* 1.5 · focus bar: the running timer stays in view everywhere (and under the clock on the lock view) */
+.focus-bar{position:fixed;z-index:85;left:50%;transform:translateX(-50%);bottom:calc(98px + env(safe-area-inset-bottom));width:min(560px,calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:22px;background:linear-gradient(135deg,#1b6e56,#0b3a2d);color:#fff;box-shadow:0 14px 34px -14px #0b2a20cc,inset 0 1px 0 #ffffff1f;animation:focus-in .32s cubic-bezier(.2,.8,.2,1)}
+.focus-bar.is-paused{background:linear-gradient(135deg,#5b6470,#363c44)}
+@keyframes focus-in{from{opacity:0;transform:translate(-50%,16px)}}
+.focus-ring{--p:0;flex:none;width:36px;height:36px;border-radius:50%;background:conic-gradient(#9ff0c8 calc(var(--p) * 360deg),#ffffff2e 0);display:grid;place-items:center;transition:--p 1s linear}
+.focus-ring span{width:28px;height:28px;border-radius:50%;background:#0f4d3c}
+.focus-bar.is-paused .focus-ring span{background:#464d56}
+.focus-text{flex:1;min-width:0;display:flex;flex-direction:column}
+.focus-text small{font-size:11px;opacity:.7;letter-spacing:.04em}
+.focus-text strong{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.focus-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.focus-btn{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ffffff24;color:#fff}
+.focus-btn svg{width:17px;height:17px;stroke-width:2.4}
+#focus-toggle svg{fill:currentColor}
+.focus-stop svg{width:13px;height:13px;fill:currentColor}
+body.has-focus .app-shell{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+body.has-focus .toast{bottom:calc(170px + env(safe-area-inset-bottom))}
+body.adding .focus-bar{display:none}
+@media(min-width:761px){.focus-bar{bottom:24px;left:calc(88px + (100% - 88px) / 4);transform:translateX(-50%);width:min(520px,calc(50% - 60px))}@keyframes focus-in{from{opacity:0;transform:translate(-50%,16px)}}body.has-focus .toast{bottom:100px}}
+body.lock-mode .focus-bar{top:calc(max(64px,9svh) + 150px);bottom:auto;width:calc(100% - 36px);background:#0b2a2080;backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);box-shadow:inset 0 0 0 1px #ffffff2e;padding:10px 10px 10px 12px;border-radius:24px}
+body.lock-mode .focus-time{font-size:26px}
+body.lock-mode .focus-ring span{background:#173c32}
+body.lock-mode.has-focus .lock-clock #lock-time{font-size:72px}
+@media(max-height:740px){body.lock-mode .focus-bar{top:calc(40px + 128px)}}
+@media(prefers-reduced-motion:reduce){.focus-bar{animation:none}}
+.parse-hint{display:flex;align-items:center;gap:6px;margin:8px 0 0 28px;font-size:12px;color:var(--accent);font-weight:600}
+.parse-hint svg{width:14px;height:14px}
+.parse-hint span{flex:1;min-width:0}
+.parse-off{font-size:12px;color:var(--muted);font-weight:500;padding:4px 8px;border-radius:12px;background:#7676801a;flex:none}
+@media(max-width:760px){.parse-hint{margin:8px 2px 0}}
+.task-row{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.quick-menu{max-width:420px}
+.quick-title{margin:4px 4px 12px;font-size:13px;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quick-actions{display:grid;border-radius:14px;overflow:hidden;background:#7676800f}
+.quick-action{display:flex;align-items:center;gap:14px;min-height:52px;padding:0 16px;font-size:16px;color:var(--ink);text-align:left}
+.quick-action+.quick-action{border-top:.5px solid var(--sep,var(--line))}
+.quick-action svg{width:20px;height:20px;color:var(--accent)}
+.quick-action.danger,.quick-action.danger svg{color:#d64545}
+.quick-action:active{background:#7676801f}
+
+/* 1.5 · motion & feedback: views fade in, settings pages slide, buttons respond to the touch */
+@keyframes view-enter{from{opacity:0;transform:translateY(10px)}}
+@keyframes page-enter{from{opacity:0;transform:translateX(28px)}}
+@keyframes page-back{from{opacity:0;transform:translateX(-20px)}}
+.view-enter{animation:view-enter .28s cubic-bezier(.2,.8,.2,1)}
+.page-enter{animation:page-enter .3s cubic-bezier(.2,.8,.2,1)}
+.page-back{animation:page-back .26s cubic-bezier(.2,.8,.2,1)}
+.chip,.primary-button,.secondary-button,.timer-pill,.timer-stop,.review-entry,.nav-add,.nav-button,.filter-tabs button,.bento .tile,.theme-chip,.font-chip,.material-tiles button,.wallpaper-choice,.focus-btn,.quick-action,.pill-segment button,.check-task,.icon-button,.settings-back,.lock-timer{transition:transform .14s cubic-bezier(.2,.8,.2,1),background-color .2s,color .2s,box-shadow .2s}
+.chip:active,.primary-button:active,.secondary-button:active,.timer-pill:active,.timer-stop:active,.review-entry:active,.filter-tabs button:active,.theme-chip:active,.font-chip:active,.material-tiles button:active,.wallpaper-choice:active,.focus-btn:active,.pill-segment button:active,.icon-button:active,.lock-timer:active{transform:scale(.95)}
+.nav-add:active{transform:scale(.92)}
+.nav-button:active{transform:scale(.92)}
+.check-task:active .check-circle{transform:scale(.86);background:var(--accent-soft)}
+.check-circle{transition:transform .14s,background .15s,border-color .15s}
+.task-body:active{background:#7676800d!important}
+/* collapsing large title */
+.header-title{display:none}
+@media(max-width:760px){
+  .app-header{position:sticky;top:0;z-index:60;transition:box-shadow .2s}
+  .header-title{display:block;position:absolute;left:50%;transform:translate(-50%,6px);font-size:16px;font-weight:650;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;font-variant-numeric:tabular-nums}
+  body.scrolled[data-view=tasks] .header-title{opacity:1;transform:translate(-50%,0)}
+  body.scrolled[data-view=tasks] .app-header{box-shadow:0 1px 0 var(--line),0 8px 20px -18px #0b2a2066}
+  body.scrolled[data-view=tasks] .update-chip{opacity:0;pointer-events:none}
+  .app-header{border-bottom:0}
+}
+@media(prefers-reduced-motion:reduce){.chip:active,.primary-button:active,.nav-add:active{transform:none}}
+body.lock-mode .focus-stop{display:none}
+body.lock-mode .focus-text strong{font-size:16px}

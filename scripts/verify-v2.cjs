@@ -83,6 +83,87 @@ let browser;
     await context.close();
   }
 
+  /* 1.5: quick add understands dates / repeats / durations / #groups; long-press menu; focus bar everywhere and on the lock view. */
+  {
+    const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage(); watch(page);
+    await page.clock.install({ time: new Date('2026-11-04T09:00:00') }); // Wednesday
+    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.locator('#fab-add').click();
+    const add = async text => { await page.locator('#task-input').fill(text); await page.locator('#add-form button[type=submit]').click(); };
+    await page.locator('#task-input').fill('明天读书30分钟');
+    assert.match(await page.locator('#parse-hint').textContent(), /明天 · 30分钟/);
+    assert.equal(await page.locator('[data-add-when=tomorrow]').getAttribute('aria-pressed'), 'true', 'Chips follow what was typed');
+    assert.equal(await page.locator('[data-add-duration="30"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('#add-form button[type=submit]').click();
+    await add('每周五 周会复盘 1小时 #工作');
+    await add('下周一交房租');
+    await add('跑步半小时');
+    await page.locator('#task-input').fill('周五见面');
+    await page.locator('#parse-off').click(); // keep the words as typed
+    await page.locator('#add-form button[type=submit]').click();
+    await page.locator('#add-backdrop').click();
+    await page.locator('#add-form').waitFor({ state: 'hidden' });
+    const tasks = await page.evaluate(store => JSON.parse(localStorage.getItem(store)).tasks, STORE);
+    const by = t => tasks.find(x => x.title === t);
+    assert.deepEqual([by('读书').date, by('读书').duration], ['2026-11-05', 30]);
+    assert.deepEqual([by('周会复盘').repeat, by('周会复盘').repeatDay, by('周会复盘').duration, by('周会复盘').group], ['weekly', 5, 60, 'work']);
+    assert.equal(by('交房租').date, '2026-11-09', '下周一 = next Monday');
+    assert.equal(by('跑步').duration, 30);
+    assert(by('周五见面') && !by('周五见面').date, '保留原文 keeps the text and sets nothing');
+
+    // Long press → quick actions (move to tomorrow, start timer).
+    const row = page.locator('#task-list .task-row', { hasText: '跑步' });
+    const box = await row.locator('.task-body').boundingBox();
+    await page.mouse.move(box.x + 40, box.y + 20);
+    await row.locator('.task-body').dispatchEvent('contextmenu');
+    assert.equal(await page.locator('#quick-menu').evaluate(d => d.open), true);
+    assert.equal(await page.locator('[data-quick=timer]').count(), 1);
+    await page.locator('[data-quick=timer]').click();
+    // Focus bar shows the running timer in every view.
+    assert.equal(await page.locator('#focus-bar').isVisible(), true);
+    assert.equal(await page.locator('#focus-title').textContent(), '跑步');
+    await page.clock.runFor(3000);
+    assert.match(await page.locator('#focus-bar [data-timer-text]').textContent(), /^29:5\d$/);
+    await page.locator('.nav-button[data-view=settings]').click();
+    assert.equal(await page.locator('#focus-bar').isVisible(), true, 'Visible on other pages too');
+    await page.locator('.nav-button[data-view=tasks]').click();
+    await page.locator('#focus-toggle').click();
+    assert.equal(await page.locator('#focus-state').textContent(), '已暂停');
+    await page.screenshot({ path: path.join(review, 'v2-focus-bar-390.png') });
+    await page.locator('#focus-done').click();
+    await page.clock.runFor(1500);
+    assert.equal(await page.locator('#focus-bar').isVisible(), false, 'Done from the bar');
+    assert.equal(await page.evaluate(store => JSON.parse(localStorage.getItem(store)).log.at(-1).title, STORE), '跑步');
+    // Move to tomorrow from the menu.
+    await page.locator('#task-list .task-row', { hasText: '周五见面' }).locator('.task-body').dispatchEvent('contextmenu');
+    await page.locator('[data-quick=tomorrow]').click();
+    assert.equal(await page.locator('#later-list .task-row', { hasText: '周五见面' }).count(), 1);
+    await context.close();
+
+    // Lock view: the running timer sits under the clock.
+    const lock = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await lock.addInitScript(() => {
+      const store = { raw: '' };
+      window.SuiSuiAndroid = { load: () => store.raw, save: j => { store.raw = j; return true; }, isLockMode: () => true, notificationsAllowed: () => true,
+        permissions: () => JSON.stringify({ notifications: true, overlay: true }), unlock() {}, version: () => 'test' };
+    });
+    const lp = await lock.newPage(); watch(lp);
+    await lp.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
+    await lp.evaluate(() => { const s = window.SuiSuiAndroid; });
+    await lp.evaluate(store => {
+      const s = JSON.parse(localStorage.getItem(store));
+      s.tasks[1].duration = 25; s.timer = { id: s.tasks[1].id, total: 1500000, endsAt: Date.now() + 1200000, left: 0 }; s.rev += 1;
+      localStorage.setItem(store, JSON.stringify(s));
+    }, STORE);
+    await lp.reload({ waitUntil: 'networkidle' });
+    assert.equal(await lp.locator('#focus-bar').isVisible(), true, 'Timer visible on the lock view');
+    const bar = await lp.locator('#focus-bar').boundingBox(), card = await lp.locator('#activity').boundingBox();
+    assert(bar.y + bar.height <= card.y, 'Focus bar sits above the to-do card');
+    await lp.screenshot({ path: path.join(review, 'v2-lock-focus-390.png') });
+    await lock.close();
+  }
+
   /* Review: week and month tables from the log, group filter, poster image. */
   {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });

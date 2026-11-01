@@ -105,14 +105,14 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     // Repeat option from the add form and edit form.
     await page.locator('.nav-button[data-view=tasks]').click();
     await page.locator('#fab-add').click();
-    await page.locator('#task-input').fill('每天喝水');
+    await page.locator('#task-input').fill('喝水');
     await page.locator('[data-add-repeat=daily]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#add-form').isVisible(), true, 'Sheet stays open for the next item');
     assert.equal(await page.locator('[data-add-repeat=none]').getAttribute('aria-pressed'), 'true', 'Repeat resets after adding');
     await page.locator('#add-backdrop').click();
     await page.locator('#add-form').waitFor({ state: 'hidden', timeout: 2000 }); // tap outside closes the sheet
-    assert.equal(await page.locator('.task-row', { hasText: '每天喝水' }).locator('.meta-flag', { hasText: '每天' }).count(), 1);
+    assert.equal(await page.locator('.task-row', { hasText: '喝水' }).locator('.meta-flag', { hasText: '每天' }).count(), 1);
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       for (const view of ['tasks', 'settings']) {

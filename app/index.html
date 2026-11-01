@@ -32,6 +32,7 @@
     <main class="workspace">
       <header class="app-header">
         <div class="wordmark"><a href="./"><img class="wordmark-logo" src="icons/icon-192.png" alt="" width="28" height="28">碎碎清单</a><button class="update-chip" id="update-chip" hidden><i data-lucide="sparkles"></i>有新版本，点此更新</button></div>
+        <span class="header-title" id="header-title" aria-hidden="true"></span>
         <div class="header-date" id="header-date"></div>
       </header>
 
@@ -54,7 +55,8 @@
           <div class="sheet-backdrop" id="add-backdrop" hidden></div>
           <form id="add-form" class="add-form" aria-label="添加待办">
             <span class="sheet-grip" aria-hidden="true"></span>
-            <div class="add-input-line"><i data-lucide="plus"></i><input id="task-input" aria-label="新的待办事项" placeholder="接下来，要做什么？" maxlength="120" autocomplete="off" enterkeyhint="done" required><button class="primary-button add-submit" type="submit">添加</button></div>
+            <div class="add-input-line"><i data-lucide="plus"></i><input id="task-input" aria-label="新的待办事项" placeholder="例如：明天 读书 30分钟" maxlength="120" autocomplete="off" enterkeyhint="done" required><button class="primary-button add-submit" type="submit">添加</button></div>
+            <p class="parse-hint" id="parse-hint" aria-live="polite" hidden></p>
             <div class="add-options">
               <div class="chip-row" id="add-group-chips" role="group" aria-label="分组"></div>
               <div class="chip-row" role="group" aria-label="日期"><i data-lucide="calendar"></i><button type="button" class="chip" data-add-when="today">今天</button><button type="button" class="chip" data-add-when="tomorrow">明天</button><button type="button" class="chip" data-add-when="pick">选日期</button><label class="sr-only" for="task-date">指定日期</label><input type="date" id="task-date" class="chip-date" hidden></div>
@@ -277,6 +279,14 @@
     </main>
   </div>
 
+  <div class="focus-bar" id="focus-bar" role="status" aria-live="off" hidden>
+    <span class="focus-ring" data-timer-progress aria-hidden="true"><span></span></span>
+    <span class="focus-text"><small id="focus-state">专注中</small><strong id="focus-title"></strong></span>
+    <span class="focus-time" data-timer-text>00:00</span>
+    <button class="focus-btn" id="focus-toggle" aria-label="暂停计时"><i data-lucide="pause"></i></button>
+    <button class="focus-btn" id="focus-done" aria-label="完成这件事"><i data-lucide="check"></i></button>
+    <button class="focus-btn focus-stop" id="focus-stop" aria-label="结束计时"><i data-lucide="square"></i></button>
+  </div>
   <div id="fragments" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" hidden><span id="toast-message"></span><button id="undo-button">撤销</button><button id="close-toast" class="icon-button" aria-label="关闭通知"><i data-lucide="x"></i></button></div>
   <dialog id="edit-sheet" class="sheet" aria-labelledby="edit-sheet-title">
@@ -294,6 +304,11 @@
       <div class="dialog-actions"><button type="button" class="text-button danger" data-action="delete" id="edit-delete"><i data-lucide="trash-2"></i>删除</button><button class="primary-button">保存</button></div>
     </form>
   </dialog>
+  <dialog id="quick-menu" class="sheet quick-menu" aria-labelledby="quick-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <p class="quick-title" id="quick-title"></p>
+    <div class="quick-actions" id="quick-actions"></div>
+  </dialog>
   <dialog id="poster-dialog" class="sheet poster-sheet" aria-labelledby="poster-title">
     <span class="sheet-grip" aria-hidden="true"></span>
     <div class="dialog-heading"><h2 id="poster-title">回顾图片</h2><button class="icon-button" id="close-poster" aria-label="关闭"><i data-lucide="x"></i></button></div>
@@ -303,7 +318,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.4</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.5</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -312,7 +327,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.4 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.5 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

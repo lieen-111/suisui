@@ -256,15 +256,26 @@
   function cardTasks() { return [...pending(), ...doneList()]; }
 
   const isPhone = () => matchMedia('(max-width:760px)').matches;
+  // Small entrance motion for views and settings pages (skipped with reduced motion).
+  function enter(el, cls) {
+    if (!el || !state.settings.motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.classList.remove('view-enter', 'page-enter', 'page-back'); void el.offsetWidth; el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  }
+  // Large title collapses into the top bar once it scrolls away (phones).
+  window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 72); }, { passive: true });
   function setView(view) {
     if (!['tasks', 'settings', 'review'].includes(view)) view = 'tasks';
     closeAdd();
     document.body.dataset.view = view;
     document.querySelectorAll('.nav-button[data-view]').forEach(b => { b.classList.toggle('selected', b.dataset.view === view); b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
     const settings = view === 'settings';
+    const changed = document.body.dataset.shown !== view;
+    document.body.dataset.shown = view;
     $('settings-panel').hidden = !settings;
     $('review-panel').hidden = view !== 'review';
     $('tasks-panel').hidden = view !== 'tasks';
+    if (changed) enter({ tasks: $('tasks-panel'), settings: $('settings-panel'), review: $('review-panel') }[view], 'view-enter');
     if (view === 'review') renderReview();
     if (settings) openSettingsPage('index');
     else updateWallpaperHole();
@@ -274,6 +285,7 @@
   const SETTINGS_TITLES = { index: '设置', look: '外观', lock: '锁屏与隐私', list: '分组与每日整理', data: '数据与备份' };
   function openSettingsPage(page) {
     if (!SETTINGS_TITLES[page]) page = 'index';
+    const deeper = page !== 'index' && settingsPage === 'index', back = page === 'index' && settingsPage !== 'index';
     settingsPage = page;
     document.body.dataset.settingsPage = page;
     $('settings-index').hidden = page !== 'index';
@@ -281,6 +293,8 @@
     $('settings-title').textContent = SETTINGS_TITLES[page];
     $('settings-back').hidden = page === 'index';
     $('settings-scroll').scrollTop = 0;
+    if (deeper) enter(document.querySelector(`.settings-page[data-page="${page}"]`), 'page-enter');
+    if (back) enter($('settings-index'), 'page-back');
     if (page === 'index') renderSettingsSummary();
     if (page === 'lock') renderNotifySetting();
     updateWallpaperHole();
@@ -440,6 +454,7 @@
     $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
     const total = todo.length + done.length;
     $('progress-number').textContent = total ? `${done.length}/${total}` : '0';
+    $('header-title').textContent = total ? `今天 · ${done.length}/${total}` : '今天';
     $('progress-arc').style.strokeDasharray = `${total ? (done.length / total) * 97.4 : 0} 97.4`;
     renderFilters(todo);
     renderAddChips();
@@ -463,6 +478,7 @@
     renderPreview();
     if (settingsPage === 'index') renderSettingsSummary();
     if (document.body.dataset.view === 'review') renderReview();
+    renderFocusBar();
     icons();
     $('storage-status').textContent = storageCopy();
   }
@@ -1131,6 +1147,78 @@
   }
   window.suisuiImageSaved = ok => showToast(ok ? '已保存到相册（图片 / 碎碎清单）' : '没有保存');
 
+  /* ---------- Quick add: understands 明天 / 周五 / 11月5日 / 每天 / 工作日 / 每周三 / 30分钟 / 1小时 / #分组 ---------- */
+  const CN_NUM = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
+  function cnNumber(s) {
+    if (/^\d+(\.\d+)?$/.test(s)) return Number(s);
+    if (s === '半') return .5;
+    if (!/^[零一二两三四五六七八九十]+$/.test(s)) return NaN;
+    if (s.includes('十')) { const [a, b] = s.split('十'); return (a ? CN_NUM[a] : 1) * 10 + (b ? CN_NUM[b] : 0); }
+    return [...s].reduce((n, c) => n * 10 + CN_NUM[c], 0);
+  }
+  const DAY_CN = { 日: 0, 天: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
+  function parseQuick(text) {
+    let rest = ` ${text} `;
+    const found = {}, hits = [];
+    const take = (re, fn) => { const m = rest.match(re); if (!m) return; if (fn(m) !== false) { rest = rest.replace(m[0], ' '); hits.push(m[0].trim()); } };
+    const today = dayKey();
+    take(/(\d+(?:\.\d+)?|[一二两三四五六七八九十半]+)\s*(?:个)?\s*(小时|钟头|h)(?:半)?/i, m => { const n = cnNumber(m[1]); if (!(n > 0)) return false; found.duration = Math.round(n * 60 + (m[0].endsWith('半') ? 30 : 0)); });
+    if (!found.duration) take(/半小时/, () => { found.duration = 30; });
+    if (!found.duration) take(/(\d+|[一二两三四五六七八九十]+)\s*(分钟|分|min|m)(?![a-z])/i, m => { const n = cnNumber(m[1]); if (!(n > 0) || n > 600) return false; found.duration = Math.round(n); });
+    take(/每(?:个)?工作日|工作日/, () => { found.repeat = 'weekdays'; });
+    if (!found.repeat) take(/每天|每日|天天/, () => { found.repeat = 'daily'; });
+    if (!found.repeat) take(/每(?:周|星期|礼拜)([一二三四五六日天])/, m => { found.repeat = 'weekly'; found.repeatDay = DAY_CN[m[1]]; });
+    if (!found.repeat) {
+      take(/大后天/, () => { found.date = addDays(today, 3); });
+      if (!found.date) take(/后天/, () => { found.date = addDays(today, 2); });
+      if (!found.date) take(/明天|明日/, () => { found.date = addDays(today, 1); });
+      if (!found.date) take(/今天|今日/, () => { found.date = today; });
+      if (!found.date) take(/(下)?(?:周|星期|礼拜)([一二三四五六日天])/, m => {
+        const target = DAY_CN[m[2]], now = weekday(today), mondayOffset = (now + 6) % 7;
+        let diff = ((target + 6) % 7) - mondayOffset; // days from today within this Mon–Sun week
+        if (m[1]) diff += 7; else if (diff < 0) diff += 7;
+        found.date = addDays(today, diff);
+      });
+      if (!found.date) take(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?|(\d{1,2})\/(\d{1,2})(?!\d)/, m => {
+        const mo = Number(m[1] || m[3]), d = Number(m[2] || m[4]); if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+        const y = new Date().getFullYear(); let key = dayKey(new Date(y, mo - 1, d)); if (key < today) key = dayKey(new Date(y + 1, mo - 1, d));
+        found.date = key;
+      });
+    }
+    take(/[#＃](\S+)/, m => { const g = state.groups.find(x => x.name === m[1] || x.name.toLowerCase() === m[1].toLowerCase()); if (!g) return false; found.group = g.id; });
+    const title = rest.replace(/\s+/g, ' ').trim().replace(/^[，,、\s]+|[，,、\s]+$/g, '');
+    return { ...found, title, hits };
+  }
+  // Keeps what the user tapped in the chips, so typing only overrides what the text actually says.
+  const addManual = { when: 'today', date: '', repeat: 'none', duration: 0, custom: false };
+  let quickOff = false;
+  function applyQuickParse() {
+    const raw = $('task-input').value;
+    const p = quickOff ? { title: raw.trim(), hits: [] } : parseQuick(raw);
+    const date = p.date ?? null;
+    if (date === null) { $('task-when').value = addManual.when; $('task-date').value = addManual.date; }
+    else if (date === dayKey()) { $('task-when').value = 'today'; }
+    else if (date === addDays(dayKey(), 1)) { $('task-when').value = 'tomorrow'; }
+    else { $('task-when').value = 'pick'; $('task-date').value = date; }
+    $('task-repeat').value = p.repeat || addManual.repeat;
+    const duration = p.duration ?? addManual.duration;
+    $('task-duration').value = String(duration);
+    customDuration.add = p.duration ? !DURATIONS.includes(p.duration) : addManual.custom;
+    if (customDuration.add) $('task-duration-custom').value = String(duration || '');
+    if (p.group) addGroupId = p.group;
+    quickRepeatDay = p.repeat === 'weekly' ? p.repeatDay : null;
+    const bits = [];
+    if (p.repeat) bits.push(p.repeat === 'weekly' ? `每周${WEEK[p.repeatDay].slice(1)}` : repeats[p.repeat]);
+    if (p.date) bits.push(dateLabel(p.date));
+    if (p.duration) bits.push(durationText(p.duration));
+    if (p.group) bits.push(groupOf(p.group).name);
+    $('parse-hint').hidden = !bits.length;
+    $('parse-hint').innerHTML = bits.length ? `${icon('sparkles')}<span>已识别：${bits.map(esc).join(' · ')}</span><button type="button" class="parse-off" id="parse-off">保留原文</button>` : '';
+    renderAddChips(); icons($('add-form'));
+    return p;
+  }
+  let quickRepeatDay = null;
+
   /* ---------- Timer: tasks with a duration get a start button and a countdown ---------- */
   // One timer at a time. state.timer = { id, total, endsAt (running) | left (paused) }; it survives reloads,
   // and the Android app shows it as a countdown notification with an alarm when it ends.
@@ -1193,6 +1281,21 @@
   }
   setInterval(tickTimer, 1000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tickTimer(); });
+  // Always-visible focus bar while a timer runs: above the tab bar in the app, under the clock on the lock view.
+  function renderFocusBar() {
+    const t = state.timer, task = t && state.tasks.find(x => x.id === t.id);
+    const bar = $('focus-bar');
+    bar.hidden = !task;
+    document.body.classList.toggle('has-focus', !!task);
+    if (!task) return;
+    $('focus-title').textContent = task.title;
+    $('focus-state').textContent = t.endsAt ? '专注中' : '已暂停';
+    bar.classList.toggle('is-paused', !t.endsAt);
+    $('focus-toggle').innerHTML = icon(t.endsAt ? 'pause' : 'play');
+    $('focus-toggle').setAttribute('aria-label', t.endsAt ? '暂停计时' : '继续计时');
+    icons(bar);
+    tickTimer();
+  }
   function timerPill(t, cls = 'timer-pill') {
     if (!t.duration || t.done) return '';
     const run = state.timer?.id === t.id ? state.timer : null;
@@ -1234,14 +1337,62 @@
     row.classList.add('settling'); row.style.setProperty('--dx', '0px');
     setTimeout(() => { row.classList.remove('settling', 'armed'); delete row.dataset.swipe; row.style.removeProperty('--dx'); }, 220);
   }
+  // Long press (or right click) on a task: quick actions without opening the editor.
+  let pressTimer = null;
+  const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
+  function openQuickMenu(id) {
+    const t = state.tasks.find(x => x.id === id);
+    if (!t) return;
+    haptic();
+    const today = dayKey(), running = state.timer?.id === id;
+    const actions = [
+      t.duration && !t.done ? ['timer', running ? (state.timer.endsAt ? 'pause' : 'play') : 'play', running ? (state.timer.endsAt ? '暂停计时' : '继续计时') : `开始计时 · ${durationText(t.duration)}`] : null,
+      ['pin', 'pin', t.pinned ? '取消置顶' : '置顶'],
+      t.repeat === 'none' && t.date !== addDays(today, 1) ? ['tomorrow', 'sunrise', '明天再做'] : null,
+      t.repeat === 'none' && t.date && t.date > today ? ['today', 'sun', '改到今天'] : null,
+      ['edit', 'pencil', '编辑'],
+      ['delete', 'trash-2', '删除', 'danger']
+    ].filter(Boolean);
+    $('quick-title').textContent = t.title;
+    $('quick-actions').innerHTML = actions.map(([key, ic, label, cls]) => `<button class="quick-action${cls ? ` ${cls}` : ''}" data-quick="${key}" data-id="${esc(id)}">${icon(ic)}<span>${label}</span></button>`).join('');
+    $('quick-menu').showModal(); icons($('quick-menu'));
+  }
+  $('quick-actions').addEventListener('click', event => {
+    const b = event.target.closest('[data-quick]');
+    if (!b) return;
+    const id = b.dataset.id, t = state.tasks.find(x => x.id === id);
+    $('quick-menu').close();
+    if (!t) return;
+    const before = { date: t.date, pinned: t.pinned };
+    switch (b.dataset.quick) {
+      case 'timer': startTimer(id); break;
+      case 'pin': t.pinned = !t.pinned; save(); render(); showToast(t.pinned ? '已置顶' : '已取消置顶'); break;
+      case 'tomorrow': t.date = addDays(dayKey(), 1); save(); render(); showToast('已移到明天', () => { t.date = before.date; save(); render(); }); break;
+      case 'today': t.date = ''; save(); render(); showToast('已改到今天', () => { t.date = before.date; save(); render(); }); break;
+      case 'edit': openEdit(id); break;
+      case 'delete': deleteTask(id); break;
+    }
+  });
+  document.addEventListener('contextmenu', event => {
+    const row = event.target.closest('#task-list .task-row, #later-list .task-row');
+    if (!row || LOCK_MODE) return;
+    event.preventDefault(); cancelPress(); openQuickMenu(row.dataset.taskId);
+  });
   document.addEventListener('pointerdown', event => {
     const row = event.target.closest('#task-list .task-row, #later-list .task-row');
     if (!row || event.button !== 0 || completing.has(row.dataset.taskId) || LOCK_MODE) return;
     swipe = { row, x: event.clientX, y: event.clientY, dx: 0, horizontal: null, armed: false, pointer: event.pointerId };
+    if (event.pointerType !== 'mouse') {
+      cancelPress();
+      pressTimer = setTimeout(() => { pressTimer = null; if (!swipe || swipe.horizontal) return; swipe = null; swallowClick = true; setTimeout(() => { swallowClick = false; }, 600); openQuickMenu(row.dataset.taskId); }, 480);
+    }
   });
+  document.addEventListener('pointerup', cancelPress);
+  document.addEventListener('pointercancel', cancelPress);
   document.addEventListener('pointermove', event => {
     if (!swipe || event.pointerId !== swipe.pointer) return;
     const dx = event.clientX - swipe.x, dy = event.clientY - swipe.y;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) cancelPress();
     if (swipe.horizontal === null) {
       if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
       swipe.horizontal = Math.abs(dx) > Math.abs(dy) * 1.3;
@@ -1271,13 +1422,14 @@
     if (b.dataset.reviewGroup) { review.group = b.dataset.reviewGroup; renderReview(); }
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
-      $('task-when').value = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
+      $('task-when').value = addManual.when = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
       if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); try { d.showPicker(); } catch { d.focus(); } }
     }
-    if (b.dataset.addRepeat) { $('task-repeat').value = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
+    if (b.dataset.addRepeat) { $('task-repeat').value = addManual.repeat = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addDuration) {
       customDuration.add = b.dataset.addDuration === 'custom';
       $('task-duration').value = customDuration.add ? String(readCustom($('task-duration-custom')) || 0) : b.dataset.addDuration;
+      addManual.duration = Number($('task-duration').value) || 0; addManual.custom = customDuration.add;
       renderAddChips();
       if (customDuration.add) $('task-duration-custom').focus();
     }
@@ -1338,18 +1490,21 @@
   }
   $('add-form').addEventListener('submit', event => {
     event.preventDefault();
-    const title = $('task-input').value.trim();
+    const parsed = applyQuickParse();
+    const title = (parsed.title || $('task-input').value).trim();
     if (!title) { $('form-error').textContent = '请先写下待办内容。'; return; }
     const date = chosenDate();
     if (date === null) { $('form-error').textContent = '请选择一个日期。'; return; }
     const repeat = repeats[$('task-repeat').value] ? $('task-repeat').value : 'none';
-    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, repeat, repeatDay: weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
+    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, repeat, repeatDay: quickRepeatDay ?? weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
     state.tasks.push(task);
     if (filter !== 'all' && filter !== task.group) filter = 'all';
     $('task-input').value = ''; $('form-error').textContent = '';
     // Back to the defaults for the next one; the group stays (people add several to one group).
     $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
     $('task-duration').value = '0'; $('task-duration-custom').value = ''; customDuration.add = false;
+    Object.assign(addManual, { when: 'today', date: '', repeat: 'none', duration: 0, custom: false }); quickRepeatDay = null; quickOff = false;
+    $('parse-hint').hidden = true;
     save(); render(); $('task-input').focus();
     const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
     if (added && state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) window.anime.animate(added, { opacity: [0, 1], y: [-10, 0], duration: 360, ease: 'outCubic' });
@@ -1377,7 +1532,10 @@
     save(); render(); showToast(dueToday(task) ? '已保存修改' : `已保存，${task.repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}出现`);
   }
   $('edit-form').addEventListener('submit', onEditSubmit);
-  $('task-duration-custom').addEventListener('input', () => { $('task-duration').value = String(readCustom($('task-duration-custom'))); });
+  $('task-duration-custom').addEventListener('input', () => { $('task-duration').value = String(readCustom($('task-duration-custom'))); addManual.duration = Number($('task-duration').value) || 0; });
+  $('task-date').addEventListener('change', () => { addManual.date = $('task-date').value; });
+  $('task-input').addEventListener('input', () => { if (!$('task-input').value.trim()) quickOff = false; applyQuickParse(); });
+  $('parse-hint').addEventListener('click', event => { if (event.target.closest('#parse-off')) { quickOff = true; applyQuickParse(); $('task-input').focus(); } });
   $('edit-duration-custom').addEventListener('input', () => { $('edit-form').elements.duration.value = String(readCustom($('edit-duration-custom'))); });
   $('edit-sheet').addEventListener('close', () => { editing = null; });
   $('edit-date').addEventListener('change', () => { const f = $('edit-form'); editChips(null, f.elements.group.value, f.elements.repeat.value); });
@@ -1397,6 +1555,14 @@
   $('close-toast').addEventListener('click', hideToast);
   ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', () => setView('tasks')));
   $('fab-add').addEventListener('click', openAdd);
+  $('focus-toggle').addEventListener('click', () => state.timer && startTimer(state.timer.id));
+  $('focus-stop').addEventListener('click', stopTimer);
+  $('focus-done').addEventListener('click', () => {
+    const id = state.timer?.id, task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    const button = document.querySelector(`.task-row[data-task-id="${CSS.escape(id)}"] .check-task`) || document.querySelector(`.lock-task[data-id="${CSS.escape(id)}"]`);
+    if (button) complete(id, button); else { markDone(task); save(); render(); showToast('已完成一项待办', () => { unmarkDone(task); save(); render(); }); }
+  });
   $('open-review').addEventListener('click', () => setView('review'));
   $('review-back').addEventListener('click', () => setView('tasks'));
   $('review-export').addEventListener('click', exportPoster);

@@ -35,12 +35,12 @@ const bridgeStub = (lock) => `
     // Dates: tomorrow goes to "以后", picked date shows its label, today stays on today's list.
     const closeSheet = async () => { await page.locator('#add-backdrop').click(); await page.locator('#add-form').waitFor({ state: 'hidden' }); };
     await page.locator('#fab-add').click();
-    await page.locator('#task-input').fill('明天交方案');
+    await page.locator('#task-input').fill('交方案');
     await page.locator('[data-add-when=tomorrow]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.match(await page.locator('#toast-message').textContent(), /以后.*明天/);
-    assert.equal(await page.locator('#task-list .task-row', { hasText: '明天交方案' }).count(), 0);
-    assert.equal(await page.locator('#later-list .task-row', { hasText: '明天交方案' }).locator('.meta-flag', { hasText: '明天' }).count(), 1);
+    assert.equal(await page.locator('#task-list .task-row', { hasText: '交方案' }).count(), 0);
+    assert.equal(await page.locator('#later-list .task-row', { hasText: '交方案' }).locator('.meta-flag', { hasText: '明天' }).count(), 1);
     await page.locator('[data-add-when=pick]').click();
     await page.locator('#task-date').fill('2026-11-05');
     await page.locator('#task-input').fill('交房租');
@@ -50,35 +50,35 @@ const bridgeStub = (lock) => `
     // Weekly on Friday shows today; weekdays not shown on Saturday.
     await page.locator('[data-add-when=today]').click();
     await page.locator('[data-add-repeat=weekly]').click();
-    await page.locator('#task-input').fill('周五复盘');
+    await page.locator('#task-input').fill('复盘会');
     await page.locator('#add-form button[type=submit]').click();
-    assert.equal(await page.locator('#task-list .task-row', { hasText: '周五复盘' }).locator('.meta-flag', { hasText: '每五' }).count(), 1);
+    assert.equal(await page.locator('#task-list .task-row', { hasText: '复盘会' }).locator('.meta-flag', { hasText: '每五' }).count(), 1);
     await page.locator('[data-add-repeat=weekdays]').click();
     assert.equal(await page.locator('[data-add-when=tomorrow]').isDisabled(), true, 'Daily-type repeats have no date');
     await page.locator('#task-input').fill('打卡');
     await page.locator('#add-form button[type=submit]').click();
     await closeSheet();
     await page.locator('#task-list .task-row', { hasText: '打卡' }).locator('[data-action=complete]').click();
-    await page.locator('#task-list .task-row', { hasText: '周五复盘' }).locator('[data-action=complete]').click();
+    await page.locator('#task-list .task-row', { hasText: '复盘会' }).locator('[data-action=complete]').click();
     // Saturday: tomorrow's task is due, weekday/weekly ones reset but move to "以后".
     await page.clock.setSystemTime(new Date('2026-10-31T08:00:00'));
     await page.clock.runFor(31000);
-    assert.equal(await page.locator('#task-list .task-row', { hasText: '明天交方案' }).count(), 1, 'Yesterday\'s “tomorrow” task is on today\'s list');
-    assert.equal(await page.locator('.lock-task', { hasText: '明天交方案' }).count(), 1, 'and on the lock card');
+    assert.equal(await page.locator('#task-list .task-row', { hasText: '交方案' }).count(), 1, 'Yesterday\'s “tomorrow” task is on today\'s list');
+    assert.equal(await page.locator('.lock-task', { hasText: '交方案' }).count(), 1, 'and on the lock card');
     assert.equal(await page.locator('#task-list .task-row', { hasText: '打卡' }).count(), 0, 'Weekdays task hidden on Saturday');
     assert.equal(await page.locator('#later-list .task-row', { hasText: '打卡' }).count(), 1);
-    assert.equal(await page.locator('#later-list .task-row', { hasText: '周五复盘' }).count(), 1, 'Weekly task waits for next Friday');
+    assert.equal(await page.locator('#later-list .task-row', { hasText: '复盘会' }).count(), 1, 'Weekly task waits for next Friday');
     // Monday: an undone dated task from Saturday shows as overdue.
     await page.clock.setSystemTime(new Date('2026-11-02T08:00:00'));
     await page.clock.runFor(31000);
-    assert.equal(await page.locator('#task-list .task-row', { hasText: '明天交方案' }).locator('.meta-flag.overdue').count(), 1);
+    assert.equal(await page.locator('#task-list .task-row', { hasText: '交方案' }).locator('.meta-flag.overdue').count(), 1);
     assert.equal(await page.locator('#task-list .task-row', { hasText: '打卡' }).count(), 1, 'Weekdays task back on Monday');
 
     // Edit: change repeat and date.
-    await page.locator('#task-list .task-row', { hasText: '明天交方案' }).getByRole('button', { name: /^编辑/ }).click();
+    await page.locator('#task-list .task-row', { hasText: '交方案' }).getByRole('button', { name: /^编辑/ }).click();
     await page.locator('.edit-form input[name=date]').fill('2026-11-10');
     await page.locator('.edit-form button.primary-button').click();
-    assert.equal(await page.locator('#later-list .task-row', { hasText: '明天交方案' }).count(), 1);
+    assert.equal(await page.locator('#later-list .task-row', { hasText: '交方案' }).count(), 1);
 
     // Groups: create, rename, recolor, use, delete (tasks move), undo.
     await page.locator('.nav-button[data-view=settings]').click();
