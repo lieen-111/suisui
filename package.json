@@ -14,7 +14,8 @@
     "capture": "node scripts/capture.cjs",
     "test:beta": "node scripts/verify-beta.cjs",
     "test:all": "node scripts/verify.cjs && node scripts/verify-completion.cjs && node scripts/verify-beta.cjs && node scripts/verify-pwa.cjs",
-    "check:swift": "python scripts/check-swift-syntax.py"
+    "check:swift": "python scripts/check-swift-syntax.py",
+    "test:v2": "node scripts/verify-v2.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

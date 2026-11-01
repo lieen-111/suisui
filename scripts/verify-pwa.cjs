@@ -31,6 +31,7 @@ const server = http.createServer((req, res) => {
       const browser = await engine.launch({ ...options, headless: true });
       try {
         const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+        await context.addInitScript(() => { window.SUISUI_DEMO = true; });
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));

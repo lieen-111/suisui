@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- Ask to be left out of battery optimization so the screen-off listener is not killed. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Task timers: exact "时间到" alarm where the user allows it (falls back to an inexact alarm). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -52,6 +54,7 @@
 
         <receiver android:name=".CompleteReceiver" android:exported="false" />
         <receiver android:name=".MidnightReceiver" android:exported="false" />
+        <receiver android:name=".TimerReceiver" android:exported="false" />
         <receiver android:name=".SystemReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

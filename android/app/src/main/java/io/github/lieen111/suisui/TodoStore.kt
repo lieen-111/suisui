@@ -71,6 +71,11 @@ object TodoStore {
             if (t.optString("id") == id && !t.optBoolean("done")) {
                 t.put("done", true)
                 t.put("completedAt", maxOf(System.currentTimeMillis(), latest))
+                // Same line app.js adds, so lock-screen completions show up in the weekly / monthly review.
+                val log = s.optJSONArray("log") ?: JSONArray().also { s.put("log", it) }
+                log.put(JSONObject().put("id", id).put("title", t.optString("title")).put("group", t.optString("group", "work"))
+                    .put("at", t.optLong("completedAt")).put("min", t.optLong("focusMs", 0L) / 60000))
+                t.put("focusMs", 0)
                 s.put("rev", s.optLong("rev", 0L) + 1)
                 write(ctx, s.toString())
                 return true

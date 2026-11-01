@@ -262,6 +262,17 @@ open class WebHostActivity : ComponentActivity() {
             }
         }
 
+        /** Countdown for a task: ongoing notification with a live timer, alarm notification when it ends. "" stops it. */
+        @JavascriptInterface
+        fun setTimer(json: String) = TaskTimer.set(ctx, json)
+
+        /** Saves the review poster (base64 PNG) to Pictures/碎碎清单, calling back suisuiImageSaved(ok). */
+        @JavascriptInterface
+        fun saveImage(base64: String, fileName: String) {
+            val ok = runCatching { TaskTimer.saveImage(ctx, android.util.Base64.decode(base64, android.util.Base64.DEFAULT), fileName) }.getOrDefault(false)
+            js("window.suisuiImageSaved && window.suisuiImageSaved($ok)")
+        }
+
         @JavascriptInterface
         fun resetLockStats() = LockLauncher.resetStats(ctx)
 

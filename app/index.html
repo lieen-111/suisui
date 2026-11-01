@@ -24,6 +24,7 @@
       <a class="brand" href="./" aria-label="碎碎清单首页"><img src="icons/icon-192.png" alt="" width="40" height="40"></a>
       <button class="nav-button selected" data-view="tasks" aria-label="清单"><i data-lucide="list-todo"></i><span>清单</span></button>
       <button class="nav-add" id="fab-add" aria-label="添加待办" title="添加待办"><i data-lucide="plus"></i></button>
+      <button class="nav-button nav-review" data-view="review" aria-label="回顾"><i data-lucide="chart-column"></i><span>回顾</span></button>
       <button class="nav-button" data-view="settings" aria-label="设置"><i data-lucide="sliders-horizontal"></i><span>设置</span></button>
       <button class="nav-button about-button" id="about-button" aria-label="关于碎碎清单"><i data-lucide="info"></i><span>关于</span></button>
     </nav>
@@ -46,7 +47,8 @@
         <section class="editor" id="tasks-panel" aria-label="全部待办">
           <div class="section-top today-top">
             <div><h1>今天</h1><p id="progress-copy" class="secondary"></p></div>
-            <div class="progress-ring" id="progress-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"></circle><circle cx="18" cy="18" r="15.5" id="progress-arc"></circle></svg><span id="progress-number"></span></div>
+            <div class="today-side"><button class="review-entry" id="open-review" aria-label="周 / 月回顾"><i data-lucide="chart-column"></i>回顾</button>
+            <div class="progress-ring" id="progress-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"></circle><circle cx="18" cy="18" r="15.5" id="progress-arc"></circle></svg><span id="progress-number"></span></div></div>
           </div>
           <div class="filter-tabs" id="filter-tabs" role="group" aria-label="筛选分组"></div>
           <div class="sheet-backdrop" id="add-backdrop" hidden></div>
@@ -57,7 +59,9 @@
               <div class="chip-row" id="add-group-chips" role="group" aria-label="分组"></div>
               <div class="chip-row" role="group" aria-label="日期"><i data-lucide="calendar"></i><button type="button" class="chip" data-add-when="today">今天</button><button type="button" class="chip" data-add-when="tomorrow">明天</button><button type="button" class="chip" data-add-when="pick">选日期</button><label class="sr-only" for="task-date">指定日期</label><input type="date" id="task-date" class="chip-date" hidden></div>
               <div class="chip-row" role="group" aria-label="重复"><i data-lucide="repeat"></i><button type="button" class="chip" data-add-repeat="none">不重复</button><button type="button" class="chip" data-add-repeat="daily">每天</button><button type="button" class="chip" data-add-repeat="weekdays">工作日</button><button type="button" class="chip" data-add-repeat="weekly">每周</button></div>
+              <div class="chip-row" role="group" aria-label="时长"><i data-lucide="timer"></i><button type="button" class="chip" data-add-duration="0">不计时</button><button type="button" class="chip" data-add-duration="15">15分钟</button><button type="button" class="chip" data-add-duration="25">25分钟</button><button type="button" class="chip" data-add-duration="30">30分钟</button><button type="button" class="chip" data-add-duration="45">45分钟</button><button type="button" class="chip" data-add-duration="60">1小时</button><button type="button" class="chip" data-add-duration="custom">自定</button><label class="sr-only" for="task-duration-custom">自定分钟</label><input type="number" id="task-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div>
             </div>
+            <input type="hidden" id="task-duration" value="0">
             <input type="hidden" id="task-group"><input type="hidden" id="task-when" value="today"><input type="hidden" id="task-repeat" value="none">
             <p class="form-error" id="form-error" role="alert"></p>
           </form>
@@ -82,6 +86,18 @@
             <div id="archive-list"></div>
           </details>
           <footer class="editor-footer"><span class="dot"></span><span id="storage-status">保存在本机</span><button id="reset-button" class="text-button">恢复示例</button></footer>
+        </section>
+
+        <section class="review-panel" id="review-panel" hidden aria-label="回顾">
+          <div class="review-top"><button class="settings-back review-back" id="review-back" aria-label="返回清单"><i data-lucide="chevron-left"></i><span>清单</span></button><h1>回顾</h1></div>
+          <div class="pill-segment review-period" role="group" aria-label="周期"><button data-period="week">每周</button><button data-period="month">每月</button></div>
+          <div class="review-nav"><button class="icon-button" data-shift="-1" aria-label="上一段"><i data-lucide="chevron-left"></i></button><div><strong id="review-range"></strong><small id="review-range-sub"></small></div><button class="icon-button" data-shift="1" id="review-next" aria-label="下一段"><i data-lucide="chevron-right"></i></button></div>
+          <div class="chip-row review-groups" id="review-groups" role="group" aria-label="分组"></div>
+          <div class="review-stats"><div><b id="rs-count">0</b><span>件完成</span></div><div><b id="rs-focus">0</b><span id="rs-focus-unit">分钟专注</span></div><div><b id="rs-days">0</b><span id="rs-days-unit">天有完成</span></div></div>
+          <div class="review-card"><h3>每天完成</h3><div class="review-chart" id="review-chart"></div></div>
+          <div class="review-card" id="review-mix-card"><h3>分组占比</h3><div class="review-mix" id="review-mix"></div><div class="review-legend" id="review-legend"></div></div>
+          <div class="review-card"><h3>做了什么</h3><div class="review-table" id="review-table"></div></div>
+          <button class="primary-button review-export" id="review-export"><i data-lucide="image-down"></i>导出成图片</button>
         </section>
 
         <section class="settings-panel" id="settings-panel" hidden aria-label="设置">
@@ -271,15 +287,23 @@
       <input id="edit-title" name="title" maxlength="120" required autocomplete="off" enterkeyhint="done">
       <div class="edit-field"><span>分组</span><div class="chip-row" id="edit-group-chips" role="group" aria-label="分组"></div></div>
       <div class="edit-field"><span>重复</span><div class="chip-row" id="edit-repeat-chips" role="group" aria-label="重复"><button type="button" class="chip" data-edit-repeat="none">不重复</button><button type="button" class="chip" data-edit-repeat="daily">每天</button><button type="button" class="chip" data-edit-repeat="weekdays">工作日</button><button type="button" class="chip" data-edit-repeat="weekly">每周</button></div></div>
+      <div class="edit-field"><span>时长</span><div class="chip-row" id="edit-duration-chips" role="group" aria-label="时长"><button type="button" class="chip" data-edit-duration="0">不计时</button><button type="button" class="chip" data-edit-duration="15">15分钟</button><button type="button" class="chip" data-edit-duration="25">25分钟</button><button type="button" class="chip" data-edit-duration="30">30分钟</button><button type="button" class="chip" data-edit-duration="45">45分钟</button><button type="button" class="chip" data-edit-duration="60">1小时</button><button type="button" class="chip" data-edit-duration="custom">自定</button><label class="sr-only" for="edit-duration-custom">自定分钟</label><input type="number" id="edit-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div></div>
       <div class="edit-field" id="edit-date-field"><span>日期</span><div class="chip-row"><button type="button" class="chip" data-edit-when="today">今天</button><button type="button" class="chip" data-edit-when="tomorrow">明天</button><label class="sr-only" for="edit-date">日期</label><input type="date" id="edit-date" name="date" class="chip-date"></div></div>
       <label class="setting-row edit-pin" for="edit-pinned"><span>置顶</span><input type="checkbox" id="edit-pinned" name="pinned" class="switch"></label>
-      <input type="hidden" name="group"><input type="hidden" name="repeat">
+      <input type="hidden" name="group"><input type="hidden" name="repeat"><input type="hidden" name="duration">
       <div class="dialog-actions"><button type="button" class="text-button danger" data-action="delete" id="edit-delete"><i data-lucide="trash-2"></i>删除</button><button class="primary-button">保存</button></div>
     </form>
   </dialog>
+  <dialog id="poster-dialog" class="sheet poster-sheet" aria-labelledby="poster-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <div class="dialog-heading"><h2 id="poster-title">回顾图片</h2><button class="icon-button" id="close-poster" aria-label="关闭"><i data-lucide="x"></i></button></div>
+    <div class="poster-frame"><img id="poster-image" alt="回顾图片"></div>
+    <p class="setting-note" id="poster-note"></p>
+    <div class="dialog-actions"><button class="primary-button" id="poster-save"><i data-lucide="download"></i>保存图片</button></div>
+  </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.3</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.4</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -288,7 +312,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.3 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.4 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

@@ -41,7 +41,10 @@
     { id: 'seed-5', title: '把下周的选题记下来', group: 'work' },
     { id: 'seed-6', title: '读完床头的那一章', group: 'life' }
   ].map(normalizeTask);
-  let state = { schema: SCHEMA, rev: 0, tasks: examples(), archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey() };
+  // First use starts empty. The sample list exists only for automated checks and demos (window.SUISUI_DEMO).
+  const DEMO = !!window.SUISUI_DEMO;
+  const LOG_LIMIT = 3000;
+  let state = { schema: SCHEMA, rev: 0, tasks: DEMO ? examples() : [], archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey(), log: [], timer: null };
   let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
   const completing = new Set();
@@ -87,8 +90,26 @@
       pinned: !!t.pinned, done: !!t.done, completedAt: Number.isFinite(t.completedAt) ? t.completedAt : 0,
       repeat, repeatDay: repeat === 'weekly' && Number.isInteger(t.repeatDay) && t.repeatDay >= 0 && t.repeatDay <= 6 ? t.repeatDay : (repeat === 'weekly' ? weekday(dayKey()) : null),
       date: repeat === 'none' && isDayKey(t.date) ? t.date : '',
+      // Optional time box in minutes: tasks with one get a start button and a countdown.
+      duration: Number.isInteger(t.duration) && t.duration > 0 && t.duration <= 600 ? t.duration : 0,
+      focusMs: Number.isFinite(t.focusMs) && t.focusMs > 0 ? Math.min(t.focusMs, 864e5) : 0,
       createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0
     };
+  }
+  /** Completion log: one line per finish, kept after repeating tasks reset, for the weekly/monthly review. */
+  function normalizeLog(list) {
+    return (Array.isArray(list) ? list : []).filter(e => e && typeof e.id === 'string' && typeof e.title === 'string' && Number.isFinite(e.at) && e.at > 0)
+      .map(e => ({ id: e.id.slice(0, 80), title: e.title.slice(0, 120), group: typeof e.group === 'string' ? e.group.slice(0, 40) : 'work', at: e.at, min: Number.isFinite(e.min) && e.min > 0 ? Math.round(e.min) : 0 }))
+      .sort((a, b) => a.at - b.at).slice(-LOG_LIMIT);
+  }
+  function backfillLog(tasks, archive) {
+    return normalizeLog([...tasks, ...archive].filter(t => t.done && t.completedAt > 1e12).map(t => ({ id: t.id, title: t.title, group: t.group, at: t.completedAt, min: 0 })));
+  }
+  function normalizeTimer(t, tasks) {
+    if (!t || typeof t.id !== 'string' || !tasks.some(x => x.id === t.id && !x.done)) return null;
+    const total = Number(t.total) || 0, endsAt = Number(t.endsAt) || 0, left = Number(t.left) || 0;
+    if (total <= 0 || (!endsAt && left <= 0)) return null;
+    return { id: t.id, total, endsAt, left: endsAt ? 0 : Math.min(left, total) };
   }
   function normalizeArchived(t) {
     const task = normalizeTask(t);
@@ -132,6 +153,8 @@
     state.day = isDayKey(saved.day) ? saved.day : dayKey();
     // Every save bumps rev; the Android side refuses a save older than what it has (a stale page in the background).
     state.rev = Number.isFinite(saved.rev) ? saved.rev : 0;
+    state.log = Array.isArray(saved.log) ? normalizeLog(saved.log) : backfillLog(state.tasks, state.archive);
+    state.timer = normalizeTimer(saved.timer, state.tasks);
     return true;
   }
 
@@ -234,13 +257,15 @@
 
   const isPhone = () => matchMedia('(max-width:760px)').matches;
   function setView(view) {
-    if (!['tasks', 'settings'].includes(view)) view = 'tasks';
+    if (!['tasks', 'settings', 'review'].includes(view)) view = 'tasks';
     closeAdd();
     document.body.dataset.view = view;
     document.querySelectorAll('.nav-button[data-view]').forEach(b => { b.classList.toggle('selected', b.dataset.view === view); b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
     const settings = view === 'settings';
     $('settings-panel').hidden = !settings;
-    $('tasks-panel').hidden = settings;
+    $('review-panel').hidden = view !== 'review';
+    $('tasks-panel').hidden = view !== 'tasks';
+    if (view === 'review') renderReview();
     if (settings) openSettingsPage('index');
     else updateWallpaperHole();
     if (isPhone()) window.scrollTo({ top: 0, behavior: 'instant' });
@@ -300,7 +325,21 @@
     document.querySelectorAll('[data-add-when]').forEach(b => { const on = b.dataset.addWhen === when; b.classList.toggle('active', on && !dateless); b.setAttribute('aria-pressed', String(on)); b.disabled = dateless; });
     document.querySelectorAll('[data-add-repeat]').forEach(b => { const on = b.dataset.addRepeat === repeat; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     $('task-date').hidden = when !== 'pick' || dateless;
+    durationChips('add', Number($('task-duration').value) || 0, $('task-duration-custom'));
   }
+  // Duration chips (add and edit): preset minutes, or "自定" with a number field.
+  let customDuration = { add: false, edit: false };
+  function durationChips(which, minutes, input) {
+    const preset = minutes === 0 || DURATIONS.includes(minutes);
+    const custom = customDuration[which] || !preset;
+    document.querySelectorAll(`[data-${which}-duration]`).forEach(b => {
+      const v = b.dataset[`${which}Duration`], on = v === 'custom' ? custom : !custom && Number(v) === minutes;
+      b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
+    });
+    input.hidden = !custom;
+    if (custom && minutes && document.activeElement !== input) input.value = String(minutes);
+  }
+  function readCustom(input) { const n = Math.round(Number(input.value)); return Number.isFinite(n) && n >= 1 && n <= 600 ? n : 0; }
   function openAdd() {
     if (document.body.dataset.view !== 'tasks') setView('tasks');
     if (filter !== 'all' && state.groups.some(g => g.id === filter)) addGroupId = filter;
@@ -341,6 +380,9 @@
     $('edit-date').value = task.date || '';
     $('edit-pinned').checked = task.pinned;
     $('edit-delete').dataset.id = id;
+    form.elements.duration.value = String(task.duration || 0);
+    customDuration.edit = false; $('edit-duration-custom').value = '';
+    durationChips('edit', task.duration || 0, $('edit-duration-custom'));
     editChips(task, groupOf(task.group).id, task.repeat);
     if (!$('edit-sheet').open) $('edit-sheet').showModal();
     icons($('edit-sheet'));
@@ -356,15 +398,17 @@
     for (const d of document.querySelectorAll('dialog[open]')) { d.close(); return true; }
     if (closeAdd()) return true;
     if (document.body.dataset.view === 'settings') { settingsPage !== 'index' ? openSettingsPage('index') : setView('tasks'); return true; }
+    if (document.body.dataset.view === 'review') { setView('tasks'); return true; }
     return false;
   };
-  function showToast(message, undo = null) {
+  function showToast(message, undo = null, label = '撤销', ms = 0) {
     clearTimeout(toastTimer);
     undoAction = undo;
     $('toast-message').textContent = message;
+    $('undo-button').textContent = label;
     $('undo-button').hidden = !undo;
     $('toast').hidden = false;
-    toastTimer = setTimeout(hideToast, undo ? 8000 : 4500);
+    toastTimer = setTimeout(hideToast, ms || (undo ? 8000 : 4500));
   }
   function hideToast() { $('toast').hidden = true; clearTimeout(toastTimer); undoAction = null; }
   function metaFlags(t) {
@@ -377,8 +421,10 @@
   }
   // Tap the circle to finish; tap the text to edit (group, date, repeat, pin, delete in one sheet).
   function row(t) {
-    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}${t.pinned ? ' is-pinned' : ''}" data-task-id="${esc(t.id)}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><button class="task-body" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}"><span class="task-title">${esc(t.title)}</span><span class="task-meta">${metaFlags(t)}</span></button></div>`;
+    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}${t.pinned ? ' is-pinned' : ''}" data-task-id="${esc(t.id)}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><button class="task-body" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}"><span class="task-title">${esc(t.title)}</span><span class="task-meta">${metaFlags(t)}</span></button>${timerPill(t)}${state.timer?.id === t.id ? `<button class="timer-stop" data-action="timer-stop" data-id="${esc(t.id)}" aria-label="结束计时">${icon('square')}</button>` : ''}</div>`;
   }
+  // First use: no sample tasks, a calm invitation instead (the dots echo the logo).
+  const FIRST_RUN = `<div class="first-run"><svg class="first-art" viewBox="0 0 120 120" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => { const a = (-80 + i * 24.3) * Math.PI / 180, t = i / 13; return `<circle cx="${(60 + 44 * Math.cos(a)).toFixed(1)}" cy="${(60 + 44 * Math.sin(a)).toFixed(1)}" r="${(2 + t * 4).toFixed(1)}" opacity="${(.3 + t * .7).toFixed(2)}"/>`; }).join('')}<path d="M44 61l11 11 22-23" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>从第一件小事开始</h2><p>点下面的 + 写下今天想做的事。<br>需要专注的事可以设个时长，点开始就倒计时。</p><button class="primary-button" data-action="first-add">${icon('plus')}添加第一件</button></div>`;
   function renderFilters(todo) {
     if (filter !== 'all' && !state.groups.some(g => g.id === filter)) filter = 'all';
     const count = id => todo.filter(t => id === 'all' || groupOf(t.group).id === id).length;
@@ -400,7 +446,11 @@
     $('gesture-tips').hidden = !!state.settings.tipsSeen || !todo.length;
     if (editing && !state.tasks.some(t => t.id === editing)) closeEdit();
     $('pending-count').textContent = String(visible.length);
-    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
+    const firstRun = !state.tasks.length && !state.log.length;
+    document.querySelector('.list-heading').hidden = firstRun;
+    $('filter-tabs').hidden = firstRun;
+    $('completed-section').hidden = !done.length;
+    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
     const laterVisible = upcoming.filter(inFilter);
     $('later-section').hidden = !laterVisible.length;
     $('later-count').textContent = String(laterVisible.length);
@@ -412,6 +462,7 @@
     renderGroupSettings();
     renderPreview();
     if (settingsPage === 'index') renderSettingsSummary();
+    if (document.body.dataset.view === 'review') renderReview();
     icons();
     $('storage-status').textContent = storageCopy();
   }
@@ -428,6 +479,8 @@
     list.innerHTML = state.groups.map(g => `<div class="group-row" data-group-id="${esc(g.id)}"><span class="dot" style="background:${g.color}"></span><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button></div>`).join('');
     $('add-group').disabled = state.groups.length >= 12;
   }
+  // A lock-card row with a duration gets its own start button next to it (buttons cannot nest).
+  function lockRow(t, button) { const pill = timerPill(t, 'lock-timer'); return pill ? `<div class="lock-row">${button}${pill}</div>` : button; }
   function renderPreview() {
     const todo = pending(), done = doneList().length;
     const list = $('activity-list'), scrollTop = list.scrollTop;
@@ -440,7 +493,7 @@
     $('activity').classList.toggle('is-private', hide);
     list.innerHTML = hide
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${todo.length ? `今天还有 ${todo.length} 件待办` : '今天的事都完成了'}</span><button class="lock-reveal" id="lock-reveal">解锁查看</button></div>`
-      : items.length ? items.map(t => `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span></button>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
+      : items.length ? items.map(t => lockRow(t, `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span></button>`)).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
     list.scrollTop = scrollTop;
     $('remaining-label').textContent = todo.length ? `剩余 ${todo.length} 项 · 已完成 ${done} 项` : (done ? `全部完成 · ${done} 项` : '暂无待办');
     $('preview-footer-copy').textContent = `碎碎清单 · ${todo.length} 项待完成`;
@@ -454,7 +507,7 @@
     $('mini-remaining').textContent = $('remaining-label').textContent;
     $('mini-list').innerHTML = state.settings.lockPrivacy
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${open ? `今天还有 ${open} 件待办` : '今天的事都完成了'}</span><span class="lock-reveal">解锁查看</span></div>`
-      : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span></div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
+      : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
   function applySettings() {
     const s = state.settings, colors = palette[s.accent], dark = darkScheme.matches, root = document.documentElement.style;
@@ -698,7 +751,7 @@
   /* ---------- Backup: export and import (also accepts the native apps' exports) ---------- */
   function backupPayload() {
     const { photo, ...settings } = state.settings;
-    return { app: 'suisui', version: SCHEMA, exportedAt: new Date().toISOString(), tasks: state.tasks, archive: state.archive, groups: state.groups, settings };
+    return { app: 'suisui', version: SCHEMA, exportedAt: new Date().toISOString(), tasks: state.tasks, archive: state.archive, groups: state.groups, log: state.log, settings };
   }
   async function exportBackup() {
     if (PREVIEW) { showToast('预览页不能下载文件，请在正式网站导出'); return; }
@@ -721,7 +774,8 @@
     const tasks = uniqueTasks(list);
     const archive = uniqueTasks(data?.archive, normalizeArchived);
     if (!tasks.length && !archive.length) throw new Error('文件里没有可导入的待办。');
-    return { tasks, archive, groups: Array.isArray(data?.groups) ? normalizeGroups(data.groups) : null, settings: data?.settings && typeof data.settings === 'object' ? data.settings : null };
+    const log = Array.isArray(data?.log) ? normalizeLog(data.log) : backfillLog(tasks, archive);
+    return { tasks, archive, log, groups: Array.isArray(data?.groups) ? normalizeGroups(data.groups) : null, settings: data?.settings && typeof data.settings === 'object' ? data.settings : null };
   }
   function openImport(file) {
     $('import-error').textContent = '';
@@ -749,12 +803,16 @@
       state.tasks = pendingImport.tasks;
       state.archive = pendingImport.archive.slice(-ARCHIVE_LIMIT);
       if (pendingImport.groups) state.groups = pendingImport.groups;
+      state.log = pendingImport.log;
+      if (state.timer && !state.tasks.some(t => t.id === state.timer.id)) { state.timer = null; syncNativeTimer(); }
     } else {
       const ids = new Set(state.tasks.map(t => t.id));
       state.tasks.push(...pendingImport.tasks.filter(t => !ids.has(t.id)));
       const archived = new Set(state.archive.map(t => t.id));
       state.archive = [...state.archive, ...pendingImport.archive.filter(t => !archived.has(t.id) && !ids.has(t.id))].slice(-ARCHIVE_LIMIT);
       mergeGroups(pendingImport.groups);
+      const seen = new Set(state.log.map(e => `${e.id}@${e.at}`));
+      state.log = normalizeLog([...state.log, ...pendingImport.log.filter(e => !seen.has(`${e.id}@${e.at}`))]);
     }
     if ($('import-settings').checked && pendingImport.settings) state.settings = cleanSettings({ ...pendingImport.settings, photo: state.settings.photo, wallpaper: pendingImport.settings.wallpaper === 'custom' ? state.settings.wallpaper : pendingImport.settings.wallpaper });
     pendingImport = null; filter = 'all'; closeEdit();
@@ -804,6 +862,20 @@
     source.style.visibility = 'hidden';
     await new Promise(resolve => setTimeout(resolve, 520));
   }
+  /** Finish a task: completion time, focus time from its timer, one line in the review log. */
+  function markDone(task) {
+    if (state.timer?.id === task.id) settleTimer(false);
+    task.done = true;
+    task.completedAt = Math.max(Date.now(), ...state.tasks.map(t => (t.completedAt || 0) + 1));
+    state.log.push({ id: task.id, title: task.title, group: task.group, at: task.completedAt, min: Math.round((task.focusMs || 0) / 60000) });
+    if (state.log.length > LOG_LIMIT) state.log = state.log.slice(-LOG_LIMIT);
+    task.focusMs = 0;
+  }
+  function unmarkDone(task) {
+    const i = state.log.findLastIndex(e => e.id === task.id && e.at === task.completedAt);
+    if (i >= 0) { task.focusMs = state.log[i].min * 60000; state.log.splice(i, 1); }
+    task.done = false;
+  }
   async function complete(id, button) {
     if (completing.has(id)) return;
     const task = state.tasks.find(t => t.id === id);
@@ -819,8 +891,7 @@
     document.querySelectorAll('.task-row, .lock-task').forEach(el => positions.set(positionKey(el), el.getBoundingClientRect().top));
     completing.delete(id);
     if (!state.tasks.includes(task) || task.done) { render(); return; }
-    task.done = true;
-    task.completedAt = Math.max(Date.now(), ...state.tasks.map(t => (t.completedAt || 0) + 1));
+    markDone(task);
     if (editing === id) closeEdit();
     save(); render();
     $('completed-section').open = true;
@@ -842,7 +913,7 @@
     }
     $('completion-note').textContent = pending().length ? '又完成一件。' : '今天的事，圆满完成。';
     setTimeout(() => { $('completion-note').textContent = ''; }, 2400);
-    showToast('已完成一项待办', () => { task.done = false; save(); render(); });
+    showToast('已完成一项待办', () => { unmarkDone(task); save(); render(); });
     if (!isBusy()) {
       const next = button.classList.contains('lock-task') ? $('activity-list').querySelector('[data-action="complete"]') || $('activity-list').querySelector('button') : $('task-list').querySelector('[data-action="complete"]');
       if (next) next.focus({ preventScroll: true });
@@ -880,6 +951,256 @@
     showToast(`已删除“${group?.name || '分组'}”${moved ? `，${moved} 件移到“${fallback.name}”` : ''}`, () => { Object.assign(state, before); save(); render(); });
   }
 
+  /* ---------- Review: what got done this week / month, as a table and as a designed image ---------- */
+  const review = { period: 'week', offset: 0, group: 'all' };
+  const WEEK_SHORT = ['日', '一', '二', '三', '四', '五', '六'];
+  function reviewRange() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let start, end;
+    if (review.period === 'week') {
+      start = new Date(today); start.setDate(today.getDate() - (today.getDay() + 6) % 7 + review.offset * 7);
+      end = new Date(start); end.setDate(start.getDate() + 7);
+    } else {
+      start = new Date(today.getFullYear(), today.getMonth() + review.offset, 1);
+      end = new Date(today.getFullYear(), today.getMonth() + review.offset + 1, 1);
+    }
+    const days = [];
+    for (const d = new Date(start); d < end; d.setDate(d.getDate() + 1)) days.push(new Date(d));
+    return { start, end, days };
+  }
+  function reviewData() {
+    const { start, end, days } = reviewRange();
+    const inRange = state.log.filter(e => e.at >= start.getTime() && e.at < end.getTime());
+    const entries = inRange.filter(e => review.group === 'all' || groupOf(e.group).id === review.group);
+    const perDay = days.map(d => { const k = dayKey(d); return { date: d, key: k, items: entries.filter(e => dayKey(new Date(e.at)) === k) }; });
+    const minutes = entries.reduce((sum, e) => sum + (e.min || 0), 0);
+    const mix = state.groups.map(g => ({ group: g, count: inRange.filter(e => groupOf(e.group).id === g.id).length })).filter(m => m.count);
+    const md = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
+    const last = new Date(end); last.setDate(last.getDate() - 1);
+    const title = review.period === 'week' ? `${md.format(start)} – ${md.format(last)}` : `${start.getFullYear()}年${start.getMonth() + 1}月`;
+    const relative = review.period === 'week' ? ['本周', '上周'][-review.offset] || `${-review.offset} 周前` : ['本月', '上个月'][-review.offset] || `${-review.offset} 个月前`;
+    const elapsed = Math.max(1, Math.min(days.length, Math.ceil((Math.min(Date.now(), end.getTime()) - start.getTime()) / 864e5)));
+    return { start, end, last, days, perDay, entries, minutes, mix, title, relative, activeDays: perDay.filter(d => d.items.length).length, elapsed, groupName: review.group === 'all' ? '全部' : groupOf(review.group).name };
+  }
+  const focusText = min => min >= 60 ? { value: (min / 60).toFixed(min % 60 ? 1 : 0), unit: '小时专注' } : { value: String(min), unit: '分钟专注' };
+  function renderReview() {
+    const d = reviewData();
+    document.querySelectorAll('[data-period]').forEach(b => { b.classList.toggle('active', b.dataset.period === review.period); b.setAttribute('aria-pressed', String(b.dataset.period === review.period)); });
+    $('review-range').textContent = d.title;
+    $('review-range-sub').textContent = d.relative;
+    $('review-next').disabled = review.offset >= 0;
+    if (review.group !== 'all' && !state.groups.some(g => g.id === review.group)) review.group = 'all';
+    $('review-groups').innerHTML = [{ id: 'all', name: '全部' }, ...state.groups].map(g => `<button type="button" class="chip${review.group === g.id ? ' active' : ''}" data-review-group="${esc(g.id)}" aria-pressed="${review.group === g.id}">${g.color ? `<span class="dot" style="background:${g.color}"></span>` : ''}${esc(g.name)}</button>`).join('');
+    $('rs-count').textContent = String(d.entries.length);
+    const f = focusText(d.minutes);
+    $('rs-focus').textContent = f.value; $('rs-focus-unit').textContent = f.unit;
+    $('rs-days').textContent = `${d.activeDays}`; $('rs-days-unit').textContent = `/ ${d.elapsed} 天有完成`;
+    const max = Math.max(1, ...d.perDay.map(x => x.items.length));
+    const month = review.period === 'month';
+    $('review-chart').classList.toggle('is-month', month);
+    $('review-chart').innerHTML = d.perDay.map(x => { const n = x.items.length, day = x.date.getDate(); const label = month ? ([1, 5, 10, 15, 20, 25, 30].includes(day) ? day : '') : WEEK_SHORT[x.date.getDay()]; return `<div class="bar${n === max && n ? ' is-top' : ''}${x.key === dayKey() ? ' is-today' : ''}" title="${x.date.getMonth() + 1}月${day}日 · ${n} 件"><span class="bar-val">${n || ''}</span><i style="--h:${n / max}"></i><span class="bar-label">${label}</span></div>`; }).join('');
+    const mixTotal = d.mix.reduce((s, m) => s + m.count, 0);
+    $('review-mix-card').hidden = !mixTotal;
+    $('review-mix').innerHTML = d.mix.map(m => `<i style="flex:${m.count};background:${m.group.color}"></i>`).join('');
+    $('review-legend').innerHTML = d.mix.map(m => `<span><span class="dot" style="background:${m.group.color}"></span>${esc(m.group.name)} ${m.count} · ${Math.round(m.count / mixTotal * 100)}%</span>`).join('');
+    const wd = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    const daysWith = [...d.perDay].reverse().filter(x => x.items.length);
+    $('review-table').innerHTML = daysWith.length ? daysWith.map(x => `<div class="rt-day"><div class="rt-date"><span>${wd.format(x.date)}</span><span>${x.items.length} 件</span></div>${x.items.map(e => `<div class="rt-row"><span class="dot" style="background:${groupOf(e.group).color}"></span><span class="rt-title">${esc(e.title)}</span><span class="rt-min">${e.min ? durationText(e.min) : ''}</span></div>`).join('')}</div>`).join('')
+      : `<div class="review-empty">${icon('calendar-check')}<span>${review.offset === 0 ? '这段时间还没有完成的事，完成后会出现在这里。' : '这段时间没有完成记录。'}</span></div>`;
+    $('review-export').disabled = !d.entries.length;
+    icons($('review-panel'));
+  }
+
+  /* Poster: a 1080px-wide image drawn on a canvas, so it looks the same on every phone. */
+  function loadImage(src) { return new Promise(resolve => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src; }); }
+  function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+  function fitText(ctx, text, width) { if (ctx.measureText(text).width <= width) return text; let t = text; while (t.length && ctx.measureText(`${t}…`).width > width) t = t.slice(0, -1); return `${t}…`; }
+  async function drawPoster(d) {
+    const W = 1080, P = 72, F = '-apple-system, "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif';
+    const font = (w, s) => `${w} ${s}px ${F}`;
+    const accent = palette[state.settings.accent][0];
+    const daysWith = [...d.perDay].reverse().filter(x => x.items.length);
+    const MAX_ROWS = 36;
+    let rows = 0; const blocks = [];
+    for (const x of daysWith) { if (rows >= MAX_ROWS) break; const items = x.items.slice(0, MAX_ROWS - rows); rows += items.length; blocks.push({ ...x, items }); }
+    const hidden = d.entries.length - rows;
+    const tableH = blocks.reduce((h, b) => h + 70 + b.items.length * 66, 0) + (hidden > 0 ? 64 : 0) + 120;
+    const H = 640 + 420 + (d.mix.length ? 230 : 0) + tableH + 200;
+    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    // paper
+    ctx.fillStyle = '#f4f2ec'; ctx.fillRect(0, 0, W, H);
+    // hero
+    const g = ctx.createLinearGradient(0, 0, W, 640); g.addColorStop(0, '#1d7058'); g.addColorStop(.6, '#0f4d3c'); g.addColorStop(1, '#082a20');
+    ctx.fillStyle = g; roundRect(ctx, 0, 0, W, 640, [0, 0, 56, 56]); ctx.fill();
+    // fragments ring (the 碎点 mark), large and faint on the right
+    for (let i = 0; i < 18; i++) { const a = (-80 + i * 19) * Math.PI / 180, t = i / 17; ctx.globalAlpha = .08 + t * .22; ctx.fillStyle = '#bff0d8'; ctx.beginPath(); ctx.arc(860 + 210 * Math.cos(a), 250 + 210 * Math.sin(a), 6 + t * 16, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    const logo = await loadImage('icons/icon-192.png');
+    if (logo) { ctx.save(); roundRect(ctx, P, 74, 72, 72, 18); ctx.clip(); ctx.drawImage(logo, P, 74, 72, 72); ctx.restore(); }
+    ctx.fillStyle = '#ffffffcc'; ctx.font = font(600, 28); ctx.fillText('碎碎清单', P + 92, 122);
+    ctx.fillStyle = '#9fe1c4'; ctx.font = font(700, 24); ctx.fillText((review.period === 'week' ? 'WEEKLY  REVIEW' : 'MONTHLY  REVIEW').split('').join(String.fromCharCode(8202)), P, 232);
+    ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText(review.period === 'week' ? '本周回顾' : '本月回顾', P, 336);
+    ctx.fillStyle = '#ffffffb3'; ctx.font = font(500, 34); ctx.fillText(`${d.title}${d.groupName !== '全部' ? ` · ${d.groupName}` : ''}`, P, 396);
+    const f = focusText(d.minutes);
+    [[String(d.entries.length), '件完成'], [f.value, f.unit], [`${d.activeDays}/${d.elapsed}`, '天有完成']].forEach(([v, u], i) => {
+      const x = P + i * 330;
+      ctx.fillStyle = '#fff'; ctx.font = font(800, 84); ctx.fillText(v, x, 540);
+      ctx.fillStyle = '#ffffffa6'; ctx.font = font(500, 28); ctx.fillText(u, x, 588);
+    });
+    // chart card
+    let y = 680;
+    const card = (h) => { ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#0b2a2014'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; roundRect(ctx, 40, y, W - 80, h, 40); ctx.fill(); ctx.shadowColor = 'transparent'; };
+    card(380);
+    ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('每天完成', P + 8, y + 70);
+    const max = Math.max(1, ...d.perDay.map(x => x.items.length));
+    const n = d.perDay.length, cx0 = P + 8, cw = W - 2 * (P + 8), slot = cw / n, bw = Math.min(64, slot * .62), base = y + 300;
+    d.perDay.forEach((x, i) => {
+      const c = x.items.length, h = c ? Math.max(10, (c / max) * 170) : 6, bx = cx0 + i * slot + (slot - bw) / 2;
+      ctx.fillStyle = c === max && c ? accent : (c ? '#bfe2d2' : '#e8ebe8'); roundRect(ctx, bx, base - h, bw, h, Math.min(16, bw / 2)); ctx.fill();
+      if (c && (n <= 7 || c === max)) { ctx.fillStyle = '#3a4a42'; ctx.font = font(700, n <= 7 ? 28 : 22); ctx.textAlign = 'center'; ctx.fillText(String(c), bx + bw / 2, base - h - 14); ctx.textAlign = 'left'; }
+      const day = x.date.getDate(); const lab = n <= 7 ? `周${WEEK_SHORT[x.date.getDay()]}` : ([1, 5, 10, 15, 20, 25, 30].includes(day) ? String(day) : '');
+      if (lab) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 24); ctx.textAlign = 'center'; ctx.fillText(lab, bx + bw / 2, base + 44); ctx.textAlign = 'left'; }
+    });
+    y += 420;
+    // mix card
+    if (d.mix.length) {
+      card(190);
+      ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('分组占比', P + 8, y + 70);
+      const total = d.mix.reduce((s, m) => s + m.count, 0); let bx = P + 8; const bwid = W - 2 * (P + 8);
+      ctx.save(); roundRect(ctx, bx, y + 96, bwid, 22, 11); ctx.clip();
+      d.mix.forEach(m => { const w = bwid * m.count / total; ctx.fillStyle = m.group.color; ctx.fillRect(bx, y + 96, w + 1, 22); bx += w; });
+      ctx.restore();
+      let lx = P + 8; ctx.font = font(500, 26);
+      d.mix.forEach(m => { const label = `${m.group.name} ${m.count} · ${Math.round(m.count / total * 100)}%`; ctx.fillStyle = m.group.color; ctx.beginPath(); ctx.arc(lx + 8, y + 155, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#4a5550'; ctx.fillText(label, lx + 24, y + 164); lx += ctx.measureText(label).width + 64; });
+      y += 230;
+    }
+    // table card
+    card(tableH);
+    ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('做了什么', P + 8, y + 70);
+    let ty = y + 120;
+    const wd = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' });
+    if (!blocks.length) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 28); ctx.fillText('这段时间还没有完成记录', P + 8, ty + 20); }
+    blocks.forEach(b => {
+      ctx.fillStyle = '#8a958f'; ctx.font = font(600, 24); ctx.fillText(wd.format(b.date), P + 8, ty + 28);
+      ctx.textAlign = 'right'; ctx.fillText(`${b.items.length} 件`, W - P - 8, ty + 28); ctx.textAlign = 'left';
+      ty += 54;
+      b.items.forEach((e, i) => {
+        if (i) { ctx.fillStyle = '#eceeed'; ctx.fillRect(P + 40, ty - 4, W - 2 * P - 48, 2); }
+        ctx.fillStyle = groupOf(e.group).color; ctx.beginPath(); ctx.arc(P + 16, ty + 28, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1f2a25'; ctx.font = font(500, 32);
+        const minText = e.min ? durationText(e.min) : '';
+        ctx.fillText(fitText(ctx, e.title, W - 2 * P - 80 - (minText ? 150 : 0)), P + 44, ty + 40);
+        if (minText) { ctx.fillStyle = accent; ctx.font = font(600, 26); ctx.textAlign = 'right'; ctx.fillText(minText, W - P - 8, ty + 38); ctx.textAlign = 'left'; }
+        ty += 66;
+      });
+      ty += 16;
+    });
+    if (hidden > 0) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 26); ctx.fillText(`… 还有 ${hidden} 件`, P + 44, ty + 24); }
+    // footer
+    const fy = H - 96;
+    ctx.fillStyle = '#9aa39e'; ctx.font = font(500, 24);
+    ctx.fillText('碎碎清单 · 小事一件一件做完', P, fy);
+    ctx.textAlign = 'right'; ctx.fillText(`生成于 ${new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date())}`, W - P, fy); ctx.textAlign = 'left';
+    return canvas;
+  }
+  let posterBlob = null, posterName = '';
+  async function exportPoster() {
+    const d = reviewData();
+    const canvas = await drawPoster(d);
+    posterName = `碎碎清单-${review.period === 'week' ? '周' : '月'}回顾-${dayKey(d.start)}.png`;
+    const url = canvas.toDataURL('image/png');
+    posterBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    $('poster-image').src = url;
+    $('poster-note').textContent = PREVIEW ? '预览页不能直接保存：在手机上长按图片即可保存到相册。' : isIOS() ? '点“保存图片”后选“存储图像”，或长按图片保存到相册。' : '';
+    $('poster-save').hidden = PREVIEW;
+    $('poster-dialog').showModal(); icons($('poster-dialog'));
+  }
+  async function savePoster() {
+    if (!posterBlob) return;
+    if (ANDROID?.saveImage) {
+      const url = $('poster-image').src;
+      try { ANDROID.saveImage(url.slice(url.indexOf(',') + 1), posterName); } catch { showToast('保存失败，请长按图片保存'); }
+      return;
+    }
+    const file = new File([posterBlob], posterName, { type: 'image/png' });
+    try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: '碎碎清单回顾' }); return; } } catch (error) { if (error?.name === 'AbortError') return; }
+    const url = URL.createObjectURL(posterBlob), a = document.createElement('a');
+    a.href = url; a.download = posterName; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+    showToast('图片已保存');
+  }
+  window.suisuiImageSaved = ok => showToast(ok ? '已保存到相册（图片 / 碎碎清单）' : '没有保存');
+
+  /* ---------- Timer: tasks with a duration get a start button and a countdown ---------- */
+  // One timer at a time. state.timer = { id, total, endsAt (running) | left (paused) }; it survives reloads,
+  // and the Android app shows it as a countdown notification with an alarm when it ends.
+  const DURATIONS = [15, 25, 30, 45, 60];
+  const timerLeft = t => t ? (t.endsAt ? Math.max(0, t.endsAt - Date.now()) : t.left) : 0;
+  const clockText = ms => { const s = Math.ceil(ms / 1000); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+  const durationText = min => min >= 60 && min % 60 === 0 ? `${min / 60}小时` : `${min}分钟`;
+  function syncNativeTimer() {
+    if (!ANDROID?.setTimer) return;
+    const t = state.timer, task = t && state.tasks.find(x => x.id === t.id);
+    try { ANDROID.setTimer(t && task ? JSON.stringify({ title: task.title, endsAt: t.endsAt, left: t.left, total: t.total }) : ''); } catch { /* optional */ }
+  }
+  /** Stop the current timer and credit the time spent to its task (all of it when it ran out). */
+  function settleTimer(finished) {
+    const t = state.timer;
+    if (!t) return;
+    const task = state.tasks.find(x => x.id === t.id);
+    if (task) task.focusMs = (task.focusMs || 0) + (finished ? t.total : Math.max(0, t.total - timerLeft(t)));
+    state.timer = null;
+    syncNativeTimer();
+  }
+  function startTimer(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task || task.done || !task.duration) return;
+    const t = state.timer;
+    if (t && t.id === id) { // pause / resume
+      if (t.endsAt) { t.left = timerLeft(t); t.endsAt = 0; showToast('已暂停计时'); }
+      else { t.endsAt = Date.now() + t.left; t.left = 0; }
+    } else {
+      if (t) settleTimer(false);
+      state.timer = { id, total: task.duration * 60000, endsAt: Date.now() + task.duration * 60000, left: 0 };
+      showToast(`开始计时：${task.title} · ${durationText(task.duration)}`);
+    }
+    haptic();
+    syncNativeTimer(); save(); render(); tickTimer();
+  }
+  function stopTimer() {
+    if (!state.timer) return;
+    settleTimer(false); save(); render(); showToast('已结束计时');
+  }
+  function finishTimer() {
+    const t = state.timer, task = t && state.tasks.find(x => x.id === t.id);
+    settleTimer(true); save(); render();
+    if (!task) return;
+    haptic('done');
+    try { navigator.vibrate?.([120, 80, 120]); } catch { /* optional */ }
+    showToast(`时间到：${task.title}`, () => {
+      const button = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"] .check-task`) || document.querySelector(`.lock-task[data-id="${CSS.escape(task.id)}"]`);
+      if (button) complete(task.id, button); else if (!task.done) { markDone(task); save(); render(); }
+    }, '标记完成', 15000);
+  }
+  // Live update of every countdown on screen, once a second while a timer runs.
+  function tickTimer() {
+    const t = state.timer;
+    if (!t) return;
+    const left = timerLeft(t);
+    if (t.endsAt && left <= 0) { finishTimer(); return; }
+    document.querySelectorAll('[data-timer-text]').forEach(el => { el.textContent = clockText(left); });
+    document.querySelectorAll('[data-timer-progress]').forEach(el => { el.style.setProperty('--p', String(1 - left / t.total)); });
+  }
+  setInterval(tickTimer, 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tickTimer(); });
+  function timerPill(t, cls = 'timer-pill') {
+    if (!t.duration || t.done) return '';
+    const run = state.timer?.id === t.id ? state.timer : null;
+    if (!run) return `<button class="${cls}" data-action="timer" data-id="${esc(t.id)}" aria-label="开始计时 ${durationText(t.duration)}：${esc(t.title)}">${icon('play')}<span>${t.duration >= 60 && t.duration % 60 === 0 ? `${t.duration / 60}小时` : `${t.duration}分`}</span></button>`;
+    const left = timerLeft(run);
+    return `<button class="${cls} is-on${run.endsAt ? ' is-running' : ' is-paused'}" data-action="timer" data-id="${esc(t.id)}" data-timer-progress style="--p:${1 - left / run.total}" aria-label="${run.endsAt ? '暂停' : '继续'}计时：${esc(t.title)}">${icon(run.endsAt ? 'pause' : 'play')}<span data-timer-text>${clockText(left)}</span></button>`;
+  }
+
   /* ---------- Feel: haptics, swipe rows ---------- */
   // A short tick when a gesture arms and when a task is done. Android app: native haptics; Android Chrome: vibrate.
   function haptic(kind = 'tick') {
@@ -889,6 +1210,7 @@
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
     const index = state.tasks.indexOf(task);
+    if (state.timer?.id === id) { state.timer = null; syncNativeTimer(); }
     state.tasks.splice(index, 1); closeEdit(); save(); render();
     showToast('已删除待办', () => { state.tasks.splice(Math.min(index, state.tasks.length), 0, task); save(); render(); });
   }
@@ -944,12 +1266,28 @@
     if (!b) return;
     if (b.dataset.view) setView(b.dataset.view);
     if (b.dataset.settingsPage) openSettingsPage(b.dataset.settingsPage);
+    if (b.dataset.period) { review.period = b.dataset.period; review.offset = 0; renderReview(); }
+    if (b.dataset.shift) { review.offset = Math.min(0, review.offset + Number(b.dataset.shift)); renderReview(); }
+    if (b.dataset.reviewGroup) { review.group = b.dataset.reviewGroup; renderReview(); }
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
       $('task-when').value = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
       if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); try { d.showPicker(); } catch { d.focus(); } }
     }
     if (b.dataset.addRepeat) { $('task-repeat').value = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
+    if (b.dataset.addDuration) {
+      customDuration.add = b.dataset.addDuration === 'custom';
+      $('task-duration').value = customDuration.add ? String(readCustom($('task-duration-custom')) || 0) : b.dataset.addDuration;
+      renderAddChips();
+      if (customDuration.add) $('task-duration-custom').focus();
+    }
+    if (b.dataset.editDuration) {
+      const form = $('edit-form');
+      customDuration.edit = b.dataset.editDuration === 'custom';
+      form.elements.duration.value = customDuration.edit ? String(readCustom($('edit-duration-custom')) || 0) : b.dataset.editDuration;
+      durationChips('edit', Number(form.elements.duration.value) || 0, $('edit-duration-custom'));
+      if (customDuration.edit) $('edit-duration-custom').focus();
+    }
     if (b.dataset.editGroup || b.dataset.editRepeat || b.dataset.editWhen) {
       const form = $('edit-form'), task = state.tasks.find(t => t.id === form.dataset.editId);
       if (b.dataset.editWhen) $('edit-date').value = b.dataset.editWhen === 'tomorrow' ? addDays(dayKey(), 1) : '';
@@ -974,8 +1312,11 @@
       case 'complete': complete(id, b); break;
       case 'pin': if (task) { task.pinned = !task.pinned; save(); render(); } break;
       case 'edit': openEdit(id); break;
+      case 'timer': startTimer(id); break;
+      case 'first-add': openAdd(); break;
+      case 'timer-stop': stopTimer(); break;
       case 'cancel-edit': closeEdit(); break;
-      case 'restore': if (task) { task.done = false; save(); render(); const restored = [...$('activity-list').querySelectorAll('button')].find(el => el.dataset.id === id); if (b.classList.contains('lock-task')) restored?.focus({ preventScroll: true }); showToast('已恢复到待完成'); } break;
+      case 'restore': if (task) { unmarkDone(task); save(); render(); const restored = [...$('activity-list').querySelectorAll('button')].find(el => el.dataset.id === id); if (b.classList.contains('lock-task')) restored?.focus({ preventScroll: true }); showToast('已恢复到待完成'); } break;
       case 'delete': deleteTask(id); break;
       case 'unarchive': {
         const index = state.archive.findIndex(t => t.id === id);
@@ -1002,12 +1343,13 @@
     const date = chosenDate();
     if (date === null) { $('form-error').textContent = '请选择一个日期。'; return; }
     const repeat = repeats[$('task-repeat').value] ? $('task-repeat').value : 'none';
-    const task = normalizeTask({ id: newId(), title, group: addGroupId, repeat, repeatDay: weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
+    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, repeat, repeatDay: weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
     state.tasks.push(task);
     if (filter !== 'all' && filter !== task.group) filter = 'all';
     $('task-input').value = ''; $('form-error').textContent = '';
     // Back to the defaults for the next one; the group stays (people add several to one group).
     $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
+    $('task-duration').value = '0'; $('task-duration-custom').value = ''; customDuration.add = false;
     save(); render(); $('task-input').focus();
     const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
     if (added && state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) window.anime.animate(added, { opacity: [0, 1], y: [-10, 0], duration: 360, ease: 'outCubic' });
@@ -1023,6 +1365,9 @@
     const date = isDayKey(data.get('date')) ? data.get('date') : '';
     task.title = title.slice(0, 120);
     task.pinned = data.get('pinned') === 'on';
+    const duration = Math.round(Number(data.get('duration')) || 0);
+    task.duration = duration > 0 && duration <= 600 ? duration : 0;
+    if (state.timer?.id === task.id && !task.duration) { settleTimer(false); }
     task.group = groupOf(data.get('group')).id;
     if (repeat === 'weekly' && task.repeat !== 'weekly') task.repeatDay = weekday(date || dayKey());
     task.repeat = repeat;
@@ -1032,6 +1377,8 @@
     save(); render(); showToast(dueToday(task) ? '已保存修改' : `已保存，${task.repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}出现`);
   }
   $('edit-form').addEventListener('submit', onEditSubmit);
+  $('task-duration-custom').addEventListener('input', () => { $('task-duration').value = String(readCustom($('task-duration-custom'))); });
+  $('edit-duration-custom').addEventListener('input', () => { $('edit-form').elements.duration.value = String(readCustom($('edit-duration-custom'))); });
   $('edit-sheet').addEventListener('close', () => { editing = null; });
   $('edit-date').addEventListener('change', () => { const f = $('edit-form'); editChips(null, f.elements.group.value, f.elements.repeat.value); });
   $('group-list').addEventListener('change', event => {
@@ -1050,6 +1397,11 @@
   $('close-toast').addEventListener('click', hideToast);
   ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', () => setView('tasks')));
   $('fab-add').addEventListener('click', openAdd);
+  $('open-review').addEventListener('click', () => setView('review'));
+  $('review-back').addEventListener('click', () => setView('tasks'));
+  $('review-export').addEventListener('click', exportPoster);
+  $('poster-save').addEventListener('click', savePoster);
+  $('close-poster').addEventListener('click', () => $('poster-dialog').close());
   $('tips-close').addEventListener('click', () => { state.settings.tipsSeen = true; save(); render(); });
   darkScheme.addEventListener?.('change', applySettings);
   $('add-backdrop').addEventListener('click', closeAdd);
@@ -1116,6 +1468,7 @@
     reader.readAsDataURL(file);
     event.target.value = '';
   });
+  $('reset-button').hidden = !DEMO; // sample list only in demo/test builds
   $('reset-button').addEventListener('click', () => {
     const previous = structuredClone({ tasks: state.tasks, groups: state.groups });
     state.tasks = examples(); state.groups = structuredClone(DEFAULT_GROUPS); closeEdit(); filter = 'all'; save(); render();
