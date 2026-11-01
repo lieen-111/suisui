@@ -160,6 +160,12 @@ let browser;
     assert.equal(await lp.locator('#focus-bar').isVisible(), true, 'Timer visible on the lock view');
     const bar = await lp.locator('#focus-bar').boundingBox(), card = await lp.locator('#activity').boundingBox();
     assert(bar.y + bar.height <= card.y, 'Focus bar sits above the to-do card');
+    // Pausing shows a toast: a small pill at the top, never stretched down over the card (1.6.1 bug).
+    await lp.locator('#focus-toggle').click();
+    await lp.locator('#toast').waitFor();
+    const toast = await lp.locator('#toast').boundingBox();
+    assert(toast.height < 60, `Toast stays one line high on the lock view (was ${toast.height}px)`);
+    assert(toast.y + toast.height <= bar.y, 'Toast does not cover the focus bar');
     await lp.screenshot({ path: path.join(review, 'v2-lock-focus-390.png') });
     await lock.close();
   }
