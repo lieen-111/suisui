@@ -1,6 +1,6 @@
 # Continue This Project
 
-Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-11-01 (1.4: no sample tasks on first run, task durations with start/pause/stop countdown, weekly/monthly review with a 1080px poster export; 1.2: swipe right/left to complete/delete with haptics, dark mode, gesture tips; 1.1: bottom-bar add button + add/edit sheets, settings split into pages, Android shows the phone's own wallpaper behind previews and the lock view):
+Read `先读我-最新交接.md` FIRST. It overrides historical notes. The public site is https://zingy-semifreddo-b3230a.netlify.app/ (the user uploads `app/` themselves). As of 2026-11-01 (1.6: the iPhone app shows the SAME web UI as Android — `ios/App/WebShell.swift` hosts the bundled `app/` in a WKWebView with the `SuiSuiIOS` bridge, native keeps widgets/Live Activity/Lock Screen intents, and native writes patch the stored JSON so web-only fields survive (`ios/Shared/RawJSON.swift`); reminders at a set time on web/Android/iPhone, drag to reorder, notes + subtasks, search, Android home-screen widget; 1.4: no sample tasks on first run, task durations with start/pause/stop countdown, weekly/monthly review with a 1080px poster export; 1.2: swipe right/left to complete/delete with haptics, dark mode, gesture tips; 1.1: bottom-bar add button + add/edit sheets, settings split into pages, Android shows the phone's own wallpaper behind previews and the lock view):
 
 - The web app is a usable beta (import/export, daily rollover, repeat, history, lock-screen notification, install guidance). A web app CANNOT put checkable to-dos on the iOS Lock Screen; that is an Apple platform limit.
 - The user asked to pursue the real goal. `ios/` holds a complete native SwiftUI + WidgetKit + ActivityKit + App Intents project (lock-screen widgets, Live Activity, direct checking). 2026-10-29: it COMPILES on GitHub Actions (Intel macOS runner) for simulator and device, and the 9 unit tests pass; the sideload IPA workflow succeeds. It has NOT run on a physical iPhone yet, so lock-screen behavior is unverified. Repo: github.com/lieen-111/suisui.
@@ -14,7 +14,7 @@ Read `README.md`, `HANDOFF.md`, `PRODUCT.md`, and `DESIGN.md` before changing be
 Two deliverables sharing one data format:
 
 1. `app/`: static, Chinese-language PWA beta. Works in the browser and from the Home Screen; the in-app lock screen is a preview.
-2. `ios/`: native iOS 17+ source (XcodeGen). Not yet built. No provisioning, Apple account or physical-device test has been supplied.
+2. `ios/`: iOS 17+ shell (XcodeGen) around the same `app/` UI plus native widgets, Live Activity, App Intents and notifications. Built in CI; no physical-device test has been supplied.
 
 The PWA has Home Screen metadata, PNG icons, offline shell caching and opt-in updates. It remains a web app with a simulated lock screen preview; its real lock-screen presence is the optional notification. See PWA-iPhone-使用说明.md. HTTPS is needed on phones; an HTTP LAN preview does not test offline installation. A temporary tunnel URL is not permanent hosting and its origin must remain stable to retain access to that origin's local data.
 
@@ -41,10 +41,11 @@ The PWA has Home Screen metadata, PNG icons, offline shell caching and opt-in up
 - `scripts/verify-v2.cjs`: 1.4 empty first run, durations + timer, completion log, weekly/monthly review, poster. Tests get the six sample tasks via `window.SUISUI_DEMO`, injected by `scripts/test-environment.cjs`.
 - `scripts/verify-v1.cjs`: 1.1 edit sheet / back button / phone-wallpaper hole, plus 1.0 review fixes: list-first phone layout (no fake phone chrome), dates/later/overdue, weekdays/weekly repeats, custom groups, theme presets, rapid completion, lock-screen privacy.
 - `app/privacy.html`: privacy policy (linked from settings and About).
+- `scripts/verify-ios-bridge.cjs`: runs the bridge script taken from `ios/App/WebShell.swift` in Chromium (boot from stored file, rev refusal, Lock Screen tick, Live Activity settings, timer, export).
 - `scripts/verify-beta.cjs`: import merge/replace/undo, backup round trip, new-day rollover (Playwright clock), daily repeat, history, iPhone install banner, notification content/refresh (permission stubbed), schema-1 upgrade.
 - `scripts/check-swift-syntax.py`: tree-sitter syntax check of `ios/` (no Xcode needed; not a type check).
 - `ios/Shared/`: model (`Models.swift`), rules (`TodoLogic.swift`, mirrors app.js), App Group storage (`TodoRepository.swift`), Live Activity payload + controller (`TodayActivity.swift`), card view (`CardView.swift`), App Intents (`Intents.swift`). Compiled into app, widget extension and tests.
-- `ios/App/`: SwiftUI app, `TodoModel` (all mutations go through `TodoRepository.mutate`), shatter effect, Siri/Shortcuts.
+- `ios/App/`: `WebShell.swift` (WKWebView, `suisuiapp://` scheme handler serving the bundled `app/`, bridge), `SuiSuiApp.swift` (notification actions, Siri/Shortcuts). `ios/Shared/RawJSON.swift` + `TodoRepository.apply` patch only changed values into the stored JSON; `Reminders.swift` schedules local notifications.
 - `ios/Widgets/Widgets.swift`: lock-screen widget, home widget, Live Activity + Dynamic Island.
 - `.github/workflows/ios-build.yml` (unsigned simulator build + unit tests), `ios-sideload-ipa.yml` (device IPA with ad-hoc embedded entitlements for free-Apple-ID sideloading) and `ios-testflight.yml` (signed upload, secrets documented inside).
 - `.impeccable/design.json`: extracted design metadata, not executable app state.
