@@ -11,6 +11,8 @@ class CompleteReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getStringExtra("id") ?: return
         TodoStore.complete(context, id)
+        val notification = intent.getIntExtra("notification", 0)
+        if (notification != 0) androidx.core.app.NotificationManagerCompat.from(context).cancel(notification)
         LockCard.update(context)
         Handler(Looper.getMainLooper()).post { TodoStore.onChange?.invoke() }
     }

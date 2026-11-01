@@ -48,9 +48,11 @@
         <section class="editor" id="tasks-panel" aria-label="全部待办">
           <div class="section-top today-top">
             <div><h1>今天</h1><p id="progress-copy" class="secondary"></p></div>
-            <div class="today-side"><button class="review-entry" id="open-review" aria-label="周 / 月回顾"><i data-lucide="chart-column"></i>回顾</button>
+            <div class="today-side"><button class="icon-button search-entry" id="open-search" aria-label="搜索"><i data-lucide="search"></i></button><button class="review-entry" id="open-review" aria-label="周 / 月回顾"><i data-lucide="chart-column"></i>回顾</button>
             <div class="progress-ring" id="progress-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"></circle><circle cx="18" cy="18" r="15.5" id="progress-arc"></circle></svg><span id="progress-number"></span></div></div>
           </div>
+          <div class="search-bar" id="search-bar" hidden><i data-lucide="search"></i><label class="sr-only" for="search-input">搜索待办</label><input id="search-input" type="search" placeholder="搜索待办、备注、子任务、历史" autocomplete="off" enterkeyhint="search"><button class="text-button" id="search-cancel">取消</button></div>
+          <div class="search-results" id="search-results" hidden></div>
           <div class="filter-tabs" id="filter-tabs" role="group" aria-label="筛选分组"></div>
           <div class="sheet-backdrop" id="add-backdrop" hidden></div>
           <form id="add-form" class="add-form" aria-label="添加待办">
@@ -61,9 +63,10 @@
               <div class="chip-row" id="add-group-chips" role="group" aria-label="分组"></div>
               <div class="chip-row" role="group" aria-label="日期"><i data-lucide="calendar"></i><button type="button" class="chip" data-add-when="today">今天</button><button type="button" class="chip" data-add-when="tomorrow">明天</button><button type="button" class="chip" data-add-when="pick">选日期</button><label class="sr-only" for="task-date">指定日期</label><input type="date" id="task-date" class="chip-date" hidden></div>
               <div class="chip-row" role="group" aria-label="重复"><i data-lucide="repeat"></i><button type="button" class="chip" data-add-repeat="none">不重复</button><button type="button" class="chip" data-add-repeat="daily">每天</button><button type="button" class="chip" data-add-repeat="weekdays">工作日</button><button type="button" class="chip" data-add-repeat="weekly">每周</button></div>
+              <div class="chip-row" role="group" aria-label="提醒"><i data-lucide="alarm-clock"></i><button type="button" class="chip" data-add-time="">不提醒</button><button type="button" class="chip" data-add-time="09:00">09:00</button><button type="button" class="chip" data-add-time="12:00">12:00</button><button type="button" class="chip" data-add-time="18:00">18:00</button><button type="button" class="chip" data-add-time="21:00">21:00</button><button type="button" class="chip" data-add-time="custom">自定</button><label class="sr-only" for="task-time-custom">提醒时间</label><input type="time" id="task-time-custom" class="chip-date" hidden></div>
               <div class="chip-row" role="group" aria-label="时长"><i data-lucide="timer"></i><button type="button" class="chip" data-add-duration="0">不计时</button><button type="button" class="chip" data-add-duration="15">15分钟</button><button type="button" class="chip" data-add-duration="25">25分钟</button><button type="button" class="chip" data-add-duration="30">30分钟</button><button type="button" class="chip" data-add-duration="45">45分钟</button><button type="button" class="chip" data-add-duration="60">1小时</button><button type="button" class="chip" data-add-duration="custom">自定</button><label class="sr-only" for="task-duration-custom">自定分钟</label><input type="number" id="task-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div>
             </div>
-            <input type="hidden" id="task-duration" value="0">
+            <input type="hidden" id="task-duration" value="0"><input type="hidden" id="task-time" value="">
             <input type="hidden" id="task-group"><input type="hidden" id="task-when" value="today"><input type="hidden" id="task-repeat" value="none">
             <p class="form-error" id="form-error" role="alert"></p>
           </form>
@@ -295,8 +298,13 @@
       <div class="dialog-heading"><h2 id="edit-sheet-title">编辑待办</h2><button type="button" class="icon-button" data-action="cancel-edit" aria-label="关闭"><i data-lucide="x"></i></button></div>
       <label class="sr-only" for="edit-title">待办内容</label>
       <input id="edit-title" name="title" maxlength="120" required autocomplete="off" enterkeyhint="done">
+      <label class="sr-only" for="edit-note">备注</label>
+      <textarea id="edit-note" name="note" rows="2" maxlength="2000" placeholder="备注（可选）"></textarea>
+      <div class="subtasks" id="edit-subtasks" aria-label="子任务"></div>
+      <div class="subtask-add"><i data-lucide="plus"></i><label class="sr-only" for="subtask-input">添加子任务</label><input id="subtask-input" maxlength="120" placeholder="添加子任务" enterkeyhint="done" autocomplete="off"></div>
       <div class="edit-field"><span>分组</span><div class="chip-row" id="edit-group-chips" role="group" aria-label="分组"></div></div>
       <div class="edit-field"><span>重复</span><div class="chip-row" id="edit-repeat-chips" role="group" aria-label="重复"><button type="button" class="chip" data-edit-repeat="none">不重复</button><button type="button" class="chip" data-edit-repeat="daily">每天</button><button type="button" class="chip" data-edit-repeat="weekdays">工作日</button><button type="button" class="chip" data-edit-repeat="weekly">每周</button></div></div>
+      <div class="edit-field"><span>提醒</span><div class="chip-row" role="group" aria-label="提醒"><button type="button" class="chip" data-edit-time="">不提醒</button><label class="sr-only" for="edit-time">提醒时间</label><input type="time" id="edit-time" name="time" class="chip-date"></div></div>
       <div class="edit-field"><span>时长</span><div class="chip-row" id="edit-duration-chips" role="group" aria-label="时长"><button type="button" class="chip" data-edit-duration="0">不计时</button><button type="button" class="chip" data-edit-duration="15">15分钟</button><button type="button" class="chip" data-edit-duration="25">25分钟</button><button type="button" class="chip" data-edit-duration="30">30分钟</button><button type="button" class="chip" data-edit-duration="45">45分钟</button><button type="button" class="chip" data-edit-duration="60">1小时</button><button type="button" class="chip" data-edit-duration="custom">自定</button><label class="sr-only" for="edit-duration-custom">自定分钟</label><input type="number" id="edit-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div></div>
       <div class="edit-field" id="edit-date-field"><span>日期</span><div class="chip-row"><button type="button" class="chip" data-edit-when="today">今天</button><button type="button" class="chip" data-edit-when="tomorrow">明天</button><label class="sr-only" for="edit-date">日期</label><input type="date" id="edit-date" name="date" class="chip-date"></div></div>
       <label class="setting-row edit-pin" for="edit-pinned"><span>置顶</span><input type="checkbox" id="edit-pinned" name="pinned" class="switch"></label>
@@ -318,7 +326,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.5</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.6</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -327,7 +335,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.5 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.6 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

@@ -59,15 +59,17 @@ object LockCard {
         val nm = NotificationManagerCompat.from(ctx)
         val s = TodoStore.state(ctx)
         ScreenService.sync(ctx)
+        // Reminders, the home-screen widget and the midnight refresh work whether or not the lock card is on.
+        runCatching { Reminders.schedule(ctx) }
+        runCatching { SuiSuiWidget.updateAll(ctx) }
+        if (s != null) scheduleMidnight(ctx)
         if (s == null || (!settingOn(s, "lockNotify") && !ScreenService.running && !ScreenService.enabled(ctx))) {
             nm.cancel(NOTIFICATION_ID); return
         }
         if (!notificationsAllowed(ctx)) return
         try { nm.notify(NOTIFICATION_ID, current(ctx)) } catch (e: SecurityException) { /* permission revoked */ }
-        scheduleMidnight(ctx)
     }
 
-    /** The notification to show: the to-do card, or a quiet line when only the lock view is enabled. */
     fun current(ctx: Context): android.app.Notification {
         ensureChannel(ctx)
         val s = TodoStore.state(ctx)

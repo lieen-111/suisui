@@ -93,6 +93,11 @@
       // Optional time box in minutes: tasks with one get a start button and a countdown.
       duration: Number.isInteger(t.duration) && t.duration > 0 && t.duration <= 600 ? t.duration : 0,
       focusMs: Number.isFinite(t.focusMs) && t.focusMs > 0 ? Math.min(t.focusMs, 864e5) : 0,
+      // Reminder time on the day the task is due (HH:MM), a note, and a small checklist.
+      time: typeof t.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t.time) ? t.time : '',
+      note: typeof t.note === 'string' ? t.note.slice(0, 2000) : '',
+      subtasks: (Array.isArray(t.subtasks) ? t.subtasks : []).filter(s => s && typeof s.title === 'string' && s.title.trim()).slice(0, 30)
+        .map((s, i) => ({ id: typeof s.id === 'string' && s.id ? s.id.slice(0, 40) : `s${i}`, title: s.title.trim().slice(0, 120), done: !!s.done })),
       createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0
     };
   }
@@ -266,7 +271,7 @@
   window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 72); }, { passive: true });
   function setView(view) {
     if (!['tasks', 'settings', 'review'].includes(view)) view = 'tasks';
-    closeAdd();
+    closeAdd(); closeSearch();
     document.body.dataset.view = view;
     document.querySelectorAll('.nav-button[data-view]').forEach(b => { b.classList.toggle('selected', b.dataset.view === view); b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
     const settings = view === 'settings';
@@ -340,6 +345,11 @@
     document.querySelectorAll('[data-add-repeat]').forEach(b => { const on = b.dataset.addRepeat === repeat; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     $('task-date').hidden = when !== 'pick' || dateless;
     durationChips('add', Number($('task-duration').value) || 0, $('task-duration-custom'));
+    const time = $('task-time').value, presetTime = ['', '09:00', '12:00', '18:00', '21:00'].includes(time);
+    const customTime = addManual.customTime || !presetTime;
+    document.querySelectorAll('[data-add-time]').forEach(b => { const on = b.dataset.addTime === 'custom' ? customTime : !customTime && b.dataset.addTime === time; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+    $('task-time-custom').hidden = !customTime;
+    if (customTime && time && document.activeElement !== $('task-time-custom')) $('task-time-custom').value = time;
   }
   // Duration chips (add and edit): preset minutes, or "自定" with a number field.
   let customDuration = { add: false, edit: false };
@@ -395,6 +405,9 @@
     $('edit-pinned').checked = task.pinned;
     $('edit-delete').dataset.id = id;
     form.elements.duration.value = String(task.duration || 0);
+    $('edit-time').value = task.time || '';
+    $('edit-note').value = task.note || '';
+    renderSubtasks(task);
     customDuration.edit = false; $('edit-duration-custom').value = '';
     durationChips('edit', task.duration || 0, $('edit-duration-custom'));
     editChips(task, groupOf(task.group).id, task.repeat);
@@ -402,6 +415,12 @@
     icons($('edit-sheet'));
     if (!isPhone()) $('edit-title').focus();
   }
+  // Subtasks change immediately (ticking one should never need a 保存).
+  function renderSubtasks(task) {
+    $('edit-subtasks').innerHTML = (task.subtasks || []).map(s => `<div class="subtask${s.done ? ' is-done' : ''}" data-sub="${esc(s.id)}"><button type="button" class="sub-check" data-sub-toggle="${esc(s.id)}" aria-label="${s.done ? '取消完成' : '完成'}：${esc(s.title)}"><span class="check-circle">${s.done ? icon('check') : ''}</span></button><span class="sub-title">${esc(s.title)}</span><button type="button" class="icon-button" data-sub-delete="${esc(s.id)}" aria-label="删除子任务：${esc(s.title)}">${icon('x')}</button></div>`).join('');
+    icons($('edit-subtasks'));
+  }
+  function editingTask() { return state.tasks.find(t => t.id === $('edit-form').dataset.editId); }
   function closeEdit() {
     editing = null;
     if ($('edit-sheet').open) { $('edit-sheet').close(); return true; }
@@ -411,6 +430,7 @@
   window.suisuiBack = () => {
     for (const d of document.querySelectorAll('dialog[open]')) { d.close(); return true; }
     if (closeAdd()) return true;
+    if (closeSearch()) return true;
     if (document.body.dataset.view === 'settings') { settingsPage !== 'index' ? openSettingsPage('index') : setView('tasks'); return true; }
     if (document.body.dataset.view === 'review') { setView('tasks'); return true; }
     return false;
@@ -430,6 +450,9 @@
     let flags = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
     if (t.repeat !== 'none') flags += `<span class="meta-flag">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
+    if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
+    if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
+    if (t.note) flags += `<span class="meta-flag" title="有备注">${icon('sticky-note')}</span>`;
     if (t.pinned) flags += `<span class="meta-flag">${icon('pin')}置顶</span>`;
     return flags;
   }
@@ -478,6 +501,7 @@
     renderPreview();
     if (settingsPage === 'index') renderSettingsSummary();
     if (document.body.dataset.view === 'review') renderReview();
+    if (document.body.classList.contains('searching')) renderSearch();
     renderFocusBar();
     icons();
     $('storage-status').textContent = storageCopy();
@@ -1162,6 +1186,19 @@
     const found = {}, hits = [];
     const take = (re, fn) => { const m = rest.match(re); if (!m) return; if (fn(m) !== false) { rest = rest.replace(m[0], ' '); hits.push(m[0].trim()); } };
     const today = dayKey();
+    // Clock time: 下午3点 / 3点半 / 晚上8点15 / 15:30 / 9：00
+    take(/(明早|明晚|明天早上|明天晚上|早上|早晨|上午|中午|下午|傍晚|晚上|今晚|凌晨)?\s*(\d{1,2}|[一二两三四五六七八九十]+)\s*(?:[:：](\d{2})|点(?:钟)?\s*(半|一刻|三刻|(\d{1,2}|[一二三四五六七八九十]+)\s*分?(?!钟))?)/, m => {
+      let h = cnNumber(m[2]); if (!(h >= 0 && h <= 24)) return false;
+      if (!m[1] && !m[3] && !/点/.test(m[0])) return false;
+      let min = m[3] ? Number(m[3]) : m[4] === '半' ? 30 : m[4] === '一刻' ? 15 : m[4] === '三刻' ? 45 : m[5] ? cnNumber(m[5]) : 0;
+      if (!(min >= 0 && min < 60)) return false;
+      if (/下午|傍晚|晚上|今晚|明晚/.test(m[1] || '') && h < 12) h += 12;
+      if (m[1] === '中午' && h < 11) h += 12;
+      if (h === 24) h = 0;
+      found.time = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+      if (m[1] === '今晚') found.date = today;
+      if (/^明/.test(m[1] || '')) found.date = addDays(today, 1);
+    });
     take(/(\d+(?:\.\d+)?|[一二两三四五六七八九十半]+)\s*(?:个)?\s*(小时|钟头|h)(?:半)?/i, m => { const n = cnNumber(m[1]); if (!(n > 0)) return false; found.duration = Math.round(n * 60 + (m[0].endsWith('半') ? 30 : 0)); });
     if (!found.duration) take(/半小时/, () => { found.duration = 30; });
     if (!found.duration) take(/(\d+|[一二两三四五六七八九十]+)\s*(分钟|分|min|m)(?![a-z])/i, m => { const n = cnNumber(m[1]); if (!(n > 0) || n > 600) return false; found.duration = Math.round(n); });
@@ -1173,6 +1210,7 @@
       if (!found.date) take(/后天/, () => { found.date = addDays(today, 2); });
       if (!found.date) take(/明天|明日/, () => { found.date = addDays(today, 1); });
       if (!found.date) take(/今天|今日/, () => { found.date = today; });
+      else take(/今天|今日/, () => {});
       if (!found.date) take(/(下)?(?:周|星期|礼拜)([一二三四五六日天])/, m => {
         const target = DAY_CN[m[2]], now = weekday(today), mondayOffset = (now + 6) % 7;
         let diff = ((target + 6) % 7) - mondayOffset; // days from today within this Mon–Sun week
@@ -1190,7 +1228,7 @@
     return { ...found, title, hits };
   }
   // Keeps what the user tapped in the chips, so typing only overrides what the text actually says.
-  const addManual = { when: 'today', date: '', repeat: 'none', duration: 0, custom: false };
+  const addManual = { when: 'today', date: '', repeat: 'none', duration: 0, custom: false, time: '', customTime: false };
   let quickOff = false;
   function applyQuickParse() {
     const raw = $('task-input').value;
@@ -1206,10 +1244,12 @@
     customDuration.add = p.duration ? !DURATIONS.includes(p.duration) : addManual.custom;
     if (customDuration.add) $('task-duration-custom').value = String(duration || '');
     if (p.group) addGroupId = p.group;
+    $('task-time').value = p.time || addManual.time;
     quickRepeatDay = p.repeat === 'weekly' ? p.repeatDay : null;
     const bits = [];
     if (p.repeat) bits.push(p.repeat === 'weekly' ? `每周${WEEK[p.repeatDay].slice(1)}` : repeats[p.repeat]);
     if (p.date) bits.push(dateLabel(p.date));
+    if (p.time) bits.push(`${p.time} 提醒`);
     if (p.duration) bits.push(durationText(p.duration));
     if (p.group) bits.push(groupOf(p.group).name);
     $('parse-hint').hidden = !bits.length;
@@ -1218,6 +1258,57 @@
     return p;
   }
   let quickRepeatDay = null;
+
+  /* ---------- Reminders: tasks with a time ring on the day they are due ---------- */
+  // Android schedules real alarms natively (works with the app closed); here the open app shows them too.
+  const fired = new Set();
+  function reminderAt(t, key = dayKey()) { if (!t.time) return 0; const [y, m, d] = key.split('-').map(Number), [hh, mm] = t.time.split(':').map(Number); return new Date(y, m - 1, d, hh, mm).getTime(); }
+  function checkReminders() {
+    const now = Date.now();
+    for (const t of pending()) {
+      const at = reminderAt(t); const key = `${t.id}@${at}`;
+      if (!at || now < at || now - at > 120000 || fired.has(key)) continue;
+      fired.add(key);
+      haptic('done');
+      try { navigator.vibrate?.([80, 60, 80]); } catch { /* optional */ }
+      showToast(`⏰ ${t.time} ${t.title}`, () => {
+        const button = document.querySelector(`.task-row[data-task-id="${CSS.escape(t.id)}"] .check-task`);
+        if (button) complete(t.id, button); else if (!t.done) { markDone(t); save(); render(); }
+      }, '完成', 60000);
+      if (!ANDROID && document.visibilityState === 'hidden' && notifySupported() && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', data: { url: './' } })).catch(() => {});
+      }
+    }
+  }
+  setInterval(checkReminders, 15000);
+
+  /* ---------- Search: tasks, notes, subtasks and history ---------- */
+  function openSearch() {
+    if (document.body.dataset.view !== 'tasks') setView('tasks');
+    document.body.classList.add('searching');
+    $('search-bar').hidden = false; $('search-input').value = ''; renderSearch();
+    $('search-input').focus();
+  }
+  function closeSearch() {
+    if (!document.body.classList.contains('searching')) return false;
+    document.body.classList.remove('searching'); $('search-bar').hidden = true; $('search-results').hidden = true; $('search-input').blur();
+    return true;
+  }
+  function renderSearch() {
+    const q = $('search-input').value.trim().toLowerCase();
+    const box = $('search-results');
+    box.hidden = false;
+    if (!q) { box.innerHTML = `<p class="search-tip">${icon('sparkles')}可以搜标题、备注、子任务，也能搜到历史里完成过的事。</p>`; icons(box); return; }
+    const hit = t => [t.title, t.note, ...(t.subtasks || []).map(s => s.title)].some(v => v && v.toLowerCase().includes(q));
+    const open = state.tasks.filter(t => !t.done && hit(t)), done = state.tasks.filter(t => t.done && hit(t)), old = state.archive.filter(hit).slice(-30).reverse();
+    const doneRow = (t, label) => `<div class="done-row">${icon('circle-check')}<s class="done-text">${esc(t.title)}</s><span class="archive-date">${label}</span></div>`;
+    const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' });
+    box.innerHTML = (open.length ? `<div class="list-heading"><span>待完成</span><span>${open.length}</span></div><div class="task-list">${open.map(row).join('')}</div>` : '')
+      + (done.length ? `<div class="list-heading"><span>今天已完成</span><span>${done.length}</span></div>${done.map(t => doneRow(t, '今天')).join('')}` : '')
+      + (old.length ? `<div class="list-heading"><span>历史</span><span>${old.length}</span></div>${old.map(t => doneRow(t, fmt.format(t.completedAt || t.archivedAt))).join('')}` : '')
+      || `<div class="empty-state">${icon('search-x')}<span>没有找到“${esc($('search-input').value.trim())}”</span></div>`;
+    icons(box);
+  }
 
   /* ---------- Timer: tasks with a duration get a start button and a countdown ---------- */
   // One timer at a time. state.timer = { id, total, endsAt (running) | left (paused) }; it survives reloads,
@@ -1378,17 +1469,66 @@
     if (!row || LOCK_MODE) return;
     event.preventDefault(); cancelPress(); openQuickMenu(row.dataset.taskId);
   });
+  // Long press lifts a row in today's list: drag to reorder (drag to the top to pin), or let go to get the menu.
+  let drag = null;
+  function liftRow(row, y, pointer) {
+    swipe = null; swallowClick = true;
+    haptic();
+    const rows = [...$('task-list').querySelectorAll('.task-row')];
+    drag = { row, id: row.dataset.taskId, y, pointer, dy: 0, moved: false, rows, from: rows.indexOf(row), to: rows.indexOf(row), h: row.offsetHeight };
+    row.classList.add('lifted');
+  }
+  function moveDrag(y) {
+    const d = drag; d.dy = y - d.y;
+    if (Math.abs(d.dy) > 6) d.moved = true;
+    d.row.style.transform = `translateY(${d.dy}px) scale(1.02)`;
+    const center = d.row.offsetTop + d.h / 2 + d.dy;
+    let to = 0;
+    d.rows.forEach((r, i) => { if (r !== d.row && r.offsetTop + r.offsetHeight / 2 < center) to++; });
+    if (to !== d.to) { d.to = to; haptic(); }
+    d.rows.forEach((r, i) => {
+      if (r === d.row) return;
+      const shift = d.from < d.to ? (i > d.from && i <= d.to ? -d.h : 0) : (i >= d.to && i < d.from ? d.h : 0);
+      r.style.transform = shift ? `translateY(${shift}px)` : '';
+    });
+  }
+  function endDrag(cancelled) {
+    const d = drag; drag = null;
+    if (!d) return;
+    setTimeout(() => { swallowClick = false; }, 400);
+    d.rows.forEach(r => { r.style.transform = ''; r.classList.remove('lifted'); });
+    if (cancelled) return;
+    if (!d.moved) { openQuickMenu(d.id); return; }
+    if (d.to === d.from) return;
+    const ids = d.rows.map(r => r.dataset.taskId);
+    ids.splice(d.to, 0, ids.splice(d.from, 1)[0]);
+    const task = state.tasks.find(t => t.id === d.id);
+    // Dropped among the pinned rows → pinned; dragged below them → unpinned.
+    const pinnedOthers = ids.filter(id => id !== d.id && state.tasks.find(t => t.id === id)?.pinned).length;
+    if (task && pinnedOthers) task.pinned = d.to < pinnedOthers;
+    // Put the visible tasks back into the slots they occupy in the full list, in the new order.
+    const slots = state.tasks.map((t, i) => ids.includes(t.id) ? i : -1).filter(i => i >= 0);
+    const moved = ids.map(id => state.tasks.find(t => t.id === id));
+    slots.forEach((slot, k) => { state.tasks[slot] = moved[k]; });
+    save(); render(); showToast('已调整顺序');
+  }
+  document.addEventListener('touchmove', event => { if (drag) event.preventDefault(); }, { passive: false });
   document.addEventListener('pointerdown', event => {
     const row = event.target.closest('#task-list .task-row, #later-list .task-row');
     if (!row || event.button !== 0 || completing.has(row.dataset.taskId) || LOCK_MODE) return;
     swipe = { row, x: event.clientX, y: event.clientY, dx: 0, horizontal: null, armed: false, pointer: event.pointerId };
-    if (event.pointerType !== 'mouse') {
-      cancelPress();
-      pressTimer = setTimeout(() => { pressTimer = null; if (!swipe || swipe.horizontal) return; swipe = null; swallowClick = true; setTimeout(() => { swallowClick = false; }, 600); openQuickMenu(row.dataset.taskId); }, 480);
-    }
+    cancelPress();
+    const y = event.clientY, pointer = event.pointerId, today = !!row.closest('#task-list');
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      if (!swipe || swipe.horizontal) return;
+      if (today) liftRow(row, y, pointer);
+      else { swipe = null; swallowClick = true; setTimeout(() => { swallowClick = false; }, 600); openQuickMenu(row.dataset.taskId); }
+    }, 450);
   });
-  document.addEventListener('pointerup', cancelPress);
-  document.addEventListener('pointercancel', cancelPress);
+  document.addEventListener('pointermove', event => { if (drag && event.pointerId === drag.pointer) moveDrag(event.clientY); });
+  document.addEventListener('pointerup', event => { cancelPress(); if (drag && event.pointerId === drag.pointer) endDrag(false); });
+  document.addEventListener('pointercancel', () => { cancelPress(); if (drag) endDrag(true); });
   document.addEventListener('pointermove', event => {
     if (!swipe || event.pointerId !== swipe.pointer) return;
     const dx = event.clientX - swipe.x, dy = event.clientY - swipe.y;
@@ -1426,6 +1566,13 @@
       if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); try { d.showPicker(); } catch { d.focus(); } }
     }
     if (b.dataset.addRepeat) { $('task-repeat').value = addManual.repeat = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
+    if (b.dataset.addTime !== undefined) {
+      addManual.customTime = b.dataset.addTime === 'custom';
+      $('task-time').value = addManual.time = addManual.customTime ? ($('task-time-custom').value || '') : b.dataset.addTime;
+      renderAddChips();
+      if (addManual.customTime) { try { $('task-time-custom').showPicker(); } catch { $('task-time-custom').focus(); } }
+    }
+    if (b.dataset.editTime !== undefined) { $('edit-time').value = ''; }
     if (b.dataset.addDuration) {
       customDuration.add = b.dataset.addDuration === 'custom';
       $('task-duration').value = customDuration.add ? String(readCustom($('task-duration-custom')) || 0) : b.dataset.addDuration;
@@ -1496,14 +1643,15 @@
     const date = chosenDate();
     if (date === null) { $('form-error').textContent = '请选择一个日期。'; return; }
     const repeat = repeats[$('task-repeat').value] ? $('task-repeat').value : 'none';
-    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, repeat, repeatDay: quickRepeatDay ?? weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
+    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, time: $('task-time').value, repeat, repeatDay: quickRepeatDay ?? weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
     state.tasks.push(task);
     if (filter !== 'all' && filter !== task.group) filter = 'all';
     $('task-input').value = ''; $('form-error').textContent = '';
     // Back to the defaults for the next one; the group stays (people add several to one group).
     $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
     $('task-duration').value = '0'; $('task-duration-custom').value = ''; customDuration.add = false;
-    Object.assign(addManual, { when: 'today', date: '', repeat: 'none', duration: 0, custom: false }); quickRepeatDay = null; quickOff = false;
+    Object.assign(addManual, { when: 'today', date: '', repeat: 'none', duration: 0, custom: false, time: '', customTime: false }); quickRepeatDay = null; quickOff = false;
+    $('task-time').value = ''; $('task-time-custom').value = '';
     $('parse-hint').hidden = true;
     save(); render(); $('task-input').focus();
     const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
@@ -1520,6 +1668,8 @@
     const date = isDayKey(data.get('date')) ? data.get('date') : '';
     task.title = title.slice(0, 120);
     task.pinned = data.get('pinned') === 'on';
+    task.time = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(data.get('time'))) ? String(data.get('time')) : '';
+    task.note = String(data.get('note') || '').slice(0, 2000);
     const duration = Math.round(Number(data.get('duration')) || 0);
     task.duration = duration > 0 && duration <= 600 ? duration : 0;
     if (state.timer?.id === task.id && !task.duration) { settleTimer(false); }
@@ -1532,8 +1682,27 @@
     save(); render(); showToast(dueToday(task) ? '已保存修改' : `已保存，${task.repeat === 'none' ? dateLabel(task.date) : repeatLabel(task)}出现`);
   }
   $('edit-form').addEventListener('submit', onEditSubmit);
+  $('edit-subtasks').addEventListener('click', event => {
+    const task = editingTask(); if (!task) return;
+    const toggle = event.target.closest('[data-sub-toggle]'), del = event.target.closest('[data-sub-delete]');
+    if (toggle) { const s = task.subtasks.find(x => x.id === toggle.dataset.subToggle); if (s) { s.done = !s.done; haptic(); } }
+    else if (del) task.subtasks = task.subtasks.filter(x => x.id !== del.dataset.subDelete);
+    else return;
+    renderSubtasks(task); save(); render();
+  });
+  $('subtask-input').addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    const task = editingTask(), title = $('subtask-input').value.trim();
+    if (!task || !title || task.subtasks.length >= 30) return;
+    task.subtasks.push({ id: newId('s'), title: title.slice(0, 120), done: false });
+    $('subtask-input').value = '';
+    renderSubtasks(task); save(); render();
+  });
+  $('edit-note').addEventListener('input', () => { const task = editingTask(); if (task) { task.note = $('edit-note').value.slice(0, 2000); clearTimeout(window.__noteTimer); window.__noteTimer = setTimeout(() => { save(); render(); }, 500); } });
   $('task-duration-custom').addEventListener('input', () => { $('task-duration').value = String(readCustom($('task-duration-custom'))); addManual.duration = Number($('task-duration').value) || 0; });
   $('task-date').addEventListener('change', () => { addManual.date = $('task-date').value; });
+  $('task-time-custom').addEventListener('change', () => { $('task-time').value = addManual.time = $('task-time-custom').value; });
   $('task-input').addEventListener('input', () => { if (!$('task-input').value.trim()) quickOff = false; applyQuickParse(); });
   $('parse-hint').addEventListener('click', event => { if (event.target.closest('#parse-off')) { quickOff = true; applyQuickParse(); $('task-input').focus(); } });
   $('edit-duration-custom').addEventListener('input', () => { $('edit-form').elements.duration.value = String(readCustom($('edit-duration-custom'))); });
@@ -1564,6 +1733,9 @@
     if (button) complete(id, button); else { markDone(task); save(); render(); showToast('已完成一项待办', () => { unmarkDone(task); save(); render(); }); }
   });
   $('open-review').addEventListener('click', () => setView('review'));
+  $('open-search').addEventListener('click', openSearch);
+  $('search-cancel').addEventListener('click', closeSearch);
+  $('search-input').addEventListener('input', renderSearch);
   $('review-back').addEventListener('click', () => setView('tasks'));
   $('review-export').addEventListener('click', exportPoster);
   $('poster-save').addEventListener('click', savePoster);

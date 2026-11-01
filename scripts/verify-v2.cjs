@@ -164,6 +164,67 @@ let browser;
     await lock.close();
   }
 
+  /* 1.6: reminders (parse + in-app alert), notes and subtasks, drag to reorder, search. */
+  {
+    const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage(); watch(page);
+    await page.clock.install({ time: new Date('2026-11-04T14:58:00') });
+    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.locator('#fab-add').click();
+    for (const t of ['下午3点开会', '明早9点半 晨跑', '买菜', '读书']) { await page.locator('#task-input').fill(t); await page.locator('#add-form button[type=submit]').click(); }
+    await page.locator('#add-backdrop').click(); await page.locator('#add-form').waitFor({ state: 'hidden' });
+    const saved = () => page.evaluate(store => JSON.parse(localStorage.getItem(store)).tasks, STORE);
+    let tasks = await saved();
+    assert.equal(tasks.find(t => t.title === '开会').time, '15:00');
+    assert.deepEqual([tasks.find(t => t.title === '晨跑').time, tasks.find(t => t.title === '晨跑').date], ['09:30', '2026-11-05']);
+    assert.match(await page.locator('.task-row', { hasText: '开会' }).locator('.meta-time').textContent(), /15:00/);
+    // In-app reminder at 15:00 with a 完成 button.
+    for (let i = 0; i < 40 && !/开会/.test(await page.locator('#toast-message').textContent()); i++) await page.clock.runFor(5000);
+    assert.match(await page.locator('#toast-message').textContent(), /15:00 开会/);
+    await page.locator('#undo-button').click();
+    await page.clock.runFor(1500);
+    tasks = await saved();
+    assert.equal(tasks.find(t => t.title === '开会').done, true, 'Completed from the reminder');
+    // Notes and subtasks save instantly.
+    await page.locator('.task-row', { hasText: '读书' }).locator('.task-body').click();
+    await page.locator('#edit-note').fill('第三章');
+    await page.locator('#subtask-input').fill('读完 3.1'); await page.locator('#subtask-input').press('Enter');
+    await page.locator('#subtask-input').fill('写摘要'); await page.locator('#subtask-input').press('Enter');
+    await page.locator('[data-sub-toggle]').first().click();
+    assert.equal(await page.locator('#edit-sheet').evaluate(d => d.open), true, 'Enter in the subtask field does not submit');
+    await page.locator('[data-action=cancel-edit]').click();
+    await page.clock.runFor(1000);
+    tasks = await saved();
+    const book = tasks.find(t => t.title === '读书');
+    assert.equal(book.note, '第三章');
+    assert.deepEqual(book.subtasks.map(s => [s.title, s.done]), [['读完 3.1', true], ['写摘要', false]]);
+    assert.match(await page.locator('.task-row', { hasText: '读书' }).locator('.task-meta').textContent(), /1\/2/);
+    // Drag: long press 读书 and move it above 买菜.
+    const before = await page.locator('#task-list .task-title').allTextContents();
+    assert.deepEqual(before, ['买菜', '读书']);
+    const r = await page.locator('#task-list .task-row').nth(1).boundingBox();
+    await page.mouse.move(r.x + 160, r.y + r.height / 2); await page.mouse.down();
+    await page.clock.runFor(600);
+    await page.mouse.move(r.x + 160, r.y - r.height * .9, { steps: 8 }); await page.mouse.up();
+    assert.deepEqual(await page.locator('#task-list .task-title').allTextContents(), ['读书', '买菜'], 'Drag reorders');
+    // Long press without moving still opens the menu.
+    const r2 = await page.locator('#task-list .task-row').nth(1).boundingBox();
+    await page.mouse.move(r2.x + 160, r2.y + r2.height / 2); await page.mouse.down(); await page.clock.runFor(600); await page.mouse.up();
+    assert.equal(await page.locator('#quick-menu').evaluate(d => d.open), true);
+    await page.keyboard.press('Escape');
+    // Search finds notes, subtasks and finished items.
+    await page.locator('#open-search').click();
+    await page.locator('#search-input').fill('摘要');
+    assert.equal(await page.locator('#search-results .task-row', { hasText: '读书' }).count(), 1, 'Matches a subtask');
+    await page.locator('#search-input').fill('开会');
+    assert.equal(await page.locator('#search-results .done-row', { hasText: '开会' }).count(), 1, 'Finds finished items');
+    await page.locator('#search-input').fill('没有这个');
+    assert.match(await page.locator('#search-results').textContent(), /没有找到/);
+    await page.locator('#search-cancel').click();
+    assert.equal(await page.locator('#task-list').isVisible(), true);
+    await context.close();
+  }
+
   /* Review: week and month tables from the log, group filter, poster image. */
   {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -225,6 +286,6 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: empty first run, durations (presets, custom, edit), start/pause/stop, time-up with 标记完成 and focus minutes, lock-card timer, completion log + undo, weekly/monthly review with group filter and navigation, 1080px poster.');
+  console.log('PASS: empty first run, durations (presets, custom, edit), start/pause/stop, time-up with 标记完成 and focus minutes, lock-card timer, completion log + undo, weekly/monthly review with group filter and navigation, 1080px poster, reminders, notes/subtasks, drag sort, search.');
   await browser.close();
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { await browser?.close(); });
