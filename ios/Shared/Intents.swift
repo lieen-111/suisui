@@ -21,6 +21,7 @@ struct ToggleTaskIntent: LiveActivityIntent {
         let doc = TodoRepository.mutate { TodoLogic.toggle(taskID, in: &$0) }
         await LiveActivityController.update(doc)
         TodoRepository.reloadWidgets()
+        Reminders.schedule()
         return .result()
     }
 }
@@ -56,7 +57,7 @@ struct StartTodayActivityIntent: LiveActivityIntent {
     init() {}
 
     func perform() async throws -> some IntentResult {
-        let doc = TodoRepository.load()
+        let doc = TodoRepository.read()
         try await LiveActivityController.start(doc)
         TodoRepository.reloadWidgets()
         return .result()

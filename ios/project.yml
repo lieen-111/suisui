@@ -13,7 +13,7 @@ settings:
   base:
     BASE_BUNDLE_ID: com.yourname.suisui
     APP_GROUP_ID: group.$(BASE_BUNDLE_ID)
-    MARKETING_VERSION: "0.3.0"
+    MARKETING_VERSION: "1.6.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
@@ -29,6 +29,10 @@ targets:
     sources:
       - path: App
       - path: Shared
+      # The interface: the same web app the Android shell bundles, copied into the app as a folder.
+      - path: ../app
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: SuiSui

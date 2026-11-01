@@ -23,12 +23,12 @@ struct TodayProvider: TimelineProvider {
     func placeholder(in context: Context) -> TodayEntry { TodayEntry(date: Date(), doc: TodoDocument()) }
 
     func getSnapshot(in context: Context, completion: @escaping (TodayEntry) -> Void) {
-        completion(TodayEntry(date: Date(), doc: context.isPreview ? TodoDocument() : TodoRepository.load()))
+        completion(TodayEntry(date: Date(), doc: context.isPreview ? TodoDocument() : TodoRepository.read()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
         let now = Date()
-        let doc = TodoRepository.load()
+        let doc = TodoRepository.read()
         // Show the new day's list right after midnight (daily items reset, yesterday's finished items leave).
         let midnight = DayKey.nextMidnight(after: now)
         var tomorrow = doc

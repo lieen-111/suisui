@@ -35,6 +35,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>把你导出的周报、月报图片存到相册。碎碎清单不会读取相册里的其他照片。</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>SuiSuiAppGroup</key>

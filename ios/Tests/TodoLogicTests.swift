@@ -143,4 +143,62 @@ final class TodoLogicTests: XCTestCase {
         XCTAssertEqual(again.groups, d.groups)
         XCTAssertEqual(again.tasks, d.tasks)
     }
+
+    /// The page stores more than the Swift model knows; a Lock Screen tap must keep all of it.
+    func testNativeChangeKeepsWebOnlyFieldsAndLogsCompletion() throws {
+        let today = DayKey.today()
+        let web = """
+        {"schema":2,"rev":5,"day":"\(today)","timer":null,"log":[],
+         "tasks":[{"id":"a","title":"读书","group":"work","pinned":false,"done":false,"completedAt":0,"repeat":"none","createdAt":1,"date":"",
+                   "note":"第三章","time":"09:30","duration":30,"focusMs":120000,"subtasks":[{"id":"s1","title":"3.1","done":true}]},
+                  {"id":"b","title":"买菜","group":"life","pinned":false,"done":false,"completedAt":0,"repeat":"none","createdAt":2,"date":"","note":"葱"}],
+         "archive":[],"groups":[{"id":"work","name":"工作","color":"#13765b"},{"id":"life","name":"生活","color":"#b14c6b"}],
+         "settings":{"accent":"amber","font":"serif","cardMaterial":"glass","wallpaper":"dawn","textSize":"l"}}
+        """
+        let first = TodoRepository.apply(stored: Data(web.utf8)) { TodoLogic.complete("a", in: &$0, now: 1_800_000_000_000) }
+        let out = try XCTUnwrap(RawJSON.object(first.write))
+        let tasks = try XCTUnwrap(out["tasks"] as? [[String: Any]])
+        XCTAssertEqual(tasks[0]["done"] as? Bool, true)
+        XCTAssertEqual(tasks[0]["note"] as? String, "第三章")
+        XCTAssertEqual(tasks[0]["time"] as? String, "09:30")
+        XCTAssertEqual(tasks[0]["duration"] as? Int, 30)
+        XCTAssertEqual((tasks[0]["subtasks"] as? [[String: Any]])?.first?["title"] as? String, "3.1")
+        XCTAssertEqual(tasks[0]["focusMs"] as? Int, 0, "Focus time moves into the log line")
+        XCTAssertEqual(tasks[1]["note"] as? String, "葱")
+        let settings = try XCTUnwrap(out["settings"] as? [String: Any])
+        XCTAssertEqual(settings["accent"] as? String, "amber", "Look settings the Swift model does not know stay untouched")
+        XCTAssertEqual(settings["font"] as? String, "serif")
+        XCTAssertEqual(out["rev"] as? Int, 6, "A native change is newer than the page's copy")
+        let log = try XCTUnwrap(out["log"] as? [[String: Any]])
+        XCTAssertEqual(log.count, 1)
+        XCTAssertEqual(log[0]["id"] as? String, "a")
+        XCTAssertEqual(log[0]["min"] as? Int, 2)
+
+        // Restoring removes the line again and gives the focus time back.
+        let second = TodoRepository.apply(stored: first.write) { TodoLogic.restore("a", in: &$0) }
+        let back = try XCTUnwrap(RawJSON.object(second.write))
+        XCTAssertEqual((back["log"] as? [Any])?.count, 0)
+        XCTAssertEqual(((back["tasks"] as? [[String: Any]])?[0])?["focusMs"] as? Int, 120000)
+
+        // Nothing changed: nothing is written. An unreadable file is never overwritten.
+        XCTAssertNil(TodoRepository.apply(stored: second.write) { _ in }.write)
+        XCTAssertNil(TodoRepository.apply(stored: Data("not json".utf8)) { TodoLogic.complete("a", in: &$0) }.write)
+    }
+
+    func testArchivedTaskKeepsItsNote() throws {
+        let web = """
+        {"rev":1,"day":"2026-10-29","tasks":[{"id":"a","title":"交方案","group":"work","done":true,"completedAt":1761730000000,"repeat":"none","createdAt":1,"note":"附上报价"}],"archive":[],"settings":{"autoArchive":true}}
+        """
+        let applied = TodoRepository.apply(stored: Data(web.utf8)) { _ in }
+        let out = try XCTUnwrap(RawJSON.object(applied.write))
+        let archived = try XCTUnwrap((out["archive"] as? [[String: Any]])?.first)
+        XCTAssertEqual(archived["id"] as? String, "a")
+        XCTAssertEqual(archived["note"] as? String, "附上报价")
+        XCTAssertEqual((out["tasks"] as? [Any])?.count, 0)
+    }
+
+    func testFreshInstallStartsEmpty() {
+        XCTAssertTrue(TodoRepository.empty.tasks.isEmpty)
+        XCTAssertNil(TodoRepository.apply(stored: nil) { _ in }.write, "Opening the app writes nothing until something changes")
+    }
 }

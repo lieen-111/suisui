@@ -3,8 +3,8 @@
   const status = document.getElementById('offline-status');
   const update = document.getElementById('pwa-update');
   // Inside the Android app every file is bundled, so no service worker is needed.
-  if (window.SuiSuiAndroid) {
-    status.textContent = '安卓 App 版：内容已内置，离线可用';
+  if (window.SuiSuiAndroid || window.SuiSuiIOS) {
+    status.textContent = window.SuiSuiIOS ? 'iPhone App 版：内容已内置，离线可用' : '安卓 App 版：内容已内置，离线可用';
     return;
   }
   if (!window.isSecureContext || !('serviceWorker' in navigator)) {

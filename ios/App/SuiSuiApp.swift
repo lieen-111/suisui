@@ -1,70 +1,47 @@
 import AppIntents
 import SwiftUI
+import UserNotifications
 
 @main
 struct SuiSuiApp: App {
-    @StateObject private var model = TodoModel()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+    @StateObject private var shell = WebShell()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(model)
-                .onOpenURL { model.handle($0) }
+            // The same interface as the Android app and the web version (app/), full screen.
+            WebShellView()
+                .environmentObject(shell)
+                .ignoresSafeArea()
+                .background(Color(uiColor: .systemBackground))
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.becameActive() }
+            if phase == .active { shell.becameActive() }
         }
     }
 }
 
-struct RootView: View {
-    @EnvironmentObject private var model: TodoModel
-
-    var body: some View {
-        TabView(selection: $model.tab) {
-            TasksView()
-                .tabItem { Label("清单", systemImage: "checklist") }
-                .tag(TodoModel.Tab.tasks)
-            LockScreenView()
-                .tabItem { Label("锁屏", systemImage: "iphone") }
-                .tag(TodoModel.Tab.lock)
-            SettingsView()
-                .tabItem { Label("设置", systemImage: "slider.horizontal.3") }
-                .tag(TodoModel.Tab.settings)
-        }
-        .tint(model.doc.settings.accentColor)
-        .overlay(alignment: .bottom) {
-            if let toast = model.toast {
-                ToastView(toast: toast)
-                    .padding(.bottom, 64)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .animation(.snappy, value: model.toast)
+/// Notification actions: "完成" on a reminder or a finished timer ticks the task without opening the app.
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        Reminders.registerCategories()
+        return true
     }
-}
 
-struct ToastView: View {
-    @EnvironmentObject private var model: TodoModel
-    let toast: TodoModel.Toast
+    /// While the app is open the page shows its own reminder bar, so only a quiet list entry is added.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.list]
+    }
 
-    var body: some View {
-        HStack(spacing: 16) {
-            Text(toast.message).font(.subheadline).lineLimit(2)
-            if toast.canUndo {
-                Button("撤销") { model.undo() }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(hex: "#b9f3cd"))
-            }
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 11)
-        .background(Color(hex: "#233b30"), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .shadow(color: Color(hex: "#152e27", opacity: 0.25), radius: 14, y: 6)
-        .padding(.horizontal, 16)
-        .accessibilityElement(children: .combine)
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        guard response.actionIdentifier == Reminders.completeAction,
+              let id = response.notification.request.content.userInfo["id"] as? String, !id.isEmpty else { return }
+        let doc = TodoRepository.mutate { TodoLogic.complete(id, in: &$0) }
+        TodoRepository.reloadWidgets()
+        Reminders.schedule()
+        await LiveActivityController.update(doc)
     }
 }
 

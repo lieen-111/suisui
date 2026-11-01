@@ -166,8 +166,11 @@
   // Android app shell (android/): the native side keeps a copy for the lock-screen card and may change it
   // (a "完成" tap on the lock screen). The wallpaper photo stays in localStorage only.
   const ANDROID = window.SuiSuiAndroid || null;
+  // iPhone app shell (ios/): the same page in a WKWebView with the same bridge, plus native widgets and Live Activity.
+  const IOS_APP = window.SuiSuiIOS || null;
+  const NATIVE = ANDROID || IOS_APP;
   let lastNativeRaw = '';
-  function readNative() { try { return ANDROID ? ANDROID.load() || '' : ''; } catch { return ''; } }
+  function readNative() { try { return NATIVE ? NATIVE.load() || '' : ''; } catch { return ''; } }
   let hadSaved = false;
   let savedPhoto = null, photoOK = true, lastContent = null;
   const contentOf = () => JSON.stringify({ ...state, rev: 0, settings: { ...state.settings, photo: '' } });
@@ -214,9 +217,9 @@
     // Bump the revision only for real changes, so an untouched page never claims to be newer.
     if (content !== lastContent) state.rev = (state.rev || 0) + 1;
     const record = JSON.stringify({ ...state, settings: { ...state.settings, photo: '' } });
-    if (ANDROID) {
+    if (NATIVE) {
       let accepted = true;
-      try { accepted = ANDROID.save(record) !== false; } catch { /* bridge unavailable */ }
+      try { accepted = NATIVE.save(record) !== false; } catch { /* bridge unavailable */ }
       if (!accepted) {
         // Another screen (lock view, lock-screen card) saved newer data: take it instead of overwriting it.
         syncFromNative(true);
@@ -237,7 +240,7 @@
   // Called by the Android shell when the lock-screen card changed the data (or on resume).
   // Take the stored native copy if it changed since this page last read or wrote it.
   function syncFromNative(force = false) {
-    if (!ANDROID || (isBusy() && !force)) return false;
+    if (!NATIVE || (isBusy() && !force)) return false;
     const raw = readNative();
     if (!raw || (raw === lastNativeRaw && !force)) return false;
     try {
@@ -324,10 +327,10 @@
     const img = $('tile-look-photo');
     if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;
     $('tile-look-card').style.background = $('mini-card').style.getPropertyValue('--card-bg') || s.cardColor;
-    const on = ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
+    const on = IOS_APP ? !!iosStatus().live : ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
     $('tile-lock-state').textContent = on ? '已开启' : '未开启';
     $('settings-index').querySelector('.tile-lock').classList.toggle('on', on);
-    $('sum-lock').textContent = s.lockPrivacy ? '隐藏内容 · 只显示件数' : ANDROID ? (s.lockScreen ? '亮屏直接显示' : '锁屏卡片') : '锁屏通知';
+    $('sum-lock').textContent = s.lockPrivacy ? '隐藏内容 · 只显示件数' : IOS_APP ? '实时活动 · 锁屏小组件' : ANDROID ? (s.lockScreen ? '亮屏直接显示' : '锁屏卡片') : '锁屏通知';
     $('tile-list-count').textContent = String(state.groups.length);
     $('tile-list-dots').innerHTML = state.groups.map(g => `<span style="background:${g.color}" title="${esc(g.name)}"></span>`).join('');
     $('sum-list').textContent = s.autoArchive ? '每天自动整理' : '不自动整理';
@@ -639,7 +642,7 @@
   /* ---------- A new day: reset repeating tasks, archive yesterday's finished items ---------- */
   function rollover({ announce = true } = {}) {
     // A page left open in the background (e.g. the lock view overnight) must not roll over its old copy.
-    if (ANDROID && booted) syncFromNative();
+    if (NATIVE && booted) syncFromNative();
     const today = dayKey();
     if (state.day === today || isBusy()) return false;
     const cutoff = startOfToday();
@@ -675,7 +678,7 @@
   /* ---------- Lock-screen notification (web): the closest a home-screen web app gets to the lock screen ---------- */
   // Set by the embedded preview build (Claude artifact), where installing, notifications and downloads are unavailable.
   const PREVIEW = !!window.SUISUI_PREVIEW;
-  const notifySupported = () => !PREVIEW && !ANDROID && 'Notification' in window && 'serviceWorker' in navigator && window.isSecureContext;
+  const notifySupported = () => !PREVIEW && !NATIVE && 'Notification' in window && 'serviceWorker' in navigator && window.isSecureContext;
   const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   let notifyTimer = null, lastNotified = '';
@@ -714,6 +717,7 @@
     const toggle = $('notify-toggle'), status = $('notify-status'), test = $('notify-test');
     toggle.checked = !!state.settings.lockNotify;
     let copy;
+    if (IOS_APP) { renderIOSLock(); return; }
     if (ANDROID) {
       let allowed = false;
       try { allowed = ANDROID.notificationsAllowed(); } catch { /* ignore */ }
@@ -739,6 +743,25 @@
     status.textContent = copy;
     test.hidden = !(state.settings.lockNotify && notifySupported() && Notification.permission === 'granted');
   }
+  // iPhone app: the lock screen is the Live Activity (and lock-screen widgets); the native side reports its status.
+  function iosStatus() { try { return IOS_APP.status || {}; } catch { return {}; } }
+  function renderIOSLock() {
+    const st = iosStatus();
+    $('notify-row').hidden = true; $('notify-status').hidden = true; $('notify-test').hidden = true;
+    $('ios-lock-settings').hidden = false;
+    $('live-toggle').checked = !!st.liveWanted;
+    $('live-toggle').disabled = st.liveAllowed === false;
+    $('live-status').textContent = st.liveAllowed === false ? '实时活动在系统里被关闭了：设置 > 碎碎清单 > 实时活动，打开后回来再开。'
+      : st.live ? '已开启：锁屏和灵动岛上显示今天的待办，点圆圈直接完成。系统限制每次最多显示 8 小时，打开碎碎清单会自动续上。'
+      : st.liveWanted ? '已开启，有待办时会在锁屏显示；全部完成或超过 8 小时后会自动收起，打开应用即恢复。'
+      : '开启后，锁屏和灵动岛上显示今天的待办，点圆圈直接完成。';
+    const n = st.notifications;
+    $('ios-notify-status').textContent = n === 'granted' ? '已允许：到点提醒和计时结束会准时通知你，通知里能直接点“完成”。'
+      : n === 'denied' ? '通知被关闭了，到点提醒不会响。点下方按钮去系统设置里打开。' : '设了提醒时间的待办会到点通知你。第一次设置提醒时会请求通知权限。';
+    $('ios-notify-button').hidden = n === 'granted';
+    $('ios-notify-button').lastChild.textContent = n === 'denied' ? '去系统设置打开通知' : '允许通知';
+  }
+  window.suisuiIOSStatus = () => { if (typeof render === 'function') { renderNotifySetting(); renderSettingsSummary(); } };
   function androidPermissions() {
     try { return JSON.parse(ANDROID.permissions()); } catch { return { notifications: false, overlay: false, lockScreenRunning: false, brand: '' }; }
   }
@@ -795,7 +818,7 @@
   }
   async function exportBackup() {
     if (PREVIEW) { showToast('预览页不能下载文件，请在正式网站导出'); return; }
-    if (ANDROID) { try { ANDROID.exportBackup(JSON.stringify(backupPayload(), null, 2), `suisui-backup-${dayKey()}.json`); } catch { showToast('导出失败，请重试'); } return; }
+    if (NATIVE) { try { NATIVE.exportBackup(JSON.stringify(backupPayload(), null, 2), `suisui-backup-${dayKey()}.json`); } catch { showToast('导出失败，请重试'); } return; }
     const name = `suisui-backup-${dayKey()}.json`;
     const blob = new Blob([JSON.stringify(backupPayload(), null, 2)], { type: 'application/json' });
     try {
@@ -863,7 +886,7 @@
 
   /* ---------- Install guidance: the web app only becomes durable and notifiable from the Home Screen ---------- */
   function renderInstallBanner() {
-    const show = !PREVIEW && !ANDROID && !state.settings.installDismissed && !isStandalone() && (isIOS() || !!installPrompt);
+    const show = !PREVIEW && !NATIVE && !state.settings.installDismissed && !isStandalone() && (isIOS() || !!installPrompt);
     $('install-banner').hidden = !show;
     $('install-native').hidden = !installPrompt;
     $('install-howto').hidden = !!installPrompt;
@@ -1152,15 +1175,15 @@
     const url = canvas.toDataURL('image/png');
     posterBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     $('poster-image').src = url;
-    $('poster-note').textContent = PREVIEW ? '预览页不能直接保存：在手机上长按图片即可保存到相册。' : isIOS() ? '点“保存图片”后选“存储图像”，或长按图片保存到相册。' : '';
+    $('poster-note').textContent = PREVIEW ? '预览页不能直接保存：在手机上长按图片即可保存到相册。' : NATIVE ? '' : isIOS() ? '点“保存图片”后选“存储图像”，或长按图片保存到相册。' : '';
     $('poster-save').hidden = PREVIEW;
     $('poster-dialog').showModal(); icons($('poster-dialog'));
   }
   async function savePoster() {
     if (!posterBlob) return;
-    if (ANDROID?.saveImage) {
+    if (NATIVE?.saveImage) {
       const url = $('poster-image').src;
-      try { ANDROID.saveImage(url.slice(url.indexOf(',') + 1), posterName); } catch { showToast('保存失败，请长按图片保存'); }
+      try { NATIVE.saveImage(url.slice(url.indexOf(',') + 1), posterName); } catch { showToast('保存失败，请长按图片保存'); }
       return;
     }
     const file = new File([posterBlob], posterName, { type: 'image/png' });
@@ -1275,7 +1298,7 @@
         const button = document.querySelector(`.task-row[data-task-id="${CSS.escape(t.id)}"] .check-task`);
         if (button) complete(t.id, button); else if (!t.done) { markDone(t); save(); render(); }
       }, '完成', 60000);
-      if (!ANDROID && document.visibilityState === 'hidden' && notifySupported() && Notification.permission === 'granted') {
+      if (!NATIVE && document.visibilityState === 'hidden' && notifySupported() && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', data: { url: './' } })).catch(() => {});
       }
     }
@@ -1318,9 +1341,9 @@
   const clockText = ms => { const s = Math.ceil(ms / 1000); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
   const durationText = min => min >= 60 && min % 60 === 0 ? `${min / 60}小时` : `${min}分钟`;
   function syncNativeTimer() {
-    if (!ANDROID?.setTimer) return;
+    if (!NATIVE?.setTimer) return;
     const t = state.timer, task = t && state.tasks.find(x => x.id === t.id);
-    try { ANDROID.setTimer(t && task ? JSON.stringify({ title: task.title, endsAt: t.endsAt, left: t.left, total: t.total }) : ''); } catch { /* optional */ }
+    try { NATIVE.setTimer(t && task ? JSON.stringify({ id: task.id, title: task.title, endsAt: t.endsAt, left: t.left, total: t.total }) : ''); } catch { /* optional */ }
   }
   /** Stop the current timer and credit the time spent to its task (all of it when it ran out). */
   function settleTimer(finished) {
@@ -1398,7 +1421,7 @@
   /* ---------- Feel: haptics, swipe rows ---------- */
   // A short tick when a gesture arms and when a task is done. Android app: native haptics; Android Chrome: vibrate.
   function haptic(kind = 'tick') {
-    try { if (ANDROID?.haptic) ANDROID.haptic(kind); else navigator.vibrate?.(kind === 'done' ? 14 : 6); } catch { /* optional */ }
+    try { if (NATIVE?.haptic) NATIVE.haptic(kind); else navigator.vibrate?.(kind === 'done' ? 14 : 6); } catch { /* optional */ }
   }
   function deleteTask(id) {
     const task = state.tasks.find(t => t.id === id);
@@ -1764,6 +1787,14 @@
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
   $('privacy-toggle').addEventListener('change', () => { state.settings.lockPrivacy = $('privacy-toggle').checked; lastNotified = ''; save(); renderPreview(); icons(); showToast(state.settings.lockPrivacy ? '锁屏上只显示数量，解锁后才能看到内容' : '锁屏上会显示待办内容'); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));
+  if (IOS_APP) {
+    $('live-toggle').addEventListener('change', () => {
+      const on = $('live-toggle').checked;
+      try { IOS_APP.liveActivity(on); } catch { /* ignore */ }
+      showToast(on ? '已在锁屏显示今天的待办' : '已从锁屏移除');
+    });
+    $('ios-notify-button').addEventListener('click', () => { try { IOS_APP.requestNotifications(); } catch { /* ignore */ } });
+  }
   if (ANDROID) {
     $('lockscreen-toggle').addEventListener('change', () => {
       state.settings.lockScreen = $('lockscreen-toggle').checked; save(); renderAndroidLock();
@@ -1824,6 +1855,8 @@
   $('install-later').addEventListener('click', () => { state.settings.installDismissed = true; save(); renderInstallBanner(); });
   $('close-install').addEventListener('click', () => $('install-dialog').close());
   $('settings-install').addEventListener('click', () => $('install-dialog').showModal());
+  if (NATIVE) { $('settings-install').hidden = true; document.querySelector('.links-row a[href="iphone.html"]')?.remove(); }
+  if (IOS_APP) document.documentElement.classList.add('ios-app');
   window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; renderInstallBanner(); });
   window.addEventListener('appinstalled', () => { installPrompt = null; renderInstallBanner(); });
   document.addEventListener('visibilitychange', () => {

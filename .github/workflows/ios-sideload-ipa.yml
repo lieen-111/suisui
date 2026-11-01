@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["ios/**", ".github/workflows/ios-sideload-ipa.yml"]
+    paths: ["ios/**", "app/**", ".github/workflows/ios-sideload-ipa.yml"]
 
 permissions:
   contents: write

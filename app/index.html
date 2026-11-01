@@ -222,11 +222,19 @@
             </div>
             <div class="settings-page" data-page="lock" hidden>
             <fieldset><legend>锁屏提醒</legend>
-              <label class="setting-row" for="notify-toggle"><span>离开应用时，把待办放到锁屏通知</span><input type="checkbox" id="notify-toggle" class="switch"></label>
+              <label class="setting-row" id="notify-row" for="notify-toggle"><span>离开应用时，把待办放到锁屏通知</span><input type="checkbox" id="notify-toggle" class="switch"></label>
               <p class="setting-note" id="notify-status" role="status"></p>
               <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新锁屏通知</button>
               <label class="setting-row" for="privacy-toggle"><span>锁屏隐藏待办内容</span><input type="checkbox" id="privacy-toggle" class="switch"></label>
               <p class="setting-note">开启后，锁屏上只显示“还有几件”，内容要解锁后才能看到和勾选。别人拿到你的手机时更安心。</p>
+              <div id="ios-lock-settings" hidden>
+                <label class="setting-row" for="live-toggle"><span>在锁屏显示今天的待办（实时活动）</span><input type="checkbox" id="live-toggle" class="switch"></label>
+                <p class="setting-note" id="live-status" role="status"></p>
+                <p class="setting-note">还可以把小组件放到锁屏：长按锁屏 → 自定 → 锁定屏幕 → 添加小组件 → 碎碎清单。点圆圈直接完成，不用解锁进应用。</p>
+                <label class="setting-row static"><span>到点提醒与计时通知</span></label>
+                <p class="setting-note" id="ios-notify-status"></p>
+                <button class="secondary-button inline" id="ios-notify-button" hidden><i data-lucide="bell-ring"></i>允许通知</button>
+              </div>
               <div class="android-only" id="android-lock-settings" hidden>
                 <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
                 <p class="setting-note" id="lockscreen-status"></p>
