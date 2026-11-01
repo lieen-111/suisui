@@ -857,3 +857,61 @@ body[data-settings-page=index] .settings-preview{display:none}
 .bento .tile-head svg{color:inherit}
 .bento .tile-look .tile-head svg{color:#fff}
 .bento .tile-look .tile-foot strong{color:#fff;font-size:26px;font-weight:700}
+
+/* 1.3.2 · materials that actually look different */
+.activity,.mini-card,.mat-card{transition:background .25s,box-shadow .25s,backdrop-filter .25s}
+.activity[data-surface=frosted],.mini-card[data-surface=frosted],.mat-card[data-surface=frosted]{box-shadow:inset 0 0 0 1px #ffffff14,inset 0 1px 0 #ffffff1f,0 12px 28px -16px #0008}
+.activity[data-surface=glass],.mini-card[data-surface=glass],.mat-card[data-surface=glass]{background:linear-gradient(135deg,#ffffff47 0%,#ffffff12 34%,#ffffff00 58%,#ffffff1a 100%),var(--card-bg);box-shadow:inset 0 0 0 1px #ffffff52,inset 0 1px 0 #ffffff80,0 14px 30px -16px #0009}
+.activity[data-surface=flat],.mini-card[data-surface=flat],.mat-card[data-surface=flat]{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+
+/* 1.3.2 · "更多外观设置" redesigned: visual material tiles, colour dots, pill segments */
+.settings-page .more-appearance{padding:0 16px}
+.settings-page .more-appearance>summary{display:flex;align-items:center;gap:12px;min-height:52px;font-size:16px;font-weight:500}
+.settings-page .more-appearance>summary>svg:first-child{box-sizing:content-box;width:16px;height:16px;padding:6px;border-radius:7px;color:#fff;background:linear-gradient(180deg,#8e8e93,#636366);transform:none!important}
+.settings-page .more-appearance>summary .summary-chevron{margin-left:auto;width:16px;height:16px;color:var(--chev,#c4c4c7);transition:transform .2s}
+.settings-page .more-appearance[open]>summary .summary-chevron{transform:rotate(180deg)}
+.settings-page .more-appearance[open]{padding-bottom:6px}
+.ag{border-top:.5px solid var(--sep,var(--line));padding:14px 0 16px}
+.ag-title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--label2,var(--muted))}
+.ag .ag-title+*{margin-bottom:0}
+.ag>*+.ag-title,.ag>*+.ag-row{margin-top:18px}
+.ag-row{display:flex;align-items:baseline;justify-content:space-between}
+.ag-row .ag-title{margin-bottom:6px}
+.ag-row output{font-size:13px;color:var(--label2,var(--muted));font-variant-numeric:tabular-nums}
+.settings-page .material-tiles.material-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:none;padding:0;margin:0;border-radius:0}
+.settings-page .material-tiles.material-options button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0;min-height:0;background:none!important;box-shadow:none!important;border:0;color:var(--ink);font-weight:400}
+.mat-demo{position:relative;display:block;width:100%;aspect-ratio:1/1.05;border-radius:14px;overflow:hidden;background:linear-gradient(150deg,#4f8a76,#123a30);isolation:isolate}
+.mat-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
+.mat-photo.monochrome{filter:grayscale(1)}
+.mat-card{position:absolute;left:10px;right:10px;top:22%;bottom:22%;border-radius:12px;background:var(--card-bg);backdrop-filter:blur(var(--card-blur)) saturate(var(--card-saturate));-webkit-backdrop-filter:blur(var(--card-blur)) saturate(var(--card-saturate));display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 10px}
+.mat-card i{display:flex;align-items:center;gap:6px;height:7px}
+.mat-card i:before{content:"";width:7px;height:7px;border-radius:50%;border:1.3px solid var(--card-check,#c6eed2);flex:none}
+.mat-card i:after{content:"";height:4px;flex:1;border-radius:2px;background:var(--card-ink,#fff);opacity:.6}
+.mat-card i:nth-child(2):after{max-width:72%}
+.mat-card i:nth-child(3):after{max-width:52%}
+.mat-name{font-size:14px;font-weight:600}
+.material-tiles small{font-size:11px;color:var(--label2,var(--muted));margin-top:-4px}
+.material-tiles button:after{content:"";width:22px;height:22px;border-radius:50%;box-sizing:border-box;border:1.5px solid #c7c7cc;background:center/13px no-repeat}
+.material-tiles button.active:after{border:0;background-color:var(--accent-fill,var(--accent));background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+.material-tiles button.active .mat-demo{box-shadow:0 0 0 2.5px var(--cell,#fff),0 0 0 4.5px var(--accent-fill,var(--accent))}
+.color-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.color-row button{width:34px;height:34px;border-radius:50%;background:var(--preset);box-shadow:inset 0 0 0 1px #0000001f;flex:none;padding:0}
+.color-row button.active{box-shadow:inset 0 0 0 1px #0000001f,0 0 0 2.5px var(--cell,#fff),0 0 0 4.5px var(--accent-fill,var(--accent))}
+.custom-color{position:relative;width:34px;height:34px;border-radius:50%;cursor:pointer;flex:none;background:conic-gradient(#ff5f57,#febc2e,#28c840,#2fb5ff,#8b5cf6,#ff5f9e,#ff5f57)}
+.custom-color span{position:absolute;inset:7px;border-radius:50%;background:var(--cell,#fff);display:block}
+.custom-color input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.color-row output{margin-left:auto;font-size:12px;color:var(--label2,var(--muted));font-variant-numeric:tabular-nums}
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row input{flex:1;margin:0!important}
+.slider-row>svg{width:16px;height:16px;color:var(--label2,var(--muted));flex:none}
+.pill-segment{display:flex;background:#7676801f;border-radius:10px;padding:2px}
+.pill-segment button{flex:1;min-height:32px;border-radius:8px;font-size:13px;color:var(--ink)}
+.pill-segment button.active{background:#fff;font-weight:600;box-shadow:0 3px 8px #0000001f,0 3px 1px #0000000a}
+.ag-switch{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer}
+.ag-switch strong{display:block;font-size:16px;font-weight:400}
+.ag-switch small{display:block;font-size:12px;color:var(--label2,var(--muted));margin-top:2px}
+.ag .swatches{gap:16px}
+.reset-row{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;border-top:.5px solid var(--sep,var(--line));font-size:15px;color:#d64545}
+.reset-row svg{width:16px;height:16px}
+.settings-page .more-appearance #reset-settings{border-radius:0;margin:0;justify-content:center;color:#d64545}
+@media(prefers-color-scheme:dark){.pill-segment{background:#7676803d}.pill-segment button.active{background:#636366;color:#fff}.reset-row,.settings-page .more-appearance #reset-settings{color:#ff6961}}

@@ -510,16 +510,20 @@
   function applyCardAppearance() {
     const s = state.settings;
     const rgb = [1, 3, 5].map(i => parseInt(s.cardColor.slice(i, i + 2), 16));
-    const opacity = 1 - s.cardTransparency / 100;
+    // Materials differ in more than blur: glass lets more through and adds a sheen and a light rim,
+    // frosted blurs heavily, flat is a solid colour (transparency still applies, scaled per material).
+    const MATERIAL = { frosted: { blur: '26px', sat: '1.25', see: .8 }, glass: { blur: '4px', sat: '1.8', see: .55 }, flat: { blur: '0px', sat: '1', see: 1 } };
     // Color-based automatic contrast; the explicit text option covers unusual wallpapers.
     const luminance = values => values.reduce((sum, v, i) => sum + (v / 255 <= .04045 ? v / 255 / 12.92 : ((v / 255 + .055) / 1.055) ** 2.4) * [.2126, .7152, .0722][i], 0);
     const lum = luminance(rgb);
     const contrast = ink => (Math.max(ink, lum) + .05) / (Math.min(ink, lum) + .05);
     const light = s.cardText === 'light' || (s.cardText === 'auto' && contrast(luminance([244, 251, 247])) >= contrast(luminance([24, 43, 34])));
-    for (const card of [$('activity'), $('mini-card')]) {
-      card.style.setProperty('--card-bg', `rgba(${rgb.join(',')},${opacity})`);
-      card.style.setProperty('--card-blur', ({ frosted: '24px', glass: '7px', flat: '0px' })[s.cardMaterial]);
-      card.style.setProperty('--card-saturate', ({ frosted: '.85', glass: '1.4', flat: '1' })[s.cardMaterial]);
+    for (const card of [$('activity'), $('mini-card'), ...document.querySelectorAll('.mat-card')]) {
+      const m = MATERIAL[card.dataset.mat || s.cardMaterial];
+      card.dataset.surface = card.dataset.mat || s.cardMaterial;
+      card.style.setProperty('--card-bg', `rgba(${rgb.join(',')},${((1 - s.cardTransparency / 100) * m.see).toFixed(3)})`);
+      card.style.setProperty('--card-blur', m.blur);
+      card.style.setProperty('--card-saturate', m.sat);
       card.style.setProperty('--card-ink', light ? '#f4fbf7' : '#182b22');
       card.style.setProperty('--card-muted', light ? '#e0eae4' : '#30483b');
       card.style.setProperty('--card-rule', light ? '#d4eddf40' : '#183b2b30');
@@ -532,6 +536,9 @@
     $('intensity').style.setProperty('--fill', `${(s.intensity - 1) / 2 * 100}%`);
     $('card-transparency-value').textContent = `${s.cardTransparency}%`;
     $('card-text').value = s.cardText;
+    document.querySelectorAll('[data-card-text]').forEach(b => { b.classList.toggle('active', b.dataset.cardText === s.cardText); b.setAttribute('aria-pressed', String(b.dataset.cardText === s.cardText)); });
+    const paper = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).thumb;
+    document.querySelectorAll('.mat-photo').forEach(img => { if (paper) { if (img.getAttribute('src') !== paper) img.src = paper; img.hidden = false; } else img.hidden = true; img.classList.toggle('monochrome', s.wallpaper === 'mono'); });
     document.querySelectorAll('[data-material]').forEach(b => { b.classList.toggle('active', b.dataset.material === s.cardMaterial); b.setAttribute('aria-pressed', String(b.dataset.material === s.cardMaterial)); });
     document.querySelectorAll('[data-card-color]').forEach(b => { b.classList.toggle('active', b.dataset.cardColor.toLowerCase() === s.cardColor.toLowerCase()); b.setAttribute('aria-pressed', String(b.dataset.cardColor.toLowerCase() === s.cardColor.toLowerCase())); });
   }
@@ -954,6 +961,7 @@
     if (b.dataset.density) { state.settings.density = b.dataset.density; save(); applySettings(); }
     if (b.dataset.wallpaper) { state.settings.wallpaper = b.dataset.wallpaper; state.settings.wallpaperPicked = true; save(); applySettings(); icons($('wallpaper-library')); }
     if (b.dataset.material) { state.settings.cardMaterial = b.dataset.material; save(); applyCardAppearance(); applySettings(); }
+    if (b.dataset.cardText) { state.settings.cardText = b.dataset.cardText; save(); applyCardAppearance(); }
     if (b.dataset.cardColor) { state.settings.cardColor = b.dataset.cardColor; save(); applySettings(); }
     if (b.dataset.themePreset) {
       const { name, ...values } = THEMES[b.dataset.themePreset];
@@ -1062,7 +1070,7 @@
   $('intensity').addEventListener('input', () => { state.settings.intensity = Number($('intensity').value); save(); applySettings(); });
   $('card-color').addEventListener('input', () => { state.settings.cardColor = $('card-color').value; applyCardAppearance(); save(); });
   $('card-transparency').addEventListener('input', () => { state.settings.cardTransparency = Number($('card-transparency').value); applyCardAppearance(); save(); });
-  $('card-text').addEventListener('change', () => { state.settings.cardText = $('card-text').value; applyCardAppearance(); save(); });
+
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
   $('privacy-toggle').addEventListener('change', () => { state.settings.lockPrivacy = $('privacy-toggle').checked; lastNotified = ''; save(); renderPreview(); icons(); showToast(state.settings.lockPrivacy ? '锁屏上只显示数量，解锁后才能看到内容' : '锁屏上会显示待办内容'); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));

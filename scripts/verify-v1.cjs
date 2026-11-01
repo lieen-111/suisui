@@ -130,7 +130,7 @@ const bridgeStub = (lock) => `
     assert.equal(await page.locator('#more-appearance').evaluate(d => d.open), false, 'Detailed appearance is folded by default');
     await page.locator('[data-theme-preset=mist]').click();
     assert.equal(await page.locator('[data-theme-preset=mist]').getAttribute('aria-pressed'), 'true');
-    assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-blur')), '7px');
+    assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-blur')), '4px');
     assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-ink')), '#182b22');
     await page.locator('[data-theme-preset=lake]').click();
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#226a9a');

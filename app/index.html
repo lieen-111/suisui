@@ -157,36 +157,46 @@
               <div class="wallpaper-library" id="wallpaper-library" role="group" aria-label="壁纸库"></div>
               <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>用自己的照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
               <p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
-            <details class="more-appearance" id="more-appearance"><summary><i data-lucide="chevron-right"></i>更多外观设置</summary>
-            <fieldset class="card-settings"><legend>待办框</legend>
-              <div class="setting-label">材质</div>
-              <div class="segmented material-options" role="group" aria-label="待办框材质">
-                <button data-material="frosted">磨砂</button><button data-material="glass">玻璃</button><button data-material="flat">平面</button>
+            <details class="more-appearance" id="more-appearance"><summary><i data-lucide="sliders-horizontal"></i>更多外观设置<i data-lucide="chevron-down" class="summary-chevron"></i></summary>
+            <section class="ag" aria-label="待办框">
+              <h3 class="ag-title">材质</h3>
+              <div class="material-tiles material-options" role="group" aria-label="待办框材质">
+                <button data-material="frosted"><span class="mat-demo" aria-hidden="true"><img class="mat-photo" alt=""><span class="mat-card" data-mat="frosted"><i></i><i></i><i></i></span></span><span class="mat-name">磨砂</span><small>柔和模糊</small></button>
+                <button data-material="glass"><span class="mat-demo" aria-hidden="true"><img class="mat-photo" alt=""><span class="mat-card" data-mat="glass"><i></i><i></i><i></i></span></span><span class="mat-name">玻璃</span><small>通透反光</small></button>
+                <button data-material="flat"><span class="mat-demo" aria-hidden="true"><img class="mat-photo" alt=""><span class="mat-card" data-mat="flat"><i></i><i></i><i></i></span></span><span class="mat-name">平面</span><small>纯色干净</small></button>
               </div>
-              <div class="setting-row"><label for="card-color">待办框颜色</label><div class="color-picker"><input type="color" id="card-color" value="#112b24" aria-label="待办框底色"><output id="card-color-value">#112B24</output></div></div>
-              <div class="card-presets" role="group" aria-label="待办框预设底色">
-                <button data-card-color="#112b24" style="--preset:#112b24" aria-label="松绿底色" title="松绿"></button>
-                <button data-card-color="#202326" style="--preset:#202326" aria-label="石墨底色" title="石墨"></button>
-                <button data-card-color="#f5f7f3" style="--preset:#f5f7f3" aria-label="雾白底色" title="雾白"></button>
-                <button data-card-color="#563746" style="--preset:#563746" aria-label="梅紫底色" title="梅紫"></button>
-                <button data-card-color="#294c64" style="--preset:#294c64" aria-label="湖蓝底色" title="湖蓝"></button>
+              <h3 class="ag-title">颜色</h3>
+              <div class="color-row" role="group" aria-label="待办框颜色">
+                <button data-card-color="#112b24" style="--preset:#112b24" aria-label="松绿" title="松绿"></button>
+                <button data-card-color="#202326" style="--preset:#202326" aria-label="石墨" title="石墨"></button>
+                <button data-card-color="#f5f7f3" style="--preset:#f5f7f3" aria-label="雾白" title="雾白"></button>
+                <button data-card-color="#563746" style="--preset:#563746" aria-label="梅紫" title="梅紫"></button>
+                <button data-card-color="#294c64" style="--preset:#294c64" aria-label="湖蓝" title="湖蓝"></button>
+                <label class="custom-color" title="自定义颜色"><input type="color" id="card-color" value="#112b24" aria-label="自定义待办框颜色"><span></span></label>
+                <output id="card-color-value">#112B24</output>
               </div>
-              <label class="setting-row" for="card-transparency"><span>透明度</span><output id="card-transparency-value">15%</output></label>
-              <input type="range" id="card-transparency" min="0" max="90" step="1" value="15" aria-label="待办框透明度">
-              <div class="range-labels"><span>不透明</span><span>通透</span></div>
-              <div class="setting-row"><label for="card-text">文字颜色</label><select id="card-text"><option value="auto">自动</option><option value="light">浅色</option><option value="dark">深色</option></select></div>
-            </fieldset>
-            <fieldset><legend>完成反馈</legend>
-              <label class="setting-row" for="motion-toggle"><span>碎裂动画</span><input type="checkbox" id="motion-toggle" class="switch"></label>
-              <label class="setting-row" for="intensity"><span>碎裂幅度</span><output id="intensity-value">适中</output></label>
-              <input type="range" id="intensity" min="1" max="3" step="1" aria-label="碎裂幅度">
-            </fieldset>
-            <fieldset><legend>App 主色</legend><div class="swatches">
-              <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i></label>
-              <label class="swatch rose" title="莓红"><input type="radio" name="accent" value="rose" aria-label="莓红"><i data-lucide="check"></i></label>
-              <label class="swatch blue" title="湖蓝"><input type="radio" name="accent" value="blue" aria-label="湖蓝"><i data-lucide="check"></i></label>
-            </div></fieldset>
-            <button class="secondary-button" id="reset-settings"><i data-lucide="rotate-ccw"></i>恢复默认外观</button>
+              <div class="ag-row"><h3 class="ag-title">透明度</h3><output id="card-transparency-value">15%</output></div>
+              <div class="slider-row"><i data-lucide="square" aria-hidden="true"></i><input type="range" id="card-transparency" min="0" max="90" step="1" value="15" aria-label="待办框透明度"><i data-lucide="square-dashed" aria-hidden="true"></i></div>
+              <h3 class="ag-title">文字</h3>
+              <div class="pill-segment" role="group" aria-label="文字颜色">
+                <button data-card-text="auto">自动</button><button data-card-text="light">浅色字</button><button data-card-text="dark">深色字</button>
+              </div>
+              <input type="hidden" id="card-text" value="auto">
+            </section>
+            <section class="ag" aria-label="完成反馈">
+              <label class="ag-switch" for="motion-toggle"><span><strong>碎裂动画</strong><small>完成时文字碎开再划线</small></span><input type="checkbox" id="motion-toggle" class="switch"></label>
+              <div class="ag-row"><h3 class="ag-title">碎裂幅度</h3><output id="intensity-value">适中</output></div>
+              <div class="slider-row"><span class="a-small">轻</span><input type="range" id="intensity" min="1" max="3" step="1" aria-label="碎裂幅度"><span class="a-small">强</span></div>
+            </section>
+            <section class="ag" aria-label="App 主色">
+              <h3 class="ag-title">App 主色</h3>
+              <div class="swatches">
+                <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i></label>
+                <label class="swatch rose" title="莓红"><input type="radio" name="accent" value="rose" aria-label="莓红"><i data-lucide="check"></i></label>
+                <label class="swatch blue" title="湖蓝"><input type="radio" name="accent" value="blue" aria-label="湖蓝"><i data-lucide="check"></i></label>
+              </div>
+            </section>
+            <button class="reset-row" id="reset-settings"><i data-lucide="rotate-ccw"></i>恢复默认外观</button>
             </details>
             </div>
             <div class="settings-page" data-page="lock" hidden>
