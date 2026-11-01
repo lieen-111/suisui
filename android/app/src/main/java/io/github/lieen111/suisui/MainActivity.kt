@@ -189,11 +189,13 @@ open class WebHostActivity : ComponentActivity() {
         @JavascriptInterface
         fun load(): String = TodoStore.read(ctx) ?: ""
 
+        /** false = rejected because the stored copy is newer; the page reloads it. */
         @JavascriptInterface
-        fun save(json: String) {
-            if (runCatching { JSONObject(json) }.isFailure) return
-            TodoStore.write(ctx, json)
+        fun save(json: String): Boolean {
+            if (runCatching { JSONObject(json) }.isFailure) return true
+            if (!TodoStore.writeFromPage(ctx, json)) return false
             LockCard.update(ctx)
+            return true
         }
 
         @JavascriptInterface
@@ -207,6 +209,11 @@ open class WebHostActivity : ComponentActivity() {
             .put("notifications", LockCard.notificationsAllowed(ctx))
             .put("overlay", Settings.canDrawOverlays(ctx))
             .put("lockScreenRunning", ScreenService.running)
+            .put("battery", LockLauncher.batteryUnrestricted(ctx))
+            .put("fullScreen", LockLauncher.fullScreenAllowed(ctx))
+            .put("needsFullScreenSetting", Build.VERSION.SDK_INT >= 34)
+            .put("screenOffs", LockLauncher.stats(ctx).first)
+            .put("shown", LockLauncher.stats(ctx).second)
             .put("brand", (Build.MANUFACTURER ?: "").lowercase())
             .toString()
 
@@ -236,6 +243,27 @@ open class WebHostActivity : ComponentActivity() {
                 runCatching { startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
             }
         }
+
+        /** System dialog: let 碎碎清单 run without battery optimization (keeps the screen-off listener alive). */
+        @SuppressLint("BatteryLife")
+        @JavascriptInterface
+        fun requestBatteryExemption() {
+            runOnUiThread {
+                val ask = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+                if (runCatching { startActivity(ask) }.isFailure) runCatching { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+            }
+        }
+
+        /** Android 14+: "全屏通知" special access, used as the second way to bring up the lock view. */
+        @JavascriptInterface
+        fun openFullScreenSettings() {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT >= 34) runCatching { startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName"))) }
+            }
+        }
+
+        @JavascriptInterface
+        fun resetLockStats() = LockLauncher.resetStats(ctx)
 
         /** Brand permission pages ("锁屏显示", "后台弹出界面"), falling back to the app details page. */
         @JavascriptInterface
@@ -299,8 +327,14 @@ class LockActivity : WebHostActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        LockLauncher.shown(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        LockLauncher.shown(this)
         js("window.suisuiNativeChanged && window.suisuiNativeChanged(); window.suisuiLockShown && window.suisuiLockShown()")
     }
 }

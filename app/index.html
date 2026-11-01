@@ -199,6 +199,7 @@
               <div class="android-only" id="android-lock-settings" hidden>
                 <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
                 <p class="setting-note" id="lockscreen-status"></p>
+                <p class="setting-note lock-stats" id="lock-stats" hidden></p>
                 <button class="secondary-button inline" id="open-android-setup"><i data-lucide="shield-check"></i>检查锁屏权限</button>
               </div>
             </fieldset>
@@ -297,6 +298,8 @@
     <ol class="setup-steps">
       <li id="setup-notify"><span class="setup-mark"></span><div><strong>通知</strong><p>用来在锁屏常驻待办卡片，并让锁屏服务保持运行。</p></div><button class="secondary-button" data-setup="notify">去开启</button></li>
       <li id="setup-overlay"><span class="setup-mark"></span><div><strong>显示在其他应用上层</strong><p>熄屏时把碎碎清单放到锁屏前面。</p></div><button class="secondary-button" data-setup="overlay">去开启</button></li>
+      <li id="setup-battery"><span class="setup-mark"></span><div><strong>不限制电池</strong><p>让系统不要在后台关掉碎碎清单，否则熄屏后经常不出现。</p></div><button class="secondary-button" data-setup="battery">去开启</button></li>
+      <li id="setup-fullscreen" hidden><span class="setup-mark"></span><div><strong>全屏通知</strong><p>第二种调出锁屏的方式（闹钟类 App 用的同一种），直接启动被系统拦下时由它补上。</p></div><button class="secondary-button" data-setup="fullscreen">去开启</button></li>
       <li id="setup-brand"><span class="setup-mark manual"></span><div><strong>锁屏显示、后台弹出界面、省电无限制</strong><p id="setup-brand-copy">小米、红米、OPPO、vivo、荣耀等手机还需要在应用权限里手动打开这几项，否则锁屏可能不出现或被系统关掉。</p></div><button class="secondary-button" data-setup="brand">打开权限页</button></li>
     </ol>
     <div class="dialog-actions"><button class="primary-button" id="finish-android-setup">完成</button></div>

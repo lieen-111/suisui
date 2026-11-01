@@ -11,10 +11,17 @@ let browser;
     window.__native = store;
     window.SuiSuiAndroid = {
       load: () => store.raw,
-      save: json => { store.raw = json; store.saves++; sessionStorage.setItem('native', json); },
+      // Mirrors TodoStore.writeFromPage: a page with an older revision is refused.
+      save: json => {
+        const rev = s => { try { return JSON.parse(s).rev || 0; } catch { return 0; } };
+        if (store.raw && rev(store.raw) > 0 && rev(json) <= rev(store.raw)) { store.rejected = (store.rejected || 0) + 1; return false; }
+        store.raw = json; store.saves++; sessionStorage.setItem('native', json); return true;
+      },
       notificationsAllowed: () => true,
       isLockMode: () => false,
-      permissions: () => JSON.stringify({ notifications: true, overlay: false, lockScreenRunning: false, brand: 'xiaomi' }),
+      permissions: () => JSON.stringify({ notifications: true, overlay: false, lockScreenRunning: false, brand: 'xiaomi', battery: false, fullScreen: true, needsFullScreenSetting: true, screenOffs: 10, shown: 6 }),
+      requestBatteryExemption: () => { store.battery = (store.battery || 0) + 1; },
+      openFullScreenSettings: () => {},
       openOverlaySettings: () => { store.overlayOpened = (store.overlayOpened || 0) + 1; },
       openAppPermissions: () => {},
       unlock: () => {},
@@ -47,7 +54,8 @@ let browser;
   await page.locator('#wallpaper-file').setInputFiles(require('node:path').resolve(__dirname, '../app/assets/lake.jpg'));
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => JSON.parse(window.__native.raw).settings.photo), '');
-  assert(await page.evaluate(() => JSON.parse(localStorage.getItem('suisui-locktodo-v1')).settings.photo.startsWith('data:image/')));
+  assert(await page.evaluate(() => localStorage.getItem('suisui-wallpaper-photo').startsWith('data:image/')), 'Photo saved under its own key');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('suisui-locktodo-v1')).settings.photo), '', 'Main record stays small');
   assert.match(await page.locator('#notify-status').textContent(), /已开启/);
 
   // A "完成" tap on the lock screen: native marks seed-3 done, then calls suisuiNativeChanged().
@@ -76,6 +84,38 @@ let browser;
   assert.equal(await page.evaluate(() => JSON.parse(window.__native.raw).settings.lockNotify), false);
   await page.locator('#notify-toggle').check();
   assert.equal(await page.evaluate(() => window.__native.permissionAsked), 1);
+
+  // Lock-screen reliability: battery step, stats in settings.
+  assert.match(await page.locator('#lock-stats').textContent(), /最近 10 次熄屏，碎碎清单锁屏出现了 6 次.*不限制电池/);
+  await page.locator('#open-android-setup').click();
+  assert.equal(await page.locator('#setup-battery').evaluate(li => li.classList.contains('done')), false);
+  await page.locator('[data-setup=battery]').click();
+  assert.equal(await page.evaluate(() => window.__native.battery), 1);
+  assert.equal(await page.locator('#setup-fullscreen').isVisible(), true);
+  await page.locator('#finish-android-setup').click();
+
+  // A newer copy written elsewhere (lock view / lock-screen card) is never overwritten by this page's older copy.
+  await page.evaluate(() => {
+    const s = JSON.parse(window.__native.raw);
+    s.rev += 5; s.settings.density = 'compact'; s.settings.lockPrivacy = true;
+    window.__native.raw = JSON.stringify(s); // no suisuiNativeChanged: this page does not know yet
+  });
+  await page.locator('#notify-toggle').click(); // the page's save is refused and it reloads the newer copy
+  const after = await page.evaluate(() => JSON.parse(window.__native.raw));
+  assert.equal(after.settings.density, 'compact', 'Stale save refused; the newer settings stay');
+  assert.equal(after.settings.lockPrivacy, true);
+  assert.equal(await page.evaluate(() => window.__native.rejected), 1);
+  assert.equal(await page.locator('#privacy-toggle').isChecked(), true, 'Page reloaded the newer settings');
+  // Overnight: a page left open must take the stored copy before its new-day cleanup.
+  await page.evaluate(() => {
+    const s = JSON.parse(window.__native.raw);
+    s.rev += 3; s.settings.density = 'comfortable'; s.day = '2020-01-01';
+    window.__native.raw = JSON.stringify(s);
+    window.suisui.rollover();
+  });
+  const morning = await page.evaluate(() => JSON.parse(window.__native.raw));
+  assert.equal(morning.settings.density, 'comfortable', 'Rollover started from the newest settings');
+  assert.notEqual(morning.day, '2020-01-01');
 
   // Export goes through the native file picker.
   await page.locator('#settings-back').click();

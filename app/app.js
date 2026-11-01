@@ -3,6 +3,8 @@
   const $ = (id) => document.getElementById(id);
   // Keep the original key so existing users keep their data; the record carries its own schema number.
   const STORE = 'suisui-locktodo-v1';
+  // The wallpaper photo lives under its own key: a large photo must never stop the to-dos and settings from saving.
+  const PHOTO_KEY = 'suisui-wallpaper-photo';
   const SCHEMA = 2;
   const ARCHIVE_LIMIT = 300;
   const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#13765b' }, { id: 'life', name: '生活', color: '#b14c6b' }];
@@ -39,7 +41,7 @@
     { id: 'seed-5', title: '把下周的选题记下来', group: 'work' },
     { id: 'seed-6', title: '读完床头的那一章', group: 'life' }
   ].map(normalizeTask);
-  let state = { schema: SCHEMA, tasks: examples(), archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey() };
+  let state = { schema: SCHEMA, rev: 0, tasks: examples(), archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey() };
   let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
   const completing = new Set();
@@ -128,6 +130,8 @@
     state.settings = cleanSettings(saved.settings);
     // Records from schema 1 have no day marker: treat them as today so nothing is archived on upgrade.
     state.day = isDayKey(saved.day) ? saved.day : dayKey();
+    // Every save bumps rev; the Android side refuses a save older than what it has (a stale page in the background).
+    state.rev = Number.isFinite(saved.rev) ? saved.rev : 0;
     return true;
   }
 
@@ -137,15 +141,28 @@
   let lastNativeRaw = '';
   function readNative() { try { return ANDROID ? ANDROID.load() || '' : ''; } catch { return ''; } }
   let hadSaved = false;
+  let savedPhoto = null, photoOK = true, lastContent = null;
+  const contentOf = () => JSON.stringify({ ...state, rev: 0, settings: { ...state.settings, photo: '' } });
   try {
     const local = JSON.parse(localStorage.getItem(STORE) || 'null');
+    let photo = '';
+    try { photo = localStorage.getItem(PHOTO_KEY) || local?.settings?.photo || ''; } catch { /* ignore */ }
     const nativeRaw = readNative();
     const native = nativeRaw ? JSON.parse(nativeRaw) : null;
+    let bootRecord = null;
     if (native && Array.isArray(native.tasks)) {
+      bootRecord = native;
       lastNativeRaw = nativeRaw;
-      native.settings = { ...(native.settings || {}), photo: local?.settings?.photo || '' };
+      native.settings = { ...(native.settings || {}), photo };
       hadSaved = applySaved(native);
-    } else hadSaved = applySaved(local);
+    } else {
+      if (local) local.settings = { ...(local.settings || {}), photo };
+      hadSaved = applySaved(local);
+      bootRecord = local;
+    }
+    // What is stored now; the first save only writes (and bumps rev) if loading changed anything (upgrades, new defaults).
+    lastContent = hadSaved ? JSON.stringify({ ...bootRecord, rev: 0, settings: { ...bootRecord.settings, photo: '' } }) : null;
+    savedPhoto = state.settings.photo;
   } catch { storageOK = false; }
   // On Android the lock screen is the main feature, so it starts switched on.
   if (ANDROID && !hadSaved) { state.settings.lockNotify = true; state.settings.lockScreen = true; }
@@ -164,28 +181,49 @@
   function storageCopy() { return storageOK ? (persisted ? '保存在本机 · 已开启长期保存' : '保存在本机') : '未能保存，请先导出备份'; }
   function save() {
     state.schema = SCHEMA;
-    try { localStorage.setItem(STORE, JSON.stringify(state)); storageOK = true; }
-    catch { storageOK = false; }
+    const content = contentOf();
+    if (content === lastContent && savedPhoto === state.settings.photo) { $('storage-status').textContent = storageCopy(); scheduleLockNotification(); return; }
+    // Bump the revision only for real changes, so an untouched page never claims to be newer.
+    if (content !== lastContent) state.rev = (state.rev || 0) + 1;
+    const record = JSON.stringify({ ...state, settings: { ...state.settings, photo: '' } });
     if (ANDROID) {
-      try { lastNativeRaw = JSON.stringify({ ...state, settings: { ...state.settings, photo: '' } }); ANDROID.save(lastNativeRaw); } catch { /* bridge unavailable */ }
+      let accepted = true;
+      try { accepted = ANDROID.save(record) !== false; } catch { /* bridge unavailable */ }
+      if (!accepted) {
+        // Another screen (lock view, lock-screen card) saved newer data: take it instead of overwriting it.
+        syncFromNative(true);
+        return;
+      }
+      lastNativeRaw = record;
+    }
+    lastContent = content;
+    try { localStorage.setItem(STORE, record); storageOK = true; }
+    catch { storageOK = false; }
+    if (savedPhoto !== state.settings.photo) {
+      try { state.settings.photo ? localStorage.setItem(PHOTO_KEY, state.settings.photo) : localStorage.removeItem(PHOTO_KEY); photoOK = true; savedPhoto = state.settings.photo; }
+      catch { photoOK = false; }
     }
     $('storage-status').textContent = storageCopy();
     scheduleLockNotification();
   }
   // Called by the Android shell when the lock-screen card changed the data (or on resume).
-  window.suisuiNativeChanged = () => {
-    if (!ANDROID || isBusy()) return;
+  // Take the stored native copy if it changed since this page last read or wrote it.
+  function syncFromNative(force = false) {
+    if (!ANDROID || (isBusy() && !force)) return false;
     const raw = readNative();
-    if (!raw || raw === lastNativeRaw) return;
+    if (!raw || (raw === lastNativeRaw && !force)) return false;
     try {
       const native = JSON.parse(raw);
       native.settings = { ...(native.settings || {}), photo: state.settings.photo };
-      if (!applySaved(native)) return;
+      if (!applySaved(native)) return false;
       lastNativeRaw = raw;
-      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* ignore */ }
-      closeEdit(); render(); applySettings();
-    } catch { /* ignore malformed */ }
-  };
+      lastContent = contentOf();
+      try { localStorage.setItem(STORE, raw); } catch { /* ignore */ }
+      if (typeof render === 'function' && document.readyState !== 'loading') { closeEdit(); render(); applySettings(); }
+      return true;
+    } catch { return false; }
+  }
+  window.suisuiNativeChanged = () => { syncFromNative(); };
 
   /* ---------- Lists ---------- */
   function pending() { return state.tasks.filter(t => !t.done && dueToday(t)).sort((a, b) => Number(b.pinned) - Number(a.pinned)); }
@@ -500,6 +538,8 @@
 
   /* ---------- A new day: reset repeating tasks, archive yesterday's finished items ---------- */
   function rollover({ announce = true } = {}) {
+    // A page left open in the background (e.g. the lock view overnight) must not roll over its old copy.
+    if (ANDROID && booted) syncFromNative();
     const today = dayKey();
     if (state.day === today || isBusy()) return false;
     const cutoff = startOfToday();
@@ -610,9 +650,17 @@
     $('lockscreen-status').textContent = !state.settings.lockScreen ? '开启后，熄屏再亮屏会先显示碎碎清单的锁屏：壁纸、时钟和待办，点圆圈完成，上滑进入手机。'
       : p.overlay && p.notifications ? '已开启。熄屏后再亮屏试试；若没出现，点“检查锁屏权限”，按品牌打开“锁屏显示”和“后台弹出界面”。'
       : '还差权限：点“检查锁屏权限”，按提示打开。';
-    const steps = { notify: p.notifications, overlay: p.overlay };
+    const steps = { notify: p.notifications, overlay: p.overlay, battery: p.battery, fullscreen: p.fullScreen };
+    $('setup-fullscreen').hidden = !p.needsFullScreenSetting;
+    const stats = $('lock-stats');
+    stats.hidden = !(state.settings.lockScreen && p.screenOffs > 0);
+    if (!stats.hidden) {
+      const missed = p.screenOffs - p.shown;
+      stats.textContent = `最近 ${p.screenOffs} 次熄屏，碎碎清单锁屏出现了 ${p.shown} 次。` + (missed > 0 ? (p.battery === false ? '有漏掉的：请在“检查锁屏权限”里打开“不限制电池”。' : '有漏掉的：请在“检查锁屏权限”里按品牌打开“后台弹出界面”和“锁屏显示”。') : '');
+    }
     Object.entries(steps).forEach(([key, ok]) => {
       const li = $(`setup-${key}`);
+      if (!li || ok === undefined) return;
       li.classList.toggle('done', !!ok);
       li.querySelector('button').textContent = ok ? '已开启' : '去开启';
       li.querySelector('button').disabled = !!ok;
@@ -1033,6 +1081,8 @@
         if (step === 'notify') ANDROID.requestNotificationPermission();
         if (step === 'overlay') ANDROID.openOverlaySettings();
         if (step === 'brand') ANDROID.openAppPermissions();
+        if (step === 'battery') ANDROID.requestBatteryExemption();
+        if (step === 'fullscreen') ANDROID.openFullScreenSettings();
       } catch { /* ignore */ }
     });
     window.suisuiAndroidResume = () => { renderNotifySetting(); save(); };
@@ -1053,7 +1103,7 @@
     $('wallpaper-error').textContent = '';
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024) { $('wallpaper-error').textContent = '请选择 3MB 以内的 JPG、PNG 或 WebP 图片。'; return; }
     const reader = new FileReader();
-    reader.onload = () => { state.settings.photo = reader.result; state.settings.wallpaper = 'custom'; state.settings.wallpaperPicked = true; save(); applySettings(); if (!storageOK) $('wallpaper-error').textContent = '图片太大，本机存储放不下，请换一张小一些的照片。'; };
+    reader.onload = () => { state.settings.photo = reader.result; state.settings.wallpaper = 'custom'; state.settings.wallpaperPicked = true; save(); applySettings(); if (!photoOK) $('wallpaper-error').textContent = '图片太大，本机存储放不下，请换一张小一些的照片。'; };
     reader.onerror = () => { $('wallpaper-error').textContent = '未能读取这张图片，请重新选择。'; };
     reader.readAsDataURL(file);
     event.target.value = '';
@@ -1102,7 +1152,9 @@
     $('lockscreen').addEventListener('touchend', event => { if (startY !== null && startY - event.changedTouches[0].clientY > 90) leave(false); startY = null; });
     window.suisuiLockShown = () => { $('activity-list').scrollTop = 0; clock(); };
   }
+  let booted = false;
   rollover({ announce: false });
+  booted = true;
   const params = new URLSearchParams(location.search);
   setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();
   if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);

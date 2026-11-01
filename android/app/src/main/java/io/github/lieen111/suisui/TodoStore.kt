@@ -25,6 +25,21 @@ object TodoStore {
     @Synchronized
     fun read(ctx: Context): String? = file(ctx).takeIf { it.exists() }?.readText()
 
+    /** Revision of a saved record; every writer bumps it so an older copy cannot overwrite a newer one. */
+    fun rev(json: String?): Long = runCatching { JSONObject(json ?: return 0L).optLong("rev", 0L) }.getOrDefault(0L)
+
+    /**
+     * Saves a record from a web page unless it is older than what is stored (a page that stayed open in the
+     * background with stale data, e.g. the lock view). Returns false when rejected; the page then reloads.
+     */
+    @Synchronized
+    fun writeFromPage(ctx: Context, json: String): Boolean {
+        val current = read(ctx)
+        if (current != null && rev(json) <= rev(current) && rev(current) > 0) return false
+        write(ctx, json)
+        return true
+    }
+
     @Synchronized
     fun write(ctx: Context, json: String) {
         val target = file(ctx)
@@ -41,7 +56,7 @@ object TodoStore {
     fun state(ctx: Context): JSONObject? {
         val raw = read(ctx) ?: return null
         val s = try { JSONObject(raw) } catch (e: Exception) { return null }
-        if (rollover(s)) write(ctx, s.toString())
+        if (rollover(s)) { s.put("rev", s.optLong("rev", 0L) + 1); write(ctx, s.toString()) }
         return s
     }
 
@@ -56,6 +71,7 @@ object TodoStore {
             if (t.optString("id") == id && !t.optBoolean("done")) {
                 t.put("done", true)
                 t.put("completedAt", maxOf(System.currentTimeMillis(), latest))
+                s.put("rev", s.optLong("rev", 0L) + 1)
                 write(ctx, s.toString())
                 return true
             }
