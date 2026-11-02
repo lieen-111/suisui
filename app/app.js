@@ -1103,7 +1103,7 @@
     if (logo) { ctx.save(); roundRect(ctx, P, 74, 72, 72, 18); ctx.clip(); ctx.drawImage(logo, P, 74, 72, 72); ctx.restore(); }
     ctx.fillStyle = '#ffffffcc'; ctx.font = font(600, 28); ctx.fillText('碎碎清单', P + 92, 122);
     ctx.fillStyle = '#9fe1c4'; ctx.font = font(700, 24); ctx.fillText((review.period === 'week' ? 'WEEKLY  REVIEW' : 'MONTHLY  REVIEW').split('').join(String.fromCharCode(8202)), P, 232);
-    ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText(review.period === 'week' ? '本周回顾' : '本月回顾', P, 336);
+    ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText((review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset] ? `${(review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset]}回顾` : review.period === 'week' ? '每周回顾' : '每月回顾', P, 336);
     ctx.fillStyle = '#ffffffb3'; ctx.font = font(500, 34); ctx.fillText(`${d.title}${d.groupName !== '全部' ? ` · ${d.groupName}` : ''}`, P, 396);
     const f = focusText(d.minutes);
     [[String(d.entries.length), '件完成'], [f.value, f.unit], [`${d.activeDays}/${d.elapsed}`, '天有完成']].forEach(([v, u], i) => {
