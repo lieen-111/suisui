@@ -198,7 +198,7 @@ struct TodayLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: "checklist").foregroundStyle(Color(hex: "#9fe1b4"))
+                Image(systemName: "checklist").foregroundStyle(Color(hex: "#e5e5ea"))
             } compactTrailing: {
                 Text(context.state.pendingCount > 0 ? "\(context.state.pendingCount)" : "✓").monospacedDigit()
             } minimal: {

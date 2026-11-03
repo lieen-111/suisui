@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="canvas">#FAFBFA</color>
-    <color name="accent">#13765B</color>
+    <color name="canvas">#FBFBFD</color>
+    <color name="accent">#1D1D1F</color>
     <style name="Theme.SuiSui" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowShowWallpaper">true</item>
@@ -15,5 +15,5 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
-    <color name="lock_ground">#2F594C</color>
+    <color name="lock_ground">#2C2C2E</color>
 </resources>

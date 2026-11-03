@@ -7,20 +7,39 @@
   const PHOTO_KEY = 'suisui-wallpaper-photo';
   const SCHEMA = 2;
   const ARCHIVE_LIMIT = 300;
-  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#13765b' }, { id: 'life', name: '生活', color: '#b14c6b' }];
-  const GROUP_COLORS = ['#13765b', '#b14c6b', '#226a9a', '#b7791f', '#6b5ca5', '#4a5a55'];
+  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#2f6fd0' }, { id: 'life', name: '生活', color: '#d2566f' }];
+  const GROUP_COLORS = ['#2f6fd0', '#d2566f', '#e0812f', '#13765b', '#7b61c9', '#5f6368'];
   const repeats = { none: '不重复', daily: '每天', weekdays: '工作日', weekly: '每周' };
   const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   // [fill, soft background, text on dark, soft background on dark]
-  const palette = { green: ['#13765b', '#e9f3ee', '#5cc59c', '#1a362c'], rose: ['#b14c6b', '#f9edf1', '#e78ea9', '#3a2430'], blue: ['#226a9a', '#eaf2f8', '#78b6e2', '#1b3142'] };
+  // [fill, soft background, text on dark, soft background on dark, fill on dark]
+  const palette = {
+    ink: ['#1d1d1f', '#efeff1', '#f2f2f4', '#2c2c2e', '#48484c'],
+    orange: ['#e05a33', '#fdeee8', '#ff9b78', '#3a2219', '#e05a33'],
+    indigo: ['#4c5bd4', '#eceffd', '#a3adff', '#23284a', '#5866de'],
+    berry: ['#cf3d66', '#fcebf0', '#ff8fae', '#3d1f29', '#d4456d'],
+    green: ['#13765b', '#e9f3ee', '#5cc59c', '#1a362c', '#13765b']
+  };
+  // Accent ramp behind the deep panels (focus bar, lock tiles), glows on dark and tinted shadows; 950 is darkest.
+  const RAMP_STEPS = ['50', '100', '200', '300', '500', '700', '800', '900', '950'];
+  const ramps = {
+    ink: ['#f8f8fa', '#f2f2f4', '#e5e5ea', '#f5f5f7', '#8e8e93', '#3a3a3c', '#242426', '#151516', '#000000'],
+    orange: ['#fff6f2', '#fdeee8', '#ffd3c2', '#ffb59a', '#f07a52', '#d9532f', '#7c2a12', '#4a1a0a', '#2a0f05'],
+    indigo: ['#f5f6ff', '#eceffd', '#d3d8ff', '#b9c1ff', '#7682ea', '#4553cc', '#1d2470', '#141a4a', '#0b0e2a'],
+    berry: ['#fff4f7', '#fcebf0', '#ffd1de', '#ffb3c8', '#e86d8f', '#c7385f', '#6b1430', '#4a1022', '#2a0912'],
+    green: ['#f4fbf7', '#e9f5ee', '#c6eed2', '#7fe0b4', '#30b07f', '#1b6e56', '#0f4d3c', '#0b3a2d', '#08291f']
+  };
+  // Settings saved before 1.7 used green/rose/blue; green was simply the old default.
+  const OLD_ACCENT = { green: 'ink', rose: 'berry', blue: 'indigo' };
   const darkScheme = matchMedia('(prefers-color-scheme: dark)');
   // One-tap looks; the detailed controls stay under “更多外观设置”.
   const THEMES = {
-    pine: { name: '松林', cardColor: '#112b24', cardMaterial: 'frosted', cardTransparency: 15, cardText: 'auto', accent: 'green' },
-    graphite: { name: '石墨', cardColor: '#202326', cardMaterial: 'frosted', cardTransparency: 22, cardText: 'auto', accent: 'blue' },
-    mist: { name: '雾白', cardColor: '#f5f7f3', cardMaterial: 'glass', cardTransparency: 28, cardText: 'auto', accent: 'green' },
-    lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'blue' },
-    plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'rose' }
+    ink: { name: '墨黑', cardColor: '#1c1c1e', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'ink' },
+    graphite: { name: '石墨', cardColor: '#202326', cardMaterial: 'frosted', cardTransparency: 22, cardText: 'auto', accent: 'indigo' },
+    mist: { name: '雾白', cardColor: '#f5f7f3', cardMaterial: 'glass', cardTransparency: 28, cardText: 'auto', accent: 'ink' },
+    lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'indigo' },
+    plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'berry' },
+    pine: { name: '松林', cardColor: '#112b24', cardMaterial: 'frosted', cardTransparency: 15, cardText: 'auto', accent: 'green' }
   };
   // Built-in wallpaper library (scripts/make-wallpapers.py makes the generated ones). "system" = the phone's own wallpaper (Android app).
   const WALLPAPERS = [
@@ -32,7 +51,7 @@
   const wallpaperOf = id => WALLPAPERS.find(w => w.id === id) || WALLPAPERS[0];
   const FONTS = { system: '默认', song: '宋体', kai: '楷体', round: '圆体' };
   const TEXT_SIZES = [['小', .9], ['标准', 1], ['大', 1.12], ['特大', 1.26]];
-  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'green', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#112b24', cardTransparency: 15, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -78,7 +97,7 @@
     for (let i = 1; i <= 7; i++) { const k = addDays(today, i); if (dueToday(t, k)) return k; }
     return addDays(today, 7);
   }
-  function repeatLabel(t) { return t.repeat === 'weekly' ? `每${WEEK[Number.isInteger(t.repeatDay) ? t.repeatDay : 1].slice(1)}` : repeats[t.repeat]; }
+  function repeatLabel(t) { return t.repeat === 'weekly' ? `每${WEEK[Number.isInteger(t.repeatDay) ? t.repeatDay : 1]}` : repeats[t.repeat]; }
 
   /* ---------- Validation: one path for stored data, imports and native apps ---------- */
   function normalizeTask(t) {
@@ -133,6 +152,12 @@
   function groupOf(id) { return state.groups.find(g => g.id === id) || state.groups[0]; }
   function cleanSettings(raw) {
     const s = { ...defaults, ...(raw && typeof raw === 'object' ? raw : {}) };
+    if (raw && typeof raw === 'object' && !raw.palette2) {
+      // 1.7 palette: the old default green becomes 墨黑 (and so does the old default lock card colour).
+      if (OLD_ACCENT[s.accent]) s.accent = OLD_ACCENT[s.accent];
+      if (String(s.cardColor).toLowerCase() === '#112b24' && Number(s.cardTransparency) === 15) { s.cardColor = '#1c1c1e'; s.cardTransparency = 18; }
+      s.palette2 = true;
+    }
     if (!palette[s.accent]) s.accent = defaults.accent;
     if (!['compact', 'comfortable'].includes(s.density)) s.density = defaults.density;
     if (!['system', 'custom'].includes(s.wallpaper) && !WALLPAPERS.some(w => w.id === s.wallpaper)) s.wallpaper = 'lake';
@@ -145,7 +170,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
+    ['palette2', 'motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -353,6 +378,7 @@
     document.querySelectorAll('[data-add-time]').forEach(b => { const on = b.dataset.addTime === 'custom' ? customTime : !customTime && b.dataset.addTime === time; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     $('task-time-custom').hidden = !customTime;
     if (customTime && time && document.activeElement !== $('task-time-custom')) $('task-time-custom').value = time;
+    syncPickers();
   }
   // Duration chips (add and edit): preset minutes, or "自定" with a number field.
   let customDuration = { add: false, edit: false };
@@ -387,6 +413,42 @@
     visualViewport.addEventListener('resize', lift); visualViewport.addEventListener('scroll', lift);
   }
 
+  /* ---------- Date and time pickers ----------
+     The native inputs stay (they open the phone's own wheel/calendar), but they sit invisibly on top of a chip
+     that shows the value in words, so the sheet never shows a raw “mm/dd/yyyy” or “--:--” field. */
+  const PICKERS = ['task-date', 'task-time-custom', 'edit-date', 'edit-time'];
+  function setupPickers() {
+    PICKERS.forEach(id => {
+      const input = $(id), wrap = document.createElement('span'), label = document.createElement('span');
+      wrap.className = 'chip pick-chip'; wrap.dataset.pick = id; label.className = 'pick-label';
+      wrap.innerHTML = icon(input.type === 'time' ? 'clock-3' : 'calendar-days');
+      input.before(wrap); wrap.append(label, input);
+      input.addEventListener('click', () => { try { input.showPicker(); } catch { /* the tap itself opens it on phones */ } });
+      ['input', 'change'].forEach(e => input.addEventListener(e, syncPickers));
+    });
+  }
+  function syncPickers() {
+    const today = dayKey();
+    PICKERS.forEach(id => {
+      const input = $(id), wrap = input.parentElement;
+      if (!wrap?.classList.contains('pick-chip')) return;
+      wrap.hidden = input.hidden;
+      wrap.classList.toggle('is-disabled', input.disabled);
+      const v = input.value;
+      let text, on;
+      if (input.type === 'date') {
+        // In the edit sheet 今天/明天 have their own chips; this one names any other day.
+        const plain = id === 'edit-date' && (!v || v === today || v === addDays(today, 1));
+        on = !!v && !plain;
+        text = on ? dateLabel(v) : id === 'edit-date' ? '其他日期' : '选日期';
+      } else { on = !!v; text = v || '选时间'; }
+      wrap.querySelector('.pick-label').textContent = text;
+      wrap.classList.toggle('active', on);
+    });
+    const noTime = !$('edit-time').value;
+    document.querySelectorAll('[data-edit-time]').forEach(b => { b.classList.toggle('active', noTime); b.setAttribute('aria-pressed', String(noTime)); });
+  }
+
   /* ---------- Edit sheet ---------- */
   function editChips(task, group, repeat) {
     $('edit-group-chips').innerHTML = state.groups.map(g => `<button type="button" class="chip${g.id === group ? ' active' : ''}" data-edit-group="${esc(g.id)}" aria-pressed="${g.id === group}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</button>`).join('');
@@ -396,6 +458,7 @@
     $('edit-date').disabled = dateless;
     document.querySelectorAll('[data-edit-when]').forEach(b => { b.disabled = dateless; const on = !dateless && (b.dataset.editWhen === 'today' ? (!date || date === today) : date === addDays(today, 1)); b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     $('edit-date-field').querySelector('span').textContent = repeat === 'weekly' ? '从哪天' : '日期';
+    syncPickers();
   }
   function openEdit(id) {
     const task = state.tasks.find(t => t.id === id);
@@ -451,7 +514,7 @@
   function metaFlags(t) {
     const g = groupOf(t.group), today = dayKey();
     let flags = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
-    if (t.repeat !== 'none') flags += `<span class="meta-flag">${icon('repeat')}${repeatLabel(t)}</span>`;
+    if (t.repeat !== 'none') flags += `<span class="meta-flag meta-repeat">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
     if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
     if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
@@ -466,15 +529,19 @@
   // First use: no sample tasks, a calm invitation instead (the dots echo the logo).
   const FIRST_RUN = `<div class="first-run"><svg class="first-art" viewBox="0 0 120 120" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => { const a = (-80 + i * 24.3) * Math.PI / 180, t = i / 13; return `<circle cx="${(60 + 44 * Math.cos(a)).toFixed(1)}" cy="${(60 + 44 * Math.sin(a)).toFixed(1)}" r="${(2 + t * 4).toFixed(1)}" opacity="${(.3 + t * .7).toFixed(2)}"/>`; }).join('')}<path d="M44 61l11 11 22-23" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>从第一件小事开始</h2><p>点下面的 + 写下今天想做的事。<br>需要专注的事可以设个时长，点开始就倒计时。</p><button class="primary-button" data-action="first-add">${icon('plus')}添加第一件</button></div>`;
   function renderFilters(todo) {
-    if (filter !== 'all' && !state.groups.some(g => g.id === filter)) filter = 'all';
+    const repeating = state.tasks.filter(t => t.repeat !== 'none').length;
+    if (filter === 'repeat' && !repeating) filter = 'all';
+    if (filter !== 'all' && filter !== 'repeat' && !state.groups.some(g => g.id === filter)) filter = 'all';
     const count = id => todo.filter(t => id === 'all' || groupOf(t.group).id === id).length;
+    // "重复" lists every repeating task, including ones that are not due today, so a daily/weekly setting can always be found again.
     $('filter-tabs').innerHTML = `<button data-filter="all">全部 <span id="count-all">${count('all')}</span></button>` +
-      state.groups.map(g => `<button data-filter="${esc(g.id)}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)} <span id="count-${esc(g.id)}">${count(g.id)}</span></button>`).join('');
+      state.groups.map(g => `<button data-filter="${esc(g.id)}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)} <span id="count-${esc(g.id)}">${count(g.id)}</span></button>`).join('') +
+      (repeating ? `<button data-filter="repeat" class="filter-repeat" title="所有每天、工作日、每周重复的事">${icon('repeat')}重复 <span id="count-repeat">${repeating}</span></button>` : '');
     document.querySelectorAll('[data-filter]').forEach(b => { b.classList.toggle('active', b.dataset.filter === filter); b.setAttribute('aria-pressed', String(b.dataset.filter === filter)); });
   }
   function render() {
     const todo = pending(), done = doneList(), upcoming = later();
-    const inFilter = t => filter === 'all' || groupOf(t.group).id === filter;
+    const inFilter = t => filter === 'all' || (filter === 'repeat' ? t.repeat !== 'none' : groupOf(t.group).id === filter);
     const visible = todo.filter(inFilter);
     const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
     $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
@@ -491,14 +558,14 @@
     document.querySelector('.list-heading').hidden = firstRun;
     $('filter-tabs').hidden = firstRun;
     $('completed-section').hidden = !done.length;
-    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
+    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${filter === 'repeat' ? '今天要做的重复事项都做完了' : todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
     const laterVisible = upcoming.filter(inFilter);
     $('later-section').hidden = !laterVisible.length;
     $('later-count').textContent = String(laterVisible.length);
     $('later-list').innerHTML = laterVisible.map(row).join('');
     $('done-count').textContent = String(done.length);
     $('clear-done').hidden = !done.some(t => t.repeat === 'none');
-    $('completed-list').innerHTML = done.map(t => `<div class="done-row" data-completed-id="${esc(t.id)}">${icon('circle-check')}<s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}</span>` : ''}<button class="icon-button" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办">${icon('rotate-ccw')}</button><button class="icon-button" data-action="delete" data-id="${esc(t.id)}" aria-label="删除：${esc(t.title)}" title="删除">${icon('trash-2')}</button></div>`).join('');
+    $('completed-list').innerHTML = done.map(t => `<div class="done-row" data-completed-id="${esc(t.id)}">${icon('circle-check')}<s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}${repeatLabel(t)}</span>` : ''}<button class="icon-button" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办">${icon('rotate-ccw')}</button><button class="icon-button" data-action="delete" data-id="${esc(t.id)}" aria-label="删除：${esc(t.title)}" title="删除">${icon('trash-2')}</button></div>`).join('');
     renderArchive();
     renderGroupSettings();
     renderPreview();
@@ -536,7 +603,7 @@
     $('activity').classList.toggle('is-private', hide);
     list.innerHTML = hide
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${todo.length ? `今天还有 ${todo.length} 件待办` : '今天的事都完成了'}</span><button class="lock-reveal" id="lock-reveal">解锁查看</button></div>`
-      : items.length ? items.map(t => lockRow(t, `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span></button>`)).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
+      : items.length ? items.map(t => lockRow(t, `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat" title="${repeatLabel(t)}">${icon('repeat')}</span>` : ''}</button>`)).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
     list.scrollTop = scrollTop;
     $('remaining-label').textContent = todo.length ? `剩余 ${todo.length} 项 · 已完成 ${done} 项` : (done ? `全部完成 · ${done} 项` : '暂无待办');
     $('preview-footer-copy').textContent = `碎碎清单 · ${todo.length} 项待完成`;
@@ -550,12 +617,14 @@
     $('mini-remaining').textContent = $('remaining-label').textContent;
     $('mini-list').innerHTML = state.settings.lockPrivacy
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${open ? `今天还有 ${open} 件待办` : '今天的事都完成了'}</span><span class="lock-reveal">解锁查看</span></div>`
-      : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
+      : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat">${icon('repeat')}</span>` : ''}${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
   function applySettings() {
     const s = state.settings, colors = palette[s.accent], dark = darkScheme.matches, root = document.documentElement.style;
     root.setProperty('--accent', dark ? colors[2] : colors[0]);
-    root.setProperty('--accent-fill', colors[0]);
+    root.setProperty('--accent-fill', dark ? colors[4] : colors[0]);
+    ramps[s.accent].forEach((c, i) => root.setProperty(`--a-${RAMP_STEPS[i]}`, c));
+    document.documentElement.dataset.palette = s.accent;
     root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
     const paper = s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper);
     ['wallpaper', 'mini-wallpaper'].forEach(id => {
@@ -620,10 +689,10 @@
       card.style.setProperty('--card-bg', `rgba(${rgb.join(',')},${((1 - s.cardTransparency / 100) * m.see).toFixed(3)})`);
       card.style.setProperty('--card-blur', m.blur);
       card.style.setProperty('--card-saturate', m.sat);
-      card.style.setProperty('--card-ink', light ? '#f4fbf7' : '#182b22');
-      card.style.setProperty('--card-muted', light ? '#e0eae4' : '#30483b');
-      card.style.setProperty('--card-rule', light ? '#d4eddf40' : '#183b2b30');
-      card.style.setProperty('--card-check', light ? '#c6eed2' : '#275d42');
+      card.style.setProperty('--card-ink', light ? '#f5f5f7' : '#1d1d1f');
+      card.style.setProperty('--card-muted', light ? '#e3e3e8' : '#48484c');
+      card.style.setProperty('--card-rule', light ? '#ffffff38' : '#0000002a');
+      card.style.setProperty('--card-check', light ? '#ececf0' : '#3a3a3c');
     }
     $('card-color').value = s.cardColor;
     $('card-color-value').textContent = s.cardColor.toUpperCase();
@@ -1081,7 +1150,7 @@
   async function drawPoster(d) {
     const W = 1080, P = 72, F = '-apple-system, "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif';
     const font = (w, s) => `${w} ${s}px ${F}`;
-    const accent = palette[state.settings.accent][0];
+    const accent = palette[state.settings.accent][0], R = Object.fromEntries(RAMP_STEPS.map((k, i) => [k, ramps[state.settings.accent][i]]));
     const daysWith = [...d.perDay].reverse().filter(x => x.items.length);
     const MAX_ROWS = 36;
     let rows = 0; const blocks = [];
@@ -1092,17 +1161,17 @@
     const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
     // paper
-    ctx.fillStyle = '#f4f2ec'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f5f5f3'; ctx.fillRect(0, 0, W, H);
     // hero
-    const g = ctx.createLinearGradient(0, 0, W, 640); g.addColorStop(0, '#1d7058'); g.addColorStop(.6, '#0f4d3c'); g.addColorStop(1, '#082a20');
+    const g = ctx.createLinearGradient(0, 0, W, 640); g.addColorStop(0, R['700']); g.addColorStop(.6, R['800']); g.addColorStop(1, R['950']);
     ctx.fillStyle = g; roundRect(ctx, 0, 0, W, 640, [0, 0, 56, 56]); ctx.fill();
     // fragments ring (the 碎点 mark), large and faint on the right
-    for (let i = 0; i < 18; i++) { const a = (-80 + i * 19) * Math.PI / 180, t = i / 17; ctx.globalAlpha = .08 + t * .22; ctx.fillStyle = '#bff0d8'; ctx.beginPath(); ctx.arc(860 + 210 * Math.cos(a), 250 + 210 * Math.sin(a), 6 + t * 16, 0, Math.PI * 2); ctx.fill(); }
+    for (let i = 0; i < 18; i++) { const a = (-80 + i * 19) * Math.PI / 180, t = i / 17; ctx.globalAlpha = .08 + t * .22; ctx.fillStyle = R['200']; ctx.beginPath(); ctx.arc(860 + 210 * Math.cos(a), 250 + 210 * Math.sin(a), 6 + t * 16, 0, Math.PI * 2); ctx.fill(); }
     ctx.globalAlpha = 1;
     const logo = await loadImage('icons/icon-192.png');
     if (logo) { ctx.save(); roundRect(ctx, P, 74, 72, 72, 18); ctx.clip(); ctx.drawImage(logo, P, 74, 72, 72); ctx.restore(); }
     ctx.fillStyle = '#ffffffcc'; ctx.font = font(600, 28); ctx.fillText('碎碎清单', P + 92, 122);
-    ctx.fillStyle = '#9fe1c4'; ctx.font = font(700, 24); ctx.fillText((review.period === 'week' ? 'WEEKLY  REVIEW' : 'MONTHLY  REVIEW').split('').join(String.fromCharCode(8202)), P, 232);
+    ctx.fillStyle = R['300']; ctx.font = font(700, 24); ctx.fillText((review.period === 'week' ? 'WEEKLY  REVIEW' : 'MONTHLY  REVIEW').split('').join(String.fromCharCode(8202)), P, 232);
     ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText((review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset] ? `${(review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset]}回顾` : review.period === 'week' ? '每周回顾' : '每月回顾', P, 336);
     ctx.fillStyle = '#ffffffb3'; ctx.font = font(500, 34); ctx.fillText(`${d.title}${d.groupName !== '全部' ? ` · ${d.groupName}` : ''}`, P, 396);
     const f = focusText(d.minutes);
@@ -1113,17 +1182,17 @@
     });
     // chart card
     let y = 680;
-    const card = (h) => { ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#0b2a2014'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; roundRect(ctx, 40, y, W - 80, h, 40); ctx.fill(); ctx.shadowColor = 'transparent'; };
+    const card = (h) => { ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#00000014'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; roundRect(ctx, 40, y, W - 80, h, 40); ctx.fill(); ctx.shadowColor = 'transparent'; };
     card(380);
     ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('每天完成', P + 8, y + 70);
     const max = Math.max(1, ...d.perDay.map(x => x.items.length));
     const n = d.perDay.length, cx0 = P + 8, cw = W - 2 * (P + 8), slot = cw / n, bw = Math.min(64, slot * .62), base = y + 300;
     d.perDay.forEach((x, i) => {
       const c = x.items.length, h = c ? Math.max(10, (c / max) * 170) : 6, bx = cx0 + i * slot + (slot - bw) / 2;
-      ctx.fillStyle = c === max && c ? accent : (c ? '#bfe2d2' : '#e8ebe8'); roundRect(ctx, bx, base - h, bw, h, Math.min(16, bw / 2)); ctx.fill();
-      if (c && (n <= 7 || c === max)) { ctx.fillStyle = '#3a4a42'; ctx.font = font(700, n <= 7 ? 28 : 22); ctx.textAlign = 'center'; ctx.fillText(String(c), bx + bw / 2, base - h - 14); ctx.textAlign = 'left'; }
+      ctx.fillStyle = c === max && c ? accent : (c ? R['200'] : '#ececef'); roundRect(ctx, bx, base - h, bw, h, Math.min(16, bw / 2)); ctx.fill();
+      if (c && (n <= 7 || c === max)) { ctx.fillStyle = '#3a3a3c'; ctx.font = font(700, n <= 7 ? 28 : 22); ctx.textAlign = 'center'; ctx.fillText(String(c), bx + bw / 2, base - h - 14); ctx.textAlign = 'left'; }
       const day = x.date.getDate(); const lab = n <= 7 ? `周${WEEK_SHORT[x.date.getDay()]}` : ([1, 5, 10, 15, 20, 25, 30].includes(day) ? String(day) : '');
-      if (lab) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 24); ctx.textAlign = 'center'; ctx.fillText(lab, bx + bw / 2, base + 44); ctx.textAlign = 'left'; }
+      if (lab) { ctx.fillStyle = '#8e8e93'; ctx.font = font(500, 24); ctx.textAlign = 'center'; ctx.fillText(lab, bx + bw / 2, base + 44); ctx.textAlign = 'left'; }
     });
     y += 420;
     // mix card
@@ -1143,15 +1212,15 @@
     ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('做了什么', P + 8, y + 70);
     let ty = y + 120;
     const wd = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' });
-    if (!blocks.length) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 28); ctx.fillText('这段时间还没有完成记录', P + 8, ty + 20); }
+    if (!blocks.length) { ctx.fillStyle = '#8e8e93'; ctx.font = font(500, 28); ctx.fillText('这段时间还没有完成记录', P + 8, ty + 20); }
     blocks.forEach(b => {
-      ctx.fillStyle = '#8a958f'; ctx.font = font(600, 24); ctx.fillText(wd.format(b.date), P + 8, ty + 28);
+      ctx.fillStyle = '#8e8e93'; ctx.font = font(600, 24); ctx.fillText(wd.format(b.date), P + 8, ty + 28);
       ctx.textAlign = 'right'; ctx.fillText(`${b.items.length} 件`, W - P - 8, ty + 28); ctx.textAlign = 'left';
       ty += 54;
       b.items.forEach((e, i) => {
-        if (i) { ctx.fillStyle = '#eceeed'; ctx.fillRect(P + 40, ty - 4, W - 2 * P - 48, 2); }
+        if (i) { ctx.fillStyle = '#ededf0'; ctx.fillRect(P + 40, ty - 4, W - 2 * P - 48, 2); }
         ctx.fillStyle = groupOf(e.group).color; ctx.beginPath(); ctx.arc(P + 16, ty + 28, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#1f2a25'; ctx.font = font(500, 32);
+        ctx.fillStyle = '#1d1d1f'; ctx.font = font(500, 32);
         const minText = e.min ? durationText(e.min) : '';
         ctx.fillText(fitText(ctx, e.title, W - 2 * P - 80 - (minText ? 150 : 0)), P + 44, ty + 40);
         if (minText) { ctx.fillStyle = accent; ctx.font = font(600, 26); ctx.textAlign = 'right'; ctx.fillText(minText, W - P - 8, ty + 38); ctx.textAlign = 'left'; }
@@ -1159,10 +1228,10 @@
       });
       ty += 16;
     });
-    if (hidden > 0) { ctx.fillStyle = '#8a958f'; ctx.font = font(500, 26); ctx.fillText(`… 还有 ${hidden} 件`, P + 44, ty + 24); }
+    if (hidden > 0) { ctx.fillStyle = '#8e8e93'; ctx.font = font(500, 26); ctx.fillText(`… 还有 ${hidden} 件`, P + 44, ty + 24); }
     // footer
     const fy = H - 96;
-    ctx.fillStyle = '#9aa39e'; ctx.font = font(500, 24);
+    ctx.fillStyle = '#a1a1a6'; ctx.font = font(500, 24);
     ctx.fillText('碎碎清单 · 小事一件一件做完', P, fy);
     ctx.textAlign = 'right'; ctx.fillText(`生成于 ${new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date())}`, W - P, fy); ctx.textAlign = 'left';
     return canvas;
@@ -1586,7 +1655,7 @@
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
       $('task-when').value = addManual.when = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
-      if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); try { d.showPicker(); } catch { d.focus(); } }
+      if (b.dataset.addWhen === 'pick') { const d = $('task-date'); d.min = dayKey(); if (!d.value) d.value = addDays(dayKey(), 2); syncPickers(); try { d.showPicker(); } catch { d.focus(); } }
     }
     if (b.dataset.addRepeat) { $('task-repeat').value = addManual.repeat = b.dataset.addRepeat; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addTime !== undefined) {
@@ -1595,7 +1664,7 @@
       renderAddChips();
       if (addManual.customTime) { try { $('task-time-custom').showPicker(); } catch { $('task-time-custom').focus(); } }
     }
-    if (b.dataset.editTime !== undefined) { $('edit-time').value = ''; }
+    if (b.dataset.editTime !== undefined) { $('edit-time').value = ''; syncPickers(); }
     if (b.dataset.addDuration) {
       customDuration.add = b.dataset.addDuration === 'custom';
       $('task-duration').value = customDuration.add ? String(readCustom($('task-duration-custom')) || 0) : b.dataset.addDuration;
@@ -1888,6 +1957,7 @@
   rollover({ announce: false });
   booted = true;
   const params = new URLSearchParams(location.search);
+  setupPickers();
   setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();
   if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);
   if (isStandalone()) requestPersistence();

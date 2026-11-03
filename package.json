@@ -16,7 +16,8 @@
     "test:all": "node scripts/verify.cjs && node scripts/verify-completion.cjs && node scripts/verify-beta.cjs && node scripts/verify-pwa.cjs",
     "check:swift": "python scripts/check-swift-syntax.py",
     "test:v2": "node scripts/verify-v2.cjs",
-    "test:ios-bridge": "node scripts/verify-ios-bridge.cjs"
+    "test:ios-bridge": "node scripts/verify-ios-bridge.cjs",
+    "test:v17": "node scripts/verify-v17.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

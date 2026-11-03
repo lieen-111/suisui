@@ -11,8 +11,8 @@ struct TaskGroup: Codable, Hashable, Identifiable {
     var color: String
 
     static let defaults = [
-        TaskGroup(id: "work", name: "工作", color: "#13765b"),
-        TaskGroup(id: "life", name: "生活", color: "#b14c6b")
+        TaskGroup(id: "work", name: "工作", color: "#2f6fd0"),
+        TaskGroup(id: "life", name: "生活", color: "#d2566f")
     ]
 }
 
@@ -97,11 +97,11 @@ struct TodoItem: Codable, Identifiable, Hashable {
 }
 
 struct AppSettings: Codable, Equatable {
-    var accent: String = "green"
+    var accent: String = "ink"
     var density: String = "comfortable"
     var cardMaterial: String = "frosted"
-    var cardColor: String = "#112b24"
-    var cardTransparency: Double = 15
+    var cardColor: String = "#1c1c1e"
+    var cardTransparency: Double = 18
     var cardText: String = "auto"
     var motion: Bool = true
     var intensity: Int = 2
@@ -118,7 +118,7 @@ struct AppSettings: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = AppSettings()
-        accent = (try? c.decodeIfPresent(String.self, forKey: .accent)).flatMap { ["green", "rose", "blue"].contains($0) ? $0 : nil } ?? d.accent
+        accent = (try? c.decodeIfPresent(String.self, forKey: .accent)).flatMap { ["ink", "orange", "indigo", "berry", "green", "rose", "blue"].contains($0) ? $0 : nil } ?? d.accent
         density = (try? c.decodeIfPresent(String.self, forKey: .density)).flatMap { ["compact", "comfortable"].contains($0) ? $0 : nil } ?? d.density
         cardMaterial = (try? c.decodeIfPresent(String.self, forKey: .cardMaterial)).flatMap { ["frosted", "glass", "flat"].contains($0) ? $0 : nil } ?? d.cardMaterial
         cardColor = (try? c.decodeIfPresent(String.self, forKey: .cardColor)).flatMap { HexColor.isValid($0) ? $0.lowercased() : nil } ?? d.cardColor

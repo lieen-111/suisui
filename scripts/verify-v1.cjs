@@ -52,7 +52,7 @@ const bridgeStub = (lock) => `
     await page.locator('[data-add-repeat=weekly]').click();
     await page.locator('#task-input').fill('复盘会');
     await page.locator('#add-form button[type=submit]').click();
-    assert.equal(await page.locator('#task-list .task-row', { hasText: '复盘会' }).locator('.meta-flag', { hasText: '每五' }).count(), 1);
+    assert.equal(await page.locator('#task-list .task-row', { hasText: '复盘会' }).locator('.meta-flag', { hasText: '每周五' }).count(), 1);
     await page.locator('[data-add-repeat=weekdays]').click();
     assert.equal(await page.locator('[data-add-when=tomorrow]').isDisabled(), true, 'Daily-type repeats have no date');
     await page.locator('#task-input').fill('打卡');
@@ -88,7 +88,7 @@ const bridgeStub = (lock) => `
     await input.fill('学习');
     await input.press('Enter');
     const newId = await input.getAttribute('data-group-id');
-    await page.locator(`.group-color[data-group-id="${newId}"][data-group-color="#226a9a"]`).click();
+    await page.locator(`.group-color[data-group-id="${newId}"][data-group-color="#e0812f"]`).click();
     await page.locator('.nav-button[data-view=tasks]').click();
     assert.equal(await page.locator('#filter-tabs button', { hasText: '学习' }).count(), 1);
     await page.locator('#fab-add').click();
@@ -131,9 +131,9 @@ const bridgeStub = (lock) => `
     await page.locator('[data-theme-preset=mist]').click();
     assert.equal(await page.locator('[data-theme-preset=mist]').getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-blur')), '4px');
-    assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-ink')), '#182b22');
+    assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-ink')), '#1d1d1f');
     await page.locator('[data-theme-preset=lake]').click();
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#226a9a');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#4c5bd4');
     assert.equal(await page.locator('[data-theme-preset=mist]').getAttribute('aria-pressed'), 'false');
     await context.close();
   }
@@ -307,9 +307,9 @@ const bridgeStub = (lock) => `
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    assert.equal(bg, 'rgb(16, 20, 18)', 'Dark background');
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#5cc59c', 'Lighter accent text on dark');
-    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(19, 118, 91)', 'Buttons keep the brand fill');
+    assert.equal(bg, 'rgb(19, 19, 19)', 'Dark background');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#f2f2f4', 'Light accent text on dark');
+    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(72, 72, 76)', 'Ink buttons turn mid-grey on dark');
     await page.screenshot({ path: path.join(review, 'v12-dark-390.png') });
     await context.close();
   }

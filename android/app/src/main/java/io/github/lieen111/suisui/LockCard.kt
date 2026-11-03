@@ -27,7 +27,7 @@ import java.util.Calendar
 object LockCard {
     private const val CHANNEL = "lock_card"
     const val NOTIFICATION_ID = 1001
-    private const val ACCENT = 0xFF13765B.toInt()
+    private const val ACCENT = 0xFF1D1D1F.toInt()
     const val ACTION_COMPLETE = "io.github.lieen111.suisui.COMPLETE"
 
     fun permissionGranted(ctx: Context): Boolean =
@@ -116,7 +116,7 @@ object LockCard {
             done.takeLast(2).forEach {
                 val line = SpannableString("✓  " + it.optString("title"))
                 line.setSpan(StrikethroughSpan(), 0, line.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                line.setSpan(ForegroundColorSpan(Color.argb(128, 120, 130, 125)), 0, line.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                line.setSpan(ForegroundColorSpan(Color.argb(128, 128, 128, 132)), 0, line.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 style.addLine(line)
             }
             style.setSummaryText(if (done.isEmpty()) "今天的待办" else "已完成 ${done.size} 件")

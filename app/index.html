@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f8f9f8">
+  <meta name="theme-color" content="#fbfbfd">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="碎碎清单">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -153,11 +153,20 @@
             <div class="settings-page" data-page="look" hidden>
             <fieldset><legend>主题</legend>
               <div class="theme-presets" role="group" aria-label="主题">
-                <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
-                <button class="theme-chip" data-theme-preset="graphite" style="--chip:#202326"><span></span>石墨</button>
+                <button class="theme-chip" data-theme-preset="ink" style="--chip:#1c1c1e"><span></span>墨黑</button>
                 <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
                 <button class="theme-chip" data-theme-preset="lake" style="--chip:#294c64"><span></span>湖蓝</button>
                 <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
+                <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
+              </div>
+            </fieldset>
+            <fieldset class="accent-settings"><legend>App 主色</legend>
+              <div class="swatches" role="radiogroup" aria-label="App 主色">
+                <label class="swatch ink" title="墨黑"><input type="radio" name="accent" value="ink" aria-label="墨黑"><i data-lucide="check"></i><span>墨黑</span></label>
+                <label class="swatch orange" title="暖橙"><input type="radio" name="accent" value="orange" aria-label="暖橙"><i data-lucide="check"></i><span>暖橙</span></label>
+                <label class="swatch indigo" title="靛蓝"><input type="radio" name="accent" value="indigo" aria-label="靛蓝"><i data-lucide="check"></i><span>靛蓝</span></label>
+                <label class="swatch berry" title="莓果"><input type="radio" name="accent" value="berry" aria-label="莓果"><i data-lucide="check"></i><span>莓果</span></label>
+                <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i><span>松绿</span></label>
               </div>
             </fieldset>
             <fieldset class="type-settings"><legend>字体与字号</legend>
@@ -188,6 +197,7 @@
               </div>
               <h3 class="ag-title">颜色</h3>
               <div class="color-row" role="group" aria-label="待办框颜色">
+                <button data-card-color="#1c1c1e" style="--preset:#1c1c1e" aria-label="墨黑" title="墨黑"></button>
                 <button data-card-color="#112b24" style="--preset:#112b24" aria-label="松绿" title="松绿"></button>
                 <button data-card-color="#202326" style="--preset:#202326" aria-label="石墨" title="石墨"></button>
                 <button data-card-color="#f5f7f3" style="--preset:#f5f7f3" aria-label="雾白" title="雾白"></button>
@@ -208,14 +218,6 @@
               <label class="ag-switch" for="motion-toggle"><span><strong>碎裂动画</strong><small>完成时文字碎开再划线</small></span><input type="checkbox" id="motion-toggle" class="switch"></label>
               <div class="ag-row"><h3 class="ag-title">碎裂幅度</h3><output id="intensity-value">适中</output></div>
               <div class="slider-row"><span class="a-small">轻</span><input type="range" id="intensity" min="1" max="3" step="1" aria-label="碎裂幅度"><span class="a-small">强</span></div>
-            </section>
-            <section class="ag" aria-label="App 主色">
-              <h3 class="ag-title">App 主色</h3>
-              <div class="swatches">
-                <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i></label>
-                <label class="swatch rose" title="莓红"><input type="radio" name="accent" value="rose" aria-label="莓红"><i data-lucide="check"></i></label>
-                <label class="swatch blue" title="湖蓝"><input type="radio" name="accent" value="blue" aria-label="湖蓝"><i data-lucide="check"></i></label>
-              </div>
             </section>
             <button class="reset-row" id="reset-settings"><i data-lucide="rotate-ccw"></i>恢复默认外观</button>
             </details>
@@ -334,7 +336,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.6</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.7</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -343,7 +345,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.6 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.7 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

@@ -81,7 +81,7 @@ open class WebHostActivity : ComponentActivity() {
         setContentView(root)
         if (!lockMode) {
             // Opaque strips behind the status and navigation bars; the web view sits between them.
-            val canvas = if (isNight()) 0xFF101412.toInt() else 0xFFFAFBFA.toInt()
+            val canvas = if (isNight()) 0xFF131313.toInt() else 0xFFFBFBFD.toInt()
             val top = View(this).apply { setBackgroundColor(canvas) }
             val bottom = View(this).apply { setBackgroundColor(canvas) }
             root.addView(top, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, Gravity.TOP))

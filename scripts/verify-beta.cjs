@@ -35,7 +35,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.locator('#import-merge').click();
     assert.equal(await page.locator('.lock-task').count(), 8, 'Merge adds only new ids');
     assert.equal(await page.locator('.task-row').count(), 7);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#226a9a', 'Settings import is opt-in and applied');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#4c5bd4', 'Settings import is opt-in and applied (an old blue accent becomes 靛蓝)');
     assert.equal(await page.locator('#archive-count').textContent(), '1');
     assert.equal(await page.locator('.done-text', { hasText: '<b>导入的生活</b>' }).count(), 1, 'Imported text stays escaped');
     await page.locator('#undo-button').click();

@@ -20,10 +20,10 @@ struct CardPalette {
     init(_ style: CardStyle) {
         light = HexColor.prefersLightInk(style.cardColor, mode: style.textMode)
         background = Color(hex: style.cardColor, opacity: 1 - style.transparency / 100)
-        ink = light ? Color(hex: "#f4fbf7") : Color(hex: "#182b22")
-        muted = light ? Color(hex: "#e0eae4") : Color(hex: "#30483b")
-        rule = light ? Color(hex: "#d4eddf", opacity: 0.25) : Color(hex: "#183b2b", opacity: 0.19)
-        check = light ? Color(hex: "#c6eed2") : Color(hex: "#275d42")
+        ink = light ? Color(hex: "#f5f5f7") : Color(hex: "#1d1d1f")
+        muted = light ? Color(hex: "#e3e3e8") : Color(hex: "#48484c")
+        rule = light ? Color(hex: "#ffffff", opacity: 0.22) : Color(hex: "#000000", opacity: 0.16)
+        check = light ? Color(hex: "#ececf0") : Color(hex: "#3a3a3c")
     }
 }
 
