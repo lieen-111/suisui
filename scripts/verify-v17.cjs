@@ -1,6 +1,6 @@
 // 1.7: repeating tasks are findable (row tag, lock mark, "重复" filter), 墨黑 palette with migration,
 // and the edit/add sheets show dates and times as chips instead of raw form fields.
-const { chromium, review, url, launchOptions } = require('./test-environment.cjs');
+const { toTasks, openPanel, chromium, review, url, launchOptions } = require('./test-environment.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const STORE = 'suisui-locktodo-v1';
@@ -40,7 +40,7 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.equal(await css(page, '--accent'), '#13765b', 'A green picked in 1.7 is kept');
 
     /* Repeat: tag on the row, mark on the lock card, a 重复 filter with tasks not due today. */
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     assert.match(await page.locator('.task-row[data-task-id=a] .meta-repeat').textContent(), /每天/);
     assert.equal(await page.locator('.lock-task[data-id=a] .lock-repeat').count(), 1, 'Lock card marks repeating rows');
     assert.equal(await page.locator('.lock-task[data-id=c] .lock-repeat').count(), 0);
@@ -59,23 +59,23 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.equal(await label('edit-time'), '选时间');
     assert.equal(await label('edit-date'), '其他日期');
     assert.equal(await page.locator('[data-edit-time]').getAttribute('aria-pressed'), 'true', '不提醒 is selected while no time is set');
-    await page.locator('#edit-time').fill('15:30');
+    await openPanel(page, 'edit', 'time'); await page.locator('#edit-time').fill('15:30');
     assert.equal(await label('edit-time'), '15:30');
     assert.equal(await page.locator('[data-edit-time]').getAttribute('aria-pressed'), 'false');
     assert.equal(await page.locator('.pick-chip[data-pick=edit-time]').evaluate(e => e.classList.contains('active')), true);
-    await page.locator('#edit-date').fill('2026-11-09');
-    await page.locator('#edit-date').dispatchEvent('change');
+    await openPanel(page, 'edit', 'when'); await page.locator('#edit-date').fill('2026-11-09');
+    await openPanel(page, 'edit', 'when'); await page.locator('#edit-date').dispatchEvent('change');
     assert.match(await label('edit-date'), /11月9日|周一/);
     assert.equal(await page.locator('#edit-note').evaluate(e => getComputedStyle(e).resize), 'none');
     await page.screenshot({ path: path.join(review, 'v17-edit-pickers-390.png') });
-    await page.locator('#edit-form .dialog-actions .primary-button').click();
+    await page.locator('.edit-form button.primary-button').click();
     const c = await page.evaluate(k => JSON.parse(localStorage.getItem(k)).tasks.find(t => t.id === 'c'), STORE);
     assert.equal(c.time, '15:30'); assert.equal(c.date, '2026-11-09');
 
     // Add sheet: "选日期" opens a chip with the chosen day.
     await page.locator('#fab-add').click();
     assert.equal(await page.locator('.pick-chip[data-pick=task-date]').isVisible(), false);
-    await page.locator('[data-add-when=pick]').click();
+    await openPanel(page, 'add', 'when'); await page.locator('[data-add-when=pick]').click();
     assert.equal(await page.locator('.pick-chip[data-pick=task-date]').isVisible(), true);
     assert.match(await label('task-date'), /11月6日|周五/);
     await context.close();

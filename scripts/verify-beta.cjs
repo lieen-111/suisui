@@ -1,6 +1,6 @@
 // Verifies the 2026-10-29 beta additions: import/merge/replace, new-day rollover, daily repeat,
 // history, install guidance and the lock-screen notification setting. Browser evidence only.
-const { chromium, review, url, launchOptions } = require('./test-environment.cjs');
+const { toTasks, openPanel, chromium, review, url, launchOptions } = require('./test-environment.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -19,7 +19,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suisui-'));
     const backup = path.join(dir, 'backup.json');
     fs.writeFileSync(backup, JSON.stringify({ app: 'suisui', version: 2, tasks: [
@@ -47,7 +47,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('.lock-task').count(), 3, 'Imported data persists');
     const arrayFile = path.join(dir, 'array.json');
     fs.writeFileSync(arrayFile, JSON.stringify([{ id: 'n-1', title: '原生版导出的数组', group: 'work' }]));
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.locator('#import-file').setInputFiles(arrayFile);
     await page.locator('#import-merge').click();
     assert.equal(await page.locator('.lock-task').count(), 4, 'Plain array backups import');
@@ -84,7 +84,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('.lock-task.is-done').count(), 0, 'Daily item is pending again');
     assert.equal(await page.locator('.lock-task[data-id=seed-4]').getAttribute('data-action'), 'complete');
     assert.equal(await page.evaluate(store => JSON.parse(localStorage.getItem(store)).day, STORE), '2026-10-30');
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.locator('#archive-section summary').click();
     await page.locator('[data-action=unarchive]').first().click();
     assert.equal(await page.locator('.lock-task').count(), 6, 'History item can be put back');
@@ -103,10 +103,10 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     await page.clock.runFor(31000);
     assert.equal(await page.locator('.lock-task.is-done').count(), 1, 'Auto-archive can be turned off');
     // Repeat option from the add form and edit form.
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.locator('#fab-add').click();
     await page.locator('#task-input').fill('喝水');
-    await page.locator('[data-add-repeat=daily]').click();
+    await openPanel(page, 'add', 'repeat'); await page.locator('[data-add-repeat=daily]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#add-form').isVisible(), true, 'Sheet stays open for the next item');
     assert.equal(await page.locator('[data-add-repeat=none]').getAttribute('aria-pressed'), 'true', 'Repeat resets after adding');
@@ -116,13 +116,13 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       for (const view of ['tasks', 'settings']) {
-        await page.locator(`.nav-button[data-view=${view}]`).click();
+        if (view === 'tasks') await toTasks(page); else await page.locator(`.nav-button[data-view=${view}]`).click();
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow ${view} ${width}`);
       }
     }
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await toTasks(page); await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     await page.screenshot({ path: path.join(review, 'beta-settings-390.png'), fullPage: true });
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.screenshot({ path: path.join(review, 'beta-tasks-430.png'), fullPage: true });
     await context.close();
   }
@@ -210,7 +210,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
+    await toTasks(page); await page.locator('.nav-button[data-view=settings]').click(); await page.locator('[data-settings-page=look]').click(); await page.locator('#more-appearance').evaluate(d => { d.open = true; });
     const mini = page.locator('#settings-preview');
     assert.equal(await mini.isVisible(), true, 'Mini preview shown in phone settings');
     assert.equal(await page.locator('.mini-row').count(), 3);

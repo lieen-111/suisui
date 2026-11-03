@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
+const { toTasks } = require('./test-environment.cjs');
 const root = path.resolve(__dirname, '../app');
 const results = path.resolve(__dirname, '../pwa-test-results');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg' };
@@ -48,7 +49,7 @@ const server = http.createServer((req, res) => {
           }), icon.src);
           assert.equal(size, icon.sizes);
         }
-        await page.locator('.nav-button[data-view="tasks"]').click();
+        await toTasks(page);
         await page.locator('#fab-add').click();
         await page.locator('#task-input').fill('PWA offline persistence');
         await page.locator('#add-form button[type="submit"]').click();
@@ -63,7 +64,7 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.locator('.lock-task').count(), 7);
         assert(await page.locator('#wallpaper').evaluate(img => img.complete && img.naturalWidth > 0));
         assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('suisui-locktodo-v1')).settings.cardMaterial), 'glass');
-        await page.locator('.nav-button[data-view="tasks"]').click();
+        await toTasks(page);
         await page.locator('.task-row [data-action=complete]').first().click();
         await page.waitForTimeout(900);
         assert.equal(await page.locator('.lock-task.is-done').count(), 1);

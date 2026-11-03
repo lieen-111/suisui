@@ -366,7 +366,7 @@
   function renderAddChips() {
     if (!state.groups.some(g => g.id === addGroupId)) addGroupId = state.groups[0].id;
     $('task-group').value = addGroupId;
-    $('add-group-chips').innerHTML = icon('folder') + state.groups.map(g => `<button type="button" class="chip${g.id === addGroupId ? ' active' : ''}" data-add-group="${esc(g.id)}" aria-pressed="${g.id === addGroupId}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</button>`).join('');
+    $('add-group-chips').innerHTML = state.groups.map(g => `<button type="button" class="chip${g.id === addGroupId ? ' active' : ''}" data-add-group="${esc(g.id)}" aria-pressed="${g.id === addGroupId}"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</button>`).join('');
     const when = $('task-when').value, repeat = $('task-repeat').value;
     const dateless = repeat === 'daily' || repeat === 'weekdays';
     document.querySelectorAll('[data-add-when]').forEach(b => { const on = b.dataset.addWhen === when; b.classList.toggle('active', on && !dateless); b.setAttribute('aria-pressed', String(on)); b.disabled = dateless; });
@@ -379,6 +379,39 @@
     $('task-time-custom').hidden = !customTime;
     if (customTime && time && document.activeElement !== $('task-time-custom')) $('task-time-custom').value = time;
     syncPickers();
+    renderAddToolbar();
+  }
+  // One compact toolbar instead of five rows of options: each tool shows its current value and opens its own row.
+  let addPanel = '', editPanel = '';
+  const durLabel = m => m ? durationText(m) : '';
+  const repeatText = (repeat, day) => repeat === 'weekly' ? `每${WEEK[Number.isInteger(day) ? day : 1]}` : repeat !== 'none' ? repeats[repeat] : '';
+  function renderAddToolbar() {
+    const when = $('task-when').value, repeat = $('task-repeat').value, date = $('task-date').value;
+    const dateless = repeat === 'daily' || repeat === 'weekdays';
+    const g = groupOf(addGroupId), minutes = Number($('task-duration').value) || 0, time = $('task-time').value;
+    const set = (id, text, on) => { const el = $(id); el.textContent = text; el.closest('.tool').classList.toggle('is-set', !!on); };
+    set('tool-when', dateless ? '每天出现' : when === 'tomorrow' ? '明天' : when === 'pick' && isDayKey(date) ? dateLabel(date) : '今天', !dateless && when !== 'today');
+    set('tool-time', time || '提醒', !!time);
+    set('tool-repeat', repeatText(repeat, quickRepeatDay ?? weekday(date || dayKey())) || '重复', repeat !== 'none');
+    set('tool-duration', durLabel(minutes) || '时长', minutes > 0);
+    set('tool-group', g.name, false); $('tool-group-dot').style.background = g.color;
+    document.querySelectorAll('[data-add-panel]').forEach(b => { const on = b.dataset.addPanel === addPanel; b.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
+    document.querySelectorAll('.add-options>[data-panel]').forEach(r => r.classList.toggle('open', r.dataset.panel === addPanel));
+  }
+  // The edit sheet lists one line per setting (icon, name, value); tapping a line opens its options under it.
+  function renderEditSummary() {
+    const form = $('edit-form'); if (!form) return;
+    const repeat = form.elements.repeat.value || 'none', today = dayKey(), date = $('edit-date').value, time = $('edit-time').value;
+    const minutes = Number(form.elements.duration.value) || 0, g = groupOf(form.elements.group.value);
+    const task = state.tasks.find(t => t.id === editing);
+    const day = repeat === 'weekly' ? (task?.repeat === 'weekly' && Number.isInteger(task.repeatDay) ? task.repeatDay : weekday(date || today)) : null;
+    const put = (name, text, on) => { const el = $(`fv-${name}`); el.textContent = text; el.classList.toggle('is-set', !!on); };
+    put('when', repeat === 'daily' || repeat === 'weekdays' ? '按重复出现' : !date || date === today ? '今天' : date === addDays(today, 1) ? '明天' : dateLabel(date), !!date && date !== today);
+    put('time', time || '不提醒', !!time);
+    put('repeat', repeatText(repeat, day) || '不重复', repeat !== 'none');
+    put('duration', durLabel(minutes) || '不计时', minutes > 0);
+    $('fv-group').innerHTML = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
+    document.querySelectorAll('[data-edit-panel]').forEach(b => { const on = b.dataset.editPanel === editPanel; b.closest('.edit-field').classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
   }
   // Duration chips (add and edit): preset minutes, or "自定" with a number field.
   let customDuration = { add: false, edit: false };
@@ -391,6 +424,7 @@
     });
     input.hidden = !custom;
     if (custom && minutes && document.activeElement !== input) input.value = String(minutes);
+    if (which === 'edit') renderEditSummary();
   }
   function readCustom(input) { const n = Math.round(Number(input.value)); return Number.isFinite(n) && n >= 1 && n <= 600 ? n : 0; }
   function openAdd() {
@@ -411,6 +445,21 @@
   if (window.visualViewport) {
     const lift = () => { const covered = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop); document.documentElement.style.setProperty('--kb', `${Math.round(covered)}px`); };
     visualViewport.addEventListener('resize', lift); visualViewport.addEventListener('scroll', lift);
+  }
+
+  /* ---------- Phone chrome ----------
+     On phones there is no tab bar: search, review and settings sit in the top bar, the add button floats
+     bottom-right, and settings close with “完成”. The same buttons go back to the sidebar on wide screens. */
+  const phoneQuery = matchMedia('(max-width: 760px)');
+  const chromeHomes = new Map();
+  function placeChrome() {
+    const moves = [[$('open-search'), $('header-actions')], [$('open-review'), $('header-actions')],
+      [document.querySelector('.nav-button[data-view=settings]'), $('header-actions')], [document.querySelector('.nav-button[data-view=tasks]'), document.querySelector('.settings-top')]];
+    moves.forEach(([el, phoneHome]) => {
+      if (!el || !phoneHome) return;
+      if (!chromeHomes.has(el)) { const mark = document.createComment('home'); el.before(mark); chromeHomes.set(el, mark); }
+      if (phoneQuery.matches) phoneHome.append(el); else chromeHomes.get(el).after(el);
+    });
   }
 
   /* ---------- Date and time pickers ----------
@@ -447,6 +496,7 @@
     });
     const noTime = !$('edit-time').value;
     document.querySelectorAll('[data-edit-time]').forEach(b => { b.classList.toggle('active', noTime); b.setAttribute('aria-pressed', String(noTime)); });
+    renderEditSummary();
   }
 
   /* ---------- Edit sheet ---------- */
@@ -457,13 +507,13 @@
     form.elements.group.value = group; form.elements.repeat.value = repeat;
     $('edit-date').disabled = dateless;
     document.querySelectorAll('[data-edit-when]').forEach(b => { b.disabled = dateless; const on = !dateless && (b.dataset.editWhen === 'today' ? (!date || date === today) : date === addDays(today, 1)); b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
-    $('edit-date-field').querySelector('span').textContent = repeat === 'weekly' ? '从哪天' : '日期';
+    $('edit-date-field').querySelector('.field-head>span').textContent = repeat === 'weekly' ? '从哪天' : '日期';
     syncPickers();
   }
   function openEdit(id) {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
-    editing = id;
+    editing = id; if (!$('edit-sheet').open) editPanel = '';
     const form = $('edit-form');
     form.dataset.editId = id;
     $('edit-title').value = task.title;
@@ -512,19 +562,18 @@
   }
   function hideToast() { $('toast').hidden = true; clearTimeout(toastTimer); undoAction = null; }
   function metaFlags(t) {
-    const g = groupOf(t.group), today = dayKey();
-    let flags = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
+    const today = dayKey();
+    let flags = '';
     if (t.repeat !== 'none') flags += `<span class="meta-flag meta-repeat">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
     if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
     if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
     if (t.note) flags += `<span class="meta-flag" title="有备注">${icon('sticky-note')}</span>`;
-    if (t.pinned) flags += `<span class="meta-flag">${icon('pin')}置顶</span>`;
     return flags;
   }
   // Tap the circle to finish; tap the text to edit (group, date, repeat, pin, delete in one sheet).
   function row(t) {
-    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}${t.pinned ? ' is-pinned' : ''}" data-task-id="${esc(t.id)}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><button class="task-body" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}"><span class="task-title">${esc(t.title)}</span><span class="task-meta">${metaFlags(t)}</span></button>${timerPill(t)}${state.timer?.id === t.id ? `<button class="timer-stop" data-action="timer-stop" data-id="${esc(t.id)}" aria-label="结束计时">${icon('square')}</button>` : ''}</div>`;
+    return `<div class="task-row${completing.has(t.id) ? ' is-completing' : ''}${t.pinned ? ' is-pinned' : ''}" data-task-id="${esc(t.id)}" style="--g:${groupOf(t.group).color}"><button class="check-task" data-action="complete" data-id="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><span class="check-circle"></span></button><button class="task-body" data-action="edit" data-id="${esc(t.id)}" aria-label="编辑：${esc(t.title)}（${esc(groupOf(t.group).name)}）"><span class="task-title">${esc(t.title)}${t.pinned ? `<span class="pin-mark" title="置顶">${icon('pin')}</span>` : ''}</span>${(m => m ? `<span class="task-meta">${m}</span>` : '')(metaFlags(t))}</button>${timerPill(t)}</div>`;
   }
   // First use: no sample tasks, a calm invitation instead (the dots echo the logo).
   const FIRST_RUN = `<div class="first-run"><svg class="first-art" viewBox="0 0 120 120" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => { const a = (-80 + i * 24.3) * Math.PI / 180, t = i / 13; return `<circle cx="${(60 + 44 * Math.cos(a)).toFixed(1)}" cy="${(60 + 44 * Math.sin(a)).toFixed(1)}" r="${(2 + t * 4).toFixed(1)}" opacity="${(.3 + t * .7).toFixed(2)}"/>`; }).join('')}<path d="M44 61l11 11 22-23" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>从第一件小事开始</h2><p>点下面的 + 写下今天想做的事。<br>需要专注的事可以设个时长，点开始就倒计时。</p><button class="primary-button" data-action="first-add">${icon('plus')}添加第一件</button></div>`;
@@ -1652,6 +1701,8 @@
     if (b.dataset.period) { review.period = b.dataset.period; review.offset = 0; renderReview(); }
     if (b.dataset.shift) { review.offset = Math.min(0, review.offset + Number(b.dataset.shift)); renderReview(); }
     if (b.dataset.reviewGroup) { review.group = b.dataset.reviewGroup; renderReview(); }
+    if (b.dataset.addPanel) { addPanel = addPanel === b.dataset.addPanel ? '' : b.dataset.addPanel; renderAddToolbar(); }
+    if (b.dataset.editPanel) { editPanel = editPanel === b.dataset.editPanel ? '' : b.dataset.editPanel; renderEditSummary(); }
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
       $('task-when').value = addManual.when = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
@@ -1744,7 +1795,7 @@
     $('task-duration').value = '0'; $('task-duration-custom').value = ''; customDuration.add = false;
     Object.assign(addManual, { when: 'today', date: '', repeat: 'none', duration: 0, custom: false, time: '', customTime: false }); quickRepeatDay = null; quickOff = false;
     $('task-time').value = ''; $('task-time-custom').value = '';
-    $('parse-hint').hidden = true;
+    $('parse-hint').hidden = true; addPanel = '';
     save(); render(); $('task-input').focus();
     const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
     if (added && state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) window.anime.animate(added, { opacity: [0, 1], y: [-10, 0], duration: 360, ease: 'outCubic' });
@@ -1958,6 +2009,7 @@
   booted = true;
   const params = new URLSearchParams(location.search);
   setupPickers();
+  placeChrome(); phoneQuery.addEventListener?.('change', placeChrome);
   setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();
   if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);
   if (isStandalone()) requestPersistence();

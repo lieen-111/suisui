@@ -1147,3 +1147,138 @@ body.lock-mode .toast,body.lock-mode.has-focus .toast{top:calc(14px + env(safe-a
 .task-meta svg{width:11px;height:11px}
 @media(max-width:760px){.editor-footer>.dot,#storage-status{display:none}}
 @media(max-width:760px){.filter-tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);padding-right:24px}}
+
+/* ================= 1.8 redesign: fewer layers, calmer controls ================= */
+:root{--chip-bg:#efeff2;--chip-ink:#3a3a3c;--group-bg-2:#f4f4f6;--hair:#e6e6ea}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--chip-bg:#2a2a2d;--chip-ink:#e5e5ea;--group-bg-2:#1c1c1e;--hair:#2c2c2e}}
+
+/* Controls: filled, borderless chips; the chosen one is solid. One look for every option in the app. */
+.chip,.filter-tabs button,.chip-date{border-color:transparent!important;background:var(--chip-bg)!important;color:var(--chip-ink)!important;font-weight:500;font-size:13px}
+.chip.active,.filter-tabs button.active{background:var(--accent-fill)!important;color:#fff!important;font-weight:600}
+.chip.active .dot,.filter-tabs button.active .dot{box-shadow:0 0 0 1.5px #ffffffcc}
+.filter-tabs button{min-height:34px;padding:0 14px;border-radius:17px}
+.filter-tabs button>span:last-child{opacity:.6;font-size:12px}
+
+/* Rows: the check ring carries the group colour; one quiet line of facts only when there is something to say */
+.task-row .check-circle{border-color:color-mix(in srgb,var(--g,#a1a1a6) 72%,#c7c7cc);border-width:1.7px}
+.check-task:hover .check-circle{background:color-mix(in srgb,var(--g,var(--accent)) 12%,transparent);border-color:var(--g,var(--accent))}
+.task-title{font-size:calc(16px * var(--ts));line-height:1.45;font-weight:450;color:var(--ink)}
+.task-row.is-pinned .task-title{font-weight:600}
+.pin-mark{display:inline-flex;vertical-align:-1px;margin-left:6px;color:var(--muted)}
+.pin-mark svg{width:13px;height:13px}
+.task-meta{margin-top:3px;color:var(--muted)}
+.task-meta .meta-flag:first-child svg{margin-left:0}
+.task-body{padding-top:12px;padding-bottom:12px}
+.task-row{min-height:58px;border-bottom-color:var(--hair)}
+
+/* Add: one line to type, a toolbar of five values, one option row at a time */
+.add-input-line>svg{display:none}
+.add-input-line input{font-size:17px}
+.add-input-line .add-submit{width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;display:grid;place-items:center;background:var(--accent-fill)}
+.add-input-line .add-submit svg{width:19px;height:19px;stroke-width:2.4;color:#fff;display:block}
+.add-submit-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.add-toolbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:10px;padding:1px 0}
+.add-toolbar::-webkit-scrollbar{display:none}
+.tool{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:17px;background:var(--chip-bg);color:var(--muted);font-size:13px;white-space:nowrap;flex:none;transition:background .15s,color .15s}
+.tool svg{width:15px;height:15px}
+.tool .dot{width:8px;height:8px}
+.tool.is-set{color:var(--ink);font-weight:600}
+.tool.open{background:var(--accent-fill);color:#fff}
+.tool.open .dot{box-shadow:0 0 0 1.5px #fff}
+.add-options{display:block!important;margin:0!important}
+.add-options>.chip-row{display:none;margin-top:8px;padding:8px 0 2px;border-top:1px solid var(--hair)}
+.add-options>.chip-row.open{display:flex;animation:panel-in .18s ease-out}
+.add-options>.chip-row>svg{display:none}
+.add-options .chip{background:transparent!important;border:1px solid var(--hair)!important}
+.add-options .chip.active{background:var(--accent-fill)!important;border-color:transparent!important}
+@keyframes panel-in{from{opacity:0;transform:translateY(-4px)}}
+
+/* Edit: title first, then one line per setting; the options open under the line you tap */
+#edit-form .dialog-heading{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:44px}
+#edit-form .dialog-heading h2{font-size:15px;font-weight:600;color:var(--muted);text-align:center}
+#edit-form .dialog-heading .sheet-cancel{justify-self:start;color:var(--muted);font-size:15px;min-height:40px;padding:0 4px}
+#edit-form .dialog-heading .primary-button{justify-self:end;min-height:34px;padding:0 16px;border-radius:17px;font-size:14px;font-weight:600;background:var(--accent-fill)}
+#edit-title{border:0!important;background:transparent!important;padding:6px 0!important;margin:10px 0 0!important;min-height:0;font-size:calc(22px * var(--ts))!important;font-weight:650;line-height:1.35}
+#edit-note{display:block;width:100%;border:0!important;background:transparent!important;padding:2px 0 8px!important;margin:0;min-height:30px;font:inherit;font-size:15px;color:var(--muted);resize:none;outline:0}
+.subtask-add{border-top:0}
+.detail-list{margin:14px 0 4px;border-radius:16px;background:var(--group-bg-2);overflow:hidden}
+.edit-field{display:block!important;min-height:0!important;border-bottom:1px solid var(--hair);padding:0!important;grid-template-columns:none!important}
+.field-head{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 14px;font-size:15px;color:var(--ink);text-align:left}
+.field-head>svg{width:18px;height:18px;color:var(--muted);flex:none}
+.field-head>span{flex:none}
+.field-value{margin-left:auto;font-weight:500;color:var(--muted);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field-value.is-set{color:var(--ink);font-weight:600}
+.field-value .dot{width:8px;height:8px}
+.field-caret{width:16px!important;height:16px!important;color:#c7c7cc!important;transition:transform .2s}
+.edit-field.open .field-caret{transform:rotate(90deg)}
+.edit-field>.chip-row{display:none;flex-wrap:wrap;gap:6px;padding:0 14px 14px 44px}
+.edit-field.open>.chip-row{display:flex;animation:panel-in .18s ease-out}
+.edit-field .chip{background:var(--card,#fff)!important}
+.edit-field .chip.active{background:var(--accent-fill)!important}
+@media(prefers-color-scheme:dark){.edit-field .chip{background:#2c2c2e!important}}
+.detail-list .edit-pin{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;margin:0;border:0;font-size:15px;color:var(--ink)}
+.detail-list .edit-pin>svg{width:18px;height:18px;color:var(--muted)}
+.detail-list .edit-pin>span{flex:1}
+#edit-form .dialog-actions{justify-content:center;margin-top:10px}
+#edit-form .dialog-actions .danger{font-size:15px;min-height:44px}
+
+/* Settings: one selection mark is enough */
+.theme-chip:after,.theme-chip.active:after,.font-chip:after,.font-chip.active:after,.material-tiles button:after,.material-tiles button.active:after{display:none!important}
+
+/* Review: one hero number, the others quiet */
+.review-stats>div:nth-child(2),.review-stats>div:nth-child(3){background:var(--group-bg-2)!important;color:var(--ink)}
+.review-stats>div:nth-child(2) span,.review-stats>div:nth-child(3) span{color:var(--muted);opacity:1}
+
+@media(max-width:760px){
+  /* Top bar: large title below, small title + three icons on top; no app logo inside the app */
+  .app-header{height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0 16px;background:color-mix(in srgb,var(--page,#fbfbfd) 88%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);border-bottom:0}
+  .wordmark>a{display:none}
+  .header-actions{margin-left:auto;display:flex;align-items:center;gap:2px}
+  .header-actions .icon-button,.header-actions .review-entry,.header-actions .nav-button{width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;display:grid;place-items:center;background:none!important;color:var(--ink);font-size:0;gap:0}
+  .header-actions svg{width:21px!important;height:21px!important;stroke-width:1.9}
+  .header-actions .nav-button span{display:none}
+  .header-actions .nav-button.selected{background:none;color:var(--ink)}
+  body:not([data-view=tasks]) .app-header{display:none}
+  .today-top{margin:4px 0 18px;align-items:flex-end}
+  .today-top h1{font-size:34px;font-weight:750;letter-spacing:-.01em;margin:0 0 2px;line-height:1.15}
+  .today-top .secondary{font-size:14px;color:var(--muted)}
+  .today-side{gap:0}
+  .progress-ring{width:44px;height:44px}
+  .progress-ring svg{width:44px;height:44px}
+  .list-heading{display:none!important}
+
+  /* No tab bar: the add button floats bottom-right; settings close with 完成 */
+  body:not(.lock-mode) .app-shell{padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+  .navigation{position:static!important;height:0!important;min-height:0;padding:0!important;border:0!important;background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important;overflow:visible}
+  .navigation>.nav-button{display:none!important}
+  .nav-add{position:fixed!important;right:20px;bottom:calc(22px + env(safe-area-inset-bottom));margin:0!important;width:58px!important;height:58px!important;border-radius:50%!important;z-index:90;background:var(--accent-fill)!important;box-shadow:0 12px 26px -10px #000000a0,0 2px 6px #00000026!important;transition:transform .18s cubic-bezier(.2,.8,.2,1),bottom .25s cubic-bezier(.2,.8,.2,1)}
+  .nav-add:active{transform:scale(.92)}
+  .nav-add svg{width:26px;height:26px}
+  body:not([data-view=tasks]) .nav-add,body.adding .nav-add{display:none!important}
+  .settings-top>.nav-button[data-view=tasks]{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:auto;min-height:40px;padding:0 10px;flex-direction:row;font-size:0;color:var(--accent);background:none!important;border-radius:20px}
+  .settings-top>.nav-button[data-view=tasks] svg{display:none}
+  .settings-top>.nav-button[data-view=tasks] span{display:none}
+  .settings-top>.nav-button[data-view=tasks]:after{content:"完成";font-size:17px;font-weight:600}
+
+  /* The timer bar sits at the bottom edge; the add button steps up above it */
+  body:not(.lock-mode) .focus-bar{left:12px!important;right:12px;width:auto!important;transform:none!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;animation-name:focus-in-phone}
+  @keyframes focus-in-phone{from{opacity:0;transform:translateY(16px)}}
+  body.has-focus .nav-add{bottom:calc(14px + 64px + 14px + env(safe-area-inset-bottom))}
+  body.has-focus:not(.lock-mode) .app-shell{padding-bottom:calc(180px + env(safe-area-inset-bottom))!important}
+  body.has-focus .toast{bottom:calc(90px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
+
+  /* Sheets */
+  .add-form{padding:8px 16px calc(12px + env(safe-area-inset-bottom))!important}
+  .add-input-line{background:none!important;padding:4px 0 4px 2px!important}
+  .add-input-line input{font-size:18px!important;min-height:44px}
+  dialog.sheet{padding:6px 18px calc(18px + env(safe-area-inset-bottom))}
+}
+body.lock-mode .nav-add,body.lock-mode .header-actions{display:none!important}
+.lock-clock>svg{display:none}
+:root{--page:#fbfbfd}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#131313}
+  html[data-palette=ink] .nav-add,html[data-palette=ink] .add-input-line .add-submit,html[data-palette=ink] #edit-form .dialog-heading .primary-button{background:#f2f2f4!important;color:#1d1d1f!important}
+  html[data-palette=ink] .add-input-line .add-submit svg{color:#1d1d1f}
+  html[data-palette=ink] .chip.active,html[data-palette=ink] .filter-tabs button.active,html[data-palette=ink] .tool.open{background:#f2f2f4!important;color:#1d1d1f!important}
+  html[data-palette=ink] .chip.active .dot,html[data-palette=ink] .filter-tabs button.active .dot{box-shadow:0 0 0 1.5px #1d1d1f66}}

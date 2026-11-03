@@ -21,7 +21,21 @@ const chromium = {
 };
 const review = path.resolve(__dirname, '../test-results');
 fs.mkdirSync(review, { recursive: true });
+// 1.8 sheets show options one row at a time: open the row (add toolbar or edit line) before using its chips.
+async function openPanel(page, kind, name) {
+  const head = page.locator(`[data-${kind}-panel=${name}]`);
+  if (await head.getAttribute('aria-expanded') !== 'true') await head.click();
+}
+// Phones have no tab bar: the list is reached with 完成 in settings or ‹ 清单 in the review; already there is fine.
+async function toTasks(page) {
+  const done = page.locator('.nav-button[data-view=tasks]');
+  if (await done.isVisible()) return done.click();
+  if (await page.locator('#review-back').isVisible()) return page.locator('#review-back').click();
+  if (await page.evaluate(() => document.body.dataset.view) !== 'tasks') return done.click();
+}
 module.exports = {
+  toTasks,
+  openPanel,
   chromium,
   review,
   url: process.env.LOCKTODO_URL || 'http://localhost:8793',

@@ -1,6 +1,6 @@
 // 1.4 requirements: empty first run, task durations with a start button and countdown,
 // weekly / monthly review table and a designed poster image.
-const { chromium, review, url, launchOptions } = require('./test-environment.cjs');
+const { toTasks, openPanel, chromium, review, url, launchOptions } = require('./test-environment.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const STORE = 'suisui-locktodo-v1';
@@ -26,14 +26,14 @@ let browser;
     // Durations: chips in the add sheet; tasks without one get no start button.
     await page.locator('[data-action=first-add]').click();
     await page.locator('#task-input').fill('读书');
-    await page.locator('[data-add-duration="30"]').click();
+    await openPanel(page, 'add', 'duration'); await page.locator('[data-add-duration="30"]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('[data-add-duration="0"]').getAttribute('aria-pressed'), 'true', 'Duration resets after adding');
     await page.locator('#task-input').fill('写周报');
     await page.locator('#add-form button[type=submit]').click();
     await page.locator('#task-input').fill('冥想');
-    await page.locator('[data-add-duration=custom]').click();
-    await page.locator('#task-duration-custom').fill('1');
+    await openPanel(page, 'add', 'duration'); await page.locator('[data-add-duration=custom]').click();
+    await openPanel(page, 'add', 'duration'); await page.locator('#task-duration-custom').fill('1');
     await page.locator('#add-form button[type=submit]').click();
     await page.locator('#add-backdrop').click();
     await page.locator('#add-form').waitFor({ state: 'hidden' });
@@ -50,7 +50,8 @@ let browser;
     const paused = await rowOf('读书').locator('[data-timer-text]').textContent();
     await page.clock.runFor(10000);
     assert.equal(await rowOf('读书').locator('[data-timer-text]').textContent(), paused, 'Paused timer holds');
-    await rowOf('读书').locator('.timer-stop').click();
+    assert.equal(await rowOf('读书').locator('.timer-stop').count(), 0, 'Stop lives in the focus bar only');
+    await page.locator('#focus-stop').click();
     assert.equal(await rowOf('读书').locator('.timer-pill').textContent().then(t => t.includes('30分')), true, 'Stopped timer shows the duration again');
 
     // A timer that runs out: toast with "标记完成", focus time goes into the review log.
@@ -76,7 +77,7 @@ let browser;
     assert.equal(await page.evaluate(store => JSON.parse(localStorage.getItem(store)).log.length, STORE), 1, 'Undo removes the log line');
     // Edit sheet changes the duration.
     await rowOf('写周报').locator('.task-body').click();
-    await page.locator('[data-edit-duration="45"]').click();
+    await openPanel(page, 'edit', 'duration'); await page.locator('[data-edit-duration="45"]').click();
     await page.locator('.edit-form button.primary-button').click();
     assert.match(await rowOf('写周报').locator('.timer-pill').textContent(), /45分/);
     await page.screenshot({ path: path.join(review, 'v2-timers-390.png') });
@@ -127,7 +128,7 @@ let browser;
     assert.match(await page.locator('#focus-bar [data-timer-text]').textContent(), /^29:5\d$/);
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#focus-bar').isVisible(), true, 'Visible on other pages too');
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.locator('#focus-toggle').click();
     assert.equal(await page.locator('#focus-state').textContent(), '已暂停');
     await page.screenshot({ path: path.join(review, 'v2-focus-bar-390.png') });

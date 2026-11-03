@@ -1,6 +1,6 @@
 // 1.0 features: list-first phones, dates and "以后", weekday/weekly repeats, custom groups,
 // theme presets, lock-screen privacy (Android lock view + notification text), rapid completion.
-const { chromium, review, url, launchOptions } = require('./test-environment.cjs');
+const { toTasks, openPanel, chromium, review, url, launchOptions } = require('./test-environment.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const STORE = 'suisui-locktodo-v1';
@@ -36,24 +36,24 @@ const bridgeStub = (lock) => `
     const closeSheet = async () => { await page.locator('#add-backdrop').click(); await page.locator('#add-form').waitFor({ state: 'hidden' }); };
     await page.locator('#fab-add').click();
     await page.locator('#task-input').fill('交方案');
-    await page.locator('[data-add-when=tomorrow]').click();
+    await openPanel(page, 'add', 'when'); await page.locator('[data-add-when=tomorrow]').click();
     await page.locator('#add-form button[type=submit]').click();
     assert.match(await page.locator('#toast-message').textContent(), /以后.*明天/);
     assert.equal(await page.locator('#task-list .task-row', { hasText: '交方案' }).count(), 0);
     assert.equal(await page.locator('#later-list .task-row', { hasText: '交方案' }).locator('.meta-flag', { hasText: '明天' }).count(), 1);
-    await page.locator('[data-add-when=pick]').click();
-    await page.locator('#task-date').fill('2026-11-05');
+    await openPanel(page, 'add', 'when'); await page.locator('[data-add-when=pick]').click();
+    await openPanel(page, 'add', 'when'); await page.locator('#task-date').fill('2026-11-05');
     await page.locator('#task-input').fill('交房租');
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#later-list .task-row', { hasText: '交房租' }).locator('.meta-flag', { hasText: '11月5日' }).count(), 1);
     assert.equal(await page.locator('.lock-task', { hasText: '交房租' }).count(), 0, 'Future tasks stay off the lock card');
     // Weekly on Friday shows today; weekdays not shown on Saturday.
-    await page.locator('[data-add-when=today]').click();
-    await page.locator('[data-add-repeat=weekly]').click();
+    await openPanel(page, 'add', 'when'); await page.locator('[data-add-when=today]').click();
+    await openPanel(page, 'add', 'repeat'); await page.locator('[data-add-repeat=weekly]').click();
     await page.locator('#task-input').fill('复盘会');
     await page.locator('#add-form button[type=submit]').click();
     assert.equal(await page.locator('#task-list .task-row', { hasText: '复盘会' }).locator('.meta-flag', { hasText: '每周五' }).count(), 1);
-    await page.locator('[data-add-repeat=weekdays]').click();
+    await openPanel(page, 'add', 'repeat'); await page.locator('[data-add-repeat=weekdays]').click();
     assert.equal(await page.locator('[data-add-when=tomorrow]').isDisabled(), true, 'Daily-type repeats have no date');
     await page.locator('#task-input').fill('打卡');
     await page.locator('#add-form button[type=submit]').click();
@@ -76,7 +76,7 @@ const bridgeStub = (lock) => `
 
     // Edit: change repeat and date.
     await page.locator('#task-list .task-row', { hasText: '交方案' }).getByRole('button', { name: /^编辑/ }).click();
-    await page.locator('.edit-form input[name=date]').fill('2026-11-10');
+    await openPanel(page, 'edit', 'when'); await page.locator('.edit-form input[name=date]').fill('2026-11-10');
     await page.locator('.edit-form button.primary-button').click();
     assert.equal(await page.locator('#later-list .task-row', { hasText: '交方案' }).count(), 1);
 
@@ -89,16 +89,16 @@ const bridgeStub = (lock) => `
     await input.press('Enter');
     const newId = await input.getAttribute('data-group-id');
     await page.locator(`.group-color[data-group-id="${newId}"][data-group-color="#e0812f"]`).click();
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     assert.equal(await page.locator('#filter-tabs button', { hasText: '学习' }).count(), 1);
     await page.locator('#fab-add').click();
-    await page.locator(`[data-add-group="${newId}"]`).click();
+    await openPanel(page, 'add', 'group'); await page.locator(`[data-add-group="${newId}"]`).click();
     await page.locator('#task-input').fill('背单词');
     await page.locator('#add-form button[type=submit]').click();
     await closeSheet();
     await page.locator(`[data-filter="${newId}"]`).click();
     assert.equal(await page.locator('#task-list .task-row').count(), 1);
-    assert.equal(await page.locator('#task-list .task-row .task-meta').first().evaluate(el => el.textContent.includes('学习')), true);
+    assert.equal(await page.locator('#task-list .task-row .task-body').first().evaluate(el => el.getAttribute('aria-label').includes('学习')), true, 'The row names its group for screen readers; the ring shows its colour');
     await page.locator('.nav-button[data-view=settings]').click();
     await page.locator('[data-settings-page=list]').click();
     await page.locator(`[data-group-delete="${newId}"]`).click();
@@ -108,7 +108,7 @@ const bridgeStub = (lock) => `
     for (const width of [320, 430]) { await page.setViewportSize({ width, height: 800 }); assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Settings fit ${width}`); }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: path.join(review, 'v1-settings-390.png'), fullPage: true });
-    await page.locator('.nav-button[data-view=tasks]').click();
+    await toTasks(page);
     await page.locator('[data-filter=all]').click();
     await page.screenshot({ path: path.join(review, 'v1-tasks-390.png'), fullPage: true });
 
@@ -195,14 +195,16 @@ const bridgeStub = (lock) => `
     assert.equal(await page.locator('.task-row .icon-button').count(), 0, 'Rows have no tiny icon buttons; tap the text to edit');
     await page.locator('.task-row', { hasText: '给家里打个电话' }).locator('.task-body').click();
     assert.equal(await page.locator('#edit-sheet').evaluate(d => d.open), true);
-    await page.locator('[data-edit-group=work]').click();
-    await page.locator('[data-edit-repeat=daily]').click();
+    await openPanel(page, 'edit', 'group'); await page.locator('[data-edit-group=work]').click();
+    await openPanel(page, 'edit', 'repeat'); await page.locator('[data-edit-repeat=daily]').click();
     assert.equal(await page.locator('#edit-date').isDisabled(), true);
     await page.locator('#edit-pinned').check();
     await page.locator('.edit-form button.primary-button').click();
     const row = page.locator('#task-list .task-row').nth(1);
     assert.match(await row.textContent(), /给家里打个电话/, 'Pinned rows move up');
-    assert.match(await row.locator('.task-meta').textContent(), /工作.*每天.*置顶/);
+    assert.match(await row.locator('.task-meta').textContent(), /每天/);
+    assert.equal(await row.locator('.pin-mark').count(), 1, 'Pinned rows carry a pin mark');
+    assert.match(await row.locator('.task-body').getAttribute('aria-label'), /工作/);
     // Swipe: right finishes, left deletes with undo, a short drag springs back and does not open the editor.
     const drag = async (nth, dx) => { const r = await page.locator('#task-list .task-row').nth(nth).boundingBox(); const y = r.y + r.height / 2; await page.mouse.move(r.x + 200, y); await page.mouse.down(); await page.mouse.move(r.x + 200 + dx, y, { steps: 8 }); await page.mouse.up(); };
     assert.equal(await page.locator('#gesture-tips').isVisible(), true, 'First use shows the gesture tips');
@@ -236,7 +238,7 @@ const bridgeStub = (lock) => `
     assert.equal(await page.locator('#mini-wallpaper').isVisible(), false);
     assert.equal(await page.locator('#settings-preview').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
-    for (const sel of ['.app-header', '.settings-top', '#settings-scroll', '.navigation']) assert.notEqual(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${sel} stays opaque`);
+    for (const sel of ['.app-header', '.settings-top', '#settings-scroll']) assert.notEqual(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${sel} stays opaque`);
     await page.locator('#settings-back').click();
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains('wallpaper-hole')), false, 'Settings home has no preview');
     await page.locator('[data-settings-page=look]').click();
@@ -295,8 +297,8 @@ const bridgeStub = (lock) => `
     assert(await size('.mini-row') > before * 1.2, 'Preview text grows');
     assert.match(await page.locator('.mini-row').first().evaluate(el => getComputedStyle(el).fontFamily), /Song|Serif|serif/);
     await page.reload({ waitUntil: 'networkidle' });
-    await page.locator('.nav-button[data-view=tasks]').click();
-    assert(Math.abs(await size('.task-title') - 15 * 1.26) < .5, 'List text uses the saved size');
+    await toTasks(page);
+    assert(Math.abs(await size('.task-title') - 16 * 1.26) < .5, 'List text uses the saved size');
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Large text still fits');
     await context.close();
   }
@@ -309,7 +311,7 @@ const bridgeStub = (lock) => `
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     assert.equal(bg, 'rgb(19, 19, 19)', 'Dark background');
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#f2f2f4', 'Light accent text on dark');
-    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(72, 72, 76)', 'Ink buttons turn mid-grey on dark');
+    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(242, 242, 244)', 'Ink buttons turn light on dark');
     await page.screenshot({ path: path.join(review, 'v12-dark-390.png') });
     await context.close();
   }
