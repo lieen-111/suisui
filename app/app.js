@@ -7,7 +7,9 @@
   const PHOTO_KEY = 'suisui-wallpaper-photo';
   const SCHEMA = 2;
   const ARCHIVE_LIMIT = 300;
-  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#2f6fd0', emoji: '💼' }, { id: 'life', name: '生活', color: '#d2566f', emoji: '🌿' }];
+  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#2f6fd0', icon: 'briefcase' }, { id: 'life', name: '生活', color: '#d2566f', icon: 'leaf' }];
+  // Line icons a group can carry on its lock-screen card (same Lucide set as the rest of the app).
+  const GROUP_ICONS = ['briefcase', 'leaf', 'house', 'book-open', 'graduation-cap', 'dumbbell', 'heart', 'shopping-bag', 'coffee', 'plane', 'music', 'gamepad-2', 'palette', 'camera', 'wallet', 'sun', 'target', 'sparkles'];
   const GROUP_COLORS = ['#2f6fd0', '#d2566f', '#e0812f', '#13765b', '#7b61c9', '#5f6368'];
   const repeats = { none: '不重复', daily: '每天', weekdays: '工作日', weekly: '每周' };
   const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -157,8 +159,8 @@
     const ids = new Set();
     const out = (Array.isArray(list) ? list : []).filter(g => g && typeof g.id === 'string' && g.id && typeof g.name === 'string' && g.name.trim() && !ids.has(g.id) && ids.add(g.id))
       .slice(0, 12).map(g => ({ id: g.id.slice(0, 40), name: g.name.trim().slice(0, 12), color: /^#[0-9a-f]{6}$/i.test(g.color) ? g.color : GROUP_COLORS[ids.size % GROUP_COLORS.length],
-        // 1.11: an optional emoji in front of the group's card title on the lock screen; the two built-in groups get one.
-        emoji: typeof g.emoji === 'string' ? Array.from(g.emoji.trim()).slice(0, 2).join('') : ({ work: '💼', life: '🌿' }[g.id] || '') }));
+        // 1.12: a line icon in front of the group's card title on the lock screen; the two built-in groups get one.
+        icon: GROUP_ICONS.includes(g.icon) ? g.icon : g.icon === '' ? '' : ({ work: 'briefcase', life: 'leaf' }[g.id] || '') }));
     return out.length ? out : structuredClone(DEFAULT_GROUPS);
   }
   function groupOf(id) { return state.groups.find(g => g.id === id) || state.groups[0]; }
@@ -646,10 +648,11 @@
     const fmt = new Intl.DateTimeFormat(LOC(), { month: 'numeric', day: 'numeric' });
     $('archive-list').innerHTML = items.slice(0, 60).map(t => `<div class="done-row archive-row" data-archived-id="${esc(t.id)}">${icon('archive')}<s class="done-text">${esc(t.title)}</s><span class="archive-date">${fmt.format(t.completedAt || t.archivedAt)}</span><button class="icon-button" data-action="unarchive" data-id="${esc(t.id)}" aria-label="放回待办：${esc(t.title)}" title="放回待办">${icon('rotate-ccw')}</button></div>`).join('') + (items.length > 60 ? `<p class="archive-more">只显示最近 60 条，导出备份可查看全部 ${items.length} 条。</p>` : '');
   }
+  let iconPicking = '';
   function renderGroupSettings() {
     const list = $('group-list');
-    if (list.contains(document.activeElement)) return; // don't rebuild while the user is typing a name
-    list.innerHTML = state.groups.map(g => `<div class="group-row" data-group-id="${esc(g.id)}"><label class="sr-only" for="group-emoji-${esc(g.id)}">分组图标</label><input class="group-emoji" id="group-emoji-${esc(g.id)}" value="${esc(g.emoji || '')}" placeholder="🙂" maxlength="8" data-group-id="${esc(g.id)}" style="--g:${g.color}" title="分组图标：输入一个 emoji"><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button></div>`).join('');
+    if (list.contains(document.activeElement) && document.activeElement.matches('input')) return; // don't rebuild while the user is typing a name
+    list.innerHTML = state.groups.map(g => `<div class="group-row${iconPicking === g.id ? ' picking' : ''}" data-group-id="${esc(g.id)}"><button type="button" class="group-icon-btn" data-group-icon-pick="${esc(g.id)}" style="--g:${g.color}" aria-label="分组图标" aria-expanded="${iconPicking === g.id}">${g.icon ? icon(g.icon) : '<span class="dot"></span>'}</button><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button>${iconPicking === g.id ? `<div class="group-icons" role="group" aria-label="选择图标"><button type="button" class="group-icon-choice${!g.icon ? ' active' : ''}" data-group-icon="" data-group-id="${esc(g.id)}" aria-label="不用图标">${icon('circle-off')}</button>${GROUP_ICONS.map(n => `<button type="button" class="group-icon-choice${g.icon === n ? ' active' : ''}" data-group-icon="${n}" data-group-id="${esc(g.id)}" aria-label="${n}">${icon(n)}</button>`).join('')}</div>` : ''}</div>`).join('');
     $('add-group').disabled = state.groups.length >= 12;
   }
   // Lock screen (1.11, Android lock view): one frosted card per group, like the user's reference — group emoji, name and
@@ -664,7 +667,7 @@
       if (!mine.length) return '';
       const done = mine.filter(t => t.done).length;
       const subs = t => t.done || !t.subtasks?.length ? '' : `<div class="lock-subs">${t.subtasks.map(x => `<button class="lock-sub${x.done ? ' is-done' : ''}" data-sub-quick="${esc(t.id)}" data-sub-id="${esc(x.id)}" aria-pressed="${x.done}" aria-label="${x.done ? '取消完成' : '完成'}：${esc(x.title)}"><span class="check-circle">${x.done ? icon('check') : ''}</span><span class="lock-task-label">${esc(x.title)}</span></button>`).join('')}</div>`;
-      return `<section class="lock-group" data-lock-group="${esc(g.id)}"><header class="lock-group-head">${g.emoji ? `<span class="lock-group-emoji" aria-hidden="true">${esc(g.emoji)}</span>` : `<span class="dot" style="background:${g.color}"></span>`}<b>${esc(g.name)}</b><span class="lock-group-count">${done}/${mine.length}</span></header>${mine.map(t => lockRow(t, lockButton(t)) + subs(t)).join('')}</section>`;
+      return `<section class="lock-group" data-lock-group="${esc(g.id)}"><header class="lock-group-head">${g.icon ? `<span class="lock-group-icon" aria-hidden="true">${icon(g.icon)}</span>` : ''}<b>${esc(g.name)}</b><span class="lock-group-count">${done}/${mine.length}</span></header>${mine.map(t => lockRow(t, lockButton(t)) + subs(t)).join('')}</section>`;
     }).join('');
   }
   // A lock-card row with a duration gets its own start button next to it (buttons cannot nest).
@@ -1841,6 +1844,8 @@
     }
     if (b.dataset.groupColor) { const g = state.groups.find(x => x.id === b.dataset.groupId); if (g) { g.color = b.dataset.groupColor; save(); render(); } }
     if (b.dataset.groupDelete) deleteGroup(b.dataset.groupDelete);
+    if (b.dataset.groupIconPick) { iconPicking = iconPicking === b.dataset.groupIconPick ? '' : b.dataset.groupIconPick; renderGroupSettings(); icons($('group-list')); }
+    if (b.dataset.groupIcon !== undefined && b.dataset.groupId) { const g = state.groups.find(x => x.id === b.dataset.groupId); if (g) { g.icon = b.dataset.groupIcon; iconPicking = ''; save(); render(); renderGroupSettings(); icons($('group-list')); } }
     const id = b.dataset.id, task = state.tasks.find(t => t.id === id);
     switch (b.dataset.action) {
       case 'complete': complete(id, b); break;

@@ -248,3 +248,26 @@ body.lock-mode .lock-actions[hidden]{display:none}
 body.lock-mode .lock-exit{bottom:12px;gap:0}
 body.lock-mode .lock-exit span:last-child{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-height:740px){body.lock-mode #lock-time{font-size:78px}body.lock-mode .activity-position{top:calc(40px + 132px);bottom:112px}body.lock-mode.has-focus .activity-position{top:calc(40px + 214px)}body.lock-mode .lock-actions{bottom:36px}}
+
+/* 1.12 lock screen: the old summary is back — heading (今天的待办 · done/total) above the cards, the
+   remaining/done line with 全部清单 below them, and the swipe hint at the bottom. */
+body.lock-mode .activity-heading{display:flex!important;flex:none;height:auto;margin:0 4px 10px;padding:0;color:#fff;font-size:15px;font-weight:600;text-shadow:0 1px 8px #0004}
+body.lock-mode .activity-heading svg{width:17px;height:17px}
+body.lock-mode #activity-count{font:600 14px Geist,var(--font-system);opacity:.9}
+body.lock-mode .activity-footer{display:flex!important;flex:none;height:40px;margin:2px 4px 0;padding:0;border:0!important;color:#fff;font-size:13px;opacity:.92;text-shadow:0 1px 8px #0004;background:none!important}
+body.lock-mode .lock-exit span:last-child{position:static;width:auto;height:auto;overflow:visible;clip:auto;margin-top:10px}
+body.lock-mode .lock-exit{bottom:22px;gap:0}
+/* group line icons (settings picker + lock card titles) */
+.group-row{flex-wrap:wrap}
+.group-icon-btn{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:var(--g);background:color-mix(in srgb,var(--g) 13%,transparent)}
+.group-icon-btn svg{width:19px;height:19px;stroke-width:1.8}
+.group-icon-btn .dot{width:10px;height:10px;background:var(--g)}
+.group-icons{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;padding:10px 0 4px}
+.group-icon-choice{height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ink);background:var(--chip-bg)}
+.group-icon-choice svg{width:19px;height:19px;stroke-width:1.7}
+.group-icon-choice.active{background:var(--accent-fill);color:var(--on-accent)}
+.lock-group-icon{display:grid;place-items:center;width:22px;height:22px;flex:none}
+.lock-group-icon svg{width:21px;height:21px;stroke-width:1.7}
+body.lock-mode #activity-count{color:#fff!important;opacity:1}
+body.lock-mode .activity-heading{margin:0 6px 10px}
+body.lock-mode .activity-footer{margin:4px 6px 0}

@@ -116,7 +116,10 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await page.clock.install({ time: new Date(`${day}T09:00:00`) });
     await page.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
     assert.deepEqual(await page.locator('.lock-group').evaluateAll(g => g.map(e => e.dataset.lockGroup)), ['work', 'life']);
-    assert.match(await page.locator('.lock-group[data-lock-group=work] .lock-group-head').textContent(), /💼\s*工作\s*1\/2/);
+    assert.match(await page.locator('.lock-group[data-lock-group=work] .lock-group-head').textContent(), /^\s*工作\s*1\/2\s*$/);
+    assert.equal(await page.locator('.lock-group[data-lock-group=work] .lock-group-icon svg').count(), 1, 'Groups carry a line icon (Lucide), not an emoji');
+    assert.equal(await page.locator('.activity-heading').isVisible(), true, 'The 今天的待办 heading is still there');
+    assert.equal(await page.locator('#see-all').isVisible(), true, 'The remaining/done line with 全部清单 is still there');
     assert.deepEqual(await page.locator('.lock-group[data-lock-group=work] .lock-task').evaluateAll(b => b.map(e => e.dataset.id)), ['a', 'c'], 'Finished items sit at the bottom of their card');
     assert.equal(await page.locator('.lock-group[data-lock-group=work] .lock-sub').count(), 1, 'Subtasks are listed under their task');
     await page.locator('.lock-sub').click();
@@ -145,6 +148,6 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
+  console.log('PASS: 1.12 line icons + summary kept; 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });
