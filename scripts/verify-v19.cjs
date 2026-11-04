@@ -103,7 +103,30 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await context.close();
   }
 
+  /* 1.10 home cards: one card per group, finished items at the bottom, subtasks under their task */
+  {
+    const { context, page } = await open({});
+    assert.deepEqual(await page.locator('.group-card').evaluateAll(c => c.map(e => e.dataset.groupCard)), ['work', 'life'], 'One card per group that has something today');
+    assert.match(await page.locator('.group-card[data-group-card=work] .group-card-head').textContent(), /💼\s*工作\s*0\/1/);
+    await page.locator('.task-row[data-task-id=a] [data-action=complete]').click();
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator('.group-card[data-group-card=work] .card-done-row[data-completed-id=a]').count(), 1, 'Finished item stays in its card');
+    assert.match(await page.locator('.group-card[data-group-card=work] .group-count').textContent(), /1\/1/);
+    await page.locator('.card-done-row[data-completed-id=a] [data-action=restore]').click();
+    assert.equal(await page.locator('.group-card[data-group-card=work] .task-row[data-task-id=a]').count(), 1, 'Tapping the filled circle restores it');
+    // Only one group has to-dos → only one card.
+    await page.evaluate(k => { const r = JSON.parse(localStorage.getItem(k)); r.tasks = r.tasks.filter(t => t.group === 'life'); r.tasks[0].subtasks = [{ id: 's1', title: '牛排', done: false }, { id: 's2', title: '麦片', done: false }]; localStorage.setItem(k, JSON.stringify(r)); }, STORE);
+    await page.reload({ waitUntil: 'networkidle' });
+    assert.equal(await page.locator('.group-card').count(), 1);
+    assert.equal(await page.locator('.group-card .sub-row').count(), 2, 'Subtasks are listed under their task');
+    await page.locator('.sub-row', { hasText: '牛排' }).click();
+    const subs = await page.evaluate(k => JSON.parse(localStorage.getItem(k)).tasks[0].subtasks.map(x => x.done), STORE);
+    assert.deepEqual(subs, [true, false], 'A subtask can be ticked right in the list');
+    await page.screenshot({ path: path.join(review, 'v110-one-card-390.png') });
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
+  console.log('PASS: 1.10 group cards (one per group, done at the bottom, restore, inline subtasks); 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

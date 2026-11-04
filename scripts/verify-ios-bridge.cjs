@@ -56,7 +56,7 @@ let browser;
   const ticked = { ...saved, rev: saved.rev + 1, tasks: saved.tasks.map(t => t.id === 'b' ? { ...t, done: true, completedAt: Date.now() } : t) };
   await page.evaluate(raw => { SuiSuiIOS._set(raw); suisuiNativeChanged(); }, JSON.stringify(ticked));
   assert.equal(await page.locator('#task-list .task-row', { hasText: '买菜' }).count(), 0, 'Finished on the Lock Screen');
-  assert.equal(await page.locator('#done-list .task-row, #done-list .done-row, #completed-section', { hasText: '买菜' }).count() > 0, true);
+  assert.equal(await page.locator('.card-done-row', { hasText: '买菜' }).count() > 0, true);
 
   // A save from a stale page is refused and the page takes the stored copy instead of overwriting it.
   const newer = { ...ticked, rev: ticked.rev + 5, tasks: [...ticked.tasks, { id: 'c', title: '锁屏上新加的', group: 'work', pinned: false, done: false, completedAt: 0, repeat: 'none', createdAt: 3, date: '' }] };

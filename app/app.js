@@ -7,7 +7,7 @@
   const PHOTO_KEY = 'suisui-wallpaper-photo';
   const SCHEMA = 2;
   const ARCHIVE_LIMIT = 300;
-  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#2f6fd0' }, { id: 'life', name: '生活', color: '#d2566f' }];
+  const DEFAULT_GROUPS = [{ id: 'work', name: '工作', color: '#2f6fd0', emoji: '💼' }, { id: 'life', name: '生活', color: '#d2566f', emoji: '🌿' }];
   const GROUP_COLORS = ['#2f6fd0', '#d2566f', '#e0812f', '#13765b', '#7b61c9', '#5f6368'];
   const repeats = { none: '不重复', daily: '每天', weekdays: '工作日', weekly: '每周' };
   const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -153,7 +153,9 @@
   function normalizeGroups(list) {
     const ids = new Set();
     const out = (Array.isArray(list) ? list : []).filter(g => g && typeof g.id === 'string' && g.id && typeof g.name === 'string' && g.name.trim() && !ids.has(g.id) && ids.add(g.id))
-      .slice(0, 12).map(g => ({ id: g.id.slice(0, 40), name: g.name.trim().slice(0, 12), color: /^#[0-9a-f]{6}$/i.test(g.color) ? g.color : GROUP_COLORS[ids.size % GROUP_COLORS.length] }));
+      .slice(0, 12).map(g => ({ id: g.id.slice(0, 40), name: g.name.trim().slice(0, 12), color: /^#[0-9a-f]{6}$/i.test(g.color) ? g.color : GROUP_COLORS[ids.size % GROUP_COLORS.length],
+        // 1.10: an optional emoji in front of the group's card title; the two built-in groups get one.
+        emoji: typeof g.emoji === 'string' ? Array.from(g.emoji.trim()).slice(0, 2).join('') : ({ work: '💼', life: '🌿' }[g.id] || '') }));
     return out.length ? out : structuredClone(DEFAULT_GROUPS);
   }
   function groupOf(id) { return state.groups.find(g => g.id === id) || state.groups[0]; }
@@ -565,7 +567,6 @@
     if (t.repeat !== 'none') flags += `<span class="meta-flag meta-repeat">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
     if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
-    if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
     if (t.note) flags += `<span class="meta-flag" title="有备注">${icon('sticky-note')}</span>`;
     return flags;
   }
@@ -575,6 +576,22 @@
   }
   // First use: no sample tasks, a calm invitation instead (the dots echo the logo).
   const FIRST_RUN = `<div class="first-run"><svg class="first-art" viewBox="0 0 120 120" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => { const a = (-80 + i * 24.3) * Math.PI / 180, t = i / 13; return `<circle cx="${(60 + 44 * Math.cos(a)).toFixed(1)}" cy="${(60 + 44 * Math.sin(a)).toFixed(1)}" r="${(2 + t * 4).toFixed(1)}" opacity="${(.3 + t * .7).toFixed(2)}"/>`; }).join('')}<path d="M44 61l11 11 22-23" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>从第一件小事开始</h2><p>点下面的 + 写下今天想做的事。<br>需要专注的事可以设个时长，点开始就倒计时。</p><button class="primary-button" data-action="first-add">${icon('plus')}添加第一件</button></div>`;
+  // Home list (1.10): one card per group with today's to-dos, finished ones at the bottom of the card, subtasks
+  // indented under their task. A group with nothing today gets no card, so a single group shows a single card.
+  function subRows(t) {
+    if (!t.subtasks?.length) return '';
+    return `<div class="sub-rows">${t.subtasks.map(s => `<button class="sub-row${s.done ? ' is-done' : ''}" data-sub-quick="${esc(t.id)}" data-sub-id="${esc(s.id)}" aria-label="${s.done ? '取消完成' : '完成'}：${esc(s.title)}" aria-pressed="${s.done}"><span class="check-circle">${s.done ? icon('check') : ''}</span><span class="sub-title">${s.done ? `<s>${esc(s.title)}</s>` : esc(s.title)}</span></button>`).join('')}</div>`;
+  }
+  function cardDoneRow(t) {
+    return `<div class="done-row card-done-row" data-completed-id="${esc(t.id)}" style="--g:${groupOf(t.group).color}"><button class="check-task" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办"><span class="check-circle">${icon('check')}</span></button><s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}${repeatLabel(t)}</span>` : ''}</div>`;
+  }
+  function groupCards(open, finished) {
+    return state.groups.map(g => {
+      const o = open.filter(t => groupOf(t.group).id === g.id), d = finished.filter(t => groupOf(t.group).id === g.id);
+      if (!o.length && !d.length) return '';
+      return `<section class="group-card" data-group-card="${esc(g.id)}" style="--g:${g.color}"><header class="group-card-head">${g.emoji ? `<span class="group-emoji" aria-hidden="true">${esc(g.emoji)}</span>` : '<span class="dot"></span>'}<h3>${esc(g.name)}</h3><span class="group-count">${d.length}/${o.length + d.length}</span></header>${o.map(t => row(t) + subRows(t)).join('')}${d.map(cardDoneRow).join('')}</section>`;
+    }).join('');
+  }
   function renderFilters(todo) {
     const repeating = state.tasks.filter(t => t.repeat !== 'none').length;
     if (filter === 'repeat' && !repeating) filter = 'all';
@@ -614,15 +631,18 @@
     const firstRun = !state.tasks.length && !state.log.length;
     document.querySelector('.list-heading').hidden = firstRun;
     $('filter-tabs').hidden = firstRun;
-    $('completed-section').hidden = !done.length;
-    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${filter === 'repeat' ? '今天要做的重复事项都做完了' : todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
+    $('completed-section').hidden = true; // 1.10: finished items stay at the bottom of their group's card
+    $('cards-foot').hidden = !done.some(t => t.repeat === 'none');
+    const doneHere = done.filter(inFilter);
+    $('task-list').classList.toggle('grouped', !!(visible.length || doneHere.length));
+    $('task-list').innerHTML = visible.length || doneHere.length ? groupCards(visible, doneHere) : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${filter === 'repeat' ? '今天要做的重复事项都做完了' : todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
     const laterVisible = upcoming.filter(inFilter);
     $('later-section').hidden = !laterVisible.length;
     $('later-count').textContent = String(laterVisible.length);
     $('later-list').innerHTML = laterVisible.map(row).join('');
     $('done-count').textContent = String(done.length);
     $('clear-done').hidden = !done.some(t => t.repeat === 'none');
-    $('completed-list').innerHTML = done.map(t => `<div class="done-row" data-completed-id="${esc(t.id)}">${icon('circle-check')}<s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}${repeatLabel(t)}</span>` : ''}<button class="icon-button" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办">${icon('rotate-ccw')}</button><button class="icon-button" data-action="delete" data-id="${esc(t.id)}" aria-label="删除：${esc(t.title)}" title="删除">${icon('trash-2')}</button></div>`).join('');
+    $('completed-list').innerHTML = ''; // 1.10: finished items render inside their group card (cardDoneRow)
     renderArchive();
     renderGroupSettings();
     renderPreview();
@@ -643,7 +663,7 @@
   function renderGroupSettings() {
     const list = $('group-list');
     if (list.contains(document.activeElement)) return; // don't rebuild while the user is typing a name
-    list.innerHTML = state.groups.map(g => `<div class="group-row" data-group-id="${esc(g.id)}"><span class="dot" style="background:${g.color}"></span><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button></div>`).join('');
+    list.innerHTML = state.groups.map(g => `<div class="group-row" data-group-id="${esc(g.id)}"><label class="sr-only" for="group-emoji-${esc(g.id)}">分组图标</label><input class="group-emoji" id="group-emoji-${esc(g.id)}" value="${esc(g.emoji || '')}" placeholder="🙂" maxlength="8" data-group-id="${esc(g.id)}" style="--g:${g.color}" title="分组图标：输入一个 emoji"><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button></div>`).join('');
     $('add-group').disabled = state.groups.length >= 12;
   }
   // A lock-card row with a duration gets its own start button next to it (buttons cannot nest).
@@ -1650,7 +1670,7 @@
   function liftRow(row, y, pointer) {
     swipe = null; swallowClick = true;
     haptic();
-    const rows = [...$('task-list').querySelectorAll('.task-row')];
+    const rows = [...(row.closest('.group-card') || $('task-list')).querySelectorAll('.task-row')];
     drag = { row, id: row.dataset.taskId, y, pointer, dy: 0, moved: false, rows, from: rows.indexOf(row), to: rows.indexOf(row), h: row.offsetHeight };
     row.classList.add('lifted');
   }
@@ -1737,6 +1757,10 @@
     if (b.dataset.shift) { review.offset = Math.min(0, review.offset + Number(b.dataset.shift)); renderReview(); }
     if (b.dataset.reviewGroup) { review.group = b.dataset.reviewGroup; renderReview(); }
     if (b.dataset.editPanel) { editPanel = editPanel === b.dataset.editPanel ? '' : b.dataset.editPanel; renderEditSummary(); }
+    if (b.dataset.subQuick) {
+      const task = state.tasks.find(t => t.id === b.dataset.subQuick), sub = task?.subtasks?.find(x => x.id === b.dataset.subId);
+      if (sub) { sub.done = !sub.done; haptic(); save(); render(); }
+    }
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
       $('task-when').value = addManual.when = b.dataset.addWhen; renderAddChips(); icons($('add-form'));
@@ -1893,6 +1917,12 @@
   $('edit-sheet').addEventListener('close', () => { editing = null; });
   $('edit-date').addEventListener('change', () => { const f = $('edit-form'); editChips(null, f.elements.group.value, f.elements.repeat.value); });
   $('group-list').addEventListener('change', event => {
+    const emoji = event.target.closest('.group-emoji');
+    if (emoji) {
+      const g = state.groups.find(x => x.id === emoji.dataset.groupId);
+      if (g) { g.emoji = Array.from(emoji.value.trim()).slice(0, 2).join(''); save(); render(); }
+      return;
+    }
     const input = event.target.closest('.group-name');
     if (!input) return;
     const g = state.groups.find(x => x.id === input.dataset.groupId);
