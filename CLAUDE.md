@@ -88,7 +88,7 @@ Screenshots and tests here are browser evidence, not physical-iPhone, Safari or 
 
 ## Native Work
 
-Builds and unit tests pass in CI; not yet device-tested. arm64 hosted macOS runners queued indefinitely on 2026-10-29, so workflows default to `macos-26-intel` (override with repo variable `MAC_RUNNER`). Artifact downloads are blocked from the Claude sandbox; the user downloads IPAs from the Actions page. Lock-screen buttons need an unlocked (authenticated) device; Live Activities last 8 hours; widgets/Live Activities cannot run the shatter animation. Change `BASE_BUNDLE_ID` in `ios/project.yml` (or the `BUNDLE_ID` repo variable) before signing.
+Builds and unit tests pass in CI; not yet device-tested. arm64 hosted macOS runners queued indefinitely on 2026-10-29, workflows defaulted to `macos-26-intel`; on 2026-11-04 that type stopped being picked up ("not acquired by Runner of type hosted"), so the default is now `macos-15` (override with repo variable `MAC_RUNNER`). Artifact downloads are blocked from the Claude sandbox; the user downloads IPAs from the Actions page. Lock-screen buttons need an unlocked (authenticated) device; Live Activities last 8 hours; widgets/Live Activities cannot run the shatter animation. Change `BASE_BUNDLE_ID` in `ios/project.yml` (or the `BUNDLE_ID` repo variable) before signing.
 
 ## Handoff Limits
 

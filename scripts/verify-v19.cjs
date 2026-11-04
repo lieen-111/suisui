@@ -126,11 +126,34 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.equal(await page.locator('.lock-sub.is-done').count(), 1, 'A subtask can be ticked on the lock screen');
     assert.match(await page.locator('#lock-date').textContent(), /11月4日周三 · .+年.+月.+/, 'Lock date shows the Chinese calendar date');
     await page.screenshot({ path: path.join(review, 'v111-lock-groups-390.png') });
-    await page.locator('#lock-add').click();
-    assert.deepEqual(await page.evaluate(() => window.__unlock), [true], '+ opens the app');
-    assert.ok(await page.evaluate(() => localStorage.getItem('suisui-open-add')), '… and asks it to open the add sheet');
-    await page.locator('#lock-open').click();
-    assert.deepEqual(await page.evaluate(() => window.__unlock), [true, true]);
+    // 1.14: no ✓ / + buttons; the remaining/done line sits right under the last card; quieter type.
+    assert.equal(await page.locator('#lock-add, #lock-open, .lock-actions').count(), 0, 'The ✓ and + buttons are gone');
+    const gap = await page.evaluate(() => { const cards = [...document.querySelectorAll('.lock-group')]; return document.getElementById('see-all').getBoundingClientRect().top - cards.at(-1).getBoundingClientRect().bottom; });
+    assert.ok(gap >= 0 && gap < 16, `The remaining line sits right under the cards (gap ${gap}px)`);
+    assert.ok(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.lock-group .lock-task')).fontSize)) <= 15.5, 'Lock rows use the smaller type');
+    assert.ok(await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('lock-time')).fontSize)) <= 84);
+    await page.locator('#see-all').click();
+    assert.deepEqual(await page.evaluate(() => window.__unlock), [true], '全部清单 opens the app');
+    await context.close();
+  }
+  /* 1.14 Android settings previews show the same grouped layout as the lock screen */
+  {
+    const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const rec = JSON.parse(record({}));
+    await context.addInitScript(raw => { window.SuiSuiAndroid = { load: () => raw, save: j => { raw = j; return true; }, isLockMode: () => false, notificationsAllowed: () => true, permissions: () => '{"notifications":true,"overlay":true}', version: () => 't' }; }, JSON.stringify(rec));
+    const page = await context.newPage(); watch(page);
+    await page.clock.install({ time: new Date(`${day}T09:00:00`) });
+    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.locator('.nav-button[data-view=settings]').click();
+    assert.deepEqual(await page.locator('#home-card .mini-group').evaluateAll(g => g.map(e => e.dataset.miniGroup)), ['work', 'life'], 'Settings home preview = lock screen groups');
+    assert.match(await page.locator('#home-card .hero-foot').textContent(), /剩余 2 项/);
+    await page.waitForTimeout(600);
+    const box = await page.evaluate(() => [document.querySelector('#home-card .hero-foot').getBoundingClientRect().bottom, document.getElementById('home-hero').getBoundingClientRect().bottom]);
+    assert.ok(box[0] <= box[1], 'The remaining line fits inside the settings preview');
+    await page.screenshot({ path: path.join(review, 'v114-settings-home-android-390.png') });
+    await page.locator('[data-settings-page=look]').click();
+    assert.equal(await page.locator('#mini-card.grouped .mini-group').count(), 2, 'Live preview = lock screen groups');
+    await page.screenshot({ path: path.join(review, 'v114-look-preview-android-390.png') });
     await context.close();
   }
   /* 1.11 cute fonts: picked in settings, loaded only when needed */
@@ -148,6 +171,6 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.12 line icons + summary kept; 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
+  console.log('PASS: 1.14 smaller lock type, remaining line under the cards, no ✓/+ buttons, Android previews mirror the lock screen; 1.12 line icons + summary kept; 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

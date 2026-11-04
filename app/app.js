@@ -371,7 +371,8 @@
     ['--card-bg', '--card-ink', '--card-blur'].forEach(k => card.style.setProperty(k, mini.style.getPropertyValue(k) || $('activity').style.getPropertyValue(k)));
     const open = pending();
     $('home-card-count').textContent = $('activity-count').textContent;
-    $('home-card-rows').outerHTML = `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
+    card.classList.toggle('grouped', groupedLock() && cardTasks().length > 0);
+    $('home-card-rows').outerHTML = groupedLock() && cardTasks().length ? `<span id="home-card-rows">${miniGroups(cardTasks())}<div class="hero-foot">${esc($('remaining-label').textContent)}</div></span>` : `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
     const on = IOS_APP ? !!iosStatus().live : ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
     $('tile-lock-state').textContent = s.lockPrivacy ? '隐藏内容' : on ? '已开启' : '未开启';
     $('sum-list').innerHTML = `${state.groups.slice(0, 4).map(g => `<span class="dot" style="background:${g.color}"></span>`).join('')}${state.groups.length} 个`;
@@ -693,13 +694,26 @@
     renderMiniPreview(items, max, todo.length);
   }
   // Read-only copy of the card at the top of Settings, so appearance and privacy changes are visible while adjusting them.
+  // On Android the real lock screen is the grouped view, so both settings previews draw the same thing in miniature:
+  // the heading line, one small frosted card per group, and the remaining/done line under the cards.
+  const miniRow = t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat">${icon('repeat')}</span>` : ''}${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`;
+  function miniGroups(items) {
+    return state.groups.map(g => {
+      const mine = items.filter(t => groupOf(t.group).id === g.id);
+      if (!mine.length) return '';
+      return `<div class="mini-group" data-mini-group="${esc(g.id)}"><div class="mini-group-head">${g.icon ? icon(g.icon) : ''}<b>${esc(g.name)}</b><span>${mine.filter(t => t.done).length}/${mine.length}</span></div>${mine.map(miniRow).join('')}</div>`;
+    }).join('');
+  }
+  const groupedLock = () => !!ANDROID && !state.settings.lockPrivacy;
   function renderMiniPreview(items, rows, open) {
+    $('mini-card').classList.toggle('grouped', groupedLock() && items.length > 0);
     $('mini-card').classList.toggle('compact', rows === 4);
     $('mini-count').textContent = $('activity-count').textContent;
     $('mini-remaining').textContent = $('remaining-label').textContent;
     $('mini-list').innerHTML = state.settings.lockPrivacy
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${open ? `今天还有 ${open} 件待办` : '今天的事都完成了'}</span><span class="lock-reveal">解锁查看</span></div>`
-      : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat">${icon('repeat')}</span>` : ''}${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
+      : groupedLock() && items.length ? miniGroups(items)
+      : items.length ? items.slice(0, rows).map(miniRow).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
   // 玻璃 background: the wallpaper shrunk to a few dozen pixels (and a little more colourful), then stretched by CSS.
   // Upscaling a tiny image gives the blur for free, so no live CSS blur filter has to run on every frame.
@@ -2116,9 +2130,6 @@
     $('lock-exit').hidden = false;
     const leave = openApp => { try { ANDROID.unlock(openApp); } catch { /* ignore */ } };
     $('lock-exit').addEventListener('click', () => leave(false));
-    $('lock-actions').hidden = false;
-    $('lock-open').addEventListener('click', () => leave(true));
-    $('lock-add').addEventListener('click', () => { try { localStorage.setItem('suisui-open-add', String(Date.now())); } catch { /* ignore */ } leave(true); });
     ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', event => { event.stopImmediatePropagation(); leave(true); }, true));
     $('activity-list').addEventListener('click', event => { if (event.target.closest('#lock-reveal')) leave(true); });
     let startY = null;
