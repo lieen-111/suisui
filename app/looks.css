@@ -1,0 +1,205 @@
+/* 1.9 interface styles. html[data-style] is glass (default) | paper | night; "lock" on the Android lock view.
+   Loaded after styles.css and night.css (night.css makes 夜光 dark even when the phone is in light mode). */
+@font-face{font-family:Geist;src:url(vendor/fonts/Geist-Variable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--font-system:Geist,-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","MiSans","Noto Sans CJK SC","Microsoft YaHei",sans-serif;--on-accent:#fff}
+.num,.progress-ring span,.focus-time,.timer-pill,.review-stats b,#lock-time{font-feature-settings:"tnum"}
+
+/* Hero parts used by 纸墨 and 夜光; hidden in 玻璃 */
+.today-hero,.today-meter{display:none}
+.hero-count small{font-weight:300}
+
+/* Text and fills that sit on the accent colour */
+.chip.active,.filter-tabs button.active,.tool.open,.nav-add,.add-input-line .add-submit,#edit-form .dialog-heading .primary-button,.primary-button,.timer-pill.is-on{color:var(--on-accent)!important}
+.add-input-line .add-submit svg,.nav-add svg{color:var(--on-accent)!important}
+
+/* ================= 玻璃 Glass ================= */
+html[data-style=glass]{--page:#ffffff00;--glass:#ffffff94;--glass-strong:#ffffffd6;--glass-line:#ffffffa8;--glass-shadow:0 10px 30px -14px #0a2a3a33;--chip-bg:#ffffff9c;--hair:#ffffff9e;--group-bg-2:#ffffff80}
+html[data-style=glass] body{background:#eef1f3}
+html[data-style=glass] body:before{content:"";position:fixed;inset:-80px;z-index:-2;background:var(--wall,none) 50% 70%/cover no-repeat;filter:blur(44px) saturate(1.55) brightness(1.06);transform:translateZ(0)}
+html[data-style=glass] body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#ffffffa6 0%,#ffffff52 38%,#ffffff7a 100%)}
+html[data-style=glass].glass-hole,html[data-style=glass].glass-hole body{background:transparent}
+html[data-style=glass].glass-hole body:before{display:none}
+html[data-style=glass].glass-hole body:after{background:linear-gradient(180deg,#f4f6f7e6,#f4f6f7cc 40%,#f4f6f7e0)}
+html[data-style=glass] .workspace,html[data-style=glass] .workspace-body,html[data-style=glass] .editor,html[data-style=glass] .settings-panel,html[data-style=glass] .review-panel,html[data-style=glass] .settings-top,html[data-style=glass] .settings-scroll{background:transparent!important}
+html[data-style=glass] .app-header{background:#ffffff38!important;-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
+html[data-style=glass] #task-list,html[data-style=glass] #later-list,html[data-style=glass] #completed-list,html[data-style=glass] .search-results{background:var(--glass);border-radius:26px;box-shadow:inset 0 1px 0 #ffffffe0,inset 0 0 0 1px var(--glass-line),var(--glass-shadow);padding:2px 16px;margin:0 -6px}
+html[data-style=glass] #task-list:empty,html[data-style=glass] #later-list:empty,html[data-style=glass] #completed-list:empty{display:none}
+html[data-style=glass] #task-list:has(.first-run),html[data-style=glass] #task-list:has(.empty-state){background:transparent;box-shadow:none}
+html[data-style=glass] .task-row{border-bottom-color:#ffffffb0}
+html[data-style=glass] .task-row:last-child{border-bottom:0}
+html[data-style=glass] .task-row>button:not(.timer-pill){background:transparent}
+html[data-style=glass] .task-row[data-swipe]>button:not(.timer-pill){background:#f7f9fa}
+html[data-style=glass] .task-row .check-circle{background:#ffffff66}
+html[data-style=glass] .filter-tabs button,html[data-style=glass] .chip{box-shadow:inset 0 1px 0 #ffffffd0,inset 0 0 0 1px #ffffff90}
+html[data-style=glass] .filter-tabs button.active,html[data-style=glass] .chip.active{box-shadow:none}
+html[data-style=glass] .progress-ring{border-radius:50%;background:var(--glass);box-shadow:inset 0 1px 0 #ffffffe0,inset 0 0 0 1px var(--glass-line),var(--glass-shadow)}
+html[data-style=glass] .completed-section summary{padding-left:4px}
+html[data-style=glass] .add-form,html[data-style=glass] dialog.sheet{background:var(--glass-strong)!important;-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);box-shadow:inset 0 1px 0 #fff,0 -12px 40px -10px #0a2a3a40!important}
+html[data-style=glass] .settings-page fieldset,html[data-style=glass] .settings-list,html[data-style=glass] .review-card,html[data-style=glass] .review-stats>div:nth-child(n+2),html[data-style=glass] .more-appearance,html[data-style=glass] .ag{background:var(--glass)!important;border-color:var(--glass-line)!important;box-shadow:inset 0 1px 0 #ffffffd0,var(--glass-shadow)}
+html[data-style=glass] .focus-bar{background:#141414e0;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+@media(prefers-color-scheme:dark){
+  html[data-style=glass]{--glass:#1e1f2299;--glass-strong:#1c1d20e6;--glass-line:#ffffff1f;--chip-bg:#ffffff1a;--hair:#ffffff1a;--group-bg-2:#ffffff12;--glass-shadow:0 10px 30px -14px #000a}
+  html[data-style=glass] body{background:#111214}
+  html[data-style=glass] body:before{filter:blur(44px) saturate(1.3) brightness(.62)}
+  html[data-style=glass] body:after{background:linear-gradient(180deg,#0d0e10b8,#0d0e1066 40%,#0d0e10a8)}
+  html[data-style=glass].glass-hole body:after{background:linear-gradient(180deg,#0d0e10e6,#0d0e10cc 40%,#0d0e10e0)}
+  html[data-style=glass] .app-header{background:#10111266!important}
+  html[data-style=glass] .task-row{border-bottom-color:#ffffff14}
+  html[data-style=glass] .task-row[data-swipe]>button:not(.timer-pill){background:#1d1e21}
+  html[data-style=glass] .task-row .check-circle{background:#ffffff0d}
+  html[data-style=glass] #task-list,html[data-style=glass] #later-list,html[data-style=glass] #completed-list,html[data-style=glass] .search-results,html[data-style=glass] .progress-ring,html[data-style=glass] .filter-tabs button,html[data-style=glass] .chip{box-shadow:inset 0 1px 0 #ffffff14,inset 0 0 0 1px #ffffff12}
+  html[data-style=glass] .settings-page fieldset,html[data-style=glass] .settings-list,html[data-style=glass] .review-card,html[data-style=glass] .ag{box-shadow:inset 0 1px 0 #ffffff12}
+}
+
+/* ================= 纸墨 Paper ================= */
+html[data-style=paper]{--page:#f6f5f1;--ink:#16150f;--muted:#6b6a63;--line:#e3e1d9;--surface:#efede6;--chip-bg:#ebe9e1;--chip-ink:#16150f;--hair:#e3e1d9;--group-bg-2:#efede6;--card:#fbfaf7}
+html[data-style=paper] body,html[data-style=paper] .settings-top,html[data-style=paper] .settings-scroll{background:#f6f5f1!important}
+html[data-style=paper] .task-row>button:not(.timer-pill){background:#f6f5f1}
+html[data-style=paper] .app-header{background:#f6f5f1e8!important}
+html[data-style=paper] .today-top h1,html[data-style=paper] #progress-copy,html[data-style=paper] .progress-ring{display:none}
+html[data-style=paper] .today-hero{display:flex;align-items:flex-end;gap:14px}
+html[data-style=paper] .hero-day{font:250 104px/.82 Geist,sans-serif;letter-spacing:-6px;color:var(--ink)}
+html[data-style=paper] .hero-week{padding-bottom:5px;font-size:15px;line-height:1.45;color:var(--muted)}
+html[data-style=paper] .hero-week strong{display:block;color:var(--ink);font-size:18px;font-weight:650}
+html[data-style=paper] .hero-count{display:none}
+html[data-style=paper] .today-meter{display:flex;align-items:center;gap:12px;margin:22px 0 0;font:500 12px Geist,sans-serif;letter-spacing:.08em;color:var(--muted)}
+html[data-style=paper] .today-meter i{flex:1;height:2px;background:var(--line);position:relative;overflow:hidden}
+html[data-style=paper] .today-meter i b{position:absolute;left:0;top:0;bottom:0;background:var(--ink);transition:width .4s ease}
+html[data-style=paper] .today-top{flex-direction:column;align-items:stretch!important}
+html[data-style=paper] .filter-tabs{gap:22px!important;border-bottom:1px solid var(--line)!important;-webkit-mask-image:none!important;mask-image:none!important}
+html[data-style=paper] .filter-tabs button{background:none!important;border:0!important;border-radius:0!important;padding:0 0 10px!important;min-height:0!important;color:#8c8a82!important;border-bottom:2px solid transparent!important;margin-bottom:-1px}
+html[data-style=paper] .filter-tabs button.active{color:var(--ink)!important;border-bottom-color:var(--ink)!important}
+html[data-style=paper] .filter-tabs button.active .dot{box-shadow:none}
+html[data-style=paper] .task-row .check-circle,html[data-style=paper] .subtask .check-circle{border-radius:6px}
+html[data-style=paper] .task-title{font-size:calc(17px * var(--ts))}
+html[data-style=paper] .timer-pill{background:none;border:1px solid var(--ink);color:var(--ink)}
+html[data-style=paper] .timer-pill.is-on{background:var(--ink);color:#f6f5f1!important}
+html[data-style=paper] .nav-add{border-radius:50%!important}
+html[data-style=paper] .add-form,html[data-style=paper] dialog.sheet{background:#fbfaf7!important}
+html[data-style=paper] .settings-page fieldset,html[data-style=paper] .settings-list,html[data-style=paper] .review-card,html[data-style=paper] .ag,html[data-style=paper] .more-appearance{background:#fbfaf7!important;box-shadow:none!important;border:1px solid var(--line)!important;border-radius:6px!important}
+html[data-style=paper] .settings-top h1,html[data-style=paper] .review-top h1{font-family:Geist,var(--font-system);letter-spacing:-.5px}
+html[data-style=paper] .review-stats>div:first-child{background:var(--ink)!important}
+@media(prefers-color-scheme:dark){
+  html[data-style=paper]{--page:#141311;--ink:#ecebe6;--muted:#9c9a92;--line:#2a2925;--surface:#1c1b18;--chip-bg:#23221e;--chip-ink:#ecebe6;--hair:#2a2925;--group-bg-2:#1c1b18;--card:#1c1b18}
+  html[data-style=paper] body,html[data-style=paper] .settings-top,html[data-style=paper] .settings-scroll,html[data-style=paper] .task-row>button:not(.timer-pill){background:#141311!important}
+  html[data-style=paper] .app-header{background:#141311e8!important}
+  html[data-style=paper] .add-form,html[data-style=paper] dialog.sheet,html[data-style=paper] .settings-page fieldset,html[data-style=paper] .settings-list,html[data-style=paper] .review-card,html[data-style=paper] .ag,html[data-style=paper] .more-appearance{background:#1c1b18!important}
+  html[data-style=paper] .timer-pill.is-on{color:#141311!important}
+}
+
+/* ================= 夜光 Night (always dark) ================= */
+html[data-style=night]{--page:#0a0a0b;--ink:#f3f3f0;--muted:#8a8a86;--line:#1f1f21;--surface:#141416;--chip-bg:#18181a;--chip-ink:#c9c9c5;--hair:#1f1f21;--group-bg-2:#141416;--card:#1c1c1f}
+html[data-style=night] body,html[data-style=night] .settings-top,html[data-style=night] .settings-scroll{background:#0a0a0b!important}
+html[data-style=night] .app-header{background:#0a0a0be0!important}
+html[data-style=night] .today-top h1,html[data-style=night] .progress-ring{display:none}
+html[data-style=night] .today-top{align-items:flex-end!important}
+html[data-style=night] .today-hero{display:flex;flex:1;align-items:flex-end;justify-content:space-between;gap:12px;order:-1}
+html[data-style=night] .hero-count{font:800 116px/.8 Geist,sans-serif;letter-spacing:-7px;color:var(--accent)}
+html[data-style=night] .hero-count small{font-size:48px;letter-spacing:-2px;color:#4a4a47}
+html[data-style=night] .hero-day{display:none}
+html[data-style=night] .hero-week{text-align:right;font-size:14px;line-height:1.5;color:var(--muted);padding-bottom:4px}
+html[data-style=night] .hero-week strong{display:block;color:var(--ink);font-size:20px;font-weight:700}
+html[data-style=night] #progress-copy{display:none}
+html[data-style=night] .today-top>div:first-child{display:contents}
+html[data-style=night] .today-meter{display:flex;gap:4px;margin:20px 0 4px}
+html[data-style=night] .today-meter i{flex:1;height:6px;border-radius:3px;background:#222220}
+html[data-style=night] .today-meter i.on{background:var(--accent)}
+html[data-style=night] .editor>.today-meter{margin-top:-6px}
+html[data-style=night] .filter-tabs button{border-radius:10px!important}
+html[data-style=night] .filter-tabs button.active{background:#f3f3f0!important;color:#0a0a0b!important}
+html[data-style=night] #task-list{display:grid;gap:8px}
+html[data-style=night] .task-row{border:0!important;border-radius:18px;background:#141416;padding:0 6px 0 2px;min-height:62px}
+html[data-style=night] .task-row>button:not(.timer-pill){background:#141416}
+html[data-style=night] .later-section .task-row{background:transparent;border:1px dashed #2a2a28!important}
+html[data-style=night] .later-section .task-row>button:not(.timer-pill){background:transparent}
+html[data-style=night] #later-list{display:grid;gap:8px}
+html[data-style=night] .task-row .check-circle{border-radius:8px;width:24px;height:24px}
+html[data-style=night] .timer-pill{border-radius:9px;background:var(--accent);color:var(--on-accent)!important;font-weight:650}
+html[data-style=night] .timer-pill svg{color:var(--on-accent)}
+html[data-style=night] .meta-repeat{color:var(--accent)}
+html[data-style=night] .nav-add{border-radius:22px!important;width:64px!important;height:64px!important;box-shadow:0 12px 34px -8px color-mix(in srgb,var(--accent) 55%,transparent)!important}
+html[data-style=night] .add-form,html[data-style=night] dialog.sheet{background:#141416!important}
+html[data-style=night] .add-input-line{background:transparent!important}
+html[data-style=night] .settings-page fieldset,html[data-style=night] .settings-list,html[data-style=night] .review-card,html[data-style=night] .ag,html[data-style=night] .more-appearance{background:#141416!important;border-color:#1f1f21!important;box-shadow:none!important}
+html[data-style=night] .review-stats>div:first-child{background:var(--accent)!important;color:var(--on-accent)}
+html[data-style=night] .review-stats>div:first-child span{color:var(--on-accent);opacity:.7}
+html[data-style=night] .focus-bar{background:#18181b;box-shadow:inset 0 0 0 1px #ffffff14,0 14px 34px -14px #000}
+html[data-style=night] .focus-ring{background:conic-gradient(var(--accent) calc(var(--p) * 360deg),#ffffff1f 0)}
+html[data-style=night] .focus-ring span{background:#18181b}
+html[data-style=night] .check-task:hover .check-circle{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+html[data-style=night] .edit-field .chip{background:#232325!important}
+html[data-style=night] .edit-field .chip.active{background:var(--accent)!important}
+
+/* ================= Style picker ================= */
+.style-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.style-chip{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px;border-radius:18px;border:1.5px solid var(--hair);background:var(--card,#fff);text-align:left;color:var(--ink)}
+.style-chip.active{border-color:var(--accent-fill);box-shadow:0 0 0 1px var(--accent-fill)}
+.style-chip strong{font-size:14px;margin:6px 4px 0}
+.style-chip small{font-size:11px;color:var(--muted);margin:0 4px 4px;line-height:1.35}
+.style-demo{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;width:100%;aspect-ratio:1/1.15;border-radius:12px;overflow:hidden;padding:10px}
+.style-demo i{display:block;height:9px;border-radius:5px}
+.style-demo.glass{background:linear-gradient(160deg,#9fd3e3,#e6d6c2 55%,#8fb7a6)}
+.style-demo.glass i{background:#ffffffc8;box-shadow:inset 0 0 0 1px #ffffffe0}
+.style-demo.glass i:nth-child(1){width:60%}
+.style-demo.paper{background:#f6f5f1;box-shadow:inset 0 0 0 1px #e3e1d9;justify-content:space-between}
+.style-demo.paper b{font:250 40px/.9 Geist,sans-serif;letter-spacing:-2px;color:#16150f}
+.style-demo.paper i{height:2px;border-radius:0;background:#16150f}
+.style-demo.paper i+i{background:#d8d6cd}
+.style-demo.night{background:#0a0a0b;justify-content:space-between}
+.style-demo.night b{font:800 30px/.9 Geist,sans-serif;letter-spacing:-1.5px;color:#d8ff3d}
+.style-demo.night i{height:12px;border-radius:5px;background:#1d1d20}
+.swatch.lime{--color:#d8ff3d;color:#0a0a0b}
+.swatch[hidden]{display:none}
+.look-group{font-size:20px;font-weight:700;margin:26px 4px 12px;letter-spacing:-.01em}
+.look-group:first-of-type{margin-top:8px}
+
+/* ================= Settings home: preview + grouped list ================= */
+.settings-home-hero{position:relative;display:block;width:100%;height:210px;border-radius:26px;overflow:hidden;margin:4px 0 16px;box-shadow:0 18px 40px -22px #0008;text-align:left}
+.settings-home-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.settings-home-hero .hero-tag{position:absolute;left:14px;top:14px;font-size:12px;font-weight:600;color:#fff;padding:6px 11px;border-radius:999px;background:#ffffff30;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.settings-home-hero .hero-card{position:absolute;left:14px;right:14px;bottom:14px;border-radius:20px;padding:12px 15px;color:var(--card-ink,#fff);background:var(--card-bg,#1c1c1ecc);-webkit-backdrop-filter:blur(var(--card-blur,18px)) saturate(1.3);backdrop-filter:blur(var(--card-blur,18px)) saturate(1.3);box-shadow:inset 0 0 0 1px #ffffff2a;font-size:14px}
+.settings-home-hero .hero-card p{display:flex;justify-content:space-between;font-size:12px;opacity:.8;margin:0 0 4px}
+.settings-home-hero .hero-card span{display:flex;align-items:center;gap:10px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-home-hero .hero-card span:before{content:"";flex:none;width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;opacity:.85}
+html.wallpaper-hole .settings-home-hero img{display:none}
+.settings-list{border-radius:22px;background:var(--card,#fff);overflow:hidden;margin:0 0 14px;box-shadow:0 1px 2px #0000000a}
+.settings-list>button{display:flex;align-items:center;gap:13px;width:100%;min-height:56px;padding:0 16px;border-bottom:1px solid var(--hair);font-size:16px;color:var(--ink);text-align:left;background:none}
+.settings-list>button:last-child{border-bottom:0}
+.settings-list .row-ico{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;background:var(--c,#1d1d1f)}
+.settings-list .row-ico svg{width:17px;height:17px}
+.settings-list .row-label{flex:1;min-width:0}
+.settings-list .row-value{color:var(--muted);font-size:15px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.settings-list .row-value .dot{width:8px;height:8px}
+.settings-list .row-chev{width:16px;height:16px;color:#c7c7cc}
+html[data-style=night] .settings-list .row-chev{color:#3a3a3c}
+@media(prefers-color-scheme:dark){.settings-list{background:#1c1c1e}.settings-list .row-chev{color:#48484a}}
+html[data-style=lock] .settings-home-hero{display:none}
+
+/* Add sheet rows: label on the left, options on the right */
+.add-row{display:flex;align-items:center;gap:8px;min-height:44px}
+.add-label{flex:none;width:52px;display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted)}
+.add-label svg{width:14px;height:14px}
+.add-row>.chip-row{flex:1;min-width:0;display:flex!important;margin:0!important;padding:2px 0!important;border:0!important;animation:none!important}
+.add-options{margin-top:6px!important}
+/* Settings hero rows stack */
+#home-card-rows{display:block}
+#home-card-rows>span{display:flex}
+html[data-style=paper] .today-meter{margin-bottom:20px}
+html[data-style=night] .task-row .check-circle{border-color:color-mix(in srgb,var(--g,#555) 80%,#555)}
+#home-card-rows:before{display:none!important}
+/* English: CSS-drawn words and wider row labels */
+html[lang=en] .settings-top>.nav-button[data-view=tasks]:after{content:"Done"}
+html[lang=en] .task-row[data-swipe=done]::after{content:"✓ Done"}
+html[lang=en] .task-row[data-swipe=delete]::after{content:"Delete"}
+html[lang=en] .add-label{width:78px}
+/* Android settings preview shows the real phone wallpaper through a hole: no veil there, solid page around it */
+html.wallpaper-hole[data-style=glass] body:after,html.wallpaper-hole[data-style=glass] body:before{display:none}
+html.wallpaper-hole[data-style=glass] .settings-top,html.wallpaper-hole[data-style=glass] #settings-scroll,html.wallpaper-hole[data-style=glass] .app-header{background:#f2f3f5!important}
+@media(prefers-color-scheme:dark){html.wallpaper-hole[data-style=glass] .settings-top,html.wallpaper-hole[data-style=glass] #settings-scroll,html.wallpaper-hole[data-style=glass] .app-header{background:#111214!important}}
+/* 墨黑 on dark: the main controls turn white with black text (other accent fills stay mid-grey) */
+@media(prefers-color-scheme:dark){html[data-palette=ink]:not([data-style=lock]) :is(.nav-add,.add-input-line .add-submit,#edit-form .dialog-heading .primary-button,.chip.active,.filter-tabs button.active,.tool.open,.timer-pill.is-on){background:#f2f2f4!important;color:#1d1d1f!important}
+  html[data-palette=ink] :is(.nav-add,.add-input-line .add-submit,.timer-pill.is-on) svg{color:#1d1d1f!important}}
+html[data-style=night][data-palette=ink] :is(.nav-add,.add-input-line .add-submit,#edit-form .dialog-heading .primary-button,.chip.active,.tool.open,.timer-pill.is-on,.timer-pill){background:#f2f2f4!important;color:#1d1d1f!important}
+html[data-style=night][data-palette=ink] :is(.nav-add,.add-input-line .add-submit,.timer-pill) svg{color:#1d1d1f!important}
+html[data-style=paper] .filter-tabs button.active{background:none!important;color:var(--ink)!important}
+@media(prefers-color-scheme:dark){html[data-style=paper][data-palette=ink]:not([data-style=lock]) .filter-tabs button.active{background:none!important;color:var(--ink)!important}}

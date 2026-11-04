@@ -46,7 +46,7 @@ struct TodayCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 5) {
                 Image(systemName: "checkmark.square").foregroundStyle(palette.check)
-                Text("今天的待办").fontWeight(.semibold)
+                Text(L.t(state.style.english, "今天的待办", "Today")).fontWeight(.semibold)
                 Spacer(minLength: 4)
                 Text("\(state.doneCount)/\(state.pendingCount + state.doneCount)").foregroundStyle(palette.muted).monospacedDigit()
             }
@@ -56,14 +56,14 @@ struct TodayCardView: View {
             if state.style.privacy {
                 HStack(spacing: 8) {
                     Image(systemName: "lock").foregroundStyle(palette.check)
-                    Text(state.pendingCount > 0 ? "今天还有 \(state.pendingCount) 件待办 · 解锁查看" : "今天的事都完成了")
+                    Text(state.pendingCount > 0 ? L.t(state.style.english, "今天还有 \(state.pendingCount) 件待办 · 解锁查看", "\(state.pendingCount) left today · unlock to see") : L.t(state.style.english, "今天的事都完成了", "All done for today"))
                 }
                 .font(.system(size: 13))
                 .frame(maxWidth: .infinity, minHeight: rowHeight * CGFloat(state.style.rows))
             } else if state.items.isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle").foregroundStyle(palette.check)
-                    Text("今天，留一点空白。")
+                    Text(L.t(state.style.english, "今天，留一点空白。", "Today, leave a little space."))
                 }
                 .font(.system(size: 13))
                 .frame(maxWidth: .infinity, minHeight: rowHeight * CGFloat(state.style.rows))
@@ -93,8 +93,9 @@ struct TodayCardView: View {
     }
 
     private var footerCopy: String {
-        if state.pendingCount > 0 { return "剩余 \(state.pendingCount) 项 · 已完成 \(state.doneCount) 项" }
-        return state.doneCount > 0 ? "全部完成 · \(state.doneCount) 项" : "暂无待办"
+        let en = state.style.english
+        if state.pendingCount > 0 { return L.t(en, "剩余 \(state.pendingCount) 项 · 已完成 \(state.doneCount) 项", "\(state.pendingCount) left · \(state.doneCount) done") }
+        return state.doneCount > 0 ? L.t(en, "全部完成 · \(state.doneCount) 项", "All \(state.doneCount) done") : L.t(en, "暂无待办", "Nothing to do")
     }
 
     @ViewBuilder private func row(_ item: CardItem) -> some View {
@@ -125,7 +126,7 @@ struct TodayCardView: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(item.done ? "恢复：\(item.title)" : "完成：\(item.title)")
+        .accessibilityLabel(item.done ? L.t(state.style.english, "恢复：", "Restore: ") + item.title : L.t(state.style.english, "完成：", "Finish: ") + item.title)
     }
 
     private var pager: some View {
@@ -146,6 +147,6 @@ struct TodayCardView: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(forward ? "下一页" : "上一页")
+        .accessibilityLabel(forward ? L.t(state.style.english, "下一页", "Next page") : L.t(state.style.english, "上一页", "Previous page"))
     }
 }

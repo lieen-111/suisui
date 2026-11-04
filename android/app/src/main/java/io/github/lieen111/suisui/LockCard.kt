@@ -87,7 +87,7 @@ object LockCard {
             .setShowWhen(false)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
         if (s == null || !settingOn(s, "lockNotify")) {
-            return builder.setContentTitle("碎碎清单锁屏已开启").setContentText("亮屏即可看到今天的待办").setOngoing(true).build()
+            return builder.setContentTitle(Lang.t(ctx, "碎碎清单锁屏已开启", "SuiSui lock screen is on")).setContentText(Lang.t(ctx, "亮屏即可看到今天的待办", "Wake the screen to see today's to-dos")).setOngoing(true).build()
         }
 
         val open = TodoStore.pending(s)
@@ -97,21 +97,21 @@ object LockCard {
             val publicVersion = NotificationCompat.Builder(ctx, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_check)
                 .setColor(ACCENT)
-                .setContentTitle(if (open.isEmpty()) "今天的事都完成了" else "今天还有 ${open.size} 件待办")
-                .setContentText("解锁后查看")
+                .setContentTitle(if (open.isEmpty()) Lang.t(ctx, "今天的事都完成了", "All done for today") else Lang.t(ctx, "今天还有 ${open.size} 件待办", "${open.size} left today"))
+                .setContentText(Lang.t(ctx, "解锁后查看", "Unlock to see"))
                 .setShowWhen(false)
                 .build()
             builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publicVersion)
         }
         if (open.isEmpty()) {
-            builder.setContentTitle(if (done.isEmpty()) "今天还没有待办" else "今天的事，圆满完成。")
-                .setContentText(if (done.isEmpty()) "打开碎碎清单添加一件" else "完成了 ${done.size} 件")
+            builder.setContentTitle(if (done.isEmpty()) Lang.t(ctx, "今天还没有待办", "Nothing for today yet") else Lang.t(ctx, "今天的事，圆满完成。", "Today's done. Well done."))
+                .setContentText(if (done.isEmpty()) Lang.t(ctx, "打开碎碎清单添加一件", "Open SuiSui to add one") else Lang.t(ctx, "完成了 ${done.size} 件", "${done.size} done"))
                 .setOngoing(ScreenService.running)
                 .setAutoCancel(!ScreenService.running)
         } else {
             val style = NotificationCompat.InboxStyle()
             open.take(5).forEach { style.addLine("○  " + it.optString("title")) }
-            if (open.size > 5) style.addLine("…还有 ${open.size - 5} 件")
+            if (open.size > 5) style.addLine(Lang.t(ctx, "…还有 ${open.size - 5} 件", "…${open.size - 5} more"))
             // Finished items stay visible at the end, struck through and dimmed, like the app's card.
             done.takeLast(2).forEach {
                 val line = SpannableString("✓  " + it.optString("title"))
@@ -119,9 +119,9 @@ object LockCard {
                 line.setSpan(ForegroundColorSpan(Color.argb(128, 128, 128, 132)), 0, line.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 style.addLine(line)
             }
-            style.setSummaryText(if (done.isEmpty()) "今天的待办" else "已完成 ${done.size} 件")
-            builder.setContentTitle("今天还有 ${open.size} 件待办")
-                .setContentText("下一件：" + open.first().optString("title"))
+            style.setSummaryText(if (done.isEmpty()) Lang.t(ctx, "今天的待办", "Today's to-dos") else Lang.t(ctx, "已完成 ${done.size} 件", "${done.size} done"))
+            builder.setContentTitle(Lang.t(ctx, "今天还有 ${open.size} 件待办", "${open.size} left today"))
+                .setContentText(Lang.t(ctx, "下一件：", "Next: ") + open.first().optString("title"))
                 .setStyle(style)
                 .setOngoing(true)
             open.take(3).forEach { task ->

@@ -110,7 +110,10 @@ struct AppSettings: Codable, Equatable {
     var lockPrivacy: Bool = false
     /// Native only: start the Live Activity whenever the app is opened (the web app ignores this key).
     var liveActivityOnOpen: Bool = true
+    /// Interface language chosen in the page ("zh" or "en"); native text follows it.
+    var lang: String = "zh"
 
+    var english: Bool { lang == "en" }
     var rows: Int { density == "compact" ? 4 : 3 }
 
     init() {}
@@ -118,7 +121,7 @@ struct AppSettings: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = AppSettings()
-        accent = (try? c.decodeIfPresent(String.self, forKey: .accent)).flatMap { ["ink", "orange", "indigo", "berry", "green", "rose", "blue"].contains($0) ? $0 : nil } ?? d.accent
+        accent = (try? c.decodeIfPresent(String.self, forKey: .accent)).flatMap { ["ink", "orange", "indigo", "berry", "green", "lime", "rose", "blue"].contains($0) ? $0 : nil } ?? d.accent
         density = (try? c.decodeIfPresent(String.self, forKey: .density)).flatMap { ["compact", "comfortable"].contains($0) ? $0 : nil } ?? d.density
         cardMaterial = (try? c.decodeIfPresent(String.self, forKey: .cardMaterial)).flatMap { ["frosted", "glass", "flat"].contains($0) ? $0 : nil } ?? d.cardMaterial
         cardColor = (try? c.decodeIfPresent(String.self, forKey: .cardColor)).flatMap { HexColor.isValid($0) ? $0.lowercased() : nil } ?? d.cardColor
@@ -129,6 +132,7 @@ struct AppSettings: Codable, Equatable {
         autoArchive = (try? c.decodeIfPresent(Bool.self, forKey: .autoArchive)) ?? d.autoArchive
         lockPrivacy = (try? c.decodeIfPresent(Bool.self, forKey: .lockPrivacy)) ?? d.lockPrivacy
         liveActivityOnOpen = (try? c.decodeIfPresent(Bool.self, forKey: .liveActivityOnOpen)) ?? d.liveActivityOnOpen
+        lang = (try? c.decodeIfPresent(String.self, forKey: .lang)).flatMap { ["zh", "en"].contains($0) ? $0 : nil } ?? d.lang
     }
 }
 
@@ -253,4 +257,9 @@ enum HexColor {
         func contrast(_ ink: Double) -> Double { (max(ink, base) + 0.05) / (min(ink, base) + 0.05) }
         return contrast(lum((244 / 255, 251 / 255, 247 / 255))) >= contrast(lum((24 / 255, 43 / 255, 34 / 255)))
     }
+}
+
+/// Chinese or English text for native surfaces (widgets, Live Activity, notifications).
+enum L {
+    static func t(_ english: Bool, _ zh: String, _ en: String) -> String { english ? en : zh }
 }

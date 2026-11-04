@@ -108,8 +108,8 @@ object LockLauncher {
     private fun postFullScreen(ctx: Context, intent: Intent) {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         if (nm.getNotificationChannel(CHANNEL) == null) {
-            nm.createNotificationChannel(NotificationChannel(CHANNEL, "锁屏界面", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "熄屏后显示碎碎清单锁屏时短暂使用，会自动消失"
+            nm.createNotificationChannel(NotificationChannel(CHANNEL, Lang.t(ctx, "锁屏界面", "Lock view"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = Lang.t(ctx, "熄屏后显示碎碎清单锁屏时短暂使用，会自动消失", "Used briefly to show the SuiSui lock view")
                 setSound(null, null)
                 enableVibration(false)
                 setShowBadge(false)
@@ -119,8 +119,8 @@ object LockLauncher {
         val pi = PendingIntent.getActivity(ctx, 7, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_check)
-            .setContentTitle("碎碎清单")
-            .setContentText("今天的待办")
+            .setContentTitle(Lang.t(ctx, "碎碎清单", "SuiSui"))
+            .setContentText(Lang.t(ctx, "今天的待办", "Today's to-dos"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setFullScreenIntent(pi, true)

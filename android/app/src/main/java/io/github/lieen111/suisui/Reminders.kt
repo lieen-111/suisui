@@ -74,8 +74,8 @@ object Reminders {
         if (!open || !LockCard.notificationsAllowed(ctx)) return
         val nm = ctx.getSystemService(NotificationManager::class.java)
         if (nm.getNotificationChannel(CHANNEL) == null) nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "到点提醒", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "设了时间的待办到点提醒"; enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            NotificationChannel(CHANNEL, Lang.t(ctx, "到点提醒", "Reminders"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = Lang.t(ctx, "设了时间的待办到点提醒", "To-dos with a time ring on time"); enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             })
         val notifId = 2000 + (id.hashCode() and 0xFFFF)
         val done = PendingIntent.getBroadcast(
@@ -86,9 +86,9 @@ object Reminders {
         NotificationManagerCompat.from(ctx).notify(notifId, NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_check)
             .setContentTitle(title)
-            .setContentText("$time 到了")
+            .setContentText(Lang.t(ctx, "$time 到了", "It's $time"))
             .setContentIntent(open2)
-            .addAction(0, "完成", done)
+            .addAction(0, Lang.t(ctx, "完成", "Done"), done)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)

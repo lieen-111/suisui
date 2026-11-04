@@ -31,12 +31,12 @@ object TaskTimer {
     private fun channels(ctx: Context) {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         if (nm.getNotificationChannel(RUNNING_CHANNEL) == null) nm.createNotificationChannel(
-            NotificationChannel(RUNNING_CHANNEL, "计时中", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "正在倒计时的任务"; setShowBadge(false); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            NotificationChannel(RUNNING_CHANNEL, Lang.t(ctx, "计时中", "Timer"), NotificationManager.IMPORTANCE_LOW).apply {
+                description = Lang.t(ctx, "正在倒计时的任务", "The task being timed"); setShowBadge(false); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             })
         if (nm.getNotificationChannel(DONE_CHANNEL) == null) nm.createNotificationChannel(
-            NotificationChannel(DONE_CHANNEL, "计时结束", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "任务时长到了"; enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            NotificationChannel(DONE_CHANNEL, Lang.t(ctx, "计时结束", "Timer finished"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = Lang.t(ctx, "任务时长到了", "Time is up"); enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             })
     }
 
@@ -62,14 +62,14 @@ object TaskTimer {
         val running = endsAt > System.currentTimeMillis()
         val b = NotificationCompat.Builder(ctx, RUNNING_CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_check)
-            .setContentTitle(if (running) "专注中：$title" else "已暂停：$title")
+            .setContentTitle(if (running) Lang.t(ctx, "专注中：$title", "Focusing: $title") else Lang.t(ctx, "已暂停：$title", "Paused: $title"))
             .setContentIntent(openApp(ctx))
             .setOngoing(running)
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         if (running) {
-            b.setUsesChronometer(true).setChronometerCountDown(true).setWhen(endsAt).setShowWhen(true).setContentText("到时间会提醒你")
+            b.setUsesChronometer(true).setChronometerCountDown(true).setWhen(endsAt).setShowWhen(true).setContentText(Lang.t(ctx, "到时间会提醒你", "You'll be told when time is up"))
             val pi = alarmIntent(ctx, title)
             runCatching {
                 if (Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endsAt, pi)
@@ -77,7 +77,7 @@ object TaskTimer {
             }
         } else {
             val s = (left / 1000).toInt()
-            b.setShowWhen(false).setContentText(String.format("还剩 %02d:%02d", s / 60, s % 60))
+            b.setShowWhen(false).setContentText(String.format(Lang.t(ctx, "还剩 %02d:%02d", "%02d:%02d left"), s / 60, s % 60))
         }
         if (LockCard.notificationsAllowed(ctx)) runCatching { nm.notify(RUNNING_ID, b.build()) }
     }
@@ -90,8 +90,8 @@ object TaskTimer {
         channels(ctx)
         nm.notify(DONE_ID, NotificationCompat.Builder(ctx, DONE_CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_check)
-            .setContentTitle("时间到")
-            .setContentText(if (title.isBlank()) "计时结束了" else "「$title」的时间到了，点开标记完成")
+            .setContentTitle(Lang.t(ctx, "时间到", "Time's up"))
+            .setContentText(if (title.isBlank()) Lang.t(ctx, "计时结束了", "The timer finished") else Lang.t(ctx, "「$title」的时间到了，点开标记完成", "Time's up for “$title” — tap to mark it done"))
             .setContentIntent(openApp(ctx))
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

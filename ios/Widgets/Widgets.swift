@@ -56,6 +56,7 @@ struct LockWidgetView: View {
 
     private var open: [TodoItem] { TodoLogic.pending(entry.doc.tasks) }
     private var doneCount: Int { entry.doc.tasks.filter(\.done).count }
+    private var en: Bool { entry.doc.settings.english }
 
     var body: some View {
         switch family {
@@ -68,9 +69,9 @@ struct LockWidgetView: View {
             .gaugeStyle(.accessoryCircularCapacity)
             .widgetURL(URL(string: "suisui://tasks"))
             .containerBackground(for: .widget) { AccessoryWidgetBackground() }
-            .accessibilityLabel(TodoLogic.summary(entry.doc.tasks))
+            .accessibilityLabel(TodoLogic.summary(entry.doc.tasks, english: en))
         case .accessoryInline:
-            Text(entry.doc.settings.lockPrivacy ? (open.isEmpty ? "今天的事都完成了" : "还有 \(open.count) 件待办") : TodoLogic.summary(entry.doc.tasks))
+            Text(entry.doc.settings.lockPrivacy ? (open.isEmpty ? L.t(en, "今天的事都完成了", "All done for today") : L.t(en, "还有 \(open.count) 件待办", "\(open.count) left")) : TodoLogic.summary(entry.doc.tasks, english: en))
                 .widgetURL(URL(string: "suisui://tasks"))
                 .containerBackground(for: .widget) { Color.clear }
         default:
@@ -84,7 +85,7 @@ struct LockWidgetView: View {
         VStack(alignment: .leading, spacing: 1) {
             HStack(spacing: 4) {
                 Image(systemName: "checklist")
-                Text(open.isEmpty ? "今天的事都完成了" : "还有 \(open.count) 件")
+                Text(open.isEmpty ? L.t(en, "今天的事都完成了", "All done for today") : L.t(en, "还有 \(open.count) 件", "\(open.count) left"))
             }
             .font(.system(size: 12, weight: .semibold))
             .widgetAccentable()
@@ -98,13 +99,13 @@ struct LockWidgetView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("完成：\(task.title)")
+                .accessibilityLabel(L.t(en, "完成：", "Finish: ") + task.title)
             }
             if entry.doc.settings.lockPrivacy && !open.isEmpty {
-                Text("解锁后打开碎碎清单查看").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(L.t(en, "解锁后打开碎碎清单查看", "Unlock to see in SuiSui")).font(.system(size: 12)).foregroundStyle(.secondary)
             }
             if open.isEmpty {
-                Text(doneCount > 0 ? "完成了 \(doneCount) 件，休息一下" : "打开碎碎清单添加一件")
+                Text(doneCount > 0 ? L.t(en, "完成了 \(doneCount) 件，休息一下", "\(doneCount) done — take a break") : L.t(en, "打开碎碎清单添加一件", "Open SuiSui to add one"))
                     .font(.system(size: 12)).foregroundStyle(.secondary)
             }
         }
@@ -172,7 +173,7 @@ struct TodayLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label("今天的待办", systemImage: "checklist").font(.system(size: 13, weight: .semibold))
+                    Label(L.t(context.state.style.english, "今天的待办", "Today"), systemImage: "checklist").font(.system(size: 13, weight: .semibold))
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text("\(context.state.doneCount)/\(context.state.pendingCount + context.state.doneCount)")
@@ -193,7 +194,7 @@ struct TodayLiveActivity: Widget {
                             .buttonStyle(.plain)
                         }
                         if context.state.pendingCount == 0 {
-                            Text("今天的事，圆满完成。").font(.system(size: 14)).foregroundStyle(.secondary)
+                            Text(L.t(context.state.style.english, "今天的事，圆满完成。", "Today's done. Well done.")).font(.system(size: 14)).foregroundStyle(.secondary)
                         }
                     }
                 }

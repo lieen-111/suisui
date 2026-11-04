@@ -13,8 +13,11 @@
   <title>碎碎清单</title>
   <meta name="description" content="亮屏就能看到的待办清单：完成时碎裂、划线后排到最后。可离线使用。">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="night.css">
+  <link rel="stylesheet" href="looks.css">
   <script src="vendor/anime.umd.min.js" defer></script>
   <script src="vendor/lucide.min.js" defer></script>
+  <script src="i18n.js" defer></script>
   <script src="app.js" defer></script>
   <script src="pwa.js" defer></script>
 </head>
@@ -48,10 +51,12 @@
       <div class="workspace-body">
         <section class="editor" id="tasks-panel" aria-label="全部待办">
           <div class="section-top today-top">
+            <div class="today-hero" aria-hidden="true"><b class="hero-day" id="hero-day"></b><span class="hero-count" id="hero-count"></span><span class="hero-week"><strong id="hero-week"></strong><span id="hero-sub"></span></span></div>
             <div><h1>今天</h1><p id="progress-copy" class="secondary"></p></div>
             <div class="today-side" id="today-side"><button class="icon-button search-entry" id="open-search" aria-label="搜索"><i data-lucide="search"></i></button><button class="review-entry" id="open-review" aria-label="周 / 月回顾"><i data-lucide="chart-column"></i>回顾</button>
             <div class="progress-ring" id="progress-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"></circle><circle cx="18" cy="18" r="15.5" id="progress-arc"></circle></svg><span id="progress-number"></span></div></div>
           </div>
+          <div class="today-meter" id="today-meter" aria-hidden="true"></div>
           <div class="search-bar" id="search-bar" hidden><i data-lucide="search"></i><label class="sr-only" for="search-input">搜索待办</label><input id="search-input" type="search" placeholder="搜索待办、备注、子任务、历史" autocomplete="off" enterkeyhint="search"><button class="text-button" id="search-cancel">取消</button></div>
           <div class="search-results" id="search-results" hidden></div>
           <div class="filter-tabs" id="filter-tabs" role="group" aria-label="筛选分组"></div>
@@ -60,19 +65,12 @@
             <span class="sheet-grip" aria-hidden="true"></span>
             <div class="add-input-line"><input id="task-input" aria-label="新的待办事项" placeholder="想做什么？例如：明天下午3点 开会" maxlength="120" autocomplete="off" enterkeyhint="done" required><button class="primary-button add-submit" type="submit" aria-label="添加"><i data-lucide="arrow-up"></i><span class="add-submit-text">添加</span></button></div>
             <p class="parse-hint" id="parse-hint" aria-live="polite" hidden></p>
-            <div class="add-toolbar" id="add-toolbar" role="group" aria-label="日期、提醒、重复、时长、分组">
-              <button type="button" class="tool" data-add-panel="when" aria-expanded="false"><i data-lucide="calendar"></i><span id="tool-when">今天</span></button>
-              <button type="button" class="tool" data-add-panel="time" aria-expanded="false"><i data-lucide="alarm-clock"></i><span id="tool-time">提醒</span></button>
-              <button type="button" class="tool" data-add-panel="repeat" aria-expanded="false"><i data-lucide="repeat"></i><span id="tool-repeat">重复</span></button>
-              <button type="button" class="tool" data-add-panel="duration" aria-expanded="false"><i data-lucide="timer"></i><span id="tool-duration">时长</span></button>
-              <button type="button" class="tool" data-add-panel="group" aria-expanded="false"><span class="dot" id="tool-group-dot"></span><span id="tool-group">分组</span></button>
-            </div>
             <div class="add-options">
-              <div class="chip-row" data-panel="group" id="add-group-chips" role="group" aria-label="分组"></div>
-              <div class="chip-row" data-panel="when" role="group" aria-label="日期"><button type="button" class="chip" data-add-when="today">今天</button><button type="button" class="chip" data-add-when="tomorrow">明天</button><button type="button" class="chip" data-add-when="pick">选日期</button><label class="sr-only" for="task-date">指定日期</label><input type="date" id="task-date" class="chip-date" hidden></div>
-              <div class="chip-row" data-panel="repeat" role="group" aria-label="重复"><button type="button" class="chip" data-add-repeat="none">不重复</button><button type="button" class="chip" data-add-repeat="daily">每天</button><button type="button" class="chip" data-add-repeat="weekdays">工作日</button><button type="button" class="chip" data-add-repeat="weekly">每周</button></div>
-              <div class="chip-row" data-panel="time" role="group" aria-label="提醒"><button type="button" class="chip" data-add-time="">不提醒</button><button type="button" class="chip" data-add-time="09:00">09:00</button><button type="button" class="chip" data-add-time="12:00">12:00</button><button type="button" class="chip" data-add-time="18:00">18:00</button><button type="button" class="chip" data-add-time="21:00">21:00</button><button type="button" class="chip" data-add-time="custom">自定</button><label class="sr-only" for="task-time-custom">提醒时间</label><input type="time" id="task-time-custom" class="chip-date" hidden></div>
-              <div class="chip-row" data-panel="duration" role="group" aria-label="时长"><button type="button" class="chip" data-add-duration="0">不计时</button><button type="button" class="chip" data-add-duration="15">15分钟</button><button type="button" class="chip" data-add-duration="25">25分钟</button><button type="button" class="chip" data-add-duration="30">30分钟</button><button type="button" class="chip" data-add-duration="45">45分钟</button><button type="button" class="chip" data-add-duration="60">1小时</button><button type="button" class="chip" data-add-duration="custom">自定</button><label class="sr-only" for="task-duration-custom">自定分钟</label><input type="number" id="task-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div>
+              <div class="add-row"><span class="add-label"><i data-lucide="calendar"></i>日期</span><div class="chip-row" data-panel="when" role="group" aria-label="日期"><button type="button" class="chip" data-add-when="today">今天</button><button type="button" class="chip" data-add-when="tomorrow">明天</button><button type="button" class="chip" data-add-when="pick">选日期</button><label class="sr-only" for="task-date">指定日期</label><input type="date" id="task-date" class="chip-date" hidden></div></div>
+              <div class="add-row"><span class="add-label"><i data-lucide="alarm-clock"></i>提醒</span><div class="chip-row" data-panel="time" role="group" aria-label="提醒"><button type="button" class="chip" data-add-time="">不提醒</button><button type="button" class="chip" data-add-time="09:00">09:00</button><button type="button" class="chip" data-add-time="12:00">12:00</button><button type="button" class="chip" data-add-time="18:00">18:00</button><button type="button" class="chip" data-add-time="21:00">21:00</button><button type="button" class="chip" data-add-time="custom">自定</button><label class="sr-only" for="task-time-custom">提醒时间</label><input type="time" id="task-time-custom" class="chip-date" hidden></div></div>
+              <div class="add-row"><span class="add-label"><i data-lucide="repeat"></i>重复</span><div class="chip-row" data-panel="repeat" role="group" aria-label="重复"><button type="button" class="chip" data-add-repeat="none">不重复</button><button type="button" class="chip" data-add-repeat="daily">每天</button><button type="button" class="chip" data-add-repeat="weekdays">工作日</button><button type="button" class="chip" data-add-repeat="weekly">每周</button></div></div>
+              <div class="add-row"><span class="add-label"><i data-lucide="timer"></i>时长</span><div class="chip-row" data-panel="duration" role="group" aria-label="时长"><button type="button" class="chip" data-add-duration="0">不计时</button><button type="button" class="chip" data-add-duration="15">15分钟</button><button type="button" class="chip" data-add-duration="25">25分钟</button><button type="button" class="chip" data-add-duration="30">30分钟</button><button type="button" class="chip" data-add-duration="45">45分钟</button><button type="button" class="chip" data-add-duration="60">1小时</button><button type="button" class="chip" data-add-duration="custom">自定</button><label class="sr-only" for="task-duration-custom">自定分钟</label><input type="number" id="task-duration-custom" class="chip-date chip-number" min="1" max="600" inputmode="numeric" placeholder="分钟" hidden></div></div>
+              <div class="add-row"><span class="add-label"><i data-lucide="folder"></i>分组</span><div class="chip-row" data-panel="group" id="add-group-chips" role="group" aria-label="分组"></div></div>
             </div>
             <input type="hidden" id="task-duration" value="0"><input type="hidden" id="task-time" value="">
             <input type="hidden" id="task-group"><input type="hidden" id="task-when" value="today"><input type="hidden" id="task-repeat" value="none">
@@ -126,55 +124,49 @@
             </div>
           </div>
           <div class="settings-scroll" id="settings-scroll">
-            <nav class="settings-index bento" id="settings-index" aria-label="设置分类">
-              <button class="tile tile-look" data-settings-page="look">
-                <img class="tile-photo" id="tile-look-photo" alt="">
-                <span class="tile-head"><i data-lucide="palette"></i>外观</span>
-                <span class="tile-look-card" id="tile-look-card" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span class="tile-foot"><strong id="tile-look-title"></strong><small id="sum-look"></small></span>
-                <i data-lucide="arrow-up-right" class="tile-go"></i>
+            <nav class="settings-index" id="settings-index" aria-label="设置分类">
+              <button class="settings-home-hero" id="home-hero" aria-label="外观与锁屏卡片">
+                <img id="tile-look-photo" alt="">
+                <span class="hero-tag">锁屏预览</span>
+                <span class="hero-card" id="home-card"><p><b>今天的待办</b><b id="home-card-count"></b></p><span id="home-card-rows"></span></span>
               </button>
-              <button class="tile tile-lock" data-settings-page="lock">
-                <span class="tile-head"><i data-lucide="lock-keyhole"></i>锁屏</span>
-                <span class="tile-big" id="tile-lock-state"></span>
-                <small id="sum-lock"></small>
-                <span class="tile-pulse" aria-hidden="true"></span>
-              </button>
-              <button class="tile tile-list" data-settings-page="list">
-                <span class="tile-head"><i data-lucide="folders"></i>分组</span>
-                <span class="tile-big"><span id="tile-list-count"></span><em>个</em></span>
-                <span class="tile-dots" id="tile-list-dots" aria-hidden="true"></span>
-                <small id="sum-list"></small>
-              </button>
-              <button class="tile tile-data" data-settings-page="data">
-                <span class="tile-head"><i data-lucide="shield-check"></i>数据</span>
-                <span class="tile-big">本机</span>
-                <small>不上传 · 可导出备份</small>
-              </button>
-              <button class="tile tile-about" id="about-row">
-                <img src="icons/icon-192.png" alt="" class="tile-logo">
-                <span class="tile-head">关于</span>
-                <span class="tile-big tile-version" id="sum-about">1.8</span>
-                <small>意见反馈 · 隐私政策</small>
-              </button>
+              <div class="settings-list">
+                <button data-settings-page="look"><span class="row-ico" style="--c:#5856d6"><i data-lucide="palette"></i></span><span class="row-label">外观</span><span class="row-value" id="sum-look"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="lock"><span class="row-ico" style="--c:#2f6fd0"><i data-lucide="lock-keyhole"></i></span><span class="row-label">锁屏</span><span class="row-value" id="tile-lock-state"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="list"><span class="row-ico" style="--c:#e0812f"><i data-lucide="folders"></i></span><span class="row-label">分组</span><span class="row-value" id="sum-list"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+              </div>
+              <div class="settings-list">
+                <button data-settings-page="language"><span class="row-ico" style="--c:#13a38a"><i data-lucide="languages"></i></span><span class="row-label">语言 · Language</span><span class="row-value" id="sum-lang"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="data"><span class="row-ico" style="--c:#34a853"><i data-lucide="shield-check"></i></span><span class="row-label">数据</span><span class="row-value">仅本机</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button id="about-row"><span class="row-ico" style="--c:#8e8e93"><i data-lucide="info"></i></span><span class="row-label">关于</span><span class="row-value" id="sum-about">1.9</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+              </div>
             </nav>
+            <div class="settings-page" data-page="language" hidden>
+            <fieldset><legend>语言 · Language</legend>
+              <div class="lang-options" role="radiogroup" aria-label="语言 Language">
+                <label class="setting-row lang-row"><span>简体中文</span><input type="radio" name="lang" value="zh"></label>
+                <label class="setting-row lang-row"><span>English</span><input type="radio" name="lang" value="en"></label>
+              </div>
+              <p class="setting-note">切换后界面、提示、日期和锁屏卡片一起换。你写下的待办内容不会被翻译。</p>
+            </fieldset>
+            </div>
             <div class="settings-page" data-page="look" hidden>
-            <fieldset><legend>主题</legend>
-              <div class="theme-presets" role="group" aria-label="主题">
-                <button class="theme-chip" data-theme-preset="ink" style="--chip:#1c1c1e"><span></span>墨黑</button>
-                <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
-                <button class="theme-chip" data-theme-preset="lake" style="--chip:#294c64"><span></span>湖蓝</button>
-                <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
-                <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
+            <h2 class="look-group" id="look-app-title">App 界面</h2>
+            <fieldset class="ui-styles"><legend>界面风格</legend>
+              <div class="style-presets" role="group" aria-label="界面风格">
+                <button class="style-chip" data-ui-style="glass"><span class="style-demo glass" aria-hidden="true"><i></i><i></i><i></i></span><strong>玻璃</strong><small>壁纸铺底，通透</small></button>
+                <button class="style-chip" data-ui-style="paper"><span class="style-demo paper" aria-hidden="true"><b>04</b><i></i><i></i></span><strong>纸墨</strong><small>米白纸，大号日期</small></button>
+                <button class="style-chip" data-ui-style="night"><span class="style-demo night" aria-hidden="true"><b>4/8</b><i></i><i></i></span><strong>夜光</strong><small>深色，荧光色</small></button>
               </div>
             </fieldset>
-            <fieldset class="accent-settings"><legend>App 主色</legend>
-              <div class="swatches" role="radiogroup" aria-label="App 主色">
+            <fieldset class="accent-settings"><legend>配色</legend>
+              <div class="swatches" role="radiogroup" aria-label="App 配色">
                 <label class="swatch ink" title="墨黑"><input type="radio" name="accent" value="ink" aria-label="墨黑"><i data-lucide="check"></i><span>墨黑</span></label>
                 <label class="swatch orange" title="暖橙"><input type="radio" name="accent" value="orange" aria-label="暖橙"><i data-lucide="check"></i><span>暖橙</span></label>
                 <label class="swatch indigo" title="靛蓝"><input type="radio" name="accent" value="indigo" aria-label="靛蓝"><i data-lucide="check"></i><span>靛蓝</span></label>
                 <label class="swatch berry" title="莓果"><input type="radio" name="accent" value="berry" aria-label="莓果"><i data-lucide="check"></i><span>莓果</span></label>
                 <label class="swatch green" title="松绿"><input type="radio" name="accent" value="green" aria-label="松绿"><i data-lucide="check"></i><span>松绿</span></label>
+                <label class="swatch lime" title="荧光" id="swatch-lime"><input type="radio" name="accent" value="lime" aria-label="荧光"><i data-lucide="check"></i><span>荧光</span></label>
               </div>
             </fieldset>
             <fieldset class="type-settings"><legend>字体与字号</legend>
@@ -188,6 +180,16 @@
               <div class="text-size-row"><span class="a-small" aria-hidden="true">A</span><input type="range" id="text-size" min="0" max="3" step="1" aria-label="字号"><span class="a-large" aria-hidden="true">A</span></div>
               <p class="setting-note">清单、锁屏卡片和预览一起变化。字体用的是手机自带的，没有的会自动换成最接近的。</p>
             </fieldset>
+            <h2 class="look-group" id="look-card-title">锁屏卡片</h2>
+            <fieldset class="card-styles"><legend>卡片样式</legend>
+              <div class="theme-presets" role="group" aria-label="锁屏卡片样式">
+                <button class="theme-chip" data-theme-preset="ink" style="--chip:#1c1c1e"><span></span>墨黑</button>
+                <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
+                <button class="theme-chip" data-theme-preset="lake" style="--chip:#294c64"><span></span>湖蓝</button>
+                <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
+                <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
+              </div>
+            </fieldset>
             <fieldset><legend>锁屏显示条数</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
               <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
             </div></fieldset>
@@ -195,7 +197,7 @@
               <div class="wallpaper-library" id="wallpaper-library" role="group" aria-label="壁纸库"></div>
               <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>用自己的照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
               <p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
-            <details class="more-appearance" id="more-appearance"><summary><i data-lucide="sliders-horizontal"></i>更多外观设置<i data-lucide="chevron-down" class="summary-chevron"></i></summary>
+            <details class="more-appearance" id="more-appearance"><summary><i data-lucide="sliders-horizontal"></i>更多卡片设置<i data-lucide="chevron-down" class="summary-chevron"></i></summary>
             <section class="ag" aria-label="待办框">
               <h3 class="ag-title">材质</h3>
               <div class="material-tiles material-options" role="group" aria-label="待办框材质">
@@ -346,7 +348,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.8</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.9</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -355,7 +357,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.8 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.9 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

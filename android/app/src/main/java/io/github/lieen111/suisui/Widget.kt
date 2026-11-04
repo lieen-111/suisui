@@ -32,6 +32,8 @@ class SuiSuiWidget : AppWidgetProvider() {
             val open = s?.let { TodoStore.pending(it) } ?: emptyList()
             val done = s?.let { st -> TodoStore.done(st).count { TodoStore.dueToday(it) } } ?: 0
             val views = RemoteViews(ctx.packageName, R.layout.widget_suisui)
+            views.setTextViewText(R.id.widget_title, Lang.t(ctx, "今天的待办", "Today's to-dos"))
+            views.setTextViewText(R.id.widget_empty, Lang.t(ctx, "今天的事都完成了 ✓", "All done for today ✓"))
             views.setTextViewText(R.id.widget_count, if (open.isEmpty() && done == 0) "" else "$done/${open.size + done}")
             val app = PendingIntent.getActivity(ctx, 10, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             views.setOnClickPendingIntent(R.id.widget_header, app)

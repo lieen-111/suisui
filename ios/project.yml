@@ -13,7 +13,7 @@ settings:
   base:
     BASE_BUNDLE_ID: com.yourname.suisui
     APP_GROUP_ID: group.$(BASE_BUNDLE_ID)
-    MARKETING_VERSION: "1.8.0"
+    MARKETING_VERSION: "1.9.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"

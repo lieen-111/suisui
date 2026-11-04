@@ -12,7 +12,7 @@ enum Reminders {
     private static let timerID = "timer"
 
     static func registerCategories() {
-        let done = UNNotificationAction(identifier: completeAction, title: "完成", options: [])
+        let done = UNNotificationAction(identifier: completeAction, title: L.t(TodoRepository.read().settings.english, "完成", "Done"), options: [])
         UNUserNotificationCenter.current().setNotificationCategories([
             UNNotificationCategory(identifier: reminderCategory, actions: [done], intentIdentifiers: [], options: []),
             UNNotificationCategory(identifier: timerCategory, actions: [done], intentIdentifiers: [], options: [])
@@ -56,7 +56,7 @@ enum Reminders {
                 guard let at = calendar.date(from: parts), at > now else { continue }
                 let content = UNMutableNotificationContent()
                 content.title = "⏰ \(time) \(task.title)"
-                content.body = "到点了。点“完成”直接勾掉。"
+                content.body = L.t(doc.settings.english, "到点了。点“完成”直接勾掉。", "It's time. Tap “Done” to tick it off.")
                 content.sound = .default
                 content.categoryIdentifier = reminderCategory
                 content.userInfo = ["id": task.id]
@@ -81,8 +81,9 @@ enum Reminders {
         guard let t = RawJSON.object(json.data(using: .utf8)), let endsAt = (t["endsAt"] as? NSNumber)?.doubleValue,
               endsAt > Date.nowMillis + 1000 else { return }
         let content = UNMutableNotificationContent()
-        content.title = "时间到：\((t["title"] as? String) ?? "专注")"
-        content.body = "这一段专注结束了。做完了就点“完成”。"
+        let english = TodoRepository.read().settings.english
+        content.title = L.t(english, "时间到：", "Time's up: ") + ((t["title"] as? String) ?? L.t(english, "专注", "Focus"))
+        content.body = L.t(english, "这一段专注结束了。做完了就点“完成”。", "This focus session is over. Tap “Done” if you finished.")
         content.sound = .default
         content.categoryIdentifier = timerCategory
         content.userInfo = ["id": (t["id"] as? String) ?? ""]

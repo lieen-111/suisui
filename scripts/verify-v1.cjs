@@ -133,7 +133,7 @@ const bridgeStub = (lock) => `
     assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-blur')), '4px');
     assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-ink')), '#1d1d1f');
     await page.locator('[data-theme-preset=lake]').click();
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#4c5bd4');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#1d1d1f', 'Lock-card styles no longer touch the app colour');
     assert.equal(await page.locator('[data-theme-preset=mist]').getAttribute('aria-pressed'), 'false');
     await context.close();
   }
@@ -309,7 +309,7 @@ const bridgeStub = (lock) => `
     const page = await context.newPage(); watch(page);
     await page.goto(url, { waitUntil: 'networkidle' });
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    assert.equal(bg, 'rgb(19, 19, 19)', 'Dark background');
+    assert.equal(bg, 'rgb(17, 18, 20)', 'Dark background (玻璃 style)');
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#f2f2f4', 'Light accent text on dark');
     assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(242, 242, 244)', 'Ink buttons turn light on dark');
     await page.screenshot({ path: path.join(review, 'v12-dark-390.png') });

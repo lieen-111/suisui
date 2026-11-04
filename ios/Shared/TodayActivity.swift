@@ -31,6 +31,8 @@ struct CardStyle: Codable, Hashable {
     var rows: Int
     /// Lock-screen privacy: show only the count.
     var privacy: Bool = false
+    /// English interface (settings.lang == "en").
+    var english: Bool = false
 
     init(_ settings: AppSettings) {
         cardColor = settings.cardColor
@@ -39,6 +41,7 @@ struct CardStyle: Codable, Hashable {
         material = settings.cardMaterial
         rows = settings.rows
         privacy = settings.lockPrivacy
+        english = settings.english
     }
 }
 

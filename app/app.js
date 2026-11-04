@@ -18,8 +18,12 @@
     orange: ['#e05a33', '#fdeee8', '#ff9b78', '#3a2219', '#e05a33'],
     indigo: ['#4c5bd4', '#eceffd', '#a3adff', '#23284a', '#5866de'],
     berry: ['#cf3d66', '#fcebf0', '#ff8fae', '#3d1f29', '#d4456d'],
-    green: ['#13765b', '#e9f3ee', '#5cc59c', '#1a362c', '#13765b']
+    green: ['#13765b', '#e9f3ee', '#5cc59c', '#1a362c', '#13765b'],
+    lime: ['#d8ff3d', '#2a3310', '#d8ff3d', '#232a0c', '#d8ff3d']
   };
+  // Interface styles (1.9): the whole app's look. 荧光 (lime) only exists in 夜光, which is always dark.
+  const UI_STYLES = { glass: '玻璃', paper: '纸墨', night: '夜光' };
+  const accentOf = s => s.accent === 'lime' && s.uiStyle !== 'night' ? 'ink' : s.accent;
   // Accent ramp behind the deep panels (focus bar, lock tiles), glows on dark and tinted shadows; 950 is darkest.
   const RAMP_STEPS = ['50', '100', '200', '300', '500', '700', '800', '900', '950'];
   const ramps = {
@@ -27,19 +31,20 @@
     orange: ['#fff6f2', '#fdeee8', '#ffd3c2', '#ffb59a', '#f07a52', '#d9532f', '#7c2a12', '#4a1a0a', '#2a0f05'],
     indigo: ['#f5f6ff', '#eceffd', '#d3d8ff', '#b9c1ff', '#7682ea', '#4553cc', '#1d2470', '#141a4a', '#0b0e2a'],
     berry: ['#fff4f7', '#fcebf0', '#ffd1de', '#ffb3c8', '#e86d8f', '#c7385f', '#6b1430', '#4a1022', '#2a0912'],
-    green: ['#f4fbf7', '#e9f5ee', '#c6eed2', '#7fe0b4', '#30b07f', '#1b6e56', '#0f4d3c', '#0b3a2d', '#08291f']
+    green: ['#f4fbf7', '#e9f5ee', '#c6eed2', '#7fe0b4', '#30b07f', '#1b6e56', '#0f4d3c', '#0b3a2d', '#08291f'],
+    lime: ['#f7ffd6', '#eaffa0', '#e2ff73', '#d8ff3d', '#b8e02a', '#3a3a3c', '#242426', '#151516', '#000000']
   };
   // Settings saved before 1.7 used green/rose/blue; green was simply the old default.
   const OLD_ACCENT = { green: 'ink', rose: 'berry', blue: 'indigo' };
   const darkScheme = matchMedia('(prefers-color-scheme: dark)');
   // One-tap looks; the detailed controls stay under “更多外观设置”.
   const THEMES = {
-    ink: { name: '墨黑', cardColor: '#1c1c1e', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'ink' },
-    graphite: { name: '石墨', cardColor: '#202326', cardMaterial: 'frosted', cardTransparency: 22, cardText: 'auto', accent: 'indigo' },
-    mist: { name: '雾白', cardColor: '#f5f7f3', cardMaterial: 'glass', cardTransparency: 28, cardText: 'auto', accent: 'ink' },
-    lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'indigo' },
-    plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto', accent: 'berry' },
-    pine: { name: '松林', cardColor: '#112b24', cardMaterial: 'frosted', cardTransparency: 15, cardText: 'auto', accent: 'green' }
+    ink: { name: '墨黑', cardColor: '#1c1c1e', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto' },
+    graphite: { name: '石墨', cardColor: '#202326', cardMaterial: 'frosted', cardTransparency: 22, cardText: 'auto' },
+    mist: { name: '雾白', cardColor: '#f5f7f3', cardMaterial: 'glass', cardTransparency: 28, cardText: 'auto' },
+    lake: { name: '湖蓝', cardColor: '#294c64', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto' },
+    plum: { name: '梅紫', cardColor: '#563746', cardMaterial: 'frosted', cardTransparency: 18, cardText: 'auto' },
+    pine: { name: '松林', cardColor: '#112b24', cardMaterial: 'frosted', cardTransparency: 15, cardText: 'auto' }
   };
   // Built-in wallpaper library (scripts/make-wallpapers.py makes the generated ones). "system" = the phone's own wallpaper (Android app).
   const WALLPAPERS = [
@@ -51,7 +56,7 @@
   const wallpaperOf = id => WALLPAPERS.find(w => w.id === id) || WALLPAPERS[0];
   const FONTS = { system: '默认', song: '宋体', kai: '楷体', round: '圆体' };
   const TEXT_SIZES = [['小', .9], ['标准', 1], ['大', 1.12], ['特大', 1.26]];
-  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, uiStyle: 'glass', lang: 'zh', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -76,11 +81,13 @@
   function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
   function newId(prefix = 't') { return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`; }
   function isDayKey(v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v); }
+  const LOC = () => (state?.settings?.lang === 'en' ? 'en-US' : 'zh-CN');
   function dateLabel(key) {
     const today = dayKey();
     if (key === today) return '今天';
     if (key === addDays(today, 1)) return '明天';
-    const [, m, d] = key.split('-').map(Number);
+    const [y, m, d] = key.split('-').map(Number);
+    if (LOC() === 'en-US') return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(y, m - 1, d));
     return `${m}月${d}日 ${WEEK[weekday(key)]}`;
   }
   /** Is this task on today's list? Undated one-off tasks always are; overdue ones too. */
@@ -159,6 +166,8 @@
       s.palette2 = true;
     }
     if (!palette[s.accent]) s.accent = defaults.accent;
+    if (!UI_STYLES[s.uiStyle]) s.uiStyle = defaults.uiStyle;
+    if (!['zh', 'en'].includes(s.lang)) s.lang = defaults.lang;
     if (!['compact', 'comfortable'].includes(s.density)) s.density = defaults.density;
     if (!['system', 'custom'].includes(s.wallpaper) && !WALLPAPERS.some(w => w.id === s.wallpaper)) s.wallpaper = 'lake';
     if (typeof s.photo !== 'string' || !/^data:image\/(jpeg|png|webp);base64,/.test(s.photo)) s.photo = '';
@@ -315,7 +324,7 @@
     if (isPhone()) window.scrollTo({ top: 0, behavior: 'instant' });
   }
   /* Settings: an index of four pages instead of one long scroll. */
-  const SETTINGS_TITLES = { index: '设置', look: '外观', lock: '锁屏与隐私', list: '分组与每日整理', data: '数据与备份' };
+  const SETTINGS_TITLES = { index: '设置', look: '外观', lock: '锁屏与隐私', list: '分组与每日整理', data: '数据与备份', language: '语言' };
   function openSettingsPage(page) {
     if (!SETTINGS_TITLES[page]) page = 'index';
     const deeper = page !== 'index' && settingsPage === 'index', back = page === 'index' && settingsPage !== 'index';
@@ -340,25 +349,25 @@
   }
   function themeName() {
     const s = state.settings;
-    const hit = Object.values(THEMES).find(t => ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText', 'accent'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase()));
+    const hit = Object.values(THEMES).find(t => ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase()));
     return hit ? hit.name : '自定义';
   }
   function renderSettingsSummary() {
     const s = state.settings;
-    // Bento cards: each one shows its current state, not just a label.
-    $('tile-look-title').textContent = `${themeName()}`;
-    $('sum-look').textContent = `${FONTS[s.font]} · ${TEXT_SIZES[s.textSize][0]}字号 · 锁屏 ${s.density === 'compact' ? 4 : 3} 条`;
-    const photo = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).thumb;
+    // Settings home: a live preview of the lock card on the wallpaper, then one line per section with its current value.
+    $('sum-look').textContent = `${UI_STYLES[s.uiStyle]} · ${themeName()}`;
+    const photo = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).src;
     const img = $('tile-look-photo');
     if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;
-    $('tile-look-card').style.background = $('mini-card').style.getPropertyValue('--card-bg') || s.cardColor;
+    const card = $('home-card'), mini = $('mini-card');
+    ['--card-bg', '--card-ink', '--card-blur'].forEach(k => card.style.setProperty(k, mini.style.getPropertyValue(k) || $('activity').style.getPropertyValue(k)));
+    const open = pending();
+    $('home-card-count').textContent = $('activity-count').textContent;
+    $('home-card-rows').outerHTML = `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
     const on = IOS_APP ? !!iosStatus().live : ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
-    $('tile-lock-state').textContent = on ? '已开启' : '未开启';
-    $('settings-index').querySelector('.tile-lock').classList.toggle('on', on);
-    $('sum-lock').textContent = s.lockPrivacy ? '隐藏内容 · 只显示件数' : IOS_APP ? '实时活动 · 锁屏小组件' : ANDROID ? (s.lockScreen ? '亮屏直接显示' : '锁屏卡片') : '锁屏通知';
-    $('tile-list-count').textContent = String(state.groups.length);
-    $('tile-list-dots').innerHTML = state.groups.map(g => `<span style="background:${g.color}" title="${esc(g.name)}"></span>`).join('');
-    $('sum-list').textContent = s.autoArchive ? '每天自动整理' : '不自动整理';
+    $('tile-lock-state').textContent = s.lockPrivacy ? '隐藏内容' : on ? '已开启' : '未开启';
+    $('sum-list').innerHTML = `${state.groups.slice(0, 4).map(g => `<span class="dot" style="background:${g.color}"></span>`).join('')}${state.groups.length} 个`;
+    $('sum-lang').textContent = s.lang === 'en' ? 'English' : '简体中文';
   }
 
   /* ---------- Add sheet (phones) / inline form (wider screens) ---------- */
@@ -385,19 +394,8 @@
   let addPanel = '', editPanel = '';
   const durLabel = m => m ? durationText(m) : '';
   const repeatText = (repeat, day) => repeat === 'weekly' ? `每${WEEK[Number.isInteger(day) ? day : 1]}` : repeat !== 'none' ? repeats[repeat] : '';
-  function renderAddToolbar() {
-    const when = $('task-when').value, repeat = $('task-repeat').value, date = $('task-date').value;
-    const dateless = repeat === 'daily' || repeat === 'weekdays';
-    const g = groupOf(addGroupId), minutes = Number($('task-duration').value) || 0, time = $('task-time').value;
-    const set = (id, text, on) => { const el = $(id); el.textContent = text; el.closest('.tool').classList.toggle('is-set', !!on); };
-    set('tool-when', dateless ? '每天出现' : when === 'tomorrow' ? '明天' : when === 'pick' && isDayKey(date) ? dateLabel(date) : '今天', !dateless && when !== 'today');
-    set('tool-time', time || '提醒', !!time);
-    set('tool-repeat', repeatText(repeat, quickRepeatDay ?? weekday(date || dayKey())) || '重复', repeat !== 'none');
-    set('tool-duration', durLabel(minutes) || '时长', minutes > 0);
-    set('tool-group', g.name, false); $('tool-group-dot').style.background = g.color;
-    document.querySelectorAll('[data-add-panel]').forEach(b => { const on = b.dataset.addPanel === addPanel; b.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
-    document.querySelectorAll('.add-options>[data-panel]').forEach(r => r.classList.toggle('open', r.dataset.panel === addPanel));
-  }
+  // 1.9: the add sheet shows every option row again (quicker than a toolbar); each row has its label on the left.
+  function renderAddToolbar() {}
   // The edit sheet lists one line per setting (icon, name, value); tapping a line opens its options under it.
   function renderEditSummary() {
     const form = $('edit-form'); if (!form) return;
@@ -592,12 +590,22 @@
     const todo = pending(), done = doneList(), upcoming = later();
     const inFilter = t => filter === 'all' || (filter === 'repeat' ? t.repeat !== 'none' : groupOf(t.group).id === filter);
     const visible = todo.filter(inFilter);
-    const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    const fmt = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'short' });
     $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
     const total = todo.length + done.length;
     $('progress-number').textContent = total ? `${done.length}/${total}` : '0';
     $('header-title').textContent = total ? `今天 · ${done.length}/${total}` : '今天';
     $('progress-arc').style.strokeDasharray = `${total ? (done.length / total) * 97.4 : 0} 97.4`;
+    // Hero for 纸墨 (big day number) and 夜光 (big count + segments); 玻璃 keeps the title and ring.
+    const now = new Date();
+    $('hero-day').textContent = String(now.getDate()).padStart(2, '0');
+    $('hero-week').textContent = new Intl.DateTimeFormat(LOC(), { weekday: 'long' }).format(now);
+    $('hero-sub').textContent = `${new Intl.DateTimeFormat(LOC(), { month: LOC() === 'en-US' ? 'short' : 'numeric' }).format(now).replace(/^(\d+)$/, '$1月')} · ${todo.length ? `还有 ${todo.length} 件` : total ? '都完成了' : '还没有待办'}`;
+    $('hero-count').innerHTML = `${done.length}<small>/${total}</small>`;
+    const seg = Math.min(total, 16);
+    $('today-meter').innerHTML = state.settings.uiStyle === 'night'
+      ? Array.from({ length: seg || 1 }, (_, i) => `<i class="${total && i < Math.round(done.length / total * seg) ? 'on' : ''}"></i>`).join('')
+      : `<span>${done.length} / ${total}</span><i><b style="width:${total ? Math.round(done.length / total * 100) : 0}%"></b></i><span>${total ? Math.round(done.length / total * 100) : 0}%</span>`;
     renderFilters(todo);
     renderAddChips();
     $('gesture-tips').hidden = !!state.settings.tipsSeen || !todo.length;
@@ -629,7 +637,7 @@
     const items = [...state.archive].sort((a, b) => b.archivedAt - a.archivedAt);
     $('archive-section').hidden = !items.length;
     $('archive-count').textContent = String(items.length);
-    const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' });
+    const fmt = new Intl.DateTimeFormat(LOC(), { month: 'numeric', day: 'numeric' });
     $('archive-list').innerHTML = items.slice(0, 60).map(t => `<div class="done-row archive-row" data-archived-id="${esc(t.id)}">${icon('archive')}<s class="done-text">${esc(t.title)}</s><span class="archive-date">${fmt.format(t.completedAt || t.archivedAt)}</span><button class="icon-button" data-action="unarchive" data-id="${esc(t.id)}" aria-label="放回待办：${esc(t.title)}" title="放回待办">${icon('rotate-ccw')}</button></div>`).join('') + (items.length > 60 ? `<p class="archive-more">只显示最近 60 条，导出备份可查看全部 ${items.length} 条。</p>` : '');
   }
   function renderGroupSettings() {
@@ -669,13 +677,20 @@
       : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat">${icon('repeat')}</span>` : ''}${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
   function applySettings() {
-    const s = state.settings, colors = palette[s.accent], dark = darkScheme.matches, root = document.documentElement.style;
+    const s = state.settings, accent = accentOf(s), colors = palette[accent], dark = darkScheme.matches || s.uiStyle === 'night', root = document.documentElement.style;
+    document.documentElement.dataset.style = LOCK_MODE ? 'lock' : s.uiStyle;
+    root.setProperty('--on-accent', accent === 'lime' ? '#0a0a0b' : '#ffffff');
+    $('swatch-lime').hidden = s.uiStyle !== 'night';
+    document.querySelectorAll('[data-ui-style]').forEach(b => { const on = b.dataset.uiStyle === s.uiStyle; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     root.setProperty('--accent', dark ? colors[2] : colors[0]);
     root.setProperty('--accent-fill', dark ? colors[4] : colors[0]);
-    ramps[s.accent].forEach((c, i) => root.setProperty(`--a-${RAMP_STEPS[i]}`, c));
-    document.documentElement.dataset.palette = s.accent;
+    ramps[accent].forEach((c, i) => root.setProperty(`--a-${RAMP_STEPS[i]}`, c));
+    document.documentElement.dataset.palette = accent;
     root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
     const paper = s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper);
+    // 玻璃 lays the (blurred) wallpaper under the whole app; with the phone's own wallpaper the page lets it show through.
+    root.setProperty('--wall', `url("${paper.src}")`);
+    document.documentElement.classList.toggle('glass-hole', s.uiStyle === 'glass' && !LOCK_MODE && useSystemWallpaper());
     ['wallpaper', 'mini-wallpaper'].forEach(id => {
       const img = $(id);
       if (img.getAttribute('src') !== paper.src) img.src = paper.src;
@@ -692,12 +707,13 @@
     updateWallpaperHole();
     $('mini-tag-label').textContent = useSystemWallpaper() ? '实时预览 · 手机壁纸' : '实时预览';
     renderWallpaperLibrary();
-    document.querySelectorAll('[name="accent"]').forEach(i => { i.checked = i.value === s.accent; });
+    document.querySelectorAll('[name="accent"]').forEach(i => { i.checked = i.value === accentOf(s); });
+    document.querySelectorAll('[name="lang"]').forEach(i => { i.checked = i.value === s.lang; });
     document.querySelectorAll('[data-density]').forEach(b => { b.classList.toggle('active', b.dataset.density === s.density); b.setAttribute('aria-pressed', String(b.dataset.density === s.density)); });
 
     document.querySelectorAll('[data-theme-preset]').forEach(b => {
       const t = THEMES[b.dataset.themePreset];
-      const on = ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText', 'accent'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase());
+      const on = ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase());
       b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
     });
     $('motion-toggle').checked = !!s.motion;
@@ -1156,9 +1172,9 @@
     const perDay = days.map(d => { const k = dayKey(d); return { date: d, key: k, items: entries.filter(e => dayKey(new Date(e.at)) === k) }; });
     const minutes = entries.reduce((sum, e) => sum + (e.min || 0), 0);
     const mix = state.groups.map(g => ({ group: g, count: inRange.filter(e => groupOf(e.group).id === g.id).length })).filter(m => m.count);
-    const md = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
+    const md = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric' });
     const last = new Date(end); last.setDate(last.getDate() - 1);
-    const title = review.period === 'week' ? `${md.format(start)} – ${md.format(last)}` : `${start.getFullYear()}年${start.getMonth() + 1}月`;
+    const title = review.period === 'week' ? `${md.format(start)} – ${md.format(last)}` : (LOC() === 'en-US' ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(start) : `${start.getFullYear()}年${start.getMonth() + 1}月`);
     const relative = review.period === 'week' ? ['本周', '上周'][-review.offset] || `${-review.offset} 周前` : ['本月', '上个月'][-review.offset] || `${-review.offset} 个月前`;
     const elapsed = Math.max(1, Math.min(days.length, Math.ceil((Math.min(Date.now(), end.getTime()) - start.getTime()) / 864e5)));
     return { start, end, last, days, perDay, entries, minutes, mix, title, relative, activeDays: perDay.filter(d => d.items.length).length, elapsed, groupName: review.group === 'all' ? '全部' : groupOf(review.group).name };
@@ -1179,12 +1195,12 @@
     const max = Math.max(1, ...d.perDay.map(x => x.items.length));
     const month = review.period === 'month';
     $('review-chart').classList.toggle('is-month', month);
-    $('review-chart').innerHTML = d.perDay.map(x => { const n = x.items.length, day = x.date.getDate(); const label = month ? ([1, 5, 10, 15, 20, 25, 30].includes(day) ? day : '') : WEEK_SHORT[x.date.getDay()]; return `<div class="bar${n === max && n ? ' is-top' : ''}${x.key === dayKey() ? ' is-today' : ''}" title="${x.date.getMonth() + 1}月${day}日 · ${n} 件"><span class="bar-val">${n || ''}</span><i style="--h:${n / max}"></i><span class="bar-label">${label}</span></div>`; }).join('');
+    $('review-chart').innerHTML = d.perDay.map(x => { const n = x.items.length, day = x.date.getDate(); const label = month ? ([1, 5, 10, 15, 20, 25, 30].includes(day) ? day : '') : WEEK_SHORT[x.date.getDay()]; return `<div class="bar${n === max && n ? ' is-top' : ''}${x.key === dayKey() ? ' is-today' : ''}" title="${new Intl.DateTimeFormat(LOC(), { month: LOC() === 'en-US' ? 'short' : 'long', day: 'numeric' }).format(x.date)} · ${n} 件"><span class="bar-val">${n || ''}</span><i style="--h:${n / max}"></i><span class="bar-label">${label}</span></div>`; }).join('');
     const mixTotal = d.mix.reduce((s, m) => s + m.count, 0);
     $('review-mix-card').hidden = !mixTotal;
     $('review-mix').innerHTML = d.mix.map(m => `<i style="flex:${m.count};background:${m.group.color}"></i>`).join('');
     $('review-legend').innerHTML = d.mix.map(m => `<span><span class="dot" style="background:${m.group.color}"></span>${esc(m.group.name)} ${m.count} · ${Math.round(m.count / mixTotal * 100)}%</span>`).join('');
-    const wd = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    const wd = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'short' });
     const daysWith = [...d.perDay].reverse().filter(x => x.items.length);
     $('review-table').innerHTML = daysWith.length ? daysWith.map(x => `<div class="rt-day"><div class="rt-date"><span>${wd.format(x.date)}</span><span>${x.items.length} 件</span></div>${x.items.map(e => `<div class="rt-row"><span class="dot" style="background:${groupOf(e.group).color}"></span><span class="rt-title">${esc(e.title)}</span><span class="rt-min">${e.min ? durationText(e.min) : ''}</span></div>`).join('')}</div>`).join('')
       : `<div class="review-empty">${icon('calendar-check')}<span>${review.offset === 0 ? '这段时间还没有完成的事，完成后会出现在这里。' : '这段时间没有完成记录。'}</span></div>`;
@@ -1199,7 +1215,7 @@
   async function drawPoster(d) {
     const W = 1080, P = 72, F = '-apple-system, "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif';
     const font = (w, s) => `${w} ${s}px ${F}`;
-    const accent = palette[state.settings.accent][0], R = Object.fromEntries(RAMP_STEPS.map((k, i) => [k, ramps[state.settings.accent][i]]));
+    const ac = accentOf(state.settings), accent = ac === 'lime' ? '#1d1d1f' : palette[ac][0], R = Object.fromEntries(RAMP_STEPS.map((k, i) => [k, ramps[ac === 'lime' ? 'ink' : ac][i]]));
     const daysWith = [...d.perDay].reverse().filter(x => x.items.length);
     const MAX_ROWS = 36;
     let rows = 0; const blocks = [];
@@ -1260,7 +1276,7 @@
     card(tableH);
     ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('做了什么', P + 8, y + 70);
     let ty = y + 120;
-    const wd = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' });
+    const wd = new Intl.DateTimeFormat(LOC(), { month: 'numeric', day: 'numeric', weekday: 'short' });
     if (!blocks.length) { ctx.fillStyle = '#8e8e93'; ctx.font = font(500, 28); ctx.fillText('这段时间还没有完成记录', P + 8, ty + 20); }
     blocks.forEach(b => {
       ctx.fillStyle = '#8e8e93'; ctx.font = font(600, 24); ctx.fillText(wd.format(b.date), P + 8, ty + 28);
@@ -1282,7 +1298,7 @@
     const fy = H - 96;
     ctx.fillStyle = '#a1a1a6'; ctx.font = font(500, 24);
     ctx.fillText('碎碎清单 · 小事一件一件做完', P, fy);
-    ctx.textAlign = 'right'; ctx.fillText(`生成于 ${new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date())}`, W - P, fy); ctx.textAlign = 'left';
+    ctx.textAlign = 'right'; ctx.fillText(`生成于 ${new Intl.DateTimeFormat(LOC(), { year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date())}`, W - P, fy); ctx.textAlign = 'left';
     return canvas;
   }
   let posterBlob = null, posterName = '';
@@ -1322,6 +1338,7 @@
     return [...s].reduce((n, c) => n * 10 + CN_NUM[c], 0);
   }
   const DAY_CN = { 日: 0, 天: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
+  const DAY_EN = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
   function parseQuick(text) {
     let rest = ` ${text} `;
     const found = {}, hits = [];
@@ -1340,10 +1357,21 @@
       if (m[1] === '今晚') found.date = today;
       if (/^明/.test(m[1] || '')) found.date = addDays(today, 1);
     });
-    take(/(\d+(?:\.\d+)?|[一二两三四五六七八九十半]+)\s*(?:个)?\s*(小时|钟头|h)(?:半)?/i, m => { const n = cnNumber(m[1]); if (!(n > 0)) return false; found.duration = Math.round(n * 60 + (m[0].endsWith('半') ? 30 : 0)); });
+    // English: 3pm, 3:30 pm, at 9am, noon
+    if (!found.time) take(/(?:\bat\s+)?\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)(?![a-z])/i, m => {
+      let h = Number(m[1]), min = Number(m[2] || 0); if (h < 1 || h > 12 || min > 59) return false;
+      if (/p/i.test(m[3]) && h < 12) h += 12; if (/a/i.test(m[3]) && h === 12) h = 0;
+      found.time = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+    });
+    if (!found.time) take(/\b(?:at\s+)?noon\b/i, () => { found.time = '12:00'; });
+    take(/\b(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i, m => { const n = Number(m[1]); if (!(n > 0) || n > 10) return false; found.duration = Math.round(n * 60); });
+    if (!found.duration) take(/\b(\d+)\s*(?:minutes?|mins?)\b/i, m => { const n = Number(m[1]); if (!(n > 0) || n > 600) return false; found.duration = n; });
+    if (!found.duration) take(/(\d+(?:\.\d+)?|[一二两三四五六七八九十半]+)\s*(?:个)?\s*(小时|钟头|h)(?:半)?/i, m => { const n = cnNumber(m[1]); if (!(n > 0)) return false; found.duration = Math.round(n * 60 + (m[0].endsWith('半') ? 30 : 0)); });
     if (!found.duration) take(/半小时/, () => { found.duration = 30; });
     if (!found.duration) take(/(\d+|[一二两三四五六七八九十]+)\s*(分钟|分|min|m)(?![a-z])/i, m => { const n = cnNumber(m[1]); if (!(n > 0) || n > 600) return false; found.duration = Math.round(n); });
-    take(/每(?:个)?工作日|工作日/, () => { found.repeat = 'weekdays'; });
+    take(/每(?:个)?工作日|工作日|\b(?:every\s+)?weekdays?\b/i, () => { found.repeat = 'weekdays'; });
+    if (!found.repeat) take(/\b(?:every\s*day|everyday|daily)\b/i, () => { found.repeat = 'daily'; });
+    if (!found.repeat) take(/\bevery\s+(sun|mon|tue|wed|thu|fri|sat)[a-z]*\b/i, m => { found.repeat = 'weekly'; found.repeatDay = DAY_EN[m[1].toLowerCase()]; });
     if (!found.repeat) take(/每天|每日|天天/, () => { found.repeat = 'daily'; });
     if (!found.repeat) take(/每(?:周|星期|礼拜)([一二三四五六日天])/, m => { found.repeat = 'weekly'; found.repeatDay = DAY_CN[m[1]]; });
     if (!found.repeat) {
@@ -1351,6 +1379,13 @@
       if (!found.date) take(/后天/, () => { found.date = addDays(today, 2); });
       if (!found.date) take(/明天|明日/, () => { found.date = addDays(today, 1); });
       if (!found.date) take(/今天|今日/, () => { found.date = today; });
+      if (!found.date) take(/\b(?:tomorrow|tmr|tmrw)\b/i, () => { found.date = addDays(today, 1); });
+      if (!found.date) take(/\btoday\b|\btonight\b/i, () => { found.date = today; });
+      if (!found.date) take(/\b(?:(next)\s+|on\s+)?(sun|mon|tue|wed|thu|fri|sat)(?:day|sday|nesday|rsday|urday|s)?\b/i, m => {
+        const target = DAY_EN[m[2].toLowerCase()], now = weekday(today);
+        let diff = (target - now + 7) % 7; if (m[1] && diff === 0) diff = 7; else if (m[1]) diff += diff < 7 && diff > 0 ? 0 : 0;
+        found.date = addDays(today, diff || 0);
+      });
       else take(/今天|今日/, () => {});
       if (!found.date) take(/(下)?(?:周|星期|礼拜)([一二三四五六日天])/, m => {
         const target = DAY_CN[m[2]], now = weekday(today), mondayOffset = (now + 6) % 7;
@@ -1443,7 +1478,7 @@
     const hit = t => [t.title, t.note, ...(t.subtasks || []).map(s => s.title)].some(v => v && v.toLowerCase().includes(q));
     const open = state.tasks.filter(t => !t.done && hit(t)), done = state.tasks.filter(t => t.done && hit(t)), old = state.archive.filter(hit).slice(-30).reverse();
     const doneRow = (t, label) => `<div class="done-row">${icon('circle-check')}<s class="done-text">${esc(t.title)}</s><span class="archive-date">${label}</span></div>`;
-    const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' });
+    const fmt = new Intl.DateTimeFormat(LOC(), { month: 'numeric', day: 'numeric' });
     box.innerHTML = (open.length ? `<div class="list-heading"><span>待完成</span><span>${open.length}</span></div><div class="task-list">${open.map(row).join('')}</div>` : '')
       + (done.length ? `<div class="list-heading"><span>今天已完成</span><span>${done.length}</span></div>${done.map(t => doneRow(t, '今天')).join('')}` : '')
       + (old.length ? `<div class="list-heading"><span>历史</span><span>${old.length}</span></div>${old.map(t => doneRow(t, fmt.format(t.completedAt || t.archivedAt))).join('')}` : '')
@@ -1701,7 +1736,6 @@
     if (b.dataset.period) { review.period = b.dataset.period; review.offset = 0; renderReview(); }
     if (b.dataset.shift) { review.offset = Math.min(0, review.offset + Number(b.dataset.shift)); renderReview(); }
     if (b.dataset.reviewGroup) { review.group = b.dataset.reviewGroup; renderReview(); }
-    if (b.dataset.addPanel) { addPanel = addPanel === b.dataset.addPanel ? '' : b.dataset.addPanel; renderAddToolbar(); }
     if (b.dataset.editPanel) { editPanel = editPanel === b.dataset.editPanel ? '' : b.dataset.editPanel; renderEditSummary(); }
     if (b.dataset.addGroup) { addGroupId = b.dataset.addGroup; renderAddChips(); icons($('add-form')); }
     if (b.dataset.addWhen) {
@@ -1743,9 +1777,16 @@
     if (b.dataset.material) { state.settings.cardMaterial = b.dataset.material; save(); applyCardAppearance(); applySettings(); }
     if (b.dataset.cardText) { state.settings.cardText = b.dataset.cardText; save(); applyCardAppearance(); }
     if (b.dataset.cardColor) { state.settings.cardColor = b.dataset.cardColor; save(); applySettings(); }
+    if (b.dataset.uiStyle) {
+      const st = state.settings, next = b.dataset.uiStyle;
+      // 夜光 comes with its own 荧光; leaving it gives 墨黑 back. Other colours are kept as chosen.
+      if (next === 'night' && st.accent === 'ink') st.accent = 'lime';
+      if (next !== 'night' && st.accent === 'lime') st.accent = 'ink';
+      st.uiStyle = next; save(); applySettings(); render();
+    }
     if (b.dataset.themePreset) {
       const { name, ...values } = THEMES[b.dataset.themePreset];
-      Object.assign(state.settings, values); save(); applySettings(); showToast(`已换成“${name}”主题`);
+      Object.assign(state.settings, values); save(); applySettings(); showToast(`锁屏卡片已换成“${name}”`);
     }
     if (b.dataset.groupColor) { const g = state.groups.find(x => x.id === b.dataset.groupId); if (g) { g.color = b.dataset.groupColor; save(); render(); } }
     if (b.dataset.groupDelete) deleteGroup(b.dataset.groupDelete);
@@ -1895,6 +1936,8 @@
   const openAbout = () => $('about-dialog').showModal();
   $('about-button').addEventListener('click', openAbout);
   $('about-row').addEventListener('click', openAbout);
+  $('home-hero').addEventListener('click', () => openSettingsPage('look'));
+  document.querySelectorAll('[name="lang"]').forEach(input => input.addEventListener('change', () => { state.settings.lang = input.value; save(); location.reload(); }));
   $('close-about').addEventListener('click', () => $('about-dialog').close());
   document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog && (event.offsetX < 0 || event.offsetY < 0 || event.offsetX > dialog.offsetWidth || event.offsetY > dialog.offsetHeight)) dialog.close(); }));
   document.querySelectorAll('[name="accent"]').forEach(input => input.addEventListener('change', () => { state.settings.accent = input.value; save(); applySettings(); }));
@@ -1986,8 +2029,8 @@
   window.addEventListener('pagehide', () => updateLockNotification());
   function clock() {
     const date = new Date();
-    $('header-date').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
-    $('lock-date').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
+    $('header-date').textContent = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
+    $('lock-date').textContent = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
     $('lock-time').textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     if (rollover()) render();
   }
@@ -2008,6 +2051,7 @@
   rollover({ announce: false });
   booted = true;
   const params = new URLSearchParams(location.search);
+  window.SuiSuiI18n?.setLang(state.settings.lang);
   setupPickers();
   placeChrome(); phoneQuery.addEventListener?.('change', placeChrome);
   setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();

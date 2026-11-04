@@ -174,9 +174,9 @@ enum TodoLogic {
     }
 
     /// Plain-text summary used by the inline widget and accessibility.
-    static func summary(_ tasks: [TodoItem]) -> String {
+    static func summary(_ tasks: [TodoItem], english: Bool = false) -> String {
         let open = pending(tasks)
-        guard let first = open.first else { return tasks.isEmpty ? "今天还没有待办" : "今天的事都完成了" }
-        return open.count == 1 ? "最后一件：\(first.title)" : "还有 \(open.count) 件 · \(first.title)"
+        guard let first = open.first else { return tasks.isEmpty ? L.t(english, "今天还没有待办", "Nothing for today") : L.t(english, "今天的事都完成了", "All done for today") }
+        return open.count == 1 ? L.t(english, "最后一件：", "Last one: ") + first.title : L.t(english, "还有 \(open.count) 件 · ", "\(open.count) left · ") + first.title
     }
 }

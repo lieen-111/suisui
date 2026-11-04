@@ -17,7 +17,9 @@
     "check:swift": "python scripts/check-swift-syntax.py",
     "test:v2": "node scripts/verify-v2.cjs",
     "test:ios-bridge": "node scripts/verify-ios-bridge.cjs",
-    "test:v17": "node scripts/verify-v17.cjs"
+    "test:v17": "node scripts/verify-v17.cjs",
+    "test:v19": "node scripts/verify-v19.cjs",
+    "build:night": "python3 scripts/build-night-css.py"
   },
   "devDependencies": {
     "playwright": "1.62.1"
