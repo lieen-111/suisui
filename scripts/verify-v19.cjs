@@ -28,7 +28,9 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
   {
     const { context, page } = await open({});
     assert.equal(await page.evaluate(() => document.documentElement.dataset.style), 'glass', '玻璃 is the default style');
-    assert.match(await css(page, '--wall'), /lake\.jpg/, 'Glass lays the wallpaper under the app');
+    await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--wall').includes('data:image/jpeg'));
+    // Glass lays a pre-blurred (tiny, upscaled) copy of the wallpaper under the app: no live blur filter.
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body, '::before').filter), 'none');
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#home-hero').isVisible(), true, 'Settings home starts with the lock-card preview');
     assert.equal(await page.locator('.settings-list [data-settings-page]').count(), 5);
@@ -103,30 +105,46 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await context.close();
   }
 
-  /* 1.10 home cards: one card per group, finished items at the bottom, subtasks under their task */
+  /* 1.11 lock screen: one card per group (only groups with something today), subtasks, ✓ and + buttons */
+  {
+    const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const rec = JSON.parse(record({}));
+    rec.tasks[0].subtasks = [{ id: 's1', title: '牛排', done: false }];
+    rec.tasks.push({ ...base, id: 'c', title: '确认合同', done: true, completedAt: Date.parse(`${day}T08:00:00`) });
+    await context.addInitScript(raw => { window.__unlock = []; window.SuiSuiAndroid = { load: () => raw, save: j => { raw = j; return true; }, isLockMode: () => true, notificationsAllowed: () => true, permissions: () => '{"notifications":true,"overlay":true}', unlock: o => window.__unlock.push(o), version: () => 't' }; }, JSON.stringify(rec));
+    const page = await context.newPage(); watch(page);
+    await page.clock.install({ time: new Date(`${day}T09:00:00`) });
+    await page.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
+    assert.deepEqual(await page.locator('.lock-group').evaluateAll(g => g.map(e => e.dataset.lockGroup)), ['work', 'life']);
+    assert.match(await page.locator('.lock-group[data-lock-group=work] .lock-group-head').textContent(), /💼\s*工作\s*1\/2/);
+    assert.deepEqual(await page.locator('.lock-group[data-lock-group=work] .lock-task').evaluateAll(b => b.map(e => e.dataset.id)), ['a', 'c'], 'Finished items sit at the bottom of their card');
+    assert.equal(await page.locator('.lock-group[data-lock-group=work] .lock-sub').count(), 1, 'Subtasks are listed under their task');
+    await page.locator('.lock-sub').click();
+    assert.equal(await page.locator('.lock-sub.is-done').count(), 1, 'A subtask can be ticked on the lock screen');
+    assert.match(await page.locator('#lock-date').textContent(), /11月4日周三 · .+年.+月.+/, 'Lock date shows the Chinese calendar date');
+    await page.screenshot({ path: path.join(review, 'v111-lock-groups-390.png') });
+    await page.locator('#lock-add').click();
+    assert.deepEqual(await page.evaluate(() => window.__unlock), [true], '+ opens the app');
+    assert.ok(await page.evaluate(() => localStorage.getItem('suisui-open-add')), '… and asks it to open the add sheet');
+    await page.locator('#lock-open').click();
+    assert.deepEqual(await page.evaluate(() => window.__unlock), [true, true]);
+    await context.close();
+  }
+  /* 1.11 cute fonts: picked in settings, loaded only when needed */
   {
     const { context, page } = await open({});
-    assert.deepEqual(await page.locator('.group-card').evaluateAll(c => c.map(e => e.dataset.groupCard)), ['work', 'life'], 'One card per group that has something today');
-    assert.match(await page.locator('.group-card[data-group-card=work] .group-card-head').textContent(), /💼\s*工作\s*0\/1/);
-    await page.locator('.task-row[data-task-id=a] [data-action=complete]').click();
-    await page.waitForTimeout(900);
-    assert.equal(await page.locator('.group-card[data-group-card=work] .card-done-row[data-completed-id=a]').count(), 1, 'Finished item stays in its card');
-    assert.match(await page.locator('.group-card[data-group-card=work] .group-count').textContent(), /1\/1/);
-    await page.locator('.card-done-row[data-completed-id=a] [data-action=restore]').click();
-    assert.equal(await page.locator('.group-card[data-group-card=work] .task-row[data-task-id=a]').count(), 1, 'Tapping the filled circle restores it');
-    // Only one group has to-dos → only one card.
-    await page.evaluate(k => { const r = JSON.parse(localStorage.getItem(k)); r.tasks = r.tasks.filter(t => t.group === 'life'); r.tasks[0].subtasks = [{ id: 's1', title: '牛排', done: false }, { id: 's2', title: '麦片', done: false }]; localStorage.setItem(k, JSON.stringify(r)); }, STORE);
-    await page.reload({ waitUntil: 'networkidle' });
-    assert.equal(await page.locator('.group-card').count(), 1);
-    assert.equal(await page.locator('.group-card .sub-row').count(), 2, 'Subtasks are listed under their task');
-    await page.locator('.sub-row', { hasText: '牛排' }).click();
-    const subs = await page.evaluate(k => JSON.parse(localStorage.getItem(k)).tasks[0].subtasks.map(x => x.done), STORE);
-    assert.deepEqual(subs, [true, false], 'A subtask can be ticked right in the list');
-    await page.screenshot({ path: path.join(review, 'v110-one-card-390.png') });
+    assert.equal(await page.locator('#cute-fonts').count(), 0, 'Cute fonts are not loaded until needed');
+    await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=look]').click();
+    assert.equal(await page.locator('#cute-fonts').count(), 1, 'Opening the look page loads them for the previews');
+    assert.equal(await page.locator('[data-font]').count(), 7);
+    await page.locator('[data-font=kuaile]').click();
+    assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue('--app-font')), 'var(--font-kuaile)');
+    await page.waitForFunction(() => document.fonts.check('16px "ZCOOL KuaiLe"', '碎碎'));
     await context.close();
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.10 group cards (one per group, done at the bottom, restore, inline subtasks); 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
+  console.log('PASS: 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

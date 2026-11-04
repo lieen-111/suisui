@@ -205,8 +205,7 @@ let browser;
     const book = tasks.find(t => t.title === '读书');
     assert.equal(book.note, '第三章');
     assert.deepEqual(book.subtasks.map(s => [s.title, s.done]), [['读完 3.1', true], ['写摘要', false]]);
-    assert.equal(await page.locator('.group-card .sub-row').count(), 2, 'Subtasks show under their task in the card');
-    assert.equal(await page.locator('.group-card .sub-row.is-done').count(), 1);
+    assert.match(await page.locator('.task-row', { hasText: '读书' }).locator('.task-meta').textContent(), /1\/2/);
     // Drag: long press 读书 and move it above 买菜.
     const before = await page.locator('#task-list .task-title').allTextContents();
     assert.deepEqual(before, ['买菜', '读书']);

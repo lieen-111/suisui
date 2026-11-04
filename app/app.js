@@ -54,7 +54,10 @@
       .map(([id, name]) => ({ id, name, src: `assets/wallpapers/${id}.jpg`, thumb: `assets/wallpapers/${id}-thumb.jpg`, pos: '50% 60%' }))
   ];
   const wallpaperOf = id => WALLPAPERS.find(w => w.id === id) || WALLPAPERS[0];
-  const FONTS = { system: '默认', song: '宋体', kai: '楷体', round: '圆体' };
+  const FONTS = { system: '默认', song: '宋体', kai: '楷体', round: '圆体', kuaile: '快乐体', huangyou: '黄油体', shouxie: '手写体' };
+  // Bundled cute fonts load their CSS only when needed (it lists ~280 small font pieces).
+  const CUTE = ['kuaile', 'huangyou', 'shouxie'];
+  function ensureCuteFonts() { if (document.getElementById('cute-fonts')) return; const l = document.createElement('link'); l.id = 'cute-fonts'; l.rel = 'stylesheet'; l.href = 'fonts-cute.css'; document.head.append(l); }
   const TEXT_SIZES = [['小', .9], ['标准', 1], ['大', 1.12], ['特大', 1.26]];
   const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, uiStyle: 'glass', lang: 'zh', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
   const examples = () => [
@@ -154,7 +157,7 @@
     const ids = new Set();
     const out = (Array.isArray(list) ? list : []).filter(g => g && typeof g.id === 'string' && g.id && typeof g.name === 'string' && g.name.trim() && !ids.has(g.id) && ids.add(g.id))
       .slice(0, 12).map(g => ({ id: g.id.slice(0, 40), name: g.name.trim().slice(0, 12), color: /^#[0-9a-f]{6}$/i.test(g.color) ? g.color : GROUP_COLORS[ids.size % GROUP_COLORS.length],
-        // 1.10: an optional emoji in front of the group's card title; the two built-in groups get one.
+        // 1.11: an optional emoji in front of the group's card title on the lock screen; the two built-in groups get one.
         emoji: typeof g.emoji === 'string' ? Array.from(g.emoji.trim()).slice(0, 2).join('') : ({ work: '💼', life: '🌿' }[g.id] || '') }));
     return out.length ? out : structuredClone(DEFAULT_GROUPS);
   }
@@ -341,6 +344,7 @@
     if (back) enter($('settings-index'), 'page-back');
     if (page === 'index') renderSettingsSummary();
     if (page === 'lock') renderNotifySetting();
+    if (page === 'look') ensureCuteFonts();
     updateWallpaperHole();
     icons($('settings-panel'));
   }
@@ -567,6 +571,7 @@
     if (t.repeat !== 'none') flags += `<span class="meta-flag meta-repeat">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
     if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
+    if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
     if (t.note) flags += `<span class="meta-flag" title="有备注">${icon('sticky-note')}</span>`;
     return flags;
   }
@@ -576,22 +581,6 @@
   }
   // First use: no sample tasks, a calm invitation instead (the dots echo the logo).
   const FIRST_RUN = `<div class="first-run"><svg class="first-art" viewBox="0 0 120 120" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => { const a = (-80 + i * 24.3) * Math.PI / 180, t = i / 13; return `<circle cx="${(60 + 44 * Math.cos(a)).toFixed(1)}" cy="${(60 + 44 * Math.sin(a)).toFixed(1)}" r="${(2 + t * 4).toFixed(1)}" opacity="${(.3 + t * .7).toFixed(2)}"/>`; }).join('')}<path d="M44 61l11 11 22-23" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>从第一件小事开始</h2><p>点下面的 + 写下今天想做的事。<br>需要专注的事可以设个时长，点开始就倒计时。</p><button class="primary-button" data-action="first-add">${icon('plus')}添加第一件</button></div>`;
-  // Home list (1.10): one card per group with today's to-dos, finished ones at the bottom of the card, subtasks
-  // indented under their task. A group with nothing today gets no card, so a single group shows a single card.
-  function subRows(t) {
-    if (!t.subtasks?.length) return '';
-    return `<div class="sub-rows">${t.subtasks.map(s => `<button class="sub-row${s.done ? ' is-done' : ''}" data-sub-quick="${esc(t.id)}" data-sub-id="${esc(s.id)}" aria-label="${s.done ? '取消完成' : '完成'}：${esc(s.title)}" aria-pressed="${s.done}"><span class="check-circle">${s.done ? icon('check') : ''}</span><span class="sub-title">${s.done ? `<s>${esc(s.title)}</s>` : esc(s.title)}</span></button>`).join('')}</div>`;
-  }
-  function cardDoneRow(t) {
-    return `<div class="done-row card-done-row" data-completed-id="${esc(t.id)}" style="--g:${groupOf(t.group).color}"><button class="check-task" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办"><span class="check-circle">${icon('check')}</span></button><s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}${repeatLabel(t)}</span>` : ''}</div>`;
-  }
-  function groupCards(open, finished) {
-    return state.groups.map(g => {
-      const o = open.filter(t => groupOf(t.group).id === g.id), d = finished.filter(t => groupOf(t.group).id === g.id);
-      if (!o.length && !d.length) return '';
-      return `<section class="group-card" data-group-card="${esc(g.id)}" style="--g:${g.color}"><header class="group-card-head">${g.emoji ? `<span class="group-emoji" aria-hidden="true">${esc(g.emoji)}</span>` : '<span class="dot"></span>'}<h3>${esc(g.name)}</h3><span class="group-count">${d.length}/${o.length + d.length}</span></header>${o.map(t => row(t) + subRows(t)).join('')}${d.map(cardDoneRow).join('')}</section>`;
-    }).join('');
-  }
   function renderFilters(todo) {
     const repeating = state.tasks.filter(t => t.repeat !== 'none').length;
     if (filter === 'repeat' && !repeating) filter = 'all';
@@ -631,18 +620,15 @@
     const firstRun = !state.tasks.length && !state.log.length;
     document.querySelector('.list-heading').hidden = firstRun;
     $('filter-tabs').hidden = firstRun;
-    $('completed-section').hidden = true; // 1.10: finished items stay at the bottom of their group's card
-    $('cards-foot').hidden = !done.some(t => t.repeat === 'none');
-    const doneHere = done.filter(inFilter);
-    $('task-list').classList.toggle('grouped', !!(visible.length || doneHere.length));
-    $('task-list').innerHTML = visible.length || doneHere.length ? groupCards(visible, doneHere) : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${filter === 'repeat' ? '今天要做的重复事项都做完了' : todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
+    $('completed-section').hidden = !done.length;
+    $('task-list').innerHTML = visible.length ? visible.map(row).join('') : firstRun ? FIRST_RUN : `<div class="empty-state">${icon(todo.length ? 'list-filter' : 'circle-check')}<span>${filter === 'repeat' ? '今天要做的重复事项都做完了' : todo.length ? '这个分组今天没有待办' : done.length ? '都完成了，给自己一点空白。' : '今天从一件小事开始。'}</span></div>`;
     const laterVisible = upcoming.filter(inFilter);
     $('later-section').hidden = !laterVisible.length;
     $('later-count').textContent = String(laterVisible.length);
     $('later-list').innerHTML = laterVisible.map(row).join('');
     $('done-count').textContent = String(done.length);
     $('clear-done').hidden = !done.some(t => t.repeat === 'none');
-    $('completed-list').innerHTML = ''; // 1.10: finished items render inside their group card (cardDoneRow)
+    $('completed-list').innerHTML = done.map(t => `<div class="done-row" data-completed-id="${esc(t.id)}">${icon('circle-check')}<s class="done-text completed-title">${esc(t.title)}</s>${t.repeat !== 'none' ? `<span class="done-flag" title="下次该做时自动重新出现">${icon('repeat')}${repeatLabel(t)}</span>` : ''}<button class="icon-button" data-action="restore" data-id="${esc(t.id)}" aria-label="恢复：${esc(t.title)}" title="恢复待办">${icon('rotate-ccw')}</button><button class="icon-button" data-action="delete" data-id="${esc(t.id)}" aria-label="删除：${esc(t.title)}" title="删除">${icon('trash-2')}</button></div>`).join('');
     renderArchive();
     renderGroupSettings();
     renderPreview();
@@ -666,6 +652,21 @@
     list.innerHTML = state.groups.map(g => `<div class="group-row" data-group-id="${esc(g.id)}"><label class="sr-only" for="group-emoji-${esc(g.id)}">分组图标</label><input class="group-emoji" id="group-emoji-${esc(g.id)}" value="${esc(g.emoji || '')}" placeholder="🙂" maxlength="8" data-group-id="${esc(g.id)}" style="--g:${g.color}" title="分组图标：输入一个 emoji"><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button></div>`).join('');
     $('add-group').disabled = state.groups.length >= 12;
   }
+  // Lock screen (1.11, Android lock view): one frosted card per group, like the user's reference — group emoji, name and
+  // done/total on top, open items, subtasks indented under their task, finished items (filled check) at the bottom.
+  // A group with nothing today gets no card. Rows are the same .lock-task buttons, so completing and restoring work as before.
+  function lockButton(t) {
+    return `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat" title="${repeatLabel(t)}">${icon('repeat')}</span>` : ''}</button>`;
+  }
+  function lockGroups(items) {
+    return state.groups.map(g => {
+      const mine = items.filter(t => groupOf(t.group).id === g.id);
+      if (!mine.length) return '';
+      const done = mine.filter(t => t.done).length;
+      const subs = t => t.done || !t.subtasks?.length ? '' : `<div class="lock-subs">${t.subtasks.map(x => `<button class="lock-sub${x.done ? ' is-done' : ''}" data-sub-quick="${esc(t.id)}" data-sub-id="${esc(x.id)}" aria-pressed="${x.done}" aria-label="${x.done ? '取消完成' : '完成'}：${esc(x.title)}"><span class="check-circle">${x.done ? icon('check') : ''}</span><span class="lock-task-label">${esc(x.title)}</span></button>`).join('')}</div>`;
+      return `<section class="lock-group" data-lock-group="${esc(g.id)}"><header class="lock-group-head">${g.emoji ? `<span class="lock-group-emoji" aria-hidden="true">${esc(g.emoji)}</span>` : `<span class="dot" style="background:${g.color}"></span>`}<b>${esc(g.name)}</b><span class="lock-group-count">${done}/${mine.length}</span></header>${mine.map(t => lockRow(t, lockButton(t)) + subs(t)).join('')}</section>`;
+    }).join('');
+  }
   // A lock-card row with a duration gets its own start button next to it (buttons cannot nest).
   function lockRow(t, button) { const pill = timerPill(t, 'lock-timer'); return pill ? `<div class="lock-row">${button}${pill}</div>` : button; }
   function renderPreview() {
@@ -680,6 +681,7 @@
     $('activity').classList.toggle('is-private', hide);
     list.innerHTML = hide
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${todo.length ? `今天还有 ${todo.length} 件待办` : '今天的事都完成了'}</span><button class="lock-reveal" id="lock-reveal">解锁查看</button></div>`
+      : LOCK_MODE && items.length ? lockGroups(items)
       : items.length ? items.map(t => lockRow(t, `<button class="lock-task${t.done ? ' is-done' : ''}${completing.has(t.id) ? ' is-completing' : ''}" data-action="${t.done ? 'restore' : 'complete'}" data-id="${esc(t.id)}" aria-label="${t.done ? '恢复' : '完成'}：${esc(t.title)}" aria-pressed="${t.done}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="lock-task-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat" title="${repeatLabel(t)}">${icon('repeat')}</span>` : ''}</button>`)).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
     list.scrollTop = scrollTop;
     $('remaining-label').textContent = todo.length ? `剩余 ${todo.length} 项 · 已完成 ${done} 项` : (done ? `全部完成 · ${done} 项` : '暂无待办');
@@ -696,6 +698,30 @@
       ? `<div class="lock-private">${icon('lock-keyhole')}<span>${open ? `今天还有 ${open} 件待办` : '今天的事都完成了'}</span><span class="lock-reveal">解锁查看</span></div>`
       : items.length ? items.slice(0, rows).map(t => `<div class="mini-row${t.done ? ' is-done' : ''}"><span class="check-circle">${t.done ? icon('check') : ''}</span><span class="mini-row-label">${t.done ? `<s class="completed-title">${esc(t.title)}</s>` : esc(t.title)}</span>${t.repeat !== 'none' ? `<span class="lock-repeat">${icon('repeat')}</span>` : ''}${t.duration && !t.done ? `<span class="mini-timer">${icon('play')}${t.duration}分</span>` : ''}</div>`).join('') : `<div class="lock-empty">${icon('circle-check')}<span>今天，留一点空白。</span></div>`;
   }
+  // 玻璃 background: the wallpaper shrunk to a few dozen pixels (and a little more colourful), then stretched by CSS.
+  // Upscaling a tiny image gives the blur for free, so no live CSS blur filter has to run on every frame.
+  let wallFor = '';
+  function glassWall(src) {
+    if (wallFor === src) return; wallFor = src;
+    const img = new Image();
+    img.onload = () => {
+      if (wallFor !== src) return;
+      try {
+        const w = 36, h = Math.max(1, Math.round(w * img.naturalHeight / img.naturalWidth));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+        const px = ctx.getImageData(0, 0, w, h), d = px.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const g = (d[i] + d[i + 1] + d[i + 2]) / 3;
+          for (let k = 0; k < 3; k++) d[i + k] = Math.max(0, Math.min(255, g + (d[i + k] - g) * 1.45 + 8));
+        }
+        ctx.putImageData(px, 0, 0);
+        document.documentElement.style.setProperty('--wall', `url("${c.toDataURL('image/jpeg', .9)}")`);
+      } catch { document.documentElement.style.setProperty('--wall', `url("${src}")`); }
+    };
+    img.onerror = () => { if (wallFor === src) document.documentElement.style.setProperty('--wall', `url("${src}")`); };
+    img.src = src;
+  }
   function applySettings() {
     const s = state.settings, accent = accentOf(s), colors = palette[accent], dark = darkScheme.matches || s.uiStyle === 'night', root = document.documentElement.style;
     document.documentElement.dataset.style = LOCK_MODE ? 'lock' : s.uiStyle;
@@ -709,7 +735,7 @@
     root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
     const paper = s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper);
     // 玻璃 lays the (blurred) wallpaper under the whole app; with the phone's own wallpaper the page lets it show through.
-    root.setProperty('--wall', `url("${paper.src}")`);
+    glassWall(paper.src);
     document.documentElement.classList.toggle('glass-hole', s.uiStyle === 'glass' && !LOCK_MODE && useSystemWallpaper());
     ['wallpaper', 'mini-wallpaper'].forEach(id => {
       const img = $(id);
@@ -717,6 +743,7 @@
       img.style.objectPosition = paper.pos;
       img.classList.toggle('monochrome', !!paper.mono);
     });
+    if (CUTE.includes(s.font)) ensureCuteFonts();
     root.setProperty('--app-font', `var(--font-${s.font})`);
     root.setProperty('--ts', String(TEXT_SIZES[s.textSize][1]));
     document.querySelectorAll('[data-font]').forEach(b => { b.classList.toggle('active', b.dataset.font === s.font); b.setAttribute('aria-pressed', String(b.dataset.font === s.font)); });
@@ -1670,7 +1697,7 @@
   function liftRow(row, y, pointer) {
     swipe = null; swallowClick = true;
     haptic();
-    const rows = [...(row.closest('.group-card') || $('task-list')).querySelectorAll('.task-row')];
+    const rows = [...$('task-list').querySelectorAll('.task-row')];
     drag = { row, id: row.dataset.taskId, y, pointer, dy: 0, moved: false, rows, from: rows.indexOf(row), to: rows.indexOf(row), h: row.offsetHeight };
     row.classList.add('lifted');
   }
@@ -2057,10 +2084,24 @@
     else { clock(); renderNotifySetting(); }
   });
   window.addEventListener('pagehide', () => updateLockNotification());
+  // 丙午年九月廿六: the Chinese calendar date for the lock screen, when the browser knows it.
+  function lunar(date) {
+    try {
+      const parts = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', { year: 'numeric', month: 'long', day: 'numeric' }).formatToParts(date);
+      const get = type => parts.find(p => p.type === type)?.value || '';
+      const d = Number(get('day')), month = get('month'), year = get('yearName');
+      if (!d || !month) return '';
+      const n = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+      const day = d <= 10 ? `初${n[d]}` : d < 20 ? `十${n[d - 10]}` : d === 20 ? '二十' : d < 30 ? `廿${n[d - 20]}` : '三十';
+      return `${year ? `${year}年` : ''}${month}${day}`;
+    } catch { return ''; }
+  }
   function clock() {
     const date = new Date();
     $('header-date').textContent = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
-    $('lock-date').textContent = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
+    $('lock-date').textContent = LOC() === 'zh-CN'
+      ? `${new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }).format(date)}${lunar(date) ? ` · ${lunar(date)}` : ''}`
+      : new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
     $('lock-time').textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     if (rollover()) render();
   }
@@ -2070,6 +2111,9 @@
     $('lock-exit').hidden = false;
     const leave = openApp => { try { ANDROID.unlock(openApp); } catch { /* ignore */ } };
     $('lock-exit').addEventListener('click', () => leave(false));
+    $('lock-actions').hidden = false;
+    $('lock-open').addEventListener('click', () => leave(true));
+    $('lock-add').addEventListener('click', () => { try { localStorage.setItem('suisui-open-add', String(Date.now())); } catch { /* ignore */ } leave(true); });
     ['see-all', 'preview-list-button'].forEach(id => $(id).addEventListener('click', event => { event.stopImmediatePropagation(); leave(true); }, true));
     $('activity-list').addEventListener('click', event => { if (event.target.closest('#lock-reveal')) leave(true); });
     let startY = null;
@@ -2086,6 +2130,14 @@
   placeChrome(); phoneQuery.addEventListener?.('change', placeChrome);
   setView(LOCK_MODE ? 'tasks' : params.get('view')); if (params.get('page')) openSettingsPage(params.get('page')); render(); applySettings(); clock(); save(); renderInstallBanner();
   if (ANDROID && !LOCK_MODE && state.settings.lockScreen && !state.settings.androidSetupSeen) setTimeout(openAndroidSetup, 600);
+  if (!LOCK_MODE) {
+    const addFromLock = () => {
+      let at = 0; try { at = Number(localStorage.getItem('suisui-open-add')) || 0; localStorage.removeItem('suisui-open-add'); } catch { /* ignore */ }
+      if (at && Date.now() - at < 60000) setTimeout(openAdd, 250);
+    };
+    addFromLock();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) addFromLock(); });
+  }
   if (isStandalone()) requestPersistence();
   else navigator.storage?.persisted?.().then(value => { persisted = value; $('storage-status').textContent = storageCopy(); }).catch(() => {});
   setInterval(clock, 30000);

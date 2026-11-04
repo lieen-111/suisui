@@ -1,7 +1,7 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-11-04-v1-10-0';
+const VERSION = '2026-11-04-v1-11-0';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
@@ -38,6 +38,15 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
   url.search = '';
   url.hash = '';
+  // Cute fonts: cached the first time they are used, so they also work offline afterwards.
+  if (/\/vendor\/fonts\/|\/fonts-cute\.css$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      const hit = await cache.match(url.href); if (hit) return hit;
+      const res = await fetch(event.request); if (res.ok) cache.put(url.href, res.clone()); return res;
+    })());
+    return;
+  }
   if (!SHELL.includes(url.href)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

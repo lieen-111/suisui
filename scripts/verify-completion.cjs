@@ -81,7 +81,8 @@ let browser;
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await mp.waitForTimeout(200);
-  assert(await ml.evaluate(el => el.scrollTop) > 0, 'Touch swipe scrolls task box');
+  // 1.11: the lock view lists one card per group in a taller area; it only scrolls when the cards overflow it.
+  if (await ml.evaluate(el => el.scrollHeight > el.clientHeight + 4)) assert(await ml.evaluate(el => el.scrollTop) > 0, 'Touch swipe scrolls task box');
   assert.equal(await mp.evaluate(() => window.scrollY), 0, 'Swipe does not move outer page');
   await mp.locator('.lock-task[data-id=seed-5]').click();
   await mp.waitForTimeout(1150);
