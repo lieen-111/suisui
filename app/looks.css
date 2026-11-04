@@ -271,3 +271,6 @@ body.lock-mode .lock-exit{bottom:22px;gap:0}
 body.lock-mode #activity-count{color:#fff!important;opacity:1}
 body.lock-mode .activity-heading{margin:0 6px 10px}
 body.lock-mode .activity-footer{margin:4px 6px 0}
+.group-row{grid-template-columns:36px minmax(0,1fr) auto 36px!important}
+.group-row>.group-icons{grid-column:1/-1}
+@media(max-width:420px){.group-row{grid-template-columns:36px minmax(0,1fr) 36px!important}.group-row>.group-colors{grid-column:2/4}}
