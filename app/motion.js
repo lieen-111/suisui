@@ -68,7 +68,24 @@
     download: nudge('0 3px'), upload: nudge('0 -3px'), share: nudge('0 -3px'), 'share-2': pop, 'file-down': nudge('0 3px'), 'image-down': nudge('0 3px'),
     image: pop, 'image-plus': pop, type: pop, 'grip-vertical': pop, 'notebook-pen': pop, pencil: k([{ rotate: '0deg' }, { rotate: '-18deg' }, { rotate: '0deg' }], 420, spring),
     'list-checks': pop, 'chart-no-axes-column': k([{ scale: '1 1' }, { scale: '1 .6' }, { scale: '1 1.08' }, { scale: '1 1' }], 520, out, '50% 90%'),
-    history: k([{ rotate: '0deg' }, { rotate: '-360deg' }], 700, out), archive: nudge('0 2px'), 'eye-off': pop, eye: pop, 'heart': pop, star: k([{ scale: 1, rotate: '0deg' }, { scale: 1.3, rotate: '72deg' }, { scale: 1, rotate: '72deg' }], 560, spring)
+    history: k([{ rotate: '0deg' }, { rotate: '-360deg' }], 700, out), archive: nudge('0 2px'), 'eye-off': pop, eye: pop, 'heart': pop, star: k([{ scale: 1, rotate: '0deg' }, { scale: 1.3, rotate: '72deg' }, { scale: 1, rotate: '72deg' }], 560, spring),
+    // 1.16: the rest of the icons the app uses
+    'sliders-horizontal': k([{ scale: 1 }, { scale: '1.15 .85' }, { scale: '.92 1.08' }, { scale: 1 }], 560, out),
+    'chart-column': k([{ scale: '1 1' }, { scale: '1 .55' }, { scale: '1 1.1' }, { scale: '1 1' }], 560, out, '50% 92%'),
+    'square-plus': k([{ rotate: '0deg', scale: 1 }, { rotate: '90deg', scale: 1.1 }, { rotate: '90deg', scale: 1 }], 520, spring),
+    'refresh-cw': k([{ rotate: '0deg' }, { rotate: '360deg' }], 700, out),
+    'list-todo': k([{ translate: '0 0' }, { translate: '3px 0' }, { translate: '0 0' }], 420, spring),
+    'arrow-up': k([{ translate: '0 0' }, { translate: '0 -5px' }, { translate: '0 0' }], 420, spring),
+    folder: k([{ scale: 1, rotate: '0deg' }, { scale: 1.1, rotate: '-8deg' }, { scale: 1, rotate: '0deg' }], 480, spring),
+    'square-check-big': pop, 'calendar-check': pop,
+    'square-dashed': k([{ rotate: '0deg' }, { rotate: '90deg' }], 520, spring),
+    smartphone: k([{ rotate: '0deg' }, { rotate: '-10deg' }, { rotate: '8deg' }, { rotate: '-4deg' }, { rotate: '0deg' }], 520),
+    'sticky-note': k([{ rotate: '0deg', translate: '0 0' }, { rotate: '-8deg', translate: '0 -3px' }, { rotate: '0deg', translate: '0 0' }], 500, spring),
+    'circle-off': k([{ rotate: '0deg' }, { rotate: '-90deg' }, { rotate: '0deg' }], 520),
+    'search-x': k([{ rotate: '0deg' }, { rotate: '-12deg' }, { rotate: '10deg' }, { rotate: '0deg' }], 460),
+    'hard-drive': nudge('0 2px'), briefcase: k([{ translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 0' }], 420, spring),
+    leaf: k([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '6deg' }, { rotate: '0deg' }], 600, out, '20% 80%'),
+    'notebook-text': pop, 'list-filter': nudge('0 2px'), 'ellipsis': k([{ scale: '1 1' }, { scale: '1.25 .8' }, { scale: '1 1' }], 380, spring)
   };
   const iconName = svg => [...svg.classList].map(c => c.startsWith('lucide-') ? c.slice(7) : '').find(n => n && n !== 'icon') || '';
   function animateIcon(svg) {
@@ -125,5 +142,57 @@
     }));
   }, true);
 
-  window.SuiSuiMotion = { animateIcon, ICONS };
+  /* ---------- list: rows glide to their new place (FLIP), new rows fade in, counts bump ---------- */
+  // app.js calls capture() at the start of render() and the returned function at the end.
+  const ROWS = '#task-list .task-row[data-task-id], #later-list .task-row[data-task-id]';
+  const COUNTS = ['done-count', 'later-count', 'pending-count', 'progress-number'];
+  function capture() {
+    if (!on() || document.body.dataset.view !== 'tasks' || document.body.classList.contains('dragging')) return null;
+    const before = new Map();
+    document.querySelectorAll(ROWS).forEach(r => { if (!r.dataset.swipe) before.set(r.dataset.taskId, r.getBoundingClientRect().top); });
+    if (before.size > 80) return null;
+    const counts = COUNTS.map(id => document.getElementById(id)?.textContent);
+    const firstRender = before.size === 0;
+    return () => {
+      const rows = [...document.querySelectorAll(ROWS)];
+      if (rows.length > 80) return;
+      let fresh = 0;
+      rows.forEach(r => {
+        if (r.dataset.swipe) return;
+        const old = before.get(r.dataset.taskId), now = r.getBoundingClientRect().top;
+        if (old === undefined) {
+          if (firstRender) return;
+          r.animate([{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.min(fresh++, 6) * 30, easing: out, fill: 'backwards' });
+        } else if (Math.abs(old - now) > 1) {
+          r.animate([{ translate: `0 ${old - now}px` }, { translate: '0 0' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1.05)' });
+        }
+      });
+      COUNTS.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && counts[i] !== undefined && el.textContent !== counts[i] && el.offsetParent) el.animate([{ scale: 1 }, { scale: 1.35 }, { scale: 1 }], { duration: 380, easing: out });
+      });
+    };
+  }
+
+  /* ---------- sections (以后 / 已完成 / 更多卡片设置) open and close with height ---------- */
+  document.addEventListener('click', e => {
+    const summary = e.target.closest('details > summary');
+    if (!summary || !on()) return;
+    const details = summary.parentElement;
+    const body = [...details.children].filter(c => c !== summary);
+    if (!body.length) return;
+    e.preventDefault();
+    if (details.dataset.animating) return;
+    details.dataset.animating = '1';
+    const done = () => { delete details.dataset.animating; body.forEach(c => { c.style.overflow = ''; }); };
+    if (!details.open) {
+      details.open = true;
+      body.forEach((c, i) => { const h = c.offsetHeight; c.style.overflow = 'hidden'; c.animate([{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }], { duration: 340, easing: out }).finished.then(i === 0 ? done : null, done); });
+    } else {
+      const anims = body.map(c => { c.style.overflow = 'hidden'; return c.animate([{ height: c.offsetHeight + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 260, easing: 'cubic-bezier(.4,0,.6,1)' }); });
+      Promise.all(anims.map(a => a.finished)).then(() => { details.open = false; done(); }, () => { details.open = false; done(); });
+    }
+  }, true);
+
+  window.SuiSuiMotion = { animateIcon, ICONS, capture };
 })();

@@ -407,3 +407,85 @@ html[data-motion=on] .settings-home .settings-list>button.is-pressed{scale:1;bac
 /* Grouped live preview: start under the 实时预览 tag; the list fades out if it is longer than the space, the remaining line stays */
 .settings-preview:has(.mini-card.grouped) .mini-card.grouped{max-height:calc(100% - 50px)}
 .mini-card.grouped .mini-list{-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),#0000);mask-image:linear-gradient(#000 calc(100% - 18px),#0000)}
+
+/* ================= 1.16 ================= */
+/* 数据: backup state on top, the buttons as rows, quiet links under the box */
+.backup-head{display:flex;gap:12px;align-items:flex-start;padding:2px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.backup-head>svg{flex:none;width:34px;height:34px;padding:8px;border-radius:11px;background:color-mix(in srgb,currentColor 8%,transparent)}
+.backup-head b{display:block;font-size:15px;font-weight:620}
+#backup-state.is-old{color:#c86a12}
+@media(prefers-color-scheme:dark){#backup-state.is-old{color:#ffb35c}}
+html[data-style=night] #backup-state.is-old{color:#ffb35c}
+.backup-head small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.settings-page[data-page=data] .button-row{display:flex;flex-direction:column;gap:0}
+.settings-page[data-page=data] .button-row .secondary-button{justify-content:flex-start;gap:12px;min-height:50px;border:0;background:none!important;box-shadow:none!important;padding:0 2px;font-size:15px;border-radius:0}
+.settings-page[data-page=data] .button-row .secondary-button+.secondary-button{border-top:1px solid var(--line)}
+.settings-page .data-links{display:flex;justify-content:center;gap:22px;border:0!important;margin:16px 0 0!important;padding:0!important}
+.settings-page .data-links a{font-size:12.5px;color:var(--muted);text-decoration:none}
+/* Add sheet: default choices light, changed choices dark; rows that scroll fade at the right edge */
+#add-form .chip.active.is-default{background:color-mix(in srgb,var(--ink,#1d1d1f) 8%,transparent)!important;color:var(--ink,#1d1d1f)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink,#1d1d1f) 16%,transparent)!important;font-weight:600}
+html[data-style=night] #add-form .chip.active.is-default{background:#ffffff14!important;color:#f5f5f7!important;box-shadow:inset 0 0 0 1px #ffffff24!important}
+@media(prefers-color-scheme:dark){#add-form .chip.active.is-default{background:#ffffff14!important;color:#f5f5f7!important;box-shadow:inset 0 0 0 1px #ffffff24!important}}
+#add-form .add-row .chip-row{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),#0000);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),#0000);padding-right:28px}
+/* Idle timer = a quiet outline; filled only while it runs or is paused */
+.task-row .timer-pill:not(.is-on):not(.is-paused){height:30px;padding:0 10px 0 8px;background:transparent!important;color:var(--ink,#1d1d1f)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink,#1d1d1f) 20%,transparent);font-weight:550}
+.task-row .timer-pill:not(.is-on):not(.is-paused) svg{width:11px;height:11px;opacity:.8}
+html[data-style=night] .task-row .timer-pill:not(.is-on):not(.is-paused){color:#e5e5ea!important;box-shadow:inset 0 0 0 1px #ffffff2a}
+@media(prefers-color-scheme:dark){.task-row .timer-pill:not(.is-on):not(.is-paused){color:#e5e5ea!important;box-shadow:inset 0 0 0 1px #ffffff2a}}
+/* 外观 tabs */
+.look-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:6px 0 16px;border-radius:13px;background:color-mix(in srgb,var(--ink,#1d1d1f) 7%,transparent)}
+.look-tabs button{position:relative;z-index:1;height:34px;border-radius:10px;font-size:14px;font-weight:600;color:var(--muted);transition:color .25s}
+.look-tabs button[aria-selected=true]{color:var(--ink)}
+.look-tabs-pill{position:absolute;left:3px;top:3px;bottom:3px;width:calc(50% - 3px);border-radius:10px;background:var(--surface-strong,#fff);box-shadow:0 1px 3px #0000001f,0 0 0 .5px #0000000d;transition:translate .42s cubic-bezier(.34,1.3,.64,1)}
+.settings-page[data-tab=card] .look-tabs-pill{translate:100% 0}
+@media(prefers-color-scheme:dark){.look-tabs-pill{background:#3a3a3c}}
+html[data-style=night] .look-tabs-pill{background:#2a2a2d}
+html[data-style=night] .look-tabs{background:#ffffff0f}
+html[data-style=paper] .look-tabs,html[data-style=paper] .look-tabs-pill{border-radius:7px}
+.settings-page[data-tab=app] .look-section[data-look=card],.settings-page[data-tab=card] .look-section[data-look=app]{display:none}
+.settings-page:not([data-tab=all]) .look-section .look-group{display:none}
+html[data-motion=on] .settings-page[data-tab] .look-section{animation:tab-in .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes tab-in{from{opacity:0;translate:0 6px}}
+.motion-settings .ag-switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+/* One selected style for every picker on 外观: a 2px ring in the text colour; no extra ticks or radio dots */
+.swatch input:checked~svg,.swatch input:checked~i{display:none!important}
+.swatch:has(input:checked){outline:2px solid var(--color);outline-offset:4px}
+.wallpaper-library .wallpaper-choice.active:after{display:none!important}
+.segmented button .seg-check,.segmented button:after{display:none!important}
+/* 分组: quiet rows that open into an editor */
+.group-list{gap:0!important;margin:0 0 4px!important}
+.group-list .group-row{display:block!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+.group-list .group-row+.group-row{border-top:1px solid var(--line)!important}
+.group-head{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:0 2px;text-align:left;color:var(--ink)}
+.group-head .group-icon-btn{width:34px;height:34px}
+.group-head-name{flex:1;min-width:0;font-size:15.5px;font-weight:560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-head-count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.group-head>svg:last-child{width:16px;height:16px;color:var(--muted);opacity:.7;transition:rotate .35s cubic-bezier(.34,1.4,.64,1)}
+.group-row.is-open .group-head>svg:last-child{rotate:180deg}
+.group-editor{opacity:0;transition:opacity .25s}
+.group-row.is-open .group-editor{display:block;opacity:1;padding:0 2px 14px}
+.group-row:not(.is-open) .group-editor{height:0;overflow:hidden;visibility:hidden}
+.group-field{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px;padding:8px 0}
+.group-field>span{font-size:13px;color:var(--muted)}
+.group-field .group-name{height:40px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 4%,transparent);font-size:15px;color:var(--ink);width:100%}
+.group-field .group-name:focus{outline:2px solid var(--ink);outline-offset:-1px}
+.group-field .group-colors{display:flex;flex-wrap:wrap;gap:10px}
+.group-field .group-color{width:26px;height:26px;border-radius:50%;background:var(--c);border:0}
+.group-field .group-color.active{outline:2px solid var(--c);outline-offset:3px}
+.group-field .group-icons{padding:0;grid-template-columns:repeat(auto-fill,minmax(38px,1fr))}
+.group-field .group-icon-choice{height:38px}
+.group-field .group-icon-choice.active{background:color-mix(in srgb,var(--g) 16%,transparent);color:var(--g);box-shadow:inset 0 0 0 1.5px var(--g)}
+.group-delete{display:inline-flex;align-items:center;gap:6px;margin-top:6px;height:36px;padding:0 4px;font-size:13.5px;color:#d0453a}
+.group-delete svg{width:15px;height:15px}
+#add-group{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:0 2px;border:0!important;border-top:1px solid var(--line)!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--ink);font-size:15.5px;font-weight:560;justify-content:flex-start}
+#add-group svg{width:34px;height:34px;padding:8px;border-radius:11px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+/* Secondary text a step darker so it reads on bright wallpapers */
+html[data-style=glass]{--muted:#5f6066}
+@media(prefers-color-scheme:dark){html[data-style=glass]{--muted:#a1a1a8}}
+html[data-motion=on] .group-row.is-open .group-editor{animation:row-in .36s cubic-bezier(.2,.8,.2,1)}
+.settings-page #add-group svg{display:block}
+.group-field .group-colors,.group-field .group-icons{grid-column:auto!important;grid-row:auto!important}
+.group-field{align-items:start}
+.group-field>span{padding-top:10px}
+.group-field:has(.group-colors)>span{padding-top:4px}
+html[data-motion=on] .completed-section summary svg,html[data-motion=on] .more-appearance>summary svg{transition:transform .42s cubic-bezier(.34,1.5,.64,1)}

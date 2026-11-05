@@ -61,7 +61,7 @@
   const CUTE = ['kuaile', 'huangyou', 'shouxie'];
   function ensureCuteFonts() { if (document.getElementById('cute-fonts')) return; const l = document.createElement('link'); l.id = 'cute-fonts'; l.rel = 'stylesheet'; l.href = 'fonts-cute.css'; document.head.append(l); }
   const TEXT_SIZES = [['小', .9], ['标准', 1], ['大', 1.12], ['特大', 1.26]];
-  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, uiStyle: 'glass', lang: 'zh', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false };
+  const defaults = { font: 'system', textSize: 1, tipsSeen: false, wallpaperPicked: false, accent: 'ink', palette2: true, uiStyle: 'glass', lang: 'zh', density: 'comfortable', wallpaper: 'lake', photo: '', motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, intensity: 2, cardMaterial: 'frosted', cardColor: '#1c1c1e', cardTransparency: 18, cardText: 'auto', autoArchive: true, lockNotify: false, lockScreen: false, lockPrivacy: false, installDismissed: false, androidSetupSeen: false, lastBackup: 0, backupNudged: 0, firstUse: 0 };
   const examples = () => [
     { id: 'seed-1', title: '把锁屏待办的想法做出来', group: 'work', pinned: true },
     { id: 'seed-2', title: '整理今天的拍摄素材', group: 'work' },
@@ -378,6 +378,7 @@
     $('tile-lock').classList.toggle('is-on', !!on);
     $('sum-list').innerHTML = `${state.groups.slice(0, 4).map(g => `<span class="dot" style="background:${g.color}"></span>`).join('')}${state.groups.length} 个`;
     $('sum-lang').textContent = s.lang === 'en' ? 'English' : '简体中文';
+    renderBackupState();
   }
 
   /* ---------- Add sheet (phones) / inline form (wider screens) ---------- */
@@ -399,6 +400,7 @@
     if (customTime && time && document.activeElement !== $('task-time-custom')) $('task-time-custom').value = time;
     syncPickers();
     renderAddToolbar();
+    markAddDefaults();
   }
   // One compact toolbar instead of five rows of options: each tool shows its current value and opens its own row.
   let addPanel = '', editPanel = '';
@@ -432,7 +434,15 @@
     });
     input.hidden = !custom;
     if (custom && minutes && document.activeElement !== input) input.value = String(minutes);
-    if (which === 'edit') renderEditSummary();
+    if (which === 'edit') renderEditSummary(); else markAddDefaults();
+  }
+  // In the add sheet the untouched choices stay light; only what you changed turns dark, so a glance shows what you set.
+  function markAddDefaults() {
+    const defaults = { addWhen: 'today', addTime: '', addRepeat: 'none', addDuration: '0', addGroup: state.groups[0]?.id };
+    document.querySelectorAll('#add-form .chip').forEach(b => {
+      const key = Object.keys(defaults).find(k => k in b.dataset);
+      b.classList.toggle('is-default', !!key && b.dataset[key] === defaults[key]);
+    });
   }
   function readCustom(input) { const n = Math.round(Number(input.value)); return Number.isFinite(n) && n >= 1 && n <= 600 ? n : 0; }
   function openAdd() {
@@ -597,6 +607,7 @@
     document.querySelectorAll('[data-filter]').forEach(b => { b.classList.toggle('active', b.dataset.filter === filter); b.setAttribute('aria-pressed', String(b.dataset.filter === filter)); });
   }
   function render() {
+    const glide = window.SuiSuiMotion?.capture?.();
     const todo = pending(), done = doneList(), upcoming = later();
     const inFilter = t => filter === 'all' || (filter === 'repeat' ? t.repeat !== 'none' : groupOf(t.group).id === filter);
     const visible = todo.filter(inFilter);
@@ -642,6 +653,7 @@
     renderFocusBar();
     icons();
     $('storage-status').textContent = storageCopy();
+    glide?.();
   }
   function renderArchive() {
     const items = [...state.archive].sort((a, b) => b.archivedAt - a.archivedAt);
@@ -650,11 +662,14 @@
     const fmt = new Intl.DateTimeFormat(LOC(), { month: 'numeric', day: 'numeric' });
     $('archive-list').innerHTML = items.slice(0, 60).map(t => `<div class="done-row archive-row" data-archived-id="${esc(t.id)}">${icon('archive')}<s class="done-text">${esc(t.title)}</s><span class="archive-date">${fmt.format(t.completedAt || t.archivedAt)}</span><button class="icon-button" data-action="unarchive" data-id="${esc(t.id)}" aria-label="放回待办：${esc(t.title)}" title="放回待办">${icon('rotate-ccw')}</button></div>`).join('') + (items.length > 60 ? `<p class="archive-more">只显示最近 60 条，导出备份可查看全部 ${items.length} 条。</p>` : '');
   }
-  let iconPicking = '';
+  let iconPicking = '', editingGroup = '';
   function renderGroupSettings() {
     const list = $('group-list');
     if (list.contains(document.activeElement) && document.activeElement.matches('input')) return; // don't rebuild while the user is typing a name
-    list.innerHTML = state.groups.map(g => `<div class="group-row${iconPicking === g.id ? ' picking' : ''}" data-group-id="${esc(g.id)}"><button type="button" class="group-icon-btn" data-group-icon-pick="${esc(g.id)}" style="--g:${g.color}" aria-label="分组图标" aria-expanded="${iconPicking === g.id}">${g.icon ? icon(g.icon) : '<span class="dot"></span>'}</button><label class="sr-only" for="group-name-${esc(g.id)}">分组名称</label><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}"><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div><button class="icon-button" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}</button>${iconPicking === g.id ? `<div class="group-icons" role="group" aria-label="选择图标"><button type="button" class="group-icon-choice${!g.icon ? ' active' : ''}" data-group-icon="" data-group-id="${esc(g.id)}" aria-label="不用图标">${icon('circle-off')}</button>${GROUP_ICONS.map(n => `<button type="button" class="group-icon-choice${g.icon === n ? ' active' : ''}" data-group-icon="${n}" data-group-id="${esc(g.id)}" aria-label="${n}">${icon(n)}</button>`).join('')}</div>` : ''}</div>`).join('');
+    // 1.16: each group is one quiet row (icon, name, how many open, chevron); tapping it opens its editor below:
+    // name field, colour (selected = ring), icon grid and delete. One group open at a time.
+    const open = id => state.tasks.filter(t => !t.done && groupOf(t.group).id === id).length;
+    list.innerHTML = state.groups.map(g => { const on = editingGroup === g.id; return `<div class="group-row${on ? ' is-open' : ''}" data-group-id="${esc(g.id)}"><button type="button" class="group-head" data-group-toggle="${esc(g.id)}" aria-expanded="${on}"><span class="group-icon-btn" style="--g:${g.color}" aria-hidden="true">${g.icon ? icon(g.icon) : '<span class="dot"></span>'}</span><span class="group-head-name">${esc(g.name)}</span><span class="group-head-count">${open(g.id)} 件</span>${icon('chevron-down')}</button><div class="group-editor"><label class="group-field"><span>名称</span><input class="group-name" id="group-name-${esc(g.id)}" value="${esc(g.name)}" maxlength="12" data-group-id="${esc(g.id)}" aria-label="分组名称"></label><div class="group-field"><span>颜色</span><div class="group-colors" role="group" aria-label="${esc(g.name)}的颜色">${GROUP_COLORS.map(c => `<button class="group-color${c === g.color ? ' active' : ''}" style="--c:${c}" data-group-color="${c}" data-group-id="${esc(g.id)}" aria-label="颜色 ${c}" aria-pressed="${c === g.color}"></button>`).join('')}</div></div><div class="group-field"><span>图标</span><div class="group-icons" role="group" aria-label="选择图标"><button type="button" class="group-icon-choice${!g.icon ? ' active' : ''}" data-group-icon="" data-group-id="${esc(g.id)}" aria-label="不用图标">${icon('circle-off')}</button>${GROUP_ICONS.map(n => `<button type="button" class="group-icon-choice${g.icon === n ? ' active' : ''}" data-group-icon="${n}" data-group-id="${esc(g.id)}" aria-label="${n}" style="--g:${g.color}">${icon(n)}</button>`).join('')}</div></div><button type="button" class="group-delete" data-group-delete="${esc(g.id)}" aria-label="删除分组：${esc(g.name)}" title="删除分组">${icon('trash-2')}删除分组</button></div></div>`; }).join('');
     $('add-group').disabled = state.groups.length >= 12;
   }
   // Lock screen (1.11, Android lock view): one frosted card per group, like the user's reference — group emoji, name and
@@ -801,7 +816,7 @@
       (s.photo ? tile('custom', '我的照片', `<img src="${esc(s.photo)}" alt="" loading="lazy">`) : '') +
       WALLPAPERS.map(w => tile(w.id, w.name, `<img src="${w.thumb}" alt="" loading="lazy" style="object-position:${w.pos}">`, w.mono ? ' mono' : '')).join('');
     $('wallpaper-legend').textContent = SYSTEM_WALLPAPER ? '锁屏壁纸' : '预览壁纸';
-    $('wallpaper-note').textContent = SYSTEM_WALLPAPER ? '默认用你手机自己的壁纸；也可以给碎碎清单的锁屏单独换一张。' : '网页读不到手机壁纸，这里只影响预览。可以选一张和你锁屏一样的照片来对照。';
+    $('wallpaper-note').textContent = SYSTEM_WALLPAPER ? '默认用手机自己的壁纸，也可以单独换一张。' : '网页读不到手机壁纸，这里只影响预览。';
   }
   function applyCardAppearance() {
     const s = state.settings;
@@ -1018,16 +1033,37 @@
   }
   async function exportBackup() {
     if (PREVIEW) { showToast('预览页不能下载文件，请在正式网站导出'); return; }
-    if (NATIVE) { try { NATIVE.exportBackup(JSON.stringify(backupPayload(), null, 2), `suisui-backup-${dayKey()}.json`); } catch { showToast('导出失败，请重试'); } return; }
+    if (NATIVE) { try { NATIVE.exportBackup(JSON.stringify(backupPayload(), null, 2), `suisui-backup-${dayKey()}.json`); markBackup(); } catch { showToast('导出失败，请重试'); } return; }
     const name = `suisui-backup-${dayKey()}.json`;
     const blob = new Blob([JSON.stringify(backupPayload(), null, 2)], { type: 'application/json' });
     try {
       const file = new File([blob], name, { type: 'application/json' });
-      if (isIOS() && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: '碎碎清单备份' }); showToast('已生成备份，可存到“文件”'); return; }
+      if (isIOS() && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: '碎碎清单备份' }); markBackup(); showToast('已生成备份，可存到“文件”'); return; }
     } catch (error) { if (error?.name === 'AbortError') return; }
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+    markBackup();
     showToast('已导出待办备份');
+  }
+  // Everything lives on this device only, so keep track of the last backup and nudge (at most weekly) when it gets old.
+  const DAY_MS = 864e5;
+  function markBackup() { state.settings.lastBackup = Date.now(); save(); renderBackupState(); }
+  function renderBackupState() {
+    const at = state.settings.lastBackup, el = $('backup-state');
+    if (!el) return;
+    const days = at ? Math.floor((Date.now() - at) / DAY_MS) : -1;
+    el.textContent = days < 0 ? '还没有备份过' : days === 0 ? '今天已备份' : `上次备份：${days} 天前`;
+    el.classList.toggle('is-old', days < 0 || days >= 14);
+  }
+  function backupNudge() {
+    const s = state.settings, now = Date.now();
+    if (!s.firstUse) { s.firstUse = now; save(); return; }
+    const count = state.tasks.length + state.archive.length;
+    const since = Math.max(s.lastBackup || 0, s.firstUse);
+    if (count < 5 || now - since < 14 * DAY_MS || now - (s.backupNudged || 0) < 7 * DAY_MS) return;
+    s.backupNudged = now; save();
+    const days = Math.floor((now - since) / DAY_MS);
+    setTimeout(() => showToast(s.lastBackup ? `已经 ${days} 天没备份了，待办只存在这台手机上` : '待办只存在这台手机上，建议备份一份', exportBackup, '备份', 10000), 1500);
   }
   function parseBackup(text) {
     let data;
@@ -1197,6 +1233,7 @@
     if (state.groups.length >= 12) return;
     const used = new Set(state.groups.map(g => g.color));
     const group = { id: newId('g'), name: `分组 ${state.groups.length + 1}`, color: GROUP_COLORS.find(c => !used.has(c)) || GROUP_COLORS[state.groups.length % GROUP_COLORS.length] };
+    editingGroup = group.id;
     state.groups.push(group); save(); render();
     const input = document.querySelector(`.group-name[data-group-id="${group.id}"]`);
     input?.focus(); input?.select();
@@ -1861,6 +1898,10 @@
     if (b.dataset.groupColor) { const g = state.groups.find(x => x.id === b.dataset.groupId); if (g) { g.color = b.dataset.groupColor; save(); render(); } }
     if (b.dataset.groupDelete) deleteGroup(b.dataset.groupDelete);
     if (b.dataset.groupIconPick) { iconPicking = iconPicking === b.dataset.groupIconPick ? '' : b.dataset.groupIconPick; renderGroupSettings(); icons($('group-list')); }
+    if (b.dataset.groupToggle) {
+      editingGroup = editingGroup === b.dataset.groupToggle ? '' : b.dataset.groupToggle;
+      document.querySelectorAll('.group-row').forEach(r => { const on = r.dataset.groupId === editingGroup; r.classList.toggle('is-open', on); r.querySelector('.group-head').setAttribute('aria-expanded', String(on)); });
+    }
     if (b.dataset.groupIcon !== undefined && b.dataset.groupId) { const g = state.groups.find(x => x.id === b.dataset.groupId); if (g) { g.icon = b.dataset.groupIcon; iconPicking = ''; save(); render(); renderGroupSettings(); icons($('group-list')); } }
     const id = b.dataset.id, task = state.tasks.find(t => t.id === id);
     switch (b.dataset.action) {
@@ -2085,6 +2126,15 @@
     showToast('已恢复示例清单', () => { state.tasks = previous.tasks; state.groups = previous.groups; save(); render(); });
   });
   $('clear-done').addEventListener('click', moveDoneToArchive);
+  // 外观 has two tabs: App 界面 / 锁屏卡片. (Automated checks can show both at once with SUISUI_LOOK_ALL.)
+  const lookPage = document.querySelector('.settings-page[data-page=look]');
+  function setLookTab(tab) {
+    lookPage.dataset.tab = window.SUISUI_LOOK_ALL ? 'all' : tab;
+    document.querySelectorAll('[data-look-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lookTab === tab)));
+    $('settings-scroll').scrollTop = 0;
+  }
+  document.querySelectorAll('[data-look-tab]').forEach(b => b.addEventListener('click', () => setLookTab(b.dataset.lookTab)));
+  setLookTab('app');
   $('export-button').addEventListener('click', exportBackup);
   $('import-button').addEventListener('click', () => $('import-file').click());
   $('import-file').addEventListener('change', event => { openImport(event.target.files[0]); event.target.value = ''; });
@@ -2157,6 +2207,8 @@
     addFromLock();
     document.addEventListener('visibilitychange', () => { if (!document.hidden) addFromLock(); });
   }
+  renderBackupState();
+  if (!LOCK_MODE && !PREVIEW) backupNudge();
   if (isStandalone()) requestPersistence();
   else navigator.storage?.persisted?.().then(value => { persisted = value; $('storage-status').textContent = storageCopy(); }).catch(() => {});
   setInterval(clock, 30000);

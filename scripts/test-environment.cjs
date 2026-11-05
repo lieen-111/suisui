@@ -10,9 +10,12 @@ const chromium = {
     const browser = await realChromium.launch(options);
     const newContext = browser.newContext.bind(browser);
     browser.newContext = async (opts = {}) => {
-      const { demo = true, ...rest } = opts;
+      const { demo = true, lookTabs = false, ...rest } = opts;
       const ctx = await newContext(rest);
       if (demo) await ctx.addInitScript(demoScript);
+      // 1.16 外观 has App / 锁屏卡片 tabs. Older checks reach controls on both halves directly, so they see both
+      // at once; pass { lookTabs: true } to test the tabs themselves (verify-v19 does).
+      if (!lookTabs) await ctx.addInitScript(() => { window.SUISUI_LOOK_ALL = true; });
       // HARVEST_ZH=file: collect every Chinese UI string the tests make visible (used to build app/i18n.js).
       if (process.env.HARVEST_ZH) {
         await ctx.exposeBinding('__zhReport', (_, list) => fs.appendFileSync(process.env.HARVEST_ZH, list.join('\n') + '\n'));

@@ -17,15 +17,18 @@
   let ready = false;
   const renderStatus = () => {
     if (applyingUpdate) status.textContent = '正在更新';
-    else if (registration?.waiting) status.textContent = '新版已就绪';
+    else if (registration?.waiting && navigator.serviceWorker.controller) status.textContent = '新版已就绪';
     else if (ready) status.textContent = navigator.onLine ? '已准备好，可离线使用' : '离线可用';
   };
   // Visible prompt in the header; the button in “关于” does the same.
   const chip = document.getElementById('update-chip');
   chip?.addEventListener('click', () => update.click());
+  // A waiting worker is only an update when an older version already controls the page; on a first visit the
+  // fresh worker passes through "installed" on its way to active and must not show the update prompt.
   const showUpdate = () => {
-    update.hidden = !registration.waiting;
-    if (chip) chip.hidden = !registration.waiting;
+    const waiting = !!(registration.waiting && navigator.serviceWorker.controller);
+    update.hidden = !waiting;
+    if (chip) chip.hidden = !waiting;
     renderStatus();
   };
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -48,7 +51,7 @@
     const watchInstall = worker => {
       if (!worker) return;
       worker.addEventListener('statechange', () => {
-        if (worker.state === 'installed') showUpdate();
+        if (worker.state === 'installed' || worker.state === 'activated') showUpdate();
         if (worker.state === 'redundant' && !ready) status.textContent = '离线准备失败，请联网后重新打开';
       });
     };

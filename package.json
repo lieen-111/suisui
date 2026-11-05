@@ -19,6 +19,7 @@
     "test:ios-bridge": "node scripts/verify-ios-bridge.cjs",
     "test:v17": "node scripts/verify-v17.cjs",
     "test:v19": "node scripts/verify-v19.cjs",
+    "test:v116": "node scripts/verify-v116.cjs",
     "build:night": "python3 scripts/build-night-css.py"
   },
   "devDependencies": {

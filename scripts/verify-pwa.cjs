@@ -56,6 +56,7 @@ const server = http.createServer((req, res) => {
         await page.locator('#add-backdrop').click();
         await page.locator('.nav-button[data-view="settings"]').click();
         await page.locator('[data-settings-page="look"]').click();
+        if (await page.locator('[data-look-tab=card]').isVisible()) await page.locator('[data-look-tab=card]').click();
         await page.locator('#more-appearance').evaluate(d => { d.open = true; });
         await page.locator('[data-material="glass"]').click();
         await context.setOffline(true);

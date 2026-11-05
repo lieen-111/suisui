@@ -5,6 +5,12 @@
 (() => {
   'use strict';
   const D = {
+    // 1.16
+    '外观分类': 'Appearance sections', '动效': 'Motion', '开启动效': 'Motion on', '按下回弹、图标动画、完成时文字碎开': 'Press springs, icon animations, text shatter on finish',
+    '清单和锁屏一起变；可爱字体第一次显示稍慢。': 'List and lock screen change together; playful fonts load once.',
+    '默认用手机自己的壁纸，也可以单独换一张。': 'Uses your phone wallpaper by default; you can pick another.', '网页读不到手机壁纸，这里只影响预览。': "A web page can't read your phone wallpaper; this only changes the preview.",
+    '还没有备份过': 'Never backed up', '今天已备份': 'Backed up today', '待办只存在这台设备上，不会上传。换手机前先导出备份。': 'Your to-dos stay on this device only. Export a backup before switching phones.',
+    '待办只存在这台手机上，建议备份一份': 'Your to-dos live only on this phone — make a backup', '备份': 'Back up', '新建分组': 'New group', '名称': 'Name', '分组名称': 'Group name', '图标': 'Icon', '颜色': 'Color', '删除分组': 'Delete group',
     // brand & navigation
     '碎碎清单': 'SuiSui', '碎碎清单首页': 'SuiSui home', '主导航': 'Main navigation', '清单': 'List', '设置': 'Settings', '回顾': 'Review', '关于': 'About', '关于碎碎清单': 'About SuiSui',
     '搜索': 'Search', '搜索待办': 'Search to-dos', '搜索待办、备注、子任务、历史': 'Search to-dos, notes, subtasks, history', '取消': 'Cancel', '完成': 'Done', '关闭': 'Close', '编辑': 'Edit', '删除': 'Delete', '撤销': 'Undo', '添加': 'Add', '分享': 'Share', '保存图片': 'Save image', '知道了': 'Got it', '知道了，不再显示': "Got it, don't show again",
@@ -94,6 +100,9 @@
     [/^(.*) · (\d+) 件都完成了$/, (_, a, b) => `${a} · all ${b} done`],
     [/^(.*) · 给今天留一件想做的事$/, (_, a) => `${a} · add one thing for today`],
     [/^今天 · (\d+)\/(\d+)$/, (_, a, b) => `Today · ${a}/${b}`],
+    [/^(\d+) 件$/, (_, a) => `${a} open`],
+    [/^上次备份：(\d+) 天前$/, (_, a) => `Last backup: ${a} days ago`],
+    [/^已经 (\d+) 天没备份了，待办只存在这台手机上$/, (_, a) => `No backup for ${a} days — your to-dos live only on this phone`],
     [/^剩余 (\d+) 项 · 已完成 (\d+) 项$/, (_, a, b) => `${a} left · ${b} done`],
     [/^全部完成 · (\d+) 项$/, (_, a) => `All ${a} done`],
     [/^碎碎清单 · (\d+) 项待完成$/, (_, a) => `SuiSui · ${a} to do`],
