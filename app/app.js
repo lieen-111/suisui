@@ -368,7 +368,7 @@
     const img = $('tile-look-photo');
     if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;
     const card = $('home-card'), mini = $('mini-card');
-    ['--card-bg', '--card-ink', '--card-blur'].forEach(k => card.style.setProperty(k, mini.style.getPropertyValue(k) || $('activity').style.getPropertyValue(k)));
+    ['--card-bg', '--card-ink', '--card-blur', '--card-check', '--card-on-check'].forEach(k => card.style.setProperty(k, mini.style.getPropertyValue(k) || $('activity').style.getPropertyValue(k)));
     const open = pending();
     $('home-card-count').textContent = $('activity-count').textContent;
     card.classList.toggle('grouped', groupedLock() && cardTasks().length > 0);
@@ -839,6 +839,7 @@
       card.style.setProperty('--card-muted', light ? '#e3e3e8' : '#48484c');
       card.style.setProperty('--card-rule', light ? '#ffffff38' : '#0000002a');
       card.style.setProperty('--card-check', light ? '#ececf0' : '#3a3a3c');
+      card.style.setProperty('--card-on-check', light ? '#1d1d1f' : '#f5f5f7');
     }
     $('card-color').value = s.cardColor;
     $('card-color-value').textContent = s.cardColor.toUpperCase();

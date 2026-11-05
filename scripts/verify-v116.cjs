@@ -120,7 +120,32 @@ let browser;
     await context.close();
   }
 
+  /* 1.16.1: the running timer on the Android lock screen stays readable on light and dark cards */
+  for (const cardText of ['light', 'dark']) {
+    const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const now = Date.parse(`${day}T10:00:00`);
+    const rec = JSON.stringify({ schema: 2, rev: 1, day, tasks, archive: [], log: [], groups: [{ id: 'work', name: '工作', color: '#2f6fd0', icon: 'briefcase' }, { id: 'life', name: '生活', color: '#d2566f', icon: 'leaf' }],
+      timer: { id: 'b', total: 30 * 60000, endsAt: now + 20 * 60000, left: 0 }, settings: { palette2: true, firstUse: now, tipsSeen: true, cardText, cardColor: '#ffffff' } });
+    await context.addInitScript(raw => { window.SuiSuiAndroid = { load: () => raw, save: j => { raw = j; return true; }, isLockMode: () => true, notificationsAllowed: () => true, permissions: () => '{"notifications":true,"overlay":true}', unlock: () => {}, version: () => 't' }; }, rec);
+    const page = await context.newPage();
+    page.on('pageerror', e => errors.push(e.message));
+    await page.clock.install({ time: new Date(now) });
+    await page.goto(url + '/?mode=lock', { waitUntil: 'networkidle' });
+    const pill = page.locator('.lock-timer.is-on');
+    assert.equal(await pill.count(), 1, 'The running timer shows on the lock card');
+    const ratio = await pill.evaluate(el => {
+      const rgb = c => { const x = document.createElement('i'); x.style.color = c; document.body.append(x); const v = getComputedStyle(x).color.match(/[\d.]+/g).map(Number); x.remove(); return v; };
+      const lum = ([r, g, b]) => [r, g, b].reduce((s, v, i) => { v /= 255; return s + (v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4) * [.2126, .7152, .0722][i]; }, 0);
+      const cs = getComputedStyle(el), bg = rgb(cs.backgroundColor), fg = rgb(cs.color);
+      if (bg.length > 3 && bg[3] < .9) return 0; // a see-through pill is what made it unreadable
+      const a = lum(bg), b = lum(fg); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+    });
+    assert.ok(ratio >= 7, `Running timer text is readable on a ${cardText}-text card (contrast ${ratio.toFixed(1)})`);
+    if (cardText === 'light') await page.screenshot({ path: path.join(review, 'v1161-lock-timer-390.png') });
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.16 backup state + two-week reminder (once a week at most), add sheet defaults light / changes dark, outlined idle timer, 外观 App/锁屏 tabs, group rows open one at a time, rows glide after completion, sections animate, every icon animated, nothing moves with 动效 off.');
+  console.log('PASS: 1.16 backup state + two-week reminder (once a week at most), add sheet defaults light / changes dark, outlined idle timer, 外观 App/锁屏 tabs, group rows open one at a time, rows glide after completion, sections animate, every icon animated, nothing moves with 动效 off, running timer readable on the lock card.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

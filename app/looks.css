@@ -489,3 +489,9 @@ html[data-motion=on] .group-row.is-open .group-editor{animation:row-in .36s cubi
 .group-field>span{padding-top:10px}
 .group-field:has(.group-colors)>span{padding-top:4px}
 html[data-motion=on] .completed-section summary svg,html[data-motion=on] .more-appearance>summary svg{transition:transform .42s cubic-bezier(.34,1.5,.64,1)}
+
+/* 1.16.1 running timer on the lock card: solid pill in the check colour, text in its opposite (was card-bg = almost clear) */
+.lock-timer.is-on{background:var(--card-check);color:var(--card-on-check,#1d1d1f)!important;font-weight:650;box-shadow:0 1px 6px #0000001f}
+.lock-timer.is-on svg{color:var(--card-on-check,#1d1d1f)}
+.lock-timer.is-on:before{background:color-mix(in srgb,var(--card-on-check,#1d1d1f) 12%,transparent)}
+.lock-timer.is-paused{opacity:.9}
