@@ -404,3 +404,6 @@ html[data-style] .settings-home .settings-list{border-radius:var(--tile-r)!impor
 .settings-home .settings-list .row-chev{width:16px;height:16px;color:var(--tile-sub);opacity:.6}
 html[data-motion=on] .settings-home .settings-list>button.is-pressed{scale:1;background:color-mix(in srgb,var(--tile-ink) 5%,transparent)}
 @media(max-width:760px){body[data-view=settings] .app-shell{padding-bottom:0!important}body[data-view=settings] .settings-scroll{padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}}
+/* Grouped live preview: start under the 实时预览 tag; the list fades out if it is longer than the space, the remaining line stays */
+.settings-preview:has(.mini-card.grouped) .mini-card.grouped{max-height:calc(100% - 50px)}
+.mini-card.grouped .mini-list{-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),#0000);mask-image:linear-gradient(#000 calc(100% - 18px),#0000)}
