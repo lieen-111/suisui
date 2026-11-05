@@ -375,6 +375,7 @@
     $('home-card-rows').outerHTML = groupedLock() && cardTasks().length ? `<span id="home-card-rows">${miniGroups(cardTasks())}<div class="hero-foot">${esc($('remaining-label').textContent)}</div></span>` : `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
     const on = IOS_APP ? !!iosStatus().live : ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
     $('tile-lock-state').textContent = s.lockPrivacy ? '隐藏内容' : on ? '已开启' : '未开启';
+    $('tile-lock').classList.toggle('is-on', !!on);
     $('sum-list').innerHTML = `${state.groups.slice(0, 4).map(g => `<span class="dot" style="background:${g.color}"></span>`).join('')}${state.groups.length} 个`;
     $('sum-lang').textContent = s.lang === 'en' ? 'English' : '简体中文';
   }
@@ -742,6 +743,7 @@
   function applySettings() {
     const s = state.settings, accent = accentOf(s), colors = palette[accent], dark = darkScheme.matches || s.uiStyle === 'night', root = document.documentElement.style;
     document.documentElement.dataset.style = LOCK_MODE ? 'lock' : s.uiStyle;
+    document.documentElement.dataset.motion = s.motion ? 'on' : 'off';
     root.setProperty('--on-accent', accent === 'lime' ? '#0a0a0b' : '#ffffff');
     $('swatch-lime').hidden = s.uiStyle !== 'night';
     document.querySelectorAll('[data-ui-style]').forEach(b => { const on = b.dataset.uiStyle === s.uiStyle; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
@@ -2122,6 +2124,7 @@
       ? `${new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }).format(date)}${lunar(date) ? ` · ${lunar(date)}` : ''}`
       : new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
     $('lock-time').textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    $('hero-lock-date').textContent = $('lock-date').textContent; $('hero-lock-time').textContent = $('lock-time').textContent;
     if (rollover()) render();
   }
   // Lock mode (Android LockActivity): only the designed lock screen, over the system lock screen.

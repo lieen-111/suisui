@@ -328,3 +328,79 @@ body.lock-mode .lock-exit span:last-child{margin-top:8px;font-size:12px}
 .hero-foot{font-size:10.5px;margin:0 3px;opacity:.95;text-shadow:0 1px 6px #0004}
 .settings-home-hero:has(.hero-card.grouped){height:258px}
 .settings-home-hero .hero-card.grouped{top:58px;max-height:calc(100% - 64px)}
+
+/* ================= 1.15 motion layer (with app/motion.js) ================= */
+html[data-motion=on] :is(button,a[href],[role=button],label.chip,label.switch,.swatch,summary){transition:scale .5s cubic-bezier(.34,1.56,.64,1),background-color .2s,color .2s,box-shadow .25s,border-color .2s}
+html[data-motion=on] .is-pressed{scale:var(--press,.95);transition:scale .12s cubic-bezier(.2,.8,.2,1),background-color .1s!important}
+html[data-motion=on] .task-row .is-pressed,html[data-motion=on] .task-body.is-pressed{scale:1}
+html[data-motion=on] dialog[open]{animation:sheet-in .46s cubic-bezier(.32,1.25,.6,1)}
+html[data-motion=on] dialog[open]::backdrop{animation:fade-in .3s ease}
+@media(max-width:760px){html[data-motion=on] dialog.sheet[open]{animation:sheet-up .5s cubic-bezier(.32,1.15,.6,1)}}
+html[data-motion=on] .toast:not([hidden]){animation:toast-in .5s cubic-bezier(.34,1.56,.64,1)}
+html[data-motion=on] .add-form .add-row,html[data-motion=on] body.adding .add-form .add-submit{animation:none}
+html[data-motion=on] body.adding .add-form .add-row{animation:row-in .42s cubic-bezier(.2,.8,.2,1) both}
+html[data-motion=on] body.adding .add-form .add-row:nth-of-type(2){animation-delay:30ms}
+html[data-motion=on] body.adding .add-form .add-row:nth-of-type(3){animation-delay:60ms}
+html[data-motion=on] body.adding .add-form .add-row:nth-of-type(4){animation-delay:90ms}
+html[data-motion=on] body.adding .add-form .add-row:nth-of-type(5){animation-delay:120ms}
+html[data-motion=on] .view-enter .settings-tiles>button,html[data-motion=on] .page-back .settings-tiles>button,html[data-motion=on] .view-enter .settings-home>.settings-list,html[data-motion=on] .page-back.settings-home>.settings-list,html[data-motion=on] .page-back .settings-tiles>button{animation:tile-in .52s cubic-bezier(.2,.9,.25,1.1) both;animation-delay:calc(var(--i,0) * 45ms + 60ms)}
+html[data-motion=on] .view-enter .settings-home-hero,html[data-motion=on] .page-back .settings-home-hero{animation:hero-in .6s cubic-bezier(.2,.8,.2,1) both}
+html[data-motion=on] .fab-add svg,html[data-motion=on] #fab-add svg{transition:rotate .45s cubic-bezier(.34,1.56,.64,1)}
+html[data-motion=on] body.adding #fab-add svg{rotate:45deg}
+.check-circle{transition:scale .4s cubic-bezier(.34,1.56,.64,1),background .18s,border-color .18s,transform .14s}
+@keyframes sheet-in{from{opacity:0;scale:.94;translate:0 12px}}
+@keyframes sheet-up{from{translate:0 100%}}
+@keyframes fade-in{from{opacity:0}}
+@keyframes toast-in{from{opacity:0;translate:0 16px;scale:.9}}
+@keyframes row-in{from{opacity:0;translate:0 10px}}
+@keyframes tile-in{from{opacity:0;translate:0 14px;scale:.97}}
+@keyframes hero-in{from{opacity:0;scale:.97}}
+@media(prefers-reduced-motion:reduce){html *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ================= 1.15 settings home: preview + tiles + short list ================= */
+.settings-home{display:block;--tile-bg:#fff;--tile-line:#0000000d;--tile-ico:#f2f2f4;--tile-ink:#1d1d1f;--tile-sub:#8a8a8e;--tile-r:24px}
+@media(prefers-color-scheme:dark){.settings-home{--tile-bg:#1c1c1e;--tile-line:#ffffff10;--tile-ico:#2c2c2e;--tile-ink:#f5f5f7;--tile-sub:#8e8e93}}
+html[data-style=glass] .settings-home{--tile-bg:var(--glass);--tile-line:var(--glass-line);--tile-ico:color-mix(in srgb,var(--tile-ink) 7%,transparent)}
+html[data-style=paper] .settings-home{--tile-bg:#fbfaf7;--tile-line:#e7e4dc;--tile-ico:#efece4;--tile-ink:#1d1c1a;--tile-sub:#8c877c;--tile-r:10px}
+@media(prefers-color-scheme:dark){html[data-style=paper] .settings-home{--tile-bg:#1b1a17;--tile-line:#2a2824;--tile-ico:#26241f;--tile-ink:#f2efe8;--tile-sub:#8f897c}}
+html[data-style=night] .settings-home{--tile-bg:#141416;--tile-line:#222225;--tile-ico:#1e1e21;--tile-ink:#f5f5f7;--tile-sub:#7c7c82}
+
+/* Preview: a little lock screen — clock on top, the cards under it, a tag at the bottom. */
+.settings-home .settings-home-hero{height:312px;border-radius:calc(var(--tile-r) + 4px);margin:2px 0 12px;box-shadow:0 22px 44px -26px #000a,0 0 0 1px var(--tile-line)}
+.settings-home-hero:after{content:"";position:absolute;inset:auto 0 0;height:84px;background:linear-gradient(#0000,#0007);pointer-events:none}
+.settings-home-hero .hero-clock{position:absolute;left:0;right:0;top:20px;display:flex;flex-direction:column;align-items:center;color:#fff;text-shadow:0 1px 10px #0003;pointer-events:none}
+.hero-clock small{font-size:11px;font-weight:550;letter-spacing:.03em;opacity:.92}
+.hero-clock b{font:600 46px/1.05 Geist,var(--font-system);letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.settings-home .settings-home-hero .hero-card{bottom:46px}
+.settings-home .settings-home-hero .hero-card.grouped,.settings-home-hero:has(.hero-card.grouped) .hero-card.grouped{top:96px;bottom:auto;max-height:calc(100% - 140px);-webkit-mask-image:linear-gradient(#000 78%,#0000);mask-image:linear-gradient(#000 78%,#0000)}
+.settings-home .settings-home-hero:has(.hero-card.grouped){height:312px}
+.settings-home .settings-home-hero .hero-tag{top:auto;left:14px;bottom:13px;z-index:2;display:inline-flex;align-items:center;gap:5px;padding:6px 11px 6px 9px;font-size:12px;background:#ffffff2e;border:1px solid #ffffff3a}
+.settings-home-hero .hero-tag svg{width:13px;height:13px}
+.settings-home .settings-home-hero .hero-card p{font-size:12px}
+
+/* Tiles */
+.settings-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 10px}
+.settings-tiles>button{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:3px;min-height:116px;padding:14px 15px;border-radius:var(--tile-r);background:var(--tile-bg);box-shadow:0 0 0 1px var(--tile-line);color:var(--tile-ink);text-align:left;overflow:hidden;min-width:0}
+html[data-style=glass] .settings-tiles>button,html[data-style=glass] .settings-home .settings-list{-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);box-shadow:inset 0 1px 0 #ffffff70,0 0 0 1px var(--tile-line),var(--glass-shadow)}
+.settings-home .row-ico{position:absolute;left:14px;top:14px;width:38px;height:38px;border-radius:calc(var(--tile-r) / 2);display:grid;place-items:center;background:var(--tile-ico);color:var(--tile-ink)}
+.settings-home .row-ico svg{width:19px;height:19px;stroke-width:1.7}
+.settings-tiles .tile-arrow{position:absolute;right:14px;top:16px;width:16px;height:16px;color:var(--tile-sub);opacity:.7;stroke-width:1.8}
+.settings-tiles .row-label{font-size:15.5px;font-weight:620;letter-spacing:-.01em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-tiles .row-value{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--tile-sub);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-tiles .row-value .dot{width:7px;height:7px;border-radius:50%;flex:none}
+.settings-tiles .state-dot{width:7px;height:7px;border-radius:50%;background:var(--tile-sub);opacity:.6;flex:none}
+#tile-lock.is-on .state-dot{background:#34c759;opacity:1;box-shadow:0 0 0 3px #34c75926}
+#tile-lock.is-on .row-ico{color:#fff;background:var(--tile-ink)}
+html[data-style=night] #tile-lock.is-on .row-ico{background:var(--accent);color:var(--on-accent)}
+
+/* Short list: one icon column, dividers start where the text starts */
+html[data-style] .settings-home .settings-list{border-radius:var(--tile-r)!important;background:var(--tile-bg)!important;box-shadow:0 0 0 1px var(--tile-line)!important;border:0!important;margin:0 0 18px;overflow:hidden}
+.settings-home .settings-list>button{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:0 15px 0 14px;border:0;color:var(--tile-ink);font-size:15.5px;background:none}
+.settings-home .settings-list>button+button:before{content:"";position:absolute;top:0;left:58px;right:0;height:1px;background:var(--tile-line)}
+.settings-home .settings-list .row-ico{position:static;width:32px;height:32px;border-radius:calc(var(--tile-r) / 2.4)}
+.settings-home .settings-list .row-ico svg{width:17px;height:17px}
+.settings-home .settings-list .row-label{flex:1;font-weight:500}
+.settings-home .settings-list .row-value{color:var(--tile-sub);font-size:14px}
+.settings-home .settings-list .row-chev{width:16px;height:16px;color:var(--tile-sub);opacity:.6}
+html[data-motion=on] .settings-home .settings-list>button.is-pressed{scale:1;background:color-mix(in srgb,var(--tile-ink) 5%,transparent)}
+@media(max-width:760px){body[data-view=settings] .app-shell{padding-bottom:0!important}body[data-view=settings] .settings-scroll{padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}}

@@ -816,7 +816,6 @@ body.lock-mode .activity.compact .lock-task{font-size:calc(14px * var(--ts))}
 .settings-index.bento{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:none;border:0;border-radius:0;overflow:visible}
 .bento .tile{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:148px;padding:16px;border-radius:24px;background:var(--cell);text-align:left;color:var(--ink);box-shadow:0 1px 0 #0000000a,0 10px 30px -22px color-mix(in srgb,var(--a-950) 40%,transparent);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s;border:0}
 .bento .tile:before{display:none}
-.bento .tile:active{transform:scale(.97)}
 .bento .tile:hover{filter:none;box-shadow:0 1px 0 #0000000a,0 16px 34px -20px color-mix(in srgb,var(--a-950) 50%,transparent)}
 .tile-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--label2,var(--muted));letter-spacing:.02em}
 .tile-head svg{width:15px;height:15px}
@@ -1061,9 +1060,6 @@ body.lock-mode.has-focus .lock-clock #lock-time{font-size:72px}
 .page-enter{animation:page-enter .3s cubic-bezier(.2,.8,.2,1)}
 .page-back{animation:page-back .26s cubic-bezier(.2,.8,.2,1)}
 .chip,.primary-button,.secondary-button,.timer-pill,.timer-stop,.review-entry,.nav-add,.nav-button,.filter-tabs button,.bento .tile,.theme-chip,.font-chip,.material-tiles button,.wallpaper-choice,.focus-btn,.quick-action,.pill-segment button,.check-task,.icon-button,.settings-back,.lock-timer{transition:transform .14s cubic-bezier(.2,.8,.2,1),background-color .2s,color .2s,box-shadow .2s}
-.chip:active,.primary-button:active,.secondary-button:active,.timer-pill:active,.timer-stop:active,.review-entry:active,.filter-tabs button:active,.theme-chip:active,.font-chip:active,.material-tiles button:active,.wallpaper-choice:active,.focus-btn:active,.pill-segment button:active,.icon-button:active,.lock-timer:active{transform:scale(.95)}
-.nav-add:active{transform:scale(.92)}
-.nav-button:active{transform:scale(.92)}
 .check-task:active .check-circle{transform:scale(.86);background:var(--accent-soft)}
 .check-circle{transition:transform .14s,background .15s,border-color .15s}
 .task-body:active{background:#7676800d!important}

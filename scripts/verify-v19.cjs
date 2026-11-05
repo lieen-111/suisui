@@ -33,7 +33,13 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.equal(await page.evaluate(() => getComputedStyle(document.body, '::before').filter), 'none');
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#home-hero').isVisible(), true, 'Settings home starts with the lock-card preview');
-    assert.equal(await page.locator('.settings-list [data-settings-page]').count(), 5);
+    assert.equal(await page.locator('#settings-index [data-settings-page]').count(), 5);
+    // 1.15: tiles + a short list; every icon sits in the same column, dividers start at the text.
+    assert.equal(await page.locator('.settings-tiles > button').count(), 4);
+    await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running'));
+    const cols = await page.evaluate(() => [...document.querySelectorAll('#settings-index .row-ico')].map(e => Math.round(e.getBoundingClientRect().left)));
+    assert.equal(new Set(cols.filter((_, i) => i % 2 === 0 || i >= 4)).size, 1, `Left icons line up: ${cols}`); // tiles 0,2 and list 4,5
+    assert.match(await page.locator('#hero-lock-time').textContent(), /^\d\d:\d\d$/, 'The preview shows the lock clock');
     assert.match(await page.locator('#sum-look').textContent(), /玻璃/);
     await page.locator('[data-settings-page=look]').click();
     assert.equal(await page.locator('#swatch-lime').isVisible(), false, '荧光 only in 夜光');
@@ -156,6 +162,36 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await page.screenshot({ path: path.join(review, 'v114-look-preview-android-390.png') });
     await context.close();
   }
+  /* 1.15 motion: press spring, icon animations, selection pops; nothing when 动效 is off */
+  {
+    const { context, page } = await open({});
+    await page.locator('.nav-button[data-view=settings]').click();
+    await page.waitForTimeout(700);
+    const tile = page.locator('#tile-lock');
+    const box = await tile.boundingBox();
+    await page.mouse.move(box.x + 30, box.y + 30); await page.mouse.down();
+    assert.equal(await tile.evaluate(e => e.classList.contains('is-pressed') && getComputedStyle(e).scale !== 'none'), true, 'A tile presses in');
+    await page.mouse.move(box.x + 30, box.y + box.height + 40);
+    assert.equal(await tile.evaluate(e => e.classList.contains('is-pressed')), false, 'Moving the finger lets go (a scroll is not a tap)');
+    await page.mouse.up();
+    await page.locator('[data-settings-page=look]').click();
+    // The page is open: tapping a style chip pops it and the back arrow nudges.
+    await page.locator('[data-ui-style=paper]').click();
+    assert.ok(await page.locator('[data-ui-style=paper]').evaluate(e => e.getAnimations().length > 0), 'A newly selected chip pops');
+    const back = page.locator('#settings-back');
+    await back.click();
+    await page.locator('#settings-done, .nav-button[data-view=tasks]').first().click();
+    await page.locator('#open-search').click();
+    await page.waitForTimeout(50);
+    assert.equal(await page.locator('#open-search svg').evaluate(e => e.getAnimations().length > 0), true, 'The search icon tilts when tapped');
+    await page.keyboard.press('Escape');
+    await page.locator('.nav-button[data-view=settings]').click();
+    // 动效 off: no press, no icon animation.
+    await page.evaluate(() => { document.documentElement.dataset.motion = 'off'; });
+    await page.locator('#tile-lock').click();
+    assert.equal(await page.locator('#tile-lock svg').first().evaluate(e => e.getAnimations().length), 0);
+    await context.close();
+  }
   /* 1.11 cute fonts: picked in settings, loaded only when needed */
   {
     const { context, page } = await open({});
@@ -171,6 +207,6 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: 1.14 smaller lock type, remaining line under the cards, no ✓/+ buttons, Android previews mirror the lock screen; 1.12 line icons + summary kept; 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
+  console.log('PASS: 1.15 settings tiles + aligned icons + preview clock, press/icon/selection motion (off with 动效 off); 1.14 smaller lock type, remaining line under the cards, no ✓/+ buttons, Android previews mirror the lock screen; 1.12 line icons + summary kept; 1.11 lock screen group cards (subtasks, ✓/+, lunar date) and cute fonts; 1.9 glass/paper/night styles (night forced dark + neon, back to ink), lock-card styles keep the app colour, stacked add rows, settings home preview + list, English UI + English quick-add + switching back.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });
