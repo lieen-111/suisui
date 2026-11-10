@@ -654,6 +654,7 @@
     icons();
     $('storage-status').textContent = storageCopy();
     glide?.();
+    window.dispatchEvent(new Event('suisui:render'));
   }
   function renderArchive() {
     const items = [...state.archive].sort((a, b) => b.archivedAt - a.archivedAt);
@@ -808,6 +809,7 @@
     renderPreview();
     if (settingsPage === 'index') renderSettingsSummary();
     icons();
+    window.dispatchEvent(new Event('suisui:settings'));
   }
   function renderWallpaperLibrary() {
     const s = state.settings, list = $('wallpaper-library');
@@ -1134,6 +1136,9 @@
     const rect = source.getBoundingClientRect(), isLock = source.classList.contains('lock-task');
     const textNode = source.querySelector(isLock ? 'span:last-child' : '.task-title');
     const textRect = textNode.getBoundingClientRect(), style = getComputedStyle(textNode);
+    // Pro: a chosen completion effect (星尘 / 墨染 / 纸飞机 / 燃尽 / 像素) replaces the default shatter.
+    const custom = window.SuiSuiPro?.effect?.(source, textNode, rect);
+    if (custom) { source.style.visibility = 'hidden'; await custom; return; }
     const layer = $('fragments'), pieces = [], cols = (navigator.hardwareConcurrency || 8) <= 4 ? 7 : 10, rows = 3;
     const strength = [.7, 1, 1.5][state.settings.intensity - 1];
     const cw = rect.width / cols, ch = rect.height / rows;
@@ -1186,6 +1191,8 @@
     completing.add(id);
     button.disabled = true;
     haptic('done');
+    const sourceRect = source.getBoundingClientRect();
+    window.dispatchEvent(new CustomEvent('suisui:completing', { detail: { id, rect: sourceRect } }));
     let animationError = false;
     try { await shatter(source); } catch { animationError = true; }
     document.querySelectorAll('.task-row, .lock-task').forEach(el => positions.set(positionKey(el), el.getBoundingClientRect().top));
@@ -1214,6 +1221,7 @@
     $('completion-note').textContent = pending().length ? '又完成一件。' : '今天的事，圆满完成。';
     setTimeout(() => { $('completion-note').textContent = ''; }, 2400);
     showToast('已完成一项待办', () => { unmarkDone(task); save(); render(); });
+    window.dispatchEvent(new CustomEvent('suisui:done', { detail: { id, rect: sourceRect, allDone: !pending().length } }));
     if (!isBusy()) {
       const next = button.classList.contains('lock-task') ? $('activity-list').querySelector('[data-action="complete"]') || $('activity-list').querySelector('button') : $('task-list').querySelector('[data-action="complete"]');
       if (next) next.focus({ preventScroll: true });
@@ -2215,4 +2223,11 @@
   setInterval(clock, 30000);
   // Test and support hook: lets automated checks and support staff inspect the state without touching storage.
   window.suisui = { dayKey, rollover: () => rollover(), notificationContent, dueToday, version: SCHEMA };
+  // Pro (app/pro.js) reads and changes state through this; the base app runs the same without it.
+  window.suisui.pro = {
+    get state() { return state; }, save, render, applySettings, showToast, hideToast, icons, esc, dayKey, addDays, pending, groupOf, haptic, lunar,
+    native: NATIVE, isPreview: PREVIEW, lockMode: LOCK_MODE,
+    saveImage(canvas, name) { posterBlob = null; return new Promise(resolve => canvas.toBlob(async blob => { posterBlob = blob; posterName = name; $('poster-image').src = canvas.toDataURL('image/png'); await savePoster(); resolve(); }, 'image/png')); }
+  };
+  window.dispatchEvent(new Event('suisui:ready'));
 })();

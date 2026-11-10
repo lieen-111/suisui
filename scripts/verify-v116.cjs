@@ -97,7 +97,7 @@ let browser;
   {
     const { context, page } = await open({ firstUse: Date.now(), tipsSeen: true });
     await page.locator('.task-row[data-task-id=a] .check-task').click();
-    await page.clock.runFor(1500);
+    await page.clock.runFor(800); // mid-glide (the shatter takes ~520 ms, the glide follows)
     const glides = await page.evaluate(() => [...document.querySelectorAll('#task-list .task-row')].flatMap(r => r.getAnimations()).length);
     assert.ok(glides > 0, 'Remaining rows glide into place');
     await page.locator('#later-section summary').click();
