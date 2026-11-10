@@ -1,5 +1,6 @@
 // Pro (app/pro.js): free users see Pro but keep the free app; try-on, trial, purchase (simulated), Pro themes,
-// completion effects, the jar, weekly shard art, countdowns and the all-done celebration.
+// completion effects, the jar, weekly art, countdowns, the all-done celebration, and the two ways to pay
+// (App Store on iPhone, redeem code on Android and the web).
 const { chromium, review, url, launchOptions } = require('./test-environment.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -11,13 +12,13 @@ let browser;
   const errors = [];
   const base = { pinned: false, done: false, completedAt: 0, date: '', createdAt: 1, group: 'work', repeat: 'none' };
   const tasks = [{ ...base, id: 'a', title: '口播剪辑收尾' }, { ...base, id: 'b', title: '动效素材' }, { ...base, id: 'c', title: '健身', group: 'life' }];
-  const open = async (settings = {}) => {
+  const open = async (settings = {}, query = '') => {
     const context = await browser.newContext({ demo: false, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const rec = JSON.stringify({ schema: 2, rev: 1, day: new Date().toISOString().slice(0, 10), tasks, archive: [], log: [], groups: [{ id: 'work', name: '工作', color: '#2f6fd0', icon: 'briefcase' }, { id: 'life', name: '生活', color: '#d2566f', icon: 'leaf' }], settings: { palette2: true, tipsSeen: true, firstUse: Date.now(), ...settings } });
     await context.addInitScript(([k, v]) => { if (!sessionStorage.getItem('x')) { localStorage.setItem(k, v); sessionStorage.setItem('x', '1'); } }, [STORE, rec]);
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url + query, { waitUntil: 'networkidle' });
     return { context, page };
   };
   const saved = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)).settings, STORE);
@@ -36,8 +37,8 @@ let browser;
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '¥18');
     await page.locator('[data-settings-page=look]').click();
-    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 4, '外观 shows the four Pro themes');
-    assert.equal(await page.locator('[data-pro-theme-pick=ink] .pro-lock-badge').count(), 1, '… locked');
+    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 5, '外观 shows 跟随时间 and the four Pro themes');
+    assert.equal(await page.locator('[data-pro-theme-pick=day] .pro-lock-badge').count(), 1, '… locked');
     await page.locator('#settings-back').click();
     await page.locator('#pro-banner').click();
     assert.equal(await page.locator('#pro-sheet').isVisible(), true, 'Pro page opens');
@@ -48,8 +49,8 @@ let browser;
     await page.screenshot({ path: path.join(review, 'pro-sheet-free-390.png') });
     // Try-on: the theme shows, nothing is saved, it ends
     await page.waitForTimeout(1400);
-    await page.locator('[data-pro-theme=ink]').click();
-    assert.equal(await html(page, 'proTheme'), 'ink', 'Try-on shows the theme');
+    await page.locator('[data-pro-theme=day]').click();
+    assert.equal(await html(page, 'proTheme'), 'day', 'Try-on shows the theme');
     assert.equal(await page.locator('#pro-tryon').isVisible(), true);
     assert.equal((await saved(page)).proTheme || '', '', 'Try-on saves nothing');
     await page.locator('#pro-tryon-end').click();
@@ -66,26 +67,35 @@ let browser;
     const p1 = (await saved(page)).pro;
     assert.equal(p1.trialUsed, true); assert.ok(p1.trialEnds > Date.now() + 2.9 * 864e5, '3-day trial');
     assert.equal(await page.locator('#pro-trial').count(), 0, 'Trial is offered once');
+    // Android and the web: a redeem code
+    assert.equal(await page.locator('#pro-buy').textContent(), '购买兑换码', 'The web build sells a redeem code');
     await page.locator('#pro-buy').click();
-    assert.equal((await saved(page)).pro.owned, true, 'Purchase is remembered');
+    assert.match(await page.locator('#pro-paynote').textContent(), /SUISUI-/, 'Preview shows a code to try');
+    await page.locator('#pro-code').fill('SUISUI-AAAA-BBBB-CCCC');
+    await page.locator('#pro-redeem button').click();
+    assert.equal((await saved(page)).pro.owned, false, 'A wrong code unlocks nothing');
+    await page.locator('#pro-fill-code').click();
+    await page.locator('#pro-redeem button').click();
+    assert.equal((await saved(page)).pro.owned, true, 'The code unlocks Pro and is remembered');
+    assert.equal((await saved(page)).pro.via, 'code');
     await page.locator('#pro-close').click();
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '已解锁');
     await page.locator('[data-settings-page=look]').click();
-    await page.locator('[data-pro-theme-pick=noir]').click();
-    assert.equal(await html(page, 'proTheme'), 'noir'); assert.equal(await html(page, 'style'), 'night', '暗金 sits on 夜光');
-    assert.equal(await html(page, 'proSkin'), 'noir', 'The theme brings its own background and header');
+    await page.locator('[data-pro-theme-pick=dusk]').click();
+    assert.equal(await html(page, 'proTheme'), 'dusk'); assert.equal(await html(page, 'style'), 'night', '暮 sits on 夜光');
+    assert.equal(await html(page, 'proSkin'), 'dusk', 'The theme brings its own background and header');
     assert.equal(await page.locator('#pro-head').count(), 1);
-    assert.equal((await saved(page)).proTheme, 'noir');
+    assert.equal((await saved(page)).proTheme, 'dusk');
     await page.locator('[data-pro-effect-pick=gold]').click();
     assert.equal((await saved(page)).proEffect, 'gold');
-    await page.screenshot({ path: path.join(review, 'pro-look-noir-390.png') });
+    await page.screenshot({ path: path.join(review, 'pro-look-dusk-390.png') });
     // A free style takes the Pro theme off
     await page.locator('[data-ui-style=paper]').click();
     await page.waitForTimeout(50);
-    assert.equal(await html(page, 'proTheme'), '', 'Picking 纸墨 takes off 暗金');
-    await page.locator('[data-pro-theme-pick=liquid]').click();
-    assert.equal(await html(page, 'style'), 'glass', '液态玻璃 sits on 玻璃');
+    assert.equal(await html(page, 'proTheme'), '', 'Picking 纸墨 takes off 暮');
+    await page.locator('[data-pro-theme-pick=dawn]').click();
+    assert.equal(await html(page, 'style'), 'glass', '晨 sits on 玻璃');
     await page.locator('#settings-back').click();
     await page.locator('.nav-button[data-view=tasks]').click();
     // Countdown
@@ -96,6 +106,14 @@ let browser;
     await page.locator('#pro-cd-add button').click();
     await page.locator('#pro-close').click();
     assert.match(await page.locator('#pro-head').textContent(), /12天期末考试/, 'Countdown in the theme header');
+    // Each theme draws today its own way
+    const marks = { dawn: '.ph-wave', day: 'rect', dusk: 'circle', night: 'circle' };
+    for (const id of ['dawn', 'day', 'dusk', 'night']) {
+      await page.evaluate(t => { window.suisui.pro.state.settings.proTheme = t; window.suisui.pro.applySettings(); window.suisui.pro.render(); }, id);
+      assert.equal(await html(page, 'proSkin'), id);
+      assert.ok(await page.locator(`#pro-head.pro-head-${id} svg.ph-art ${marks[id]}`).count() > 0, `${id} draws its own header`);
+    }
+    await page.evaluate(() => { window.suisui.pro.state.settings.proTheme = 'dawn'; window.suisui.pro.applySettings(); window.suisui.pro.render(); });
     // Pro completion: the chosen effect, no shatter; shards fly to the jar
     await page.locator('.task-row[data-task-id=a] .check-task').click();
     await page.waitForTimeout(150);
@@ -105,6 +123,11 @@ let browser;
     await page.locator('.task-row[data-task-id=b] .check-task').click(); await page.waitForTimeout(1300);
     await page.locator('.task-row[data-task-id=c] .check-task').click(); await page.waitForTimeout(1600);
     assert.equal(await page.locator('#pro-celebrate').isVisible(), true, 'All done → celebration');
+    for (const [id, sel] of [['day', '.ph-circle'], ['night', '.ph-star']]) {
+      await page.evaluate(t => { window.suisui.pro.state.settings.proTheme = t; window.suisui.pro.applySettings(); window.suisui.pro.render(); }, id);
+      assert.equal(await page.locator(`#pro-head ${sel}`).count(), 3, `${id}: one mark per finished task`);
+    }
+    await page.evaluate(() => { window.suisui.pro.state.settings.proTheme = 'dawn'; window.suisui.pro.applySettings(); window.suisui.pro.render(); });
     await page.screenshot({ path: path.join(review, 'pro-celebrate-390.png') });
     await page.locator('#pro-cel-close').click();
     assert.equal((await saved(page)).proCelebrated, await page.evaluate(() => window.suisui.dayKey()), 'Celebration once a day');
@@ -114,6 +137,8 @@ let browser;
     assert.match(await page.locator('.pro-jar-big p').textContent(), /3 件今天完成/);
     const art = await page.evaluate(() => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5)); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] !== d[0] || d[i + 1] !== d[1]) n++; return { w: c.width, h: c.height, varied: n }; });
     assert.equal(art.w, 1080); assert.equal(art.h, 1350); assert.ok(art.varied > 500, 'Weekly art has content');
+    const arts = await page.evaluate(() => ['dawn', 'day', 'dusk', 'night'].map(id => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5), window.SuiSuiPro.THEMES[id], 270); return c.toDataURL().length + ':' + c.toDataURL().slice(-200); }));
+    assert.equal(new Set(arts).size, 4, 'Four themes, four different weekly pictures');
     await page.screenshot({ path: path.join(review, 'pro-jar-390.png') });
     await page.locator('#pro-jar-close').click();
     // Reset (local preview only)
@@ -124,15 +149,27 @@ let browser;
     await context.close();
   }
 
+  /* iPhone: App Store purchase and restore */
+  {
+    const { context, page } = await open({}, '?pay=ios');
+    await page.evaluate(() => window.SuiSuiPro.open());
+    assert.equal(await page.locator('#pro-buy').textContent(), 'App Store 购买');
+    assert.equal(await page.locator('#pro-redeem').count(), 0, 'No redeem code on iPhone');
+    assert.equal(await page.locator('#pro-restore').count(), 1, 'Restore purchases on iPhone');
+    await page.locator('#pro-buy').click();
+    assert.equal((await saved(page)).pro.owned, true); assert.equal((await saved(page)).pro.via, 'appstore');
+    await context.close();
+  }
+
   /* An ended trial: the saved theme stays saved but is not shown */
   {
-    const { context, page } = await open({ pro: { owned: false, trialUsed: true, trialEnds: Date.now() - 1000 }, proTheme: 'dot' });
+    const { context, page } = await open({ pro: { owned: false, trialUsed: true, trialEnds: Date.now() - 1000 }, proTheme: 'night' });
     assert.equal(await html(page, 'proTheme'), '', 'Ended trial → free look');
     assert.equal(await page.evaluate(() => window.SuiSuiPro.isPro()), false);
     await context.close();
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back.');
+  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

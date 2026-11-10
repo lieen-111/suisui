@@ -2226,7 +2226,7 @@
   // Pro (app/pro.js) reads and changes state through this; the base app runs the same without it.
   window.suisui.pro = {
     get state() { return state; }, save, render, applySettings, showToast, hideToast, icons, esc, dayKey, addDays, pending, groupOf, haptic, lunar,
-    native: NATIVE, isPreview: PREVIEW, lockMode: LOCK_MODE,
+    native: NATIVE, platform: IOS_APP ? 'ios' : ANDROID ? 'android' : 'web', isPreview: PREVIEW, lockMode: LOCK_MODE,
     saveImage(canvas, name) { posterBlob = null; return new Promise(resolve => canvas.toBlob(async blob => { posterBlob = blob; posterName = name; $('poster-image').src = canvas.toDataURL('image/png'); await savePoster(); resolve(); }, 'image/png')); }
   };
   window.dispatchEvent(new Event('suisui:ready'));

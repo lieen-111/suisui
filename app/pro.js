@@ -12,21 +12,28 @@
 
   /* ---------- Themes: each one is a whole world (colours, type, shard material, completion effect, sound) ---------- */
   const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
+  const SERIF = '"Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
+  /* 「一日四时」: four times of day. Each theme draws today in its own way (measuring glass, manuscript paper, sunset
+     dial, constellation), has its own check and its own weekly picture. Shared: things break into pieces when done,
+     in the theme's material, and the pieces go into the same jar. */
   const THEMES = {
-    liquid: { name: '液态玻璃', line: '通透的玻璃，细的数字', base: 'glass', effect: 'stardust', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
-      shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#6b7080', mode: 'multiply', font: SANS },
-    ink: { name: '东方留白', line: '大片留白，一点朱砂', base: 'paper', effect: 'ink', sound: 'wood', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
-      shards: ['#1d1a16', '#3d362e', '#6d6358', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#7a7166', mode: 'multiply', font: SONG },
-    dot: { name: '点阵', line: '黑白点阵，只留一个红点', base: 'paper', effect: 'dots', sound: 'click', accent: '#111111', soft: '#1111110f', on: '#ffffff',
-      shards: ['#111111', '#111111', '#4a4a48', '#d71921'], bg: '#f1f1ee', ink: '#111111', muted: '#6b6b66', mode: 'source-over', font: SANS },
-    noir: { name: '暗金', line: '深黑，香槟金的细线', base: 'night', effect: 'gold', sound: 'chime', accent: '#c8a66a', soft: '#c8a66a1f', on: '#0d0c0a',
-      shards: ['#c8a66a', '#e8d3a4', '#9c7f47', '#f4e8cc'], bg: '#0d0c0a', ink: '#efe6d6', muted: '#8c8170', mode: 'screen', font: SANS }
+    dawn: { name: '晨', full: '晨 · 玻璃', line: '一只量杯，做完一件，满一点', base: 'glass', material: 'glass', effect: 'shards', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
+      shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#6b7080', mode: 'multiply', font: SANS, display: SANS },
+    day: { name: '昼', full: '昼 · 纸', line: '稿纸一格一个字，做完画个红圈', base: 'paper', material: 'paper', effect: 'shards', sound: 'paper', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
+      shards: ['#fbf8f1', '#e9e2d4', '#d9d0bf', '#1d1a16', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#8a8279', mode: 'source-over', font: SONG, display: SONG },
+    dusk: { name: '暮', full: '暮 · 金', line: '太阳跟着进度走，清空就日落', base: 'night', material: 'gold', effect: 'shards', sound: 'chime', accent: '#c8a66a', soft: '#c8a66a1f', on: '#15110c',
+      shards: ['#c8a66a', '#e8d3a4', '#9c7f47', '#f4e8cc'], bg: '#15110c', ink: '#efe6d6', muted: '#8c8170', mode: 'screen', font: SANS, display: SERIF },
+    night: { name: '夜', full: '夜 · 光', line: '每件事一颗星，做完连成星座', base: 'night', material: 'light', effect: 'shards', sound: 'night', accent: '#dfe6ff', soft: '#dfe6ff1a', on: '#07080d',
+      shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#7d8496', mode: 'screen', font: SANS, display: SANS }
   };
+  const ORDER = ['dawn', 'day', 'dusk', 'night'];
+  /** 跟随时间: 5–10 晨, 10–17 昼, 17–20 暮, 20–5 夜. */
+  const byTime = (d = new Date()) => { const h = d.getHours(); return h >= 5 && h < 10 ? 'dawn' : h >= 10 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night'; };
   const BRAND = { shards: ['#d9d6ff', '#c9f0e6', '#ffe0d2', '#f5f5f7'] };
-  const SOON = [{ name: '猫咪', line: '一只猫陪你做完今天' }, { name: '二十四节气', line: '每个节气自动换装' }];
-  const PLAIN = { shards: ['#9fd8ff', '#ffffff', '#a7b4ff', '#7ee0c8'], bg: '#0c0e14', ink: '#f1f3f7', muted: '#8b93a3', accent: '#9fd8ff', mode: 'screen', font: 'Geist,"PingFang SC","Microsoft YaHei",sans-serif' };
-  const EFFECTS = { auto: '跟随主题', shatter: '碎裂', stardust: '流光', ink: '墨染', plane: '纸飞机', dots: '点阵', gold: '金箔' };
-  const EFFECT_LINE = { shatter: '文字碎成玻璃片', stardust: '化成一缕光', ink: '墨晕开，落一枚印', plane: '折成纸飞机飞走', dots: '散成一粒粒点', gold: '金箔慢慢飘落' };
+  const SOON = [{ name: '二十四节气', line: '每个节气，一种新的材质' }];
+  const PLAIN = { material: 'plain', shards: ['#9fd8ff', '#ffffff', '#a7b4ff', '#7ee0c8'], bg: '#0c0e14', ink: '#f1f3f7', muted: '#8b93a3', accent: '#9fd8ff', mode: 'screen', font: SANS, display: SANS };
+  const EFFECTS = { auto: '跟随主题', shards: '碎裂', stardust: '流光', ink: '墨染', plane: '纸飞机', dots: '点阵', gold: '金箔' };
+  const EFFECT_LINE = { shards: '按主题的材质碎开', stardust: '化成一缕光', ink: '墨晕开，落一点红', plane: '折成纸飞机飞走', dots: '散成一粒粒点', gold: '金箔慢慢飘落' };
 
   /* ---------- Entitlement (simulated purchase in this build) ---------- */
   const info = () => { const p = S().pro; return p && typeof p === 'object' ? p : (S().pro = { owned: false, trialEnds: 0, trialUsed: false }); };
@@ -34,12 +41,29 @@
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
   const status = () => info().owned ? '已解锁' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
-  const activeTheme = () => tryOn || (isPro() && THEMES[S().proTheme] ? S().proTheme : '');
+  const activeTheme = () => tryOn || (!isPro() ? '' : S().proTheme === 'auto' ? byTime() : THEMES[S().proTheme] ? S().proTheme : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
   function persist() { API.save(); }
-  function buy() { info().owned = true; persist(); endTry(false); applyTheme(); refreshAll(); celebrateUnlock(); }
+  function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); celebrateUnlock(); }
   function startTrial() { const p = info(); if (p.trialUsed) return; p.trialUsed = true; p.trialEnds = Date.now() + TRIAL_DAYS * 864e5; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast(`已开始 ${TRIAL_DAYS} 天免费试用，Pro 全部可用`); }
   function restore() { API.showToast(info().owned ? '已恢复购买' : '没有找到购买记录（本地预览）'); }
+  /* ---------- How people pay, by platform ----------
+     iPhone: App Store in-app purchase (a non-consumable), restored with the Apple account. Apple requires this for
+       digital unlocks in an iOS app, and the app may not point to other ways to pay.
+     Android (no Google Play in China) and the web: a redeem code bought on a payment page; the code unlocks Pro.
+     This build simulates both. Real codes need a small server that issues and checks them (see 基础版与Pro.md). */
+  let payPreview = '';
+  const payPlatform = () => payPreview || new URLSearchParams(location.search).get('pay') || API.platform || 'web';
+  const CODE_ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const codeSum = body => { let h = 7; for (const ch of body) h = (h * 31 + CODE_ABC.indexOf(ch) + 1) % 1024; return CODE_ABC[h >> 5] + CODE_ABC[h & 31]; };
+  const normCode = v => String(v || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^SUISUI/, '');
+  /** Preview-only check (a checksum). The real build asks the code server instead. */
+  const codeOk = v => { const b = normCode(v); return b.length === 12 && [...b].every(ch => CODE_ABC.includes(ch)) && codeSum(b.slice(0, 10)) === b.slice(10); };
+  const demoCode = (() => { const b = 'SUPRWEEK26'; const full = b + codeSum(b); return `SUISUI-${full.slice(0, 4)}-${full.slice(4, 8)}-${full.slice(8)}`; })();
+  function redeem(value) {
+    if (!codeOk(value)) { API.showToast('兑换码不对，检查一下有没有输错'); return false; }
+    info().via = 'code'; info().code = normCode(value); buy(); return true;
+  }
   function resetLocal() { S().pro = { owned: false, trialEnds: 0, trialUsed: false }; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('已重置为未购买（本地预览）'); }
 
   /* ---------- Small helpers ---------- */
@@ -80,6 +104,8 @@
     shutter: c => { hiss(c, { d: .025, g: .28, hp: 2600 }); hiss(c, { t: .075, d: .045, g: .2, hp: 1400 }); tone(c, { f: 150, f2: 90, t: .075, d: .12, g: .06, type: 'square' }); },
     chip: c => { [523, 659, 784, 1047].forEach((f, i) => tone(c, { f, type: 'square', t: i * .055, d: .09, g: .045 })); },
     soft: c => { tone(c, { f: 880, f2: 1320, d: .18, g: .07 }); tone(c, { f: 1760, t: .06, d: .3, g: .025 }); },
+    paper: c => { hiss(c, { d: .09, g: .14, hp: 900, lp: 5200 }); hiss(c, { t: .07, d: .12, g: .09, hp: 1400, lp: 6000 }); },
+    night: c => { tone(c, { f: 1568, d: .7, g: .05 }); tone(c, { f: 2349, t: .09, d: .8, g: .035 }); tone(c, { f: 3136, t: .2, d: .6, g: .02 }); },
     click: c => { hiss(c, { d: .012, g: .22, hp: 3200 }); tone(c, { f: 2400, d: .035, g: .04, type: 'square' }); hiss(c, { t: .06, d: .01, g: .12, hp: 4000 }); },
     chime: c => { tone(c, { f: 660, d: 1.3, g: .075 }); tone(c, { f: 990, t: .02, d: 1.1, g: .045 }); tone(c, { f: 1485, t: .04, d: .8, g: .02 }); }
   };
@@ -92,7 +118,7 @@
     if (demoEffect) return demoEffect;
     if (!isPro() && !tryOn) return '';
     const e = S().proEffect || 'auto';
-    return e === 'auto' ? (THEMES[activeTheme()]?.effect || 'shatter') : e;
+    return e === 'auto' ? (THEMES[activeTheme()]?.effect || 'shards') : e;
   }
   let demoEffect = '';
   function sampleText(textNode, step) {
@@ -119,9 +145,40 @@
       requestAnimationFrame(tick); setTimeout(resolve, resolveAt);
     });
   }
-  const LIGHT = ['liquid', 'ink', 'dot'];
+  const LIGHT = ['dawn', 'day'];
   const dark = () => !LIGHT.includes(activeTheme());
   const FX = {
+    /** 碎裂, in the theme's material: glass flies apart, paper scraps flutter down, gold leaf falls, light drifts up. */
+    shards(src, s) {
+      const mat = look().material || 'glass', L = look(), cols = Math.max(4, Math.round(s.w / 24)), rows = 2, cw = s.w / cols, ch = s.h / rows, pieces = [];
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) for (let t = 0; t < 2; t++) {
+        const x0 = s.left + x * cw, y0 = s.top + y * ch, pts = t ? [[x0 + cw, y0], [x0 + cw, y0 + ch], [x0, y0 + ch]] : [[x0, y0], [x0 + cw, y0], [x0, y0 + ch]];
+        const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3, r = rng(x * 31 + y * 7 + t * 3 + 1), spread = x / Math.max(1, cols - 1) - .5;
+        const v = mat === 'paper' ? { vx: spread * 70 + (r() - .5) * 40, vy: -24 - r() * 30, g: 300, spin: (r() - .5) * 3.4, sway: 12 + r() * 16 }
+          : mat === 'gold' ? { vx: spread * 44 + (r() - .5) * 30, vy: -14 - r() * 20, g: 190, spin: (r() - .5) * 2.6, sway: 9 + r() * 12 }
+          : mat === 'light' ? { vx: spread * 60 + (r() - .5) * 30, vy: -40 - r() * 60, g: -8, spin: (r() - .5) * 2, sway: 0 }
+          : { vx: spread * (150 + r() * 90), vy: (y - .5) * 50 - 40 - r() * 50, g: 130, spin: (r() - .5) * 5, sway: 0 };
+        pieces.push({ pts, cx, cy, ...v, d: Math.abs(spread) * 60 + r() * 40, c: L.shards[(x + y + t) % L.shards.length] });
+      }
+      const dur = mat === 'paper' || mat === 'gold' ? 1450 : 1050;
+      return overlay(dur, (ctx, ms) => {
+        for (const p of pieces) {
+          const tt = Math.max(0, (ms - p.d) / 1000), life = clamp((ms - p.d) / (dur - p.d)), a = 1 - life * life;
+          if (a <= 0) continue;
+          const dx = p.vx * tt + Math.sin(tt * 6 + p.cx) * p.sway * tt, dy = p.vy * tt + .5 * p.g * tt * tt;
+          ctx.save(); ctx.globalAlpha = a; ctx.translate(p.cx + dx, p.cy + dy); ctx.rotate(p.spin * tt); ctx.translate(-p.cx, -p.cy);
+          ctx.beginPath(); ctx.moveTo(...p.pts[0]); ctx.lineTo(...p.pts[1]); ctx.lineTo(...p.pts[2]); ctx.closePath();
+          if (mat === 'paper') { ctx.shadowColor = 'rgba(60,40,20,.2)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2; ctx.fillStyle = '#fbf8f1'; ctx.fill(); ctx.shadowColor = 'transparent'; }
+          else if (mat === 'gold') { const g = ctx.createLinearGradient(p.pts[0][0], p.pts[0][1], p.pts[1][0], p.pts[2][1]); g.addColorStop(0, '#9c7f47'); g.addColorStop(.5, '#f4e8cc'); g.addColorStop(1, '#c8a66a'); ctx.fillStyle = g; ctx.globalAlpha = a * .8; ctx.fill(); ctx.globalAlpha = a; }
+          else if (mat === 'glass') { ctx.fillStyle = hex(p.c, .2); ctx.fill(); }
+          else if (mat === 'plain') { ctx.fillStyle = 'rgba(160,200,255,.22)'; ctx.fill(); }
+          ctx.save(); ctx.clip(); if (mat === 'light') ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(s.image, s.left, s.top); ctx.restore();
+          if (mat === 'light') { ctx.shadowColor = p.c; ctx.shadowBlur = 8; }
+          ctx.strokeStyle = mat === 'paper' ? 'rgba(29,26,22,.14)' : mat === 'gold' ? 'rgba(255,240,210,.75)' : mat === 'light' ? hex(p.c, .85) : 'rgba(255,255,255,.8)';
+          ctx.lineWidth = mat === 'light' ? 1 : .8; ctx.stroke(); ctx.restore();
+        }
+      });
+    },
     stardust(src, s) {
       const L = look(), parts = s.pts.slice(0, 900).map((p, i) => { const r = rng(i * 977 + 13); return { ...p, vx: (r() - .35) * 46, vy: -(28 + r() * 90), size: 1 + r() * 1.8, c: L.shards[i % L.shards.length], ph: r() * 6, d: (p.x - s.left) / s.w * 260 }; });
       return overlay(1200, (ctx, ms) => {
@@ -137,7 +194,7 @@
       });
     },
     dots(src, s) {
-      const parts = s.pts.map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: (p.x - s.left) / s.w * 300 + r() * 120, vy: -(8 + r() * 26), vx: (r() - .5) * 16, red: activeTheme() === 'dot' && r() < .04 }; });
+      const parts = s.pts.map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: (p.x - s.left) / s.w * 300 + r() * 120, vy: -(8 + r() * 26), vx: (r() - .5) * 16, red: false }; });
       return overlay(1100, (ctx, ms) => {
         for (const p of parts) {
           const t = clamp((ms - p.d) / 520), sc = t <= 0 ? 1 : 1 - easeOut(t);
@@ -202,8 +259,8 @@
   };
   function effect(source, textNode) {
     const id = chosenEffect();
-    if (!id || id === 'shatter' || !FX[id]) return null;
-    try { const s = sampleText(textNode, id === 'dots' ? 4 : id === 'stardust' ? 2 : 3); return FX[id](source, s); } catch { return null; }
+    if (!id || !FX[id]) return null;
+    try { const s = sampleText(textNode, id === 'dots' ? 4 : id === 'stardust' ? 2 : id === 'shards' ? 6 : 3); return FX[id](source, s); } catch { return null; }
   }
 
   /* ---------- 碎片罐: today's completions as shards in a glass jar ---------- */
@@ -243,60 +300,141 @@
   }
 
   /* ---------- 每周碎片画: a picture only this week of yours could make ---------- */
-  function drawArt(entries, start, L = look(), size = 1080) {
-    const id = Object.keys(THEMES).find(k => THEMES[k] === L);
-    const skinned = id && window.SuiSuiSkins?.art(id, [...entries].sort((a, b) => a.at - b.at), start, size);
-    if (skinned) return skinned;
-    const W = size, H = Math.round(size * 1.25), k = W / 1080, pixel = false;
-    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
-    const out = canvas.getContext('2d');
-    const work = canvas;
-    const ctx = work.getContext('2d'), q = pixel ? 1 / 6 : 1, sc = v => v * k * q;
-    ctx.fillStyle = L.bg; ctx.fillRect(0, 0, work.width, work.height);
-    const cx = work.width / 2, cy = sc(650);
-    if (L === THEMES.liquid) { [['#c9c2ff', .2, .2, 700], ['#bfeee2', .85, .4, 640], ['#ffd9c7', .3, .85, 620]].forEach(([c, x, y, r]) => { const g = ctx.createRadialGradient(x * W, y * H, 0, x * W, y * H, sc(r)); g.addColorStop(0, hex(c, .75)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }); }
-    if (L === THEMES.noir) { const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sc(700)); g.addColorStop(0, 'rgba(200,166,106,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(200,166,106,.35)'; ctx.lineWidth = sc(1); [470, 530].forEach(rad => { ctx.beginPath(); ctx.arc(cx, cy, sc(rad), 0, 7); ctx.stroke(); }); }
-    if (L === PLAIN) { [['#1fd1b5', -.25, .3, 620], ['#6b4bff', .3, .1, 560], ['#2f7bff', 0, .55, 520]].forEach(([c, dx, dy, r]) => { const g = ctx.createRadialGradient(cx + dx * work.width, sc(dy * 1350), 0, cx + dx * work.width, sc(dy * 1350), sc(r)); g.addColorStop(0, hex(c, L === PLAIN ? .16 : .3)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, work.width, work.height); }); }
-    if (L === PLAIN) { const r = rng(17); for (let i = 0; i < 220; i++) { const x = r() * work.width, y = r() * work.height, s = r() < .06 ? 2.2 : .6 + r(); ctx.fillStyle = `rgba(235,245,255,${.2 + r() * .55})`; ctx.beginPath(); ctx.arc(x, y, sc(s), 0, 7); ctx.fill(); } }
-    if (L === THEMES.ink) { const r = rng(7); ctx.strokeStyle = 'rgba(120,100,70,.08)'; ctx.lineWidth = sc(1.2); for (let i = 0; i < 900; i++) { const x = r() * work.width, y = r() * work.height, a = r() * 6.3, l = sc(6 + r() * 26); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); ctx.stroke(); } }
-    ctx.strokeStyle = hex(L.muted, .28); ctx.lineWidth = sc(1.2);
-    for (let d = 0; d < 7; d++) { const a = -Math.PI / 2 + d / 7 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * sc(492), cy + Math.sin(a) * sc(492)); ctx.lineTo(cx + Math.cos(a) * sc(510), cy + Math.sin(a) * sc(510)); ctx.stroke(); }
-    ctx.globalCompositeOperation = L.mode;
-    entries.forEach((e, i) => {
-      const r = rng(hash(`${e.id}${e.at}`)), when = new Date(e.at), d = (when.getDay() + 6) % 7, hr = when.getHours() + when.getMinutes() / 60;
-      const a = -Math.PI / 2 + (i + .5) / Math.max(entries.length, 1) * Math.PI * 2 + (d / 7 + hr / 168 - .5) * .35 + (r() - .5) * .08, dir = [Math.cos(a), Math.sin(a)], perp = [-dir[1], dir[0]];
-      const d0 = sc(26 + r() * 50), len = sc(150 + Math.min(e.min || 0, 120) * 2.1 + r() * 130), wb = sc(22 + r() * 46), kink = (r() - .5) * wb * .9;
-      const B1 = [cx + dir[0] * d0 + perp[0] * wb / 2, cy + dir[1] * d0 + perp[1] * wb / 2], B2 = [cx + dir[0] * d0 - perp[0] * wb / 2, cy + dir[1] * d0 - perp[1] * wb / 2];
-      const M = [cx + dir[0] * (d0 + len * .56) + perp[0] * kink, cy + dir[1] * (d0 + len * .56) + perp[1] * kink], T = [cx + dir[0] * (d0 + len), cy + dir[1] * (d0 + len)];
-      const c = shardColor(e, i, L), g = ctx.createLinearGradient(cx + dir[0] * d0, cy + dir[1] * d0, T[0], T[1]);
-      g.addColorStop(0, hex(c, L === THEMES.ink ? .82 : .92)); g.addColorStop(1, hex(c, L === THEMES.ink ? .3 : .16));
-      ctx.beginPath(); ctx.moveTo(...B1); ctx.lineTo(...M); ctx.lineTo(...T); ctx.lineTo(...B2); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
-      ctx.strokeStyle = L === THEMES.ink ? 'rgba(29,26,22,.25)' : 'rgba(255,255,255,.3)'; ctx.lineWidth = sc(1); ctx.stroke();
-      // two thin splinters beside each shard, so a quiet week still reads as glass
-      for (const side of [-1, 1]) {
-        const a2 = a + side * (.05 + r() * .09), d2 = [Math.cos(a2), Math.sin(a2)], p2 = [-d2[1], d2[0]], s0 = d0 + len * (.15 + r() * .2), l2 = len * (.35 + r() * .35), w2 = wb * (.18 + r() * .2);
-        const q1 = [cx + d2[0] * s0 + p2[0] * w2 / 2, cy + d2[1] * s0 + p2[1] * w2 / 2], q2 = [cx + d2[0] * s0 - p2[0] * w2 / 2, cy + d2[1] * s0 - p2[1] * w2 / 2], qt = [cx + d2[0] * (s0 + l2), cy + d2[1] * (s0 + l2)];
-        const g2 = ctx.createLinearGradient(cx + d2[0] * s0, cy + d2[1] * s0, qt[0], qt[1]); g2.addColorStop(0, hex(c, L === THEMES.ink ? .55 : .6)); g2.addColorStop(1, hex(c, 0));
-        ctx.beginPath(); ctx.moveTo(...q1); ctx.lineTo(...qt); ctx.lineTo(...q2); ctx.closePath(); ctx.fillStyle = g2; ctx.fill();
-      }
-    });
-    ctx.globalCompositeOperation = 'source-over';
-    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, sc(60)); core.addColorStop(0, hex(L === THEMES.ink ? '#b8322a' : L.shards[0], L === THEMES.ink ? .9 : .8)); core.addColorStop(1, hex(L.shards[0], 0));
-    ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, sc(60), 0, 7); ctx.fill();
-    if (pixel) { out.imageSmoothingEnabled = false; out.drawImage(work, 0, 0, W, H); }
-    // Words
-    const P = 84 * k, end = new Date(start.getTime() + 6 * 864e5), fmt = d => `${d.getMonth() + 1}月${d.getDate()}日`;
-    const focus = entries.reduce((n, e) => n + (e.min || 0), 0), byDay = new Array(7).fill(0); entries.forEach(e => { byDay[(new Date(e.at).getDay() + 6) % 7]++; });
+  /** The weekly picture. Each theme draws the week its own way:
+      晨 seven glasses filled with the day's things, 昼 a manuscript page with one character per thing,
+      暮 a setting sun with one ray per thing, 夜 a star map with one constellation per day. */
+  const CN = n => { const D = '零一二三四五六七八九'; return n < 10 ? D[n] : n < 20 ? `十${n % 10 ? D[n % 10] : ''}` : n < 100 ? `${D[Math.floor(n / 10)]}十${n % 10 ? D[n % 10] : ''}` : String(n); };
+  const firstChar = s => Array.from(String(s || '').trim())[0] || '·';
+  const mixWhite = (c, t) => { const n = parseInt(c.slice(1), 16), m = v => Math.round(v + (255 - v) * t); return `rgb(${m(n >> 16 & 255)},${m(n >> 8 & 255)},${m(n & 255)})`; };
+  function weekStats(entries) {
+    const focus = entries.reduce((m, e) => m + (e.min || 0), 0), byDay = new Array(7).fill(0);
+    entries.forEach(e => { byDay[(new Date(e.at).getDay() + 6) % 7]++; });
     const busiest = entries.length ? '一二三四五六日'[byDay.indexOf(Math.max(...byDay))] : '';
-    out.fillStyle = L.ink; out.textBaseline = 'alphabetic';
-    out.font = `600 ${76 * k}px ${L.font}`; out.fillText(`第 ${isoWeek(start)} 周`, P, P + 70 * k);
-    out.fillStyle = L.muted; out.font = `400 ${30 * k}px ${L.font}`; out.fillText(`${start.getFullYear()} · ${fmt(start)} 至 ${fmt(end)}`, P, P + 122 * k);
-    const lines = entries.length ? [`${entries.length} 件完成`, focus ? `${Math.floor(focus / 60) ? `${Math.floor(focus / 60)} 小时 ` : ''}${focus % 60} 分钟专注` : '这周没有计时', `周${busiest}最忙`] : ['这周还没有碎片', '完成一件事，就会长出第一片'];
-    out.fillStyle = L.ink; out.font = `600 ${40 * k}px ${L.font}`; out.fillText(lines[0], P, H - P - 92 * k);
-    out.fillStyle = L.muted; out.font = `400 ${28 * k}px ${L.font}`; out.fillText(lines.slice(1).join('，'), P, H - P - 44 * k);
-    if (L === THEMES.ink) { out.save(); out.translate(W - P - 34 * k, H - P - 70 * k); out.rotate(-.06); out.fillStyle = '#b8322a'; out.fillRect(-34 * k, -34 * k, 68 * k, 68 * k); out.fillStyle = '#fbf3e6'; out.font = `600 ${40 * k}px ${L.font}`; out.textAlign = 'center'; out.textBaseline = 'middle'; out.fillText('碎', 0, 2 * k); out.restore(); }
-    else { out.fillStyle = hex(L.muted.length === 7 ? L.muted : '#8b93a3', .9); out.font = `500 ${24 * k}px ${L.font}`; out.textAlign = 'right'; out.fillText('碎碎清单 Pro', W - P, H - P - 44 * k); out.textAlign = 'left'; }
-    if (L === THEMES.noir) { const r = rng(3), img = out.getImageData(0, 0, W, H), dt = img.data; for (let i = 0; i < dt.length; i += 4 * 3) { const n = (r() - .5) * 22; dt[i] += n; dt[i + 1] += n; dt[i + 2] += n; } out.putImageData(img, 0, 0); }
+    const focusText = focus ? `专注 ${Math.floor(focus / 60) ? `${Math.floor(focus / 60)} 小时 ` : ''}${focus % 60 ? `${focus % 60} 分钟` : ''}`.trim() : '';
+    return { focus, byDay, busiest, focusText };
+  }
+  function drawArt(entries, start, L = look(), size = 1080) {
+    entries = [...entries].sort((a, b) => a.at - b.at);
+    const W = size, H = Math.round(size * 1.25), k = W / 1080, sc = v => v * k, mat = L.material || 'plain';
+    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H; const ctx = canvas.getContext('2d');
+    const st = weekStats(entries), end = new Date(start.getTime() + 6 * 864e5), fmt = d => `${d.getMonth() + 1}月${d.getDate()}日`, Pd = sc(84);
+    const byDay = Array.from({ length: 7 }, (_, d) => entries.filter(e => (new Date(e.at).getDay() + 6) % 7 === d));
+    const th = THEMES[Object.keys(THEMES).find(id => THEMES[id] === L)];
+    const summary = entries.length ? [`${entries.length} 件`, [st.focusText, `周${st.busiest}最多`].filter(Boolean).join('，')] : ['这一周还空着', '完成一件事，画就开始长'];
+    const caption = (font, title, sub, color = L.ink, subColor = L.muted) => {
+      ctx.fillStyle = color; ctx.font = font; ctx.fillText(title, Pd, Pd + sc(70));
+      ctx.fillStyle = subColor; ctx.font = `400 ${sc(28)}px ${SANS}`; ctx.fillText(sub, Pd, Pd + sc(122));
+    };
+    const footer = (bigFont, color = L.ink, subColor = L.muted) => {
+      ctx.fillStyle = color; ctx.font = bigFont; ctx.fillText(summary[0], Pd, H - Pd - sc(70));
+      ctx.fillStyle = subColor; ctx.font = `400 ${sc(27)}px ${SANS}`; ctx.fillText(summary[1], Pd, H - Pd - sc(24));
+      ctx.fillStyle = hex(L.muted, .9); ctx.font = `500 ${sc(24)}px ${SANS}`; ctx.textAlign = 'right'; ctx.fillText('碎碎清单', W - Pd, H - Pd - sc(24)); ctx.textAlign = 'left';
+    };
+    const range = `${th ? `${th.full}　` : ''}${fmt(start)} 至 ${fmt(end)}`;
+
+    if (mat === 'glass') { /* ---- 晨: seven glasses ---- */
+      ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+      [['#c9c2ff', .15, .12, 760], ['#bfeee2', .9, .45, 700], ['#ffd9c7', .25, .92, 720], ['#d6e4ff', .8, 1, 520]].forEach(([c, x, y, r]) => { const g = ctx.createRadialGradient(x * W, y * H, 0, x * W, y * H, sc(r)); g.addColorStop(0, hex(c, .8)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
+      caption(`600 ${sc(76)}px ${SANS}`, `第 ${isoWeek(start)} 周`, range);
+      const gw = sc(106), gap = (W - 2 * Pd - 7 * gw) / 6, top = sc(330), bot = sc(1000), most = Math.max(1, ...byDay.map(d => d.reduce((m, e) => m + 1 + Math.min(e.min || 0, 90) / 30, 0)));
+      byDay.forEach((list, d) => {
+        const x = Pd + d * (gw + gap), inset = sc(8), path = () => { ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + inset, bot - sc(26)); ctx.quadraticCurveTo(x + inset, bot, x + inset + sc(26), bot); ctx.lineTo(x + gw - inset - sc(26), bot); ctx.quadraticCurveTo(x + gw - inset, bot, x + gw - inset, bot - sc(26)); ctx.lineTo(x + gw, top); };
+        path(); ctx.fillStyle = 'rgba(255,255,255,.38)'; ctx.fill();
+        ctx.save(); path(); ctx.closePath(); ctx.clip();
+        const room = bot - top - sc(40), unit = room / Math.max(most, 4); let y = bot;
+        list.forEach((e, i) => {
+          const hgt = unit * (1 + Math.min(e.min || 0, 90) / 30), c = mixWhite(groupColor(e.group), .55), g = ctx.createLinearGradient(x, 0, x + gw, 0);
+          g.addColorStop(0, c); g.addColorStop(.5, mixWhite(groupColor(e.group), .72)); g.addColorStop(1, c);
+          ctx.fillStyle = g; ctx.fillRect(x, y - hgt, gw, hgt); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillRect(x, y - hgt, gw, sc(i === list.length - 1 ? 3 : 1.4)); y -= hgt;
+        });
+        ctx.restore();
+        path(); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = sc(2.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + sc(16), top + sc(30)); ctx.lineTo(x + sc(22), bot - sc(60)); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = sc(5); ctx.lineCap = 'round'; ctx.stroke();
+        ctx.fillStyle = L.muted; ctx.font = `400 ${sc(26)}px ${SANS}`; ctx.textAlign = 'center'; ctx.fillText(`周${'一二三四五六日'[d]}`, x + gw / 2, bot + sc(56));
+        ctx.fillStyle = L.ink; ctx.font = `600 ${sc(30)}px ${SANS}`; ctx.fillText(String(list.length), x + gw / 2, bot + sc(98)); ctx.textAlign = 'left';
+      });
+      footer(`600 ${sc(44)}px ${SANS}`);
+      return canvas;
+    }
+
+    if (mat === 'paper') { /* ---- 昼: a manuscript page, written right to left ---- */
+      ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+      { const r = rng(4); for (let i = 0; i < W * H / 40; i++) { ctx.fillStyle = `rgba(90,70,40,${.05 * r()})`; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); } }
+      const cell = sc(96), rows = 8, gx = W - Pd - 7 * cell, gy = sc(250), red = '#b43a2c';
+      for (let d = 0; d < 7; d++) {
+        const x = W - Pd - (d + 1) * cell, list = byDay[d];
+        ctx.fillStyle = red; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText(`周${'一二三四五六日'[d]}`, x + cell / 2, gy - sc(22));
+        for (let r = 0; r < rows; r++) {
+          const y = gy + r * cell, cx = x + cell / 2, cy = y + cell / 2;
+          ctx.strokeStyle = hex(red, .45); ctx.lineWidth = sc(1.3); ctx.strokeRect(x, y, cell, cell);
+          ctx.save(); ctx.setLineDash([sc(4), sc(5)]); ctx.strokeStyle = hex(red, .15); ctx.lineWidth = sc(1); ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.moveTo(cx, y); ctx.lineTo(cx, y + cell); ctx.stroke(); ctx.restore();
+          const e = list[r]; if (!e) continue;
+          const more = r === rows - 1 && list.length > rows;
+          ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(more ? 34 : 58)}px ${SONG}`; ctx.fillText(more ? `+${list.length - rows + 1}` : firstChar(e.title), cx, cy + sc(more ? 12 : 20));
+          if (!more && (e.min || 0) >= 20) { const q = rng(hash(`${e.id}${e.at}`)); ctx.save(); ctx.translate(cx, cy); ctx.rotate((q() - .5) * .8); ctx.strokeStyle = red; ctx.lineWidth = sc(3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, sc(38), sc(35), 0, .25, Math.PI * 2 - .05); ctx.stroke(); ctx.restore(); }
+        }
+      }
+      ctx.textAlign = 'center';
+      Array.from(`第${CN(isoWeek(start))}周`).forEach((ch, i) => { ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(64)}px ${SONG}`; ctx.fillText(ch, Pd + sc(44), gy + sc(60) + i * sc(80)); });
+      Array.from(`${CN(start.getMonth() + 1)}月${CN(start.getDate())}日起`).forEach((ch, i) => { ctx.fillStyle = L.muted; ctx.font = `400 ${sc(24)}px ${SONG}`; ctx.fillText(ch, Pd + sc(130), gy + sc(40) + i * sc(34)); });
+      // seal
+      const sx = Pd + sc(4), sy = gy + rows * cell - sc(150), s = sc(140);
+      ctx.save(); ctx.translate(sx + s / 2, sy + s / 2); ctx.rotate(-.05); ctx.fillStyle = red; ctx.fillRect(-s / 2, -s / 2, s, s);
+      ctx.fillStyle = '#f5f2ec'; ctx.font = `600 ${sc(50)}px ${SONG}`; [['碎', -1, -1], ['碎', -1, 1], ['清', 1, -1], ['单', 1, 1]].forEach(([c, cxk, cyk]) => ctx.fillText(c, -cxk * s * .23, cyk * s * .23 + sc(17)));
+      { const r = rng(11); ctx.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 180; i++) { ctx.fillStyle = `rgba(0,0,0,${.3 + r() * .5})`; ctx.fillRect((r() - .5) * s, (r() - .5) * s, sc(1 + r() * 3), sc(1 + r() * 2)); } }
+      ctx.restore(); ctx.textAlign = 'left';
+      ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}件事` : '这一页还空着', Pd, H - Pd - sc(70));
+      ctx.fillStyle = L.muted; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? `${st.focusText ? `${st.focusText}，` : ''}周${st.busiest}写得最多。朱圈是专注过的事` : '完成一件事，就写下第一个字', Pd, H - Pd - sc(24));
+      return canvas;
+    }
+
+    if (mat === 'gold') { /* ---- 暮: the week as a setting sun ---- */
+      ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+      const hz = sc(900), cx = W / 2, R = sc(118);
+      { const g = ctx.createRadialGradient(cx, hz, 0, cx, hz, sc(820)); g.addColorStop(0, 'rgba(200,150,90,.26)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+      const span = 7 * 864e5, rays = entries.map((e, i) => { const r = rng(hash(`${e.id}${e.at}`)), f = clamp((e.at - start.getTime()) / span, 0, 1); return { a: Math.PI - (.04 + f * .92) * Math.PI + (r() - .5) * .02, len: sc(170 + Math.min(e.min || 0, 120) * 2.6 + r() * 120), w: sc(5 + r() * 5 + Math.min(e.min || 0, 90) / 18), e }; });
+      const drawRays = (mirror, alpha) => rays.forEach(({ a, len, w }) => {
+        const dx = Math.cos(a), dy = -Math.sin(a) * mirror, px = -dy, py = dx, r0 = R + sc(26), x0 = cx + dx * r0, y0 = hz + dy * r0, x1 = cx + dx * (r0 + len), y1 = hz + dy * (r0 + len);
+        const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, `rgba(244,232,204,${alpha})`); g.addColorStop(.35, `rgba(200,166,106,${alpha * .9})`); g.addColorStop(1, 'rgba(156,127,71,0)');
+        ctx.beginPath(); ctx.moveTo(x0 + px * w / 2, y0 + py * w / 2); ctx.lineTo(x1, y1); ctx.lineTo(x0 - px * w / 2, y0 - py * w / 2); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+      });
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, hz); ctx.clip(); drawRays(1, 1);
+      const sun = ctx.createRadialGradient(cx - R * .3, hz - R * .4, 0, cx, hz, R); sun.addColorStop(0, '#f4e8cc'); sun.addColorStop(.6, '#c8a66a'); sun.addColorStop(1, '#9c7f47'); ctx.fillStyle = sun; ctx.beginPath(); ctx.arc(cx, hz, R, 0, 7); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(0, hz, W, H - hz); ctx.clip(); ctx.globalAlpha = .22; drawRays(-.55, .8); ctx.restore();
+      for (let i = 0; i < 6; i++) { ctx.fillStyle = `rgba(200,166,106,${.32 - i * .045})`; const wv = R * (1.6 - i * .2); ctx.fillRect(cx - wv, hz + sc(16 + i * 18), wv * 2, sc(2)); }
+      ctx.fillStyle = 'rgba(200,166,106,.7)'; ctx.fillRect(Pd, hz, W - 2 * Pd, sc(1.5));
+      ctx.textAlign = 'center'; ctx.font = `italic 400 ${sc(28)}px ${SERIF}`;
+      ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].forEach((t, d) => { const a = Math.PI - (.04 + (d + .5) / 7 * .92) * Math.PI, rr = sc(520); ctx.fillStyle = byDay[d].length ? 'rgba(200,166,106,.8)' : 'rgba(200,166,106,.3)'; ctx.fillText(t, cx + Math.cos(a) * rr, hz - Math.sin(a) * rr); });
+      ctx.textAlign = 'left';
+      caption(`400 ${sc(80)}px ${SERIF}`, `第 ${isoWeek(start)} 周`, range, '#c8a66a', L.muted);
+      footer(`400 ${sc(46)}px ${SERIF}`, '#efe6d6');
+      return canvas;
+    }
+
+    /* ---- 夜 (and the free preview): a star map, one constellation per day ---- */
+    ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+    { const r = rng(17); for (let i = 0; i < 300; i++) { const s = r() < .05 ? 2 : .5 + r(); ctx.fillStyle = `rgba(225,232,255,${.08 + r() * .4})`; ctx.beginPath(); ctx.arc(r() * W, r() * H, sc(s), 0, 7); ctx.fill(); } }
+    const cx = W / 2, cy = sc(680), R = sc(410);
+    { const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.2); g.addColorStop(0, mat === 'plain' ? 'rgba(80,140,255,.10)' : 'rgba(90,110,190,.14)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+    ctx.strokeStyle = 'rgba(223,230,255,.18)'; ctx.lineWidth = sc(1.2); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    ctx.save(); ctx.setLineDash([sc(2), sc(10)]); [R * .36, R * .68].forEach(r => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); }); ctx.restore();
+    ctx.textAlign = 'center'; ctx.font = `400 ${sc(24)}px ${SANS}`;
+    for (let d = 0; d < 7; d++) {
+      const a0 = -Math.PI / 2 + d / 7 * Math.PI * 2, am = a0 + Math.PI / 7;
+      ctx.strokeStyle = 'rgba(223,230,255,.08)'; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a0) * sc(40), cy + Math.sin(a0) * sc(40)); ctx.lineTo(cx + Math.cos(a0) * R, cy + Math.sin(a0) * R); ctx.stroke();
+      ctx.fillStyle = byDay[d].length ? 'rgba(223,230,255,.75)' : 'rgba(223,230,255,.3)'; ctx.fillText(`周${'一二三四五六日'[d]}`, cx + Math.cos(am) * (R + sc(42)), cy + Math.sin(am) * (R + sc(42)) + sc(8));
+      const pts = byDay[d].map(e => { const when = new Date(e.at), hr = when.getHours() + when.getMinutes() / 60, r = rng(hash(`${e.id}${e.at}`)), a = a0 + (.12 + .76 * (hr / 24) + (r() - .5) * .1) * Math.PI * 2 / 7, rad = sc(70) + (R - sc(100)) * clamp((hr - 5) / 19 + (r() - .5) * .08, .04, 1); return { x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad, e }; });
+      if (pts.length > 1) { ctx.strokeStyle = 'rgba(223,230,255,.34)'; ctx.lineWidth = sc(1.4); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); }
+      pts.forEach((p, i) => {
+        const s = sc(9 + Math.min(p.e.min || 0, 90) / 7), col = mat === 'plain' ? groupColor(p.e.group) : L.shards[(hash(p.e.id) + i) % 3];
+        ctx.save(); ctx.translate(p.x, p.y); ctx.shadowColor = col; ctx.shadowBlur = s * 1.6; ctx.fillStyle = '#f4f6ff';
+        ctx.beginPath(); ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * .12, -s * .12, s, 0); ctx.quadraticCurveTo(s * .12, s * .12, 0, s); ctx.quadraticCurveTo(-s * .12, s * .12, -s, 0); ctx.quadraticCurveTo(-s * .12, -s * .12, 0, -s); ctx.fill();
+        ctx.shadowBlur = 0; ctx.fillStyle = hex(col.startsWith('#') ? col : '#9fb4ff', .25); ctx.beginPath(); ctx.arc(0, 0, s * 1.4, 0, 7); ctx.fill(); ctx.restore();
+      });
+    }
+    ctx.textAlign = 'left';
+    caption(`300 ${sc(80)}px ${SANS}`, `第 ${isoWeek(start)} 周`, range);
+    footer(`500 ${sc(44)}px ${SANS}`);
     return canvas;
   }
 
@@ -318,18 +456,19 @@
     const r = html.style;
     r.setProperty('--accent', t.accent); r.setProperty('--accent-fill', t.accent); r.setProperty('--accent-soft', t.soft); r.setProperty('--on-accent', t.on);
     r.setProperty('--pro-font', t.font);
-    if (id === 'ink') r.setProperty('--app-font', t.font);
+    if (id === 'day') r.setProperty('--app-font', t.font);
     window.SuiSuiSkins.mount(id);
   }
   function setTheme(id) {
-    if (!isPro()) { startTry(id); return; }
+    if (!isPro()) { startTry(id === 'auto' ? byTime() : id); return; }
     S().proTheme = S().proTheme === id ? '' : id; persist(); applyTheme(); refreshAll();
   }
   let tryTimer = 0;
   function startTry(id) {
+    if (id === 'auto') id = byTime();
     tryOn = id; applyTheme(); closeSheet();
     const bar = $('pro-tryon'); bar.hidden = false;
-    bar.querySelector('b').textContent = `正在试穿「${THEMES[id].name}」`;
+    bar.querySelector('b').textContent = `正在试穿「${THEMES[id].full}」`;
     clearTimeout(tryTimer); tryTimer = setTimeout(() => endTry(true), 90000);
     API.render(); refreshAll();
   }
@@ -381,22 +520,17 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('pro-celebrate').hidden) closeCelebrate(); else if (!$('pro-jar-sheet').hidden) closeJar(); else if (!$('pro-sheet').hidden) closeSheet(); } });
   }
 
-  function themeMock(id) {
-    const t = THEMES[id];
-    void t; return `<img class="pro-thumb" src="${thumbOf(id)}" alt="" aria-hidden="true">`;
-  }
-  const thumbs = {};
-  function thumbOf(id) { return thumbs[id] || (thumbs[id] = window.SuiSuiSkins.thumb(id)); }
+  function themeMock(id) { return window.SuiSuiSkins.mock(id); }
   function loadThumbFonts() { /* the themes use system and bundled fonts only; nothing to wait for */ }
   function renderLookInline() {
     const f = $('pro-look'); if (!f) return;
-    const pro = isPro(), cur = activeTheme();
-    f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${Object.keys(THEMES).map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${THEMES[id].name}</strong><small>${pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
+    const pro = isPro(), cur = tryOn || (pro ? S().proTheme || '' : '');
+    f.innerHTML = `<legend>Pro 主题 · 一日四时${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
     f.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proThemePick)));
     const e = $('pro-effects-inline');
     if (e) {
       const curE = S().proEffect || 'auto';
-      e.innerHTML = `<div class="ag-row"><h3 class="ag-title">完成动效${pro ? '' : '<span class="pro-pill">Pro</span>'}</h3></div><div class="pro-effect-row">${Object.keys(EFFECTS).map(id => `<button type="button" class="chip${pro && curE === id ? ' active' : ''}" data-pro-effect-pick="${id}">${EFFECTS[id]}${pro || id === 'shatter' ? '' : icon('lock', 'pro-chip-lock')}</button>`).join('')}</div>`;
+      e.innerHTML = `<div class="ag-row"><h3 class="ag-title">完成动效${pro ? '' : '<span class="pro-pill">Pro</span>'}</h3></div><div class="pro-effect-row">${Object.keys(EFFECTS).map(id => `<button type="button" class="chip${pro && curE === id ? ' active' : ''}" data-pro-effect-pick="${id}">${EFFECTS[id]}${pro ? '' : icon('lock', 'pro-chip-lock')}</button>`).join('')}</div>`;
       e.querySelectorAll('[data-pro-effect-pick]').forEach(b => b.addEventListener('click', () => { if (!isPro()) { openSheet('effects'); return; } S().proEffect = b.dataset.proEffectPick; persist(); renderLookInline(); }));
     }
     API.icons(f); if (e) API.icons(e);
@@ -425,14 +559,14 @@
         <h2>完成的那一下</h2>
         <p class="pro-lead">点圆圈试试。六种完成动效，每一种都配了声音。</p>
         <div class="pro-demo-row"><button type="button" class="pro-demo-check" id="pro-demo-check" aria-label="试一下完成动效"><span class="check-circle"></span></button><span class="pro-demo-title" id="pro-demo-title">把锁屏待办的想法做出来</span></div>
-        <div class="pro-effect-grid">${Object.keys(EFFECTS).filter(id => id !== 'auto').map(id => `<button type="button" class="pro-effect${(pro ? curE === id : id === (demoPick || 'stardust')) ? ' active' : ''}" data-pro-effect="${id}"><b>${EFFECTS[id]}</b><small>${EFFECT_LINE[id]}</small></button>`).join('')}
+        <div class="pro-effect-grid">${Object.keys(EFFECTS).filter(id => id !== 'auto').map(id => `<button type="button" class="pro-effect${(pro ? curE === id : id === (demoPick || 'shards')) ? ' active' : ''}" data-pro-effect="${id}"><b>${EFFECTS[id]}</b><small>${EFFECT_LINE[id]}</small></button>`).join('')}
         ${pro ? `<button type="button" class="pro-effect${curE === 'auto' ? ' active' : ''}" data-pro-effect="auto"><b>跟随主题</b><small>每个主题用自己的动效</small></button>` : ''}</div>
       </section>
 
       <section class="pro-part" data-pro-section="themes">
-        <h2>主题</h2>
-        <p class="pro-lead">不只是换颜色：字体、碎片的材质、完成的动效和声音，整套一起换。${pro ? '' : '可以先试穿 90 秒。'}</p>
-        <div class="pro-themes">${Object.keys(THEMES).map(id => `<article class="pro-theme${cur === id ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${THEMES[id].name}</h3><p>${THEMES[id].line}</p><small>${EFFECTS[THEMES[id].effect]} · ${{ glass: '玻璃轻响', wood: '木鱼一声', click: '机械轻响', chime: '铜铃余音' }[THEMES[id].sound]}</small><button type="button" data-pro-theme="${id}">${pro ? (cur === id ? '使用中' : '使用') : '试穿'}</button></article>`).join('')}
+        <h2>一日四时</h2>
+        <p class="pro-lead">一天里的四个时刻，四种看今天的方式：清晨的杯子一点点满起来，白天在稿纸上一格一格圈掉，傍晚太阳随着进度落下，夜里每件事是一颗星。打开“跟随时间”，一天里会自己换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
+        <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? S().proTheme : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，暮 17 点，夜 20 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
         ${SOON.map(t => `<article class="pro-theme soon"><span class="pro-mock" data-mock="soon" aria-hidden="true">${icon('sparkles')}</span><h3>${t.name}</h3><p>${t.line}</p><small>即将上线，已购用户免费</small></article>`).join('')}</div>
       </section>
 
@@ -461,11 +595,15 @@
         <form class="pro-cd-add" id="pro-cd-add"><input id="pro-cd-title" maxlength="12" placeholder="比如：考试" aria-label="倒数日名称" required><input type="date" id="pro-cd-date" aria-label="日期" required><button type="submit" class="primary-button">添加</button></form>
       </section>` : ''}
 
-      <footer class="pro-buy">
-        ${owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。</p>`
+      <footer class="pro-buy" data-pay="${payPlatform()}">
+        ${owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
           : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>首发价，一次买断，永久使用</span></div>
-             <div class="pro-actions">${info().trialUsed ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">解锁 Pro</button></div>`}
-        <p class="pro-legal"><button type="button" id="pro-restore">恢复购买</button><span>本地预览：购买是模拟的，不会扣费</span><button type="button" id="pro-reset">重置</button></p>
+             <div class="pro-actions">${info().trialUsed ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? 'App Store 购买' : '购买兑换码'}</button></div>
+             ${payPlatform() === 'ios' ? '<p class="pro-paynote">用 Apple 账户付款。换了手机，点下面的“恢复购买”。</p>'
+              : `<form class="pro-redeem" id="pro-redeem"><input id="pro-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="已有兑换码？输入兑换" aria-label="兑换码"><button type="submit">兑换</button></form>
+                 <p class="pro-paynote" id="pro-paynote">付款后会收到一串兑换码，安卓和网页都能用。</p>`}`}
+        <p class="pro-legal">${payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<span></span>'}<span>本地预览：付款是模拟的</span><button type="button" id="pro-reset">重置</button></p>
+        <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>
       </footer>`;
     API.icons(s);
     $('pro-close').addEventListener('click', closeSheet);
@@ -477,9 +615,16 @@
       if (id !== 'auto') playDemo();
     }));
     s.querySelectorAll('[data-pro-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proTheme)));
-    $('pro-buy')?.addEventListener('click', buy);
+    $('pro-buy')?.addEventListener('click', () => {
+      if (payPlatform() === 'ios') { buy(); return; }
+      const note = $('pro-paynote'); if (!note) return;
+      note.innerHTML = `正式版会打开付款页，付完显示兑换码。本地预览可以用这个：<button type="button" id="pro-fill-code">${demoCode}</button>`;
+      $('pro-fill-code').addEventListener('click', () => { $('pro-code').value = demoCode; $('pro-code').focus(); });
+    });
+    $('pro-redeem')?.addEventListener('submit', e => { e.preventDefault(); redeem($('pro-code').value); });
+    s.querySelectorAll('[data-pay-preview]').forEach(b => b.addEventListener('click', () => { payPreview = b.dataset.payPreview; renderSheet(); s.querySelector('.pro-buy')?.scrollIntoView({ block: 'end' }); }));
     $('pro-trial')?.addEventListener('click', startTrial);
-    $('pro-restore').addEventListener('click', restore);
+    $('pro-restore')?.addEventListener('click', restore);
     $('pro-reset').addEventListener('click', resetLocal);
     $('pro-sound')?.addEventListener('change', e => { S().proSound = e.target.checked; persist(); if (e.target.checked) playSound(themeSound()); });
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
@@ -493,10 +638,10 @@
   function playDemo() {
     const title = $('pro-demo-title'), check = $('pro-demo-check');
     if (!title || title.dataset.busy) return;
-    const pick = isPro() ? ((S().proEffect || 'auto') === 'auto' ? (THEMES[activeTheme()]?.effect || 'shatter') : S().proEffect) : (demoPick || 'stardust');
+    const pick = isPro() ? ((S().proEffect || 'auto') === 'auto' ? (THEMES[activeTheme()]?.effect || 'shards') : S().proEffect) : (demoPick || 'shards');
     title.dataset.busy = '1'; check.classList.add('done');
-    playSound(isPro() && !(S().proEffect && S().proEffect !== 'auto') ? themeSound() : ({ stardust: 'glass', ink: 'wood', dots: 'click', gold: 'chime' }[pick] || 'soft'));
-    const run = pick === 'shatter' ? shatterDemo(title) : (demoEffect = pick, FX[pick](title, sampleText(title, pick === 'dots' ? 4 : pick === 'stardust' ? 2 : 3)));
+    playSound(isPro() && !(S().proEffect && S().proEffect !== 'auto') ? themeSound() : ({ shards: themeSound() === 'soft' ? 'glass' : themeSound(), stardust: 'glass', ink: 'wood', dots: 'click', gold: 'chime' }[pick] || 'soft'));
+    const run = pick === 'shatter' ? shatterDemo(title) : (demoEffect = pick, FX[pick](title, sampleText(title, pick === 'dots' ? 4 : pick === 'stardust' ? 2 : pick === 'shards' ? 6 : 3)));
     demoEffect = '';
     title.style.visibility = 'hidden';
     Promise.resolve(run).then(() => setTimeout(() => { title.style.visibility = ''; check.classList.remove('done'); delete title.dataset.busy; title.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }, 700));
@@ -564,7 +709,7 @@
   function physicsJar(canvas, entries, sheet) {
     cancelAnimationFrame(jarRaf); tiltOff?.();
     const W = 220, H = 280, ctx = canvasFor(canvas, W, H), jx = 20, jy = 8, jw = 180, jh = 264, J = jarShape(jx, jy, jw, jh), kind = jarKind();
-    const vase = kind === 'ink', L = look(), neckL = vase ? jx + jw * .35 : J.nx, neckR = vase ? jx + jw * .65 : J.nx + J.neck;
+    const vase = false, L = look(), neckL = vase ? jx + jw * .35 : J.nx, neckR = vase ? jx + jw * .65 : J.nx + J.neck;
     const left = jx + (vase ? jw * .1 : 4), right = jx + jw - (vase ? jw * .1 : 4), bottom = jy + jh - 5, bodyTop = vase ? jy + jh * .24 : J.bodyTop + J.r * .5, R = vase ? jw * .32 : J.r;
     const queue = []; entries.forEach(e => { const r = rng(hash(`${e.id}${e.at}`)); for (let k = 0; k < 5; k++) queue.push({ s: 20 * (.85 + r() * .5), color: shardColor(e, k, L), seed: hash(`${e.id}${e.at}${k}`), rot: r() * 6.28 }); });
     queue.splice(150);
@@ -700,7 +845,7 @@
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   mount();
   applyTheme(); refreshAll();
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
@@ -712,5 +857,5 @@
     if (allDone) setTimeout(celebrate, 900);
   });
   // A trial that ends while the app is open: the free look comes back.
-  setInterval(() => { const was = document.documentElement.dataset.proTheme || ''; if (was && !activeTheme()) { applyTheme(); refreshAll(); } }, 60000);
+  setInterval(() => { const was = document.documentElement.dataset.proTheme || ''; if (was !== activeTheme()) { applyTheme(); API.render(); refreshAll(); } }, 60000);
 })();

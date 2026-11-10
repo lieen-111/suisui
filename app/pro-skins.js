@@ -1,10 +1,11 @@
-/* 碎碎清单 Pro skins — four restrained, stylised themes. The list stays the subject: each theme speaks through
-   type, colour, material and one or two details, over a quiet background.
-     liquid 液态玻璃   pearl light, glass with rim highlights, thin numerals
-     ink    东方留白   warm paper, thin Song type, one cinnabar point
-     dot    点阵       monochrome, dot-matrix numerals, one red dot
-     noir   暗金       deep black, champagne-gold hairlines, N° numbering
-   pro.js decides which theme is on; this file draws the background, header, jar and weekly picture. */
+/* 碎碎清单 Pro skins —「一日四时」: four times of day, each with its own way of drawing today.
+     dawn  晨 · 玻璃   a measuring glass that fills with light as things get done
+     day   昼 · 纸     manuscript paper: one character per task, circled in red when done
+     dusk  暮 · 金     a sunset dial: the sun crosses the sky and sets when the list is clear
+     night 夜 · 光     a constellation: every task is a star, done ones light up and join
+   What they share: completion still breaks the task into pieces (in the theme's material), and the pieces go into
+   the same jar. Everything else — header, check, rows, weekly picture — belongs to the theme.
+   The list stays the subject: backgrounds are quiet. pro.js decides which theme is on. */
 (() => {
   const API = window.suisui?.pro;
   if (!API) return;
@@ -18,59 +19,38 @@
   const esc = v => API.esc(v);
   const hexA = (c, a) => { const n = parseInt(c.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
   const two = n => String(n).padStart(2, '0');
-  const CINNABAR = '#b43a2c', GOLD = '#c8a66a', RED = '#d71921';
+  const CINNABAR = '#b43a2c', GOLD = '#c8a66a';
   const SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
   const SERIF = '"Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
-
-  /* ---------- 5×7 dot-matrix glyphs ---------- */
-  const GLYPH = {
-    0: ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'], 1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
-    2: ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'], 3: ['#####', '...#.', '..#..', '...#.', '....#', '#...#', '.###.'],
-    4: ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'], 5: ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
-    6: ['..##.', '.#...', '#....', '####.', '#...#', '#...#', '.###.'], 7: ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
-    8: ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'], 9: ['.###.', '#...#', '#...#', '.####', '....#', '...#.', '.##..'],
-    '/': ['....#', '....#', '...#.', '..#..', '.#...', '#....', '#....'], '.': ['.', '.', '.', '.', '.', '.', '#'], ':': ['.', '#', '.', '.', '.', '#', '.'],
-    '-': ['...', '...', '...', '###', '...', '...', '...'], ' ': ['..', '..', '..', '..', '..', '..', '..']
-  };
-  /** Dot-matrix text as SVG: lit dots in colour, unlit dots faint, like an LED panel. */
-  function dotSvg(text, { d = 4, gap = 1.6, color = '#111', dim = .09, cls = '' } = {}) {
-    const step = d + gap; let x = 0, dots = '';
-    for (const ch of String(text)) {
-      const g = GLYPH[ch] || GLYPH[' '], w = g[0].length;
-      g.forEach((row, y) => [...row].forEach((p, i) => { if (p !== '#' && !dim) return; dots += `<circle cx="${(x + i * step + d / 2).toFixed(1)}" cy="${(y * step + d / 2).toFixed(1)}" r="${(d / 2).toFixed(2)}"${p === '#' ? '' : ` opacity="${dim}"`}/>`; }));
-      x += w * step + step;
-    }
-    const W = Math.max(1, x - step), H = 7 * step - gap;
-    return `<svg class="dot-svg ${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" fill="${color}" aria-hidden="true">${dots}</svg>`;
-  }
-  function dotCanvas(ctx, text, x0, y0, d, color, dim = .08) {
-    const step = d * 1.4; let x = x0;
-    for (const ch of String(text)) { const g = GLYPH[ch] || GLYPH[' ']; g.forEach((row, y) => [...row].forEach((p, i) => { if (p !== '#' && !dim) return; ctx.fillStyle = p === '#' ? color : hexA(color, dim); ctx.beginPath(); ctx.arc(x + i * step + d / 2, y0 + y * step + d / 2, d / 2, 0, 7); ctx.fill(); })); x += (g[0].length + 1) * step; }
-    return x - x0;
-  }
+  const MAT = { dawn: 'glass', day: 'paper', dusk: 'gold', night: 'light' };
 
   /* ---------- Backgrounds: quiet ---------- */
   function grain(ctx, w, h, alpha, seed = 3, color = '0,0,0') {
     const r = rng(seed), n = Math.round(w * h / 9);
     for (let i = 0; i < n; i++) { ctx.fillStyle = `rgba(${color},${alpha * r()})`; ctx.fillRect(r() * w, r() * h, 1, 1); }
   }
+  function stars(ctx, w, h, n, seed, a = .5) { const r = rng(seed); for (let i = 0; i < n; i++) { ctx.fillStyle = `rgba(223,230,255,${.1 + r() * a})`; ctx.beginPath(); ctx.arc(r() * w, r() * h, r() < .05 ? 1.3 : .35 + r() * .5, 0, 7); ctx.fill(); } }
   const BG = {
-    liquid(ctx, w, h, t = 0) { // at 1/5 resolution; the browser's smoothing turns it into soft light
+    dawn(ctx, w, h, t = 0) { // drawn at 1/5 resolution; the browser's smoothing makes it soft light
       ctx.fillStyle = '#eef0f4'; ctx.fillRect(0, 0, w, h);
       [['#c9c2ff', .22, .18, .9, 1], ['#bfeee2', .82, .34, .8, 1.4], ['#ffd9c7', .3, .78, .85, 1.9], ['#d6e4ff', .78, .9, .7, 2.6]].forEach(([c, x, y, r, p]) => {
         const cx = (x + .06 * Math.sin(t / 7000 + p)) * w, cy = (y + .05 * Math.cos(t / 8000 + p * 2)) * h, R = r * Math.max(w, h) * .55, g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
         g.addColorStop(0, hexA(c, .7)); g.addColorStop(1, hexA(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       });
     },
-    ink(ctx, w, h) { ctx.fillStyle = '#f5f2ec'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .05, 4, '90,70,40'); },
-    dot(ctx, w, h) { ctx.fillStyle = '#f1f1ee'; ctx.fillRect(0, 0, w, h); },
-    noir(ctx, w, h) {
-      ctx.fillStyle = '#0d0c0a'; ctx.fillRect(0, 0, w, h);
-      const g = ctx.createRadialGradient(w * .5, -h * .1, 10, w * .5, -h * .1, h * 1.1); g.addColorStop(0, 'rgba(200,166,106,.10)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    day(ctx, w, h) { ctx.fillStyle = '#f5f2ec'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .05, 4, '90,70,40'); },
+    dusk(ctx, w, h) {
+      ctx.fillStyle = '#15110c'; ctx.fillRect(0, 0, w, h);
+      const g = ctx.createRadialGradient(w * .5, -h * .1, 10, w * .5, -h * .1, h * 1.1); g.addColorStop(0, 'rgba(200,150,90,.16)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       grain(ctx, w, h, .05, 9, '255,240,210');
+    },
+    night(ctx, w, h) {
+      ctx.fillStyle = '#07080d'; ctx.fillRect(0, 0, w, h);
+      const g = ctx.createRadialGradient(w * .5, -h * .2, 10, w * .5, -h * .2, h); g.addColorStop(0, 'rgba(90,110,190,.14)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      stars(ctx, w, h * .9, Math.round(w * h / 2600), 77, .45);
     }
   };
-  const RES = { liquid: 5 }, FPS = { liquid: 120 };
+  const RES = { dawn: 5 }, FPS = { dawn: 120 };
   let current = '', loop = 0;
   function paint(t = 0) {
     const c = $('pro-skin')?.querySelector('canvas'); if (!c || !BG[current]) return;
@@ -102,169 +82,171 @@
     $('pro-head')?.remove(); current = '';
   }
 
-  /* ---------- Headers: compact, the list stays first ---------- */
+  /* ---------- Today, as the header and the theme cards see it ---------- */
   function data() {
-    const st = API.state, todo = API.pending(), done = st.tasks.filter(t => t.done), d = new Date();
+    const st = API.state, todo = API.pending(), done = st.tasks.filter(t => t.done).sort((a, b) => (a.completedAt || 0) - (b.completedAt || 0)), d = new Date();
     const cds = (Array.isArray(st.settings.countdowns) ? st.settings.countdowns : []).map(c => { const [y, m, dd] = String(c.date).split('-').map(Number); return { title: c.title, n: Math.round((new Date(y, m - 1, dd) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5) }; }).filter(c => c.n >= 0).sort((a, b) => a.n - b.n);
-    const lunar = (() => { try { return API.lunar(d) || ''; } catch { return ''; } })();
-    return { left: todo.length, done: done.length, total: todo.length + done.length, d, lunar, cds };
+    const lunar = (() => { try { return (API.lunar(d) || '').replace(/^.+?年/, ''); } catch { return ''; } })();
+    const items = [...todo.map(t => ({ id: t.id, title: t.title, done: false })), ...done.map(t => ({ id: t.id, title: t.title, done: true, at: t.completedAt || 0 }))];
+    return { left: todo.length, done: done.length, total: todo.length + done.length, d, lunar, cds, items };
   }
+  const DEMO = (() => {
+    const titles = ['把想法做出来', '整理拍摄素材', '给家里打电话', '读二十页书', '跑步三公里', '回复客户'];
+    return { left: 4, done: 2, total: 6, d: new Date(2026, 10, 10, 9), lunar: '九月廿一', cds: [], items: titles.map((t, i) => ({ id: `demo${i}`, title: t, done: i < 2, at: i })) };
+  })();
+  const first = s => esc(Array.from(String(s).trim())[0] || '·');
+  const f1 = v => Math.round(v * 10) / 10;
+
+  /* 晨 · 玻璃 — a measuring glass: it fills with light as the day's things get done */
+  function dawnArt(D, H = 150) {
+    const W = 340, pct = D.total ? D.done / D.total : 0, level = H - Math.max(10, pct * (H - 26)), n = Math.min(D.total, 14);
+    const wave = (y, amp, ph) => { let p = `M0 ${y}`; for (let x = 0; x <= W * 2; x += 20) p += ` L${x} ${f1(y + Math.sin(x / 340 * Math.PI * 2 * 2 + ph) * amp)}`; return `${p} L${W * 2} ${H} L0 ${H} Z`; };
+    let ticks = '';
+    for (let i = 1; i <= n; i++) { const y = f1(H - 13 - i / n * (H - 26)); ticks += `<line x1="14" x2="${i <= D.done ? 26 : 21}" y1="${y}" y2="${y}" stroke="#1b1d24" stroke-opacity="${i <= D.done ? .55 : .2}" stroke-width="1"/>`; }
+    return { H, svg: `<defs><linearGradient id="pd-liq" x1="0" y1="0" x2="1" y2=".4"><stop offset="0" stop-color="#ada4ff"/><stop offset=".55" stop-color="#8fe0cb"/><stop offset="1" stop-color="#ffbfa3"/></linearGradient><clipPath id="pd-clip"><rect width="${W}" height="${H}" rx="28"/></clipPath></defs>
+      <g clip-path="url(#pd-clip)"><g class="ph-wave ph-wave-b"><path d="${wave(level - 3, 4, 1.4)}" fill="url(#pd-liq)" opacity=".45"/></g><g class="ph-wave"><path d="${wave(level, 5, 0)}" fill="url(#pd-liq)" opacity=".85"/></g>
+      <rect x="0" y="${f1(level)}" width="${W}" height="1.2" fill="#fff" opacity=".7"/></g>${ticks}
+      <text x="40" y="66" font-family="Geist,-apple-system,sans-serif" fill="#1b1d24"><tspan font-size="54" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="22" fill-opacity=".4" dx="4">/${D.total}</tspan></text>
+      <text x="42" y="90" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#6b7080" letter-spacing=".4">${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}${D.lunar ? ` · ${esc(D.lunar)}` : ''}</text>
+      <text x="42" y="${H - 18}" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#1b1d24" fill-opacity=".72">${D.total ? (D.left ? `杯子满了 ${Math.round(pct * 100)}%，还差 ${D.left} 件` : '满了。今天的都做完了') : '今天还是一只空杯子'}</text>` };
+  }
+
+  /* 昼 · 纸 — manuscript paper: each task is one character in a grid, a red circle when it is done */
+  function dayArt(D) {
+    const per = 7, cell = 31, items = D.items.slice(0, 14), n = Math.max(items.length, 4), rows = Math.ceil(n / per), gridH = rows * cell, H = Math.max(gridH + 46, 128);
+    let g = '';
+    for (let i = 0; i < n; i++) {
+      const x = (i % per) * cell + 1, y = Math.floor(i / per) * cell + 6, cx = x + cell / 2, cy = y + cell / 2, it = items[i];
+      g += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="none" stroke="${CINNABAR}" stroke-opacity=".45" stroke-width=".7"/>
+        <path d="M${x} ${cy}H${x + cell}M${cx} ${y}V${y + cell}" stroke="${CINNABAR}" stroke-opacity=".16" stroke-width=".6" stroke-dasharray="2 2"/>`;
+      if (it) {
+        g += `<text x="${cx}" y="${cy + 6.5}" text-anchor="middle" font-family='${SONG}' font-size="18" fill="#1d1a16" fill-opacity="${it.done ? .9 : .78}">${first(it.title)}</text>`;
+        if (it.done) { const r = rng(hash(it.id)), rot = f1((r() - .5) * 40); g += `<path class="ph-circle" transform="rotate(${rot} ${cx} ${cy})" d="M${cx - 12} ${cy - 1}C${cx - 12} ${cy - 11} ${cx + 11} ${cy - 13} ${cx + 12.5} ${cy - 1}C${cx + 13.5} ${cy + 10} ${cx - 5} ${cy + 14} ${cx - 11} ${cy + 5}C${cx - 13} ${cy + 1} ${cx - 10} ${cy - 6} ${cx - 5} ${cy - 10}" fill="none" stroke="${CINNABAR}" stroke-width="1.5" stroke-linecap="round" pathLength="1"/>`; }
+      }
+    }
+    const date = `${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`;
+    let v = ''; Array.from(date).forEach((ch, i) => { v += `<text x="322" y="${24 + i * 21}" text-anchor="middle" font-family='${SONG}' font-size="18" fill="#1d1a16">${ch}</text>`; });
+    Array.from(`星期${WEEK[D.d.getDay()]}`).forEach((ch, i) => { v += `<text x="298" y="${22 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${ch}</text>`; });
+    if (D.lunar) Array.from(D.lunar).slice(0, 5).forEach((ch, i) => { v += `<text x="280" y="${22 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279" fill-opacity=".7">${esc(ch)}</text>`; });
+    const foot = D.total ? `<tspan fill="#8a8279">圈了 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : '<tspan fill="#8a8279">　今日毕</tspan>'}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
+    return { H, svg: `${g}${v}<text x="2" y="${gridH + 32}" font-family='${SONG}' font-size="13.5" letter-spacing="1.5">${foot}</text>` };
+  }
+
+  /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the day's list is clear */
+  function duskArt(D) {
+    const W = 340, H = 176, hz = 146, cx = 170, R = 112, n = Math.min(D.total, 24), pct = D.total ? D.done / D.total : 0;
+    const sa = Math.PI - pct * Math.PI, sx = f1(cx + Math.cos(sa) * R), sy = f1(hz - Math.sin(sa) * R);
+    let ticks = '';
+    for (let i = 0; i < n; i++) { const a = Math.PI - (i + .5) / n * Math.PI, on = i < D.done, r0 = R + 6, r1 = r0 + (on ? 13 : 5); ticks += `<line x1="${f1(cx + Math.cos(a) * r0)}" y1="${f1(hz - Math.sin(a) * r0)}" x2="${f1(cx + Math.cos(a) * r1)}" y2="${f1(hz - Math.sin(a) * r1)}" stroke="${GOLD}" stroke-opacity="${on ? 1 : .35}" stroke-width="${on ? 1.3 : .8}"/>`; }
+    return { H, svg: `<defs><radialGradient id="pk-sun"><stop offset="0" stop-color="#f4e8cc"/><stop offset=".6" stop-color="#c8a66a"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pk-glow"><stop offset="0" stop-color="#c8a66a" stop-opacity=".35"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient><clipPath id="pk-sky"><rect width="${W}" height="${hz}"/></clipPath></defs>
+      <path d="M${cx - R} ${hz}A${R} ${R} 0 0 1 ${cx + R} ${hz}" fill="none" stroke="${GOLD}" stroke-opacity=".25" stroke-width=".7" stroke-dasharray="1 4"/>${pct ? `<path d="M${cx - R} ${hz}A${R} ${R} 0 0 1 ${sx} ${sy}" fill="none" stroke="${GOLD}" stroke-width="1.4" stroke-linecap="round"/>` : ''}${ticks}
+      <g clip-path="url(#pk-sky)"><circle cx="${sx}" cy="${sy}" r="34" fill="url(#pk-glow)"/><circle cx="${sx}" cy="${sy}" r="9" fill="url(#pk-sun)"/></g>
+      <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".6" stroke-width=".7"/>
+      <text x="${cx}" y="${hz - 30}" text-anchor="middle" font-family='${SERIF}' fill="${GOLD}"><tspan font-size="50" letter-spacing="-1">${two(D.done)}</tspan></text>
+      <text x="${cx}" y="${hz - 10}" text-anchor="middle" font-family='${SERIF}' font-size="12" fill="#8c8170" letter-spacing="3">${D.total ? (D.left ? `OF ${two(D.total)}` : '日落 · 收工') : '— —'}</text>
+      <text x="${cx}" y="${hz + 22}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#b3a68e" letter-spacing="2.5">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}${D.lunar ? `　${esc(D.lunar)}` : ''}</text>` };
+  }
+
+  /* 夜 · 光 — a constellation: every task is a star; done ones light up and join into today's shape */
+  const SPARK = (x, y, s) => `M${x} ${y - s}C${f1(x + s * .12)} ${f1(y - s * .12)} ${f1(x + s * .12)} ${f1(y - s * .12)} ${x + s} ${y}C${f1(x + s * .12)} ${f1(y + s * .12)} ${f1(x + s * .12)} ${f1(y + s * .12)} ${x} ${y + s}C${f1(x - s * .12)} ${f1(y + s * .12)} ${f1(x - s * .12)} ${f1(y + s * .12)} ${x - s} ${y}C${f1(x - s * .12)} ${f1(y - s * .12)} ${f1(x - s * .12)} ${f1(y - s * .12)} ${x} ${y - s}Z`;
+  function nightArt(D) {
+    const W = 340, H = 152, items = D.items.slice(0, 16), placed = [];
+    for (const it of items) {
+      const r = rng(hash(it.id)); let best = null, bd = -1;
+      for (let k = 0; k < 14; k++) { const x = 136 + r() * 180, y = 16 + r() * 120; if (x > 280 && y < 56) continue; const d = placed.reduce((m, p) => Math.min(m, Math.hypot(p.x - x, p.y - y)), 999); if (d > bd) { bd = d; best = { x, y }; } if (d > 30) break; }
+      placed.push({ ...(best || { x: 200, y: 80 }), it });
+    }
+    const lit = placed.filter(p => p.it.done).sort((a, b) => a.it.at - b.it.at);
+    const bg = (() => { const r = rng(5); let s = ''; for (let i = 0; i < 46; i++) s += `<circle cx="${f1(r() * W)}" cy="${f1(r() * H)}" r="${f1(.3 + r() * .6)}" fill="#dfe6ff" fill-opacity="${f1(.1 + r() * .3)}"/>`; return s; })();
+    const lines = lit.length > 1 ? `<polyline points="${lit.map(p => `${f1(p.x)},${f1(p.y)}`).join(' ')}" fill="none" stroke="#dfe6ff" stroke-opacity=".38" stroke-width=".8"/>` : '';
+    const stars = placed.map((p, i) => p.it.done
+      ? `<g class="ph-star" style="animation-delay:${(i * .37 % 3).toFixed(2)}s"><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="9" fill="url(#pn-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 6.5)}" fill="#f4f6ff"/></g>`
+      : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.6" fill="#dfe6ff" fill-opacity=".5"/><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="4.5" fill="none" stroke="#dfe6ff" stroke-opacity=".16" stroke-width=".7"/>`).join('');
+    return { H, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#9fb4ff" stop-opacity=".55"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
+      <text x="4" y="26" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12" fill="#7d8496" letter-spacing=".4">${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}</text>
+      <text x="2" y="96" font-family="Geist,-apple-system,sans-serif" fill="#e8ecf7"><tspan font-size="52" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="20" fill-opacity=".4" dx="3">/${D.total}</tspan></text>
+      <text x="4" y="122" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>` };
+  }
+  const ART = { dawn: dawnArt, day: dayArt, dusk: duskArt, night: nightArt };
+  let uid = 0;
+  const unique = (svg, u) => svg.replace(/(id="|url\(#)(p[dkn]-[a-z]+)/g, (m, p, id) => `${p}${id}-${u}`);
+  const artSvg = (id, D, cls = 'ph-art') => { const a = ART[id](D); return `<svg class="${cls}" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, ++uid)}</svg>`; };
+
+  /* ---------- Theme cards: the theme's own picture of today, then two rows with its own check ---------- */
+  const CHECK = {
+    dawn: (x, y, on) => `<circle cx="${x}" cy="${y}" r="9" fill="${on ? 'url(#pd-liq)' : '#1b1d240d'}" stroke="${on ? '#fff' : '#1b1d24'}" stroke-opacity="${on ? 1 : .35}" stroke-width="1.2"/><circle cx="${x - 3}" cy="${y - 3.5}" r="2.4" fill="#fff" opacity=".9"/>`,
+    day: (x, y, on) => `<rect x="${x - 8.5}" y="${y - 8.5}" width="17" height="17" fill="none" stroke="#1d1a16" stroke-opacity=".6" stroke-width=".8"/>${on ? `<circle cx="${x}" cy="${y}" r="10" fill="none" stroke="${CINNABAR}" stroke-width="1.4"/>` : ''}`,
+    dusk: (x, y, on) => `<rect x="${x - 6}" y="${y - 6}" width="12" height="12" transform="rotate(45 ${x} ${y})" fill="${on ? GOLD : 'none'}" stroke="${GOLD}" stroke-width="1"/>`,
+    night: (x, y, on) => `<path d="${SPARK(x, y, 9)}" fill="${on ? '#f4f6ff' : 'none'}" stroke="#dfe6ff" stroke-opacity="${on ? 1 : .6}" stroke-width=".9"/>`
+  };
+  const MOCK_BG = {
+    dawn: '<defs><radialGradient id="pd-b1" cx=".15" cy=".1" r=".8"><stop offset="0" stop-color="#c9c2ff"/><stop offset="1" stop-color="#c9c2ff" stop-opacity="0"/></radialGradient><radialGradient id="pd-b2" cx=".9" cy=".6" r=".7"><stop offset="0" stop-color="#bfeee2"/><stop offset="1" stop-color="#bfeee2" stop-opacity="0"/></radialGradient><radialGradient id="pd-b3" cx=".3" cy="1" r=".7"><stop offset="0" stop-color="#ffd9c7"/><stop offset="1" stop-color="#ffd9c7" stop-opacity="0"/></radialGradient></defs><rect width="380" height="270" fill="#eef0f4"/><rect width="380" height="270" fill="url(#pd-b1)"/><rect width="380" height="270" fill="url(#pd-b2)"/><rect width="380" height="270" fill="url(#pd-b3)"/>',
+    day: '<rect width="380" height="270" fill="#f5f2ec"/>',
+    dusk: '<defs><radialGradient id="pk-bg" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#3a2a16"/><stop offset="1" stop-color="#15110c"/></radialGradient></defs><rect width="380" height="270" fill="url(#pk-bg)"/>',
+    night: '<rect width="380" height="270" fill="#07080d"/>'
+  };
+  const INK = { dawn: '#1b1d24', day: '#1d1a16', dusk: '#efe6d6', night: '#e8ecf7' }, ROWLINE = { dawn: '#1b1d2414', day: '#b43a2c40', dusk: '#c8a66a40', night: '#dfe6ff1f' };
+  function mock(id) {
+    if (id === 'auto') {
+      const cols = [['#eef0f4', '#1b1d24'], ['#f5f2ec', '#1d1a16'], ['#15110c', GOLD], ['#07080d', '#dfe6ff']];
+      return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${cols.map(([b, c], i) => `<rect x="${i * 95}" width="95.5" height="270" fill="${b}"/><text x="${i * 95 + 47.5}" y="150" text-anchor="middle" font-family='${SONG}' font-size="44" font-weight="300" fill="${c}">${'晨昼暮夜'[i]}</text>`).join('')}</svg>`;
+    }
+    const a = ART[id](DEMO), u = ++uid, y0 = a.H + 34;
+    const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' ? SONG : id === 'dusk' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
+    const glass = id === 'dawn' ? `<rect x="20" y="16" width="340" height="${a.H}" rx="28" fill="#ffffff" fill-opacity=".45" stroke="#fff" stroke-opacity=".9"/>` : '';
+    return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${unique(MOCK_BG[id], u)}${glass}<g transform="translate(20 16)">${unique(a.svg, u)}</g>${unique(rows, u)}</svg>`;
+  }
+
+  /* ---------- Header: each theme draws today its own way; the countdowns sit under it ---------- */
   function head() {
     if (!current) return;
     const top = $('tasks-panel')?.querySelector('.today-top'); if (!top) return;
     let el = $('pro-head'); if (!el) { el = document.createElement('div'); el.id = 'pro-head'; top.before(el); }
     const keepJar = $('pro-jar-button'); if (keepJar && el.contains(keepJar)) $('today-side')?.prepend(keepJar);
-    const D = data(), pct = D.total ? D.done / D.total : 0, m = D.d.getMonth() + 1, day = D.d.getDate(), wk = WEEK[D.d.getDay()];
+    const D = data(), label = `${D.d.getMonth() + 1}月${D.d.getDate()}日，完成 ${D.done} / ${D.total}`;
     el.className = `pro-head pro-head-${current}`;
-    if (current === 'liquid') {
-      el.innerHTML = `<div class="lq-row"><p class="lq-count"><b>${D.done}</b><span>/${D.total}</span></p><p class="lq-date"><strong>星期${wk}</strong><small>${m}月${day}日 · ${D.left ? `还有 ${D.left} 件` : D.total ? '都完成了' : '今天很空'}</small></p><span class="pro-head-jar"></span></div>
-        <div class="lq-bar" aria-hidden="true"><i style="width:${(pct * 100).toFixed(1)}%"></i></div>
-        ${D.cds.length ? `<div class="lq-cds">${D.cds.slice(0, 3).map(c => `<span><b>${c.n || '今天'}</b>${c.n ? '<small>天</small>' : ''}${esc(c.title)}</span>`).join('')}</div>` : ''}`;
-    } else if (current === 'ink') {
-      el.innerHTML = `<div class="ik-row"><div><h1 class="ik-title">今日</h1><p class="ik-date">${cn(m)}月${cn(day)}日　星期${wk}${D.lunar ? `　${esc(D.lunar.replace(/^.+?年/, ''))}` : ''}</p></div><p class="ik-count" aria-label="完成 ${D.done} / ${D.total}"><b>${cn(D.done)}</b><i></i><span>${cn(D.total)}</span></p><span class="pro-head-jar"></span></div>
-        ${D.cds.length ? `<p class="ik-cds">${D.cds.slice(0, 3).map(c => `${esc(c.title)}${c.n ? `，尚有<b>${cn(c.n)}</b>日` : '，<b>就在今日</b>'}`).join('<span>·</span>')}</p>` : ''}`;
-    } else if (current === 'dot') {
-      el.innerHTML = `<div class="dt-row">${dotSvg(`${two(D.done)}/${two(D.total)}`, { d: 6, gap: 2.2, color: '#111' })}<span class="pro-head-jar"></span></div>
-        <div class="dt-meta"><span><i class="dt-rec${D.left ? '' : ' off'}"></i>${D.left ? '进行中' : D.total ? '已完成' : '待命'}</span>${dotSvg(`${two(m)}.${two(day)}`, { d: 2.4, gap: 1.1, color: '#111', dim: 0 })}<span>周${wk}</span></div>
-        <div class="dt-dots" aria-hidden="true">${Array.from({ length: Math.max(D.total, 1) }, (_, i) => `<i class="${i < D.done ? 'on' : ''}"></i>`).join('')}</div>
-        ${D.cds.length ? `<div class="dt-cds">${D.cds.slice(0, 3).map(c => `<span>${esc(c.title)}${dotSvg(`-${c.n}`, { d: 2.2, gap: 1, color: RED, dim: 0 })}</span>`).join('')}</div>` : ''}`;
-    } else if (current === 'noir') {
-      el.innerHTML = `<div class="nr-row"><p class="nr-no"><small>N°</small><b>${two(D.done)}</b><span>/ ${two(D.total)}</span></p><span class="pro-head-jar"></span></div>
-        <p class="nr-date"><span>${m}月${day}日</span><i>◆</i><span>星期${wk}</span>${D.lunar ? `<i>◆</i><span>${esc(D.lunar.replace(/^.+?年/, ''))}</span>` : ''}</p>
-        ${D.cds.length ? `<div class="nr-cds">${D.cds.slice(0, 3).map(c => `<span>${esc(c.title)}<b>${c.n ? `${c.n} 天` : '今天'}</b></span>`).join('')}</div>` : ''}`;
-    }
+    el.innerHTML = `<div class="ph-stage" role="img" aria-label="${label}">${artSvg(current, D)}<span class="pro-head-jar"></span></div>
+      ${D.cds.length ? `<div class="ph-cds">${D.cds.slice(0, 3).map(c => `<span><b>${current === 'day' ? (c.n ? cn(c.n) : '今') : c.n || '今天'}</b><small>${c.n ? (current === 'day' ? '日' : '天') : ''}</small>${esc(c.title)}</span>`).join('')}</div>` : ''}`;
     const jar = $('pro-jar-button'), slot = el.querySelector('.pro-head-jar'); if (jar && slot) slot.append(jar);
   }
 
-  /* ---------- Jars ---------- */
-  function jarPath(ctx, x, y, w, h, shape = 'jar') {
-    ctx.beginPath();
-    if (shape === 'vase') {
-      const cx = x + w / 2, mouth = w * .3;
-      ctx.moveTo(cx - mouth / 2, y + h * .05); ctx.lineTo(cx - mouth / 2, y + h * .13);
-      ctx.bezierCurveTo(x - w * .05, y + h * .2, x - w * .04, y + h * .72, x + w * .2, y + h * .93);
-      ctx.lineTo(x + w * .26, y + h); ctx.lineTo(x + w * .74, y + h); ctx.lineTo(x + w * .8, y + h * .93);
-      ctx.bezierCurveTo(x + w * 1.04, y + h * .72, x + w * 1.05, y + h * .2, cx + mouth / 2, y + h * .13); ctx.lineTo(cx + mouth / 2, y + h * .05); ctx.closePath();
-      return;
-    }
+  /* ---------- The jar: one silhouette, four materials inside ---------- */
+  function jarPath(ctx, x, y, w, h) {
     const neck = w * .44, nx = x + (w - neck) / 2, bodyTop = y + h * .2, r = w * .24;
-    ctx.moveTo(nx, y + h * .06); ctx.lineTo(nx, y + h * .14);
+    ctx.beginPath(); ctx.moveTo(nx, y + h * .06); ctx.lineTo(nx, y + h * .14);
     ctx.quadraticCurveTo(nx, bodyTop, x + r * .5, bodyTop + r * .15); ctx.quadraticCurveTo(x, bodyTop + r * .4, x, bodyTop + r);
     ctx.lineTo(x, y + h - r); ctx.quadraticCurveTo(x, y + h, x + r, y + h); ctx.lineTo(x + w - r, y + h); ctx.quadraticCurveTo(x + w, y + h, x + w, y + h - r);
     ctx.lineTo(x + w, bodyTop + r); ctx.quadraticCurveTo(x + w, bodyTop + r * .4, x + w - r * .5, bodyTop + r * .15); ctx.quadraticCurveTo(nx + neck, bodyTop, nx + neck, y + h * .14);
     ctx.lineTo(nx + neck, y + h * .06); ctx.closePath();
   }
-  function shardShape(kind, ctx, s, color, r, onDark) {
-    if (kind === 'dot') { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(0, 0, s * .32, 0, 7); ctx.fill(); return; }
-    if (kind === 'ink') { if (r() < .3) { ctx.fillStyle = hexA(CINNABAR, .85); ctx.beginPath(); ctx.arc(0, 0, s * .2, 0, 7); ctx.fill(); } else { ctx.fillStyle = hexA('#1d1a16', .35 + r() * .45); ctx.beginPath(); ctx.ellipse(0, 0, s * (.28 + r() * .16), s * (.18 + r() * .1), r() * 3, 0, 7); ctx.fill(); } return; }
-    if (kind === 'noir') { ctx.fillStyle = hexA(color, .9); ctx.beginPath(); ctx.moveTo(-s * .4, -s * .1); ctx.lineTo(s * .1, -s * .35); ctx.lineTo(s * .42, s * .05); ctx.lineTo(-s * .05, s * .32); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(255,240,210,.5)'; ctx.lineWidth = .6; ctx.stroke(); return; }
-    const n = 3 + (r() < .4 ? 1 : 0); ctx.beginPath(); for (let i = 0; i < n; i++) { const a = i / n * 6.283 + r() * 1.3, rad = s * (.34 + r() * .3); i ? ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad * .82) : ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad * .82); } ctx.closePath();
-    ctx.fillStyle = hexA(color, onDark ? .6 : .55); ctx.fill(); ctx.strokeStyle = onDark ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(.6, s / 22); ctx.stroke();
+  function shardShape(mat, ctx, s, color, r, onDark) {
+    const n = 3 + (r() < .4 ? 1 : 0), pts = [];
+    for (let i = 0; i < n; i++) { const a = i / n * 6.283 + r() * 1.3, rad = s * (.34 + r() * .3); pts.push([Math.cos(a) * rad, Math.sin(a) * rad * .82]); }
+    ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath();
+    if (mat === 'paper') { ctx.save(); ctx.shadowColor = 'rgba(70,50,25,.25)'; ctx.shadowBlur = s * .2; ctx.shadowOffsetY = s * .06; ctx.fillStyle = color; ctx.fill(); ctx.restore(); ctx.strokeStyle = 'rgba(29,26,22,.15)'; ctx.lineWidth = .6; ctx.stroke(); return; }
+    if (mat === 'light') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = hexA(color, .1); ctx.fill(); ctx.shadowColor = color; ctx.shadowBlur = s * .4; ctx.strokeStyle = hexA(color, .9); ctx.lineWidth = Math.max(.7, s / 24); ctx.stroke(); ctx.restore(); return; }
+    if (mat === 'gold') { const g = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2); g.addColorStop(0, '#9c7f47'); g.addColorStop(.5, '#f4e8cc'); g.addColorStop(1, '#c8a66a'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(255,240,210,.5)'; ctx.lineWidth = .6; ctx.stroke(); return; }
+    ctx.fillStyle = hexA(color, onDark ? .6 : .55); ctx.fill(); ctx.strokeStyle = onDark ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.9)'; ctx.lineWidth = Math.max(.6, s / 22); ctx.stroke();
   }
   function jar(kind, ctx, x, y, w, h, shards, { ms = 0, lid = true, onDark = true } = {}) {
-    const vase = kind === 'ink';
-    ctx.save(); jarPath(ctx, x, y, w, h, vase ? 'vase' : 'jar');
+    const mat = MAT[kind] || 'plain';
+    ctx.save(); jarPath(ctx, x, y, w, h);
     let fill;
-    if (vase) { fill = ctx.createLinearGradient(x, y, x + w, y + h); fill.addColorStop(0, 'rgba(196,214,200,.5)'); fill.addColorStop(1, 'rgba(150,178,162,.36)'); }
-    else if (kind === 'noir') { fill = ctx.createLinearGradient(x, 0, x + w, 0); fill.addColorStop(0, 'rgba(60,52,40,.5)'); fill.addColorStop(.5, 'rgba(20,18,14,.3)'); fill.addColorStop(1, 'rgba(60,52,40,.45)'); }
-    else if (kind === 'dot') fill = 'rgba(255,255,255,.55)';
-    else { fill = ctx.createLinearGradient(x, 0, x + w, 0); fill.addColorStop(0, onDark ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.7)'); fill.addColorStop(.5, onDark ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.3)'); fill.addColorStop(1, onDark ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.62)'); }
+    if (mat === 'gold') { fill = ctx.createLinearGradient(x, 0, x + w, 0); fill.addColorStop(0, 'rgba(70,56,38,.5)'); fill.addColorStop(.5, 'rgba(25,20,14,.3)'); fill.addColorStop(1, 'rgba(70,56,38,.45)'); }
+    else if (mat === 'light') { fill = ctx.createLinearGradient(x, 0, x + w, 0); fill.addColorStop(0, 'rgba(160,180,255,.10)'); fill.addColorStop(.5, 'rgba(160,180,255,.03)'); fill.addColorStop(1, 'rgba(160,180,255,.08)'); }
+    else { fill = ctx.createLinearGradient(x, 0, x + w, 0); fill.addColorStop(0, onDark ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.72)'); fill.addColorStop(.5, onDark ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.32)'); fill.addColorStop(1, onDark ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.64)'); }
     ctx.fillStyle = fill; ctx.fill(); ctx.clip();
-    if ((kind === 'plain' || kind === 'noir') && onDark) ctx.globalCompositeOperation = 'lighter';
-    for (const s of shards) { const r = rng(s.seed); ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.globalAlpha = ms ? .82 + .18 * Math.sin(s.seed % 7 + ms / 500) : 1; shardShape(kind, ctx, s.s, s.color, r, onDark); ctx.restore(); }
+    if ((mat === 'plain' || mat === 'gold') && onDark) ctx.globalCompositeOperation = 'lighter';
+    for (const s of shards) { const r = rng(s.seed); ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.globalAlpha = ms ? .82 + .18 * Math.sin(s.seed % 7 + ms / 500) : 1; shardShape(mat, ctx, s.s, s.color, r, onDark); ctx.restore(); }
     ctx.globalCompositeOperation = 'source-over';
-    if (ms && kind !== 'dot') { const sx = x - w + ((ms / 3000) % 1) * w * 3, g = ctx.createLinearGradient(sx, 0, sx + w * .5, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, kind === 'noir' ? 'rgba(232,210,160,.14)' : 'rgba(255,255,255,.2)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); }
+    if (ms) { const sx = x - w + ((ms / 3000) % 1) * w * 3, g = ctx.createLinearGradient(sx, 0, sx + w * .5, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, mat === 'gold' ? 'rgba(232,210,160,.14)' : 'rgba(255,255,255,.2)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); }
     ctx.restore();
-    if (vase) { jarPath(ctx, x, y, w, h, 'vase'); ctx.strokeStyle = 'rgba(29,26,22,.55)'; ctx.lineWidth = Math.max(.8, w / 110); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = Math.max(1, w / 50); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x + w * .17, y + h * .34); ctx.quadraticCurveTo(x + w * .1, y + h * .55, x + w * .19, y + h * .76); ctx.stroke(); return; }
-    jarPath(ctx, x, y, w, h);
-    if (kind === 'dot') { ctx.setLineDash([.1, Math.max(3, w / 22)]); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1.6, w / 40); ctx.strokeStyle = '#111'; ctx.stroke(); ctx.setLineDash([]); }
-    else { ctx.lineWidth = Math.max(.8, w / 90); ctx.strokeStyle = kind === 'noir' ? hexA(GOLD, .85) : onDark ? 'rgba(235,245,255,.7)' : 'rgba(30,34,44,.35)'; ctx.stroke(); }
-    if (kind !== 'dot') { const bodyTop = y + h * .2, r = w * .24; ctx.beginPath(); ctx.moveTo(x + w * .14, bodyTop + r * .9); ctx.lineTo(x + w * .14, y + h - r * 1.1); ctx.strokeStyle = kind === 'noir' ? 'rgba(232,210,160,.25)' : onDark ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(1.2, w / 34); ctx.lineCap = 'round'; ctx.stroke(); }
-    if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = kind === 'noir' ? GOLD : kind === 'dot' ? '#111' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
+    jarPath(ctx, x, y, w, h); ctx.lineWidth = Math.max(.8, w / 90);
+    ctx.strokeStyle = mat === 'gold' ? hexA(GOLD, .85) : mat === 'light' ? 'rgba(223,230,255,.6)' : mat === 'paper' ? 'rgba(29,26,22,.45)' : onDark ? 'rgba(235,245,255,.7)' : 'rgba(30,34,44,.35)'; ctx.stroke();
+    const bodyTop = y + h * .2, r = w * .24; ctx.beginPath(); ctx.moveTo(x + w * .14, bodyTop + r * .9); ctx.lineTo(x + w * .14, y + h - r * 1.1);
+    ctx.strokeStyle = mat === 'gold' ? 'rgba(232,210,160,.25)' : onDark ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(1.2, w / 34); ctx.lineCap = 'round'; ctx.stroke();
+    if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  /* ---------- Weekly pictures ---------- */
-  function isoWeek(d) { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return Math.ceil(((x - y0) / 864e5 + 1) / 7); }
-  function weekInfo(entries) { const focus = entries.reduce((n, e) => n + (e.min || 0), 0), by = new Array(7).fill(0); entries.forEach(e => { by[(new Date(e.at).getDay() + 6) % 7]++; }); return { focus, by, best: entries.length ? by.indexOf(Math.max(...by)) : -1 }; }
-  function brush(ctx, pts, w0, w1, color, alpha, seed) {
-    const r = rng(seed); let total = 0; const segs = [];
-    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push(d); total += d; }
-    let acc = 0;
-    for (let i = 1; i < pts.length; i++) {
-      const [ax, ay] = pts[i - 1], [bx, by] = pts[i], d = segs[i - 1], n = Math.max(2, Math.ceil(d / 1.4));
-      for (let k = 0; k < n; k++) { const t = k / n, pos = (acc + d * t) / total, wd = w0 + (w1 - w0) * pos, x = ax + (bx - ax) * t, y = ay + (by - ay) * t; ctx.fillStyle = hexA(color, alpha * (.6 + r() * .4)); ctx.beginPath(); ctx.ellipse(x, y, wd / 2, wd / 2.4, Math.atan2(by - ay, bx - ax), 0, 7); ctx.fill(); }
-      acc += d;
-    }
-  }
-  const curve = (a, b, bend, n = 18) => { const mx = (a[0] + b[0]) / 2 + bend[0], my = (a[1] + b[1]) / 2 + bend[1]; return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, u = 1 - t; return [u * u * a[0] + 2 * u * t * mx + t * t * b[0], u * u * a[1] + 2 * u * t * my + t * t * b[1]]; }); };
-  const ART = {
-    // 东方留白: a single plum branch, painted sparingly; one blossom per thing done
-    ink(entries, start, size = 1080) {
-      const W = size, H = Math.round(size * 1.25), k = W / 1080, c = document.createElement('canvas'); c.width = W; c.height = H;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#f5f2ec'; ctx.fillRect(0, 0, W, H); grain(ctx, W, H, .05, 8, '90,70,40');
-      const r = rng(hash(`${start.getTime()}`)), info = weekInfo(entries), INK = '#1d1a16';
-      const nodes = [[W * .02, H * .78]], dirs = [-.3, -.48, -.26, -.55, -.38, -.62, -.44];
-      for (let d = 0; d < 7; d++) { const a = dirs[d] + (r() - .5) * .2, len = W * (.12 + r() * .03) * (1 - d * .04), [px, py] = nodes[d]; nodes.push([px + Math.cos(a) * len, py + Math.sin(a) * len]); }
-      for (let d = 0; d < 7; d++) brush(ctx, curve(nodes[d], nodes[d + 1], [(r() - .5) * 40 * k, (r() - .3) * 40 * k]), (30 - d * 3.3) * k, (27 - d * 3.4) * k, INK, .88, 100 + d);
-      const byDay = Array.from({ length: 7 }, () => []); entries.forEach(e => byDay[(new Date(e.at).getDay() + 6) % 7].push(e));
-      byDay.forEach((list, d) => list.forEach((e, i) => {
-        const rr = rng(hash(`${e.id}${e.at}`)), t = .2 + rr() * .7, [ax, ay] = nodes[d], [bx, by] = nodes[d + 1], px = ax + (bx - ax) * t, py = ay + (by - ay) * t;
-        const side = i % 2 ? 1 : -1, a = Math.atan2(by - ay, bx - ax) + side * (.8 + rr() * .5), tl = (30 + rr() * 70) * k, tip = [px + Math.cos(a) * tl, py + Math.sin(a) * tl];
-        brush(ctx, curve([px, py], tip, [side * 8 * k, -6 * k], 10), 5 * k, 1.6 * k, INK, .8, 300 + d * 40 + i);
-        const s = (11 + Math.min(e.min || 0, 90) / 12 + rr() * 4) * k;
-        for (let p = 0; p < 5; p++) { const pa = p / 5 * 6.283 + rr() * .4; ctx.fillStyle = hexA(CINNABAR, .78); ctx.beginPath(); ctx.arc(tip[0] + Math.cos(pa) * s * .55, tip[1] + Math.sin(pa) * s * .55, s * .48, 0, 7); ctx.fill(); }
-        ctx.fillStyle = 'rgba(248,232,206,.95)'; ctx.beginPath(); ctx.arc(tip[0], tip[1], s * .22, 0, 7); ctx.fill();
-      }));
-      ctx.fillStyle = INK; ctx.font = `300 ${64 * k}px ${SONG}`; ctx.textAlign = 'right';
-      ctx.fillText(`第${cn(isoWeek(start))}周`, W - 96 * k, H - 250 * k);
-      ctx.fillStyle = '#7a7166'; ctx.font = `300 ${28 * k}px ${SONG}`;
-      ctx.fillText(entries.length ? `开花${cn(entries.length)}朵${info.focus ? `　专注${cn(Math.max(1, Math.round(info.focus / 60)))}时` : ''}` : '这一周，枝上还空着', W - 96 * k, H - 190 * k);
-      ctx.fillText(`${start.getMonth() + 1}月${start.getDate()}日起`, W - 96 * k, H - 146 * k);
-      ctx.fillStyle = CINNABAR; ctx.fillRect(W - 96 * k - 16 * k, H - 104 * k, 16 * k, 16 * k);
-      ctx.textAlign = 'left';
-      return c;
-    },
-    // 点阵: a calendar of dots — one column a day, one dot per thing done
-    dot(entries, start, size = 1080) {
-      const W = size, H = Math.round(size * 1.25), k = W / 1080, c = document.createElement('canvas'); c.width = W; c.height = H; const ctx = c.getContext('2d');
-      ctx.fillStyle = '#f1f1ee'; ctx.fillRect(0, 0, W, H);
-      const info = weekInfo(entries), P = 90 * k, end = new Date(start.getTime() + 6 * 864e5);
-      const wW = dotCanvas(ctx, two(isoWeek(start)), P, P, 22 * k, '#111');
-      ctx.fillStyle = '#111'; ctx.font = `500 ${32 * k}px Geist,"PingFang SC",sans-serif`; ctx.fillText('周', P + wW + 8 * k, P + 206 * k);
-      ctx.fillStyle = '#6b6b66'; ctx.font = `400 ${26 * k}px Geist,"PingFang SC",sans-serif`; ctx.fillText(`${start.getMonth() + 1}.${start.getDate()} – ${end.getMonth() + 1}.${end.getDate()}`, P, P + 270 * k);
-      const gx = P, gy = 470 * k, cw = (W - P * 2) / 7, rows = 10, d = 26 * k;
-      for (let col = 0; col < 7; col++) {
-        for (let row = 0; row < rows; row++) { const lit = row < info.by[col], x = gx + col * cw + cw / 2, y = gy + (rows - 1 - row) * d * 1.9; ctx.fillStyle = lit ? (col === info.best && row === info.by[col] - 1 ? RED : '#111') : 'rgba(17,17,17,.07)'; ctx.beginPath(); ctx.arc(x, y, d / 2, 0, 7); ctx.fill(); }
-        ctx.fillStyle = '#6b6b66'; ctx.font = `400 ${24 * k}px Geist,"PingFang SC",sans-serif`; ctx.textAlign = 'center'; ctx.fillText('一二三四五六日'[col], gx + col * cw + cw / 2, gy + rows * d * 1.9 + 20 * k); ctx.textAlign = 'left';
-      }
-      const fy = H - P - 110 * k;
-      const nW = dotCanvas(ctx, two(entries.length), P, fy, 9 * k, '#111');
-      ctx.fillStyle = '#111'; ctx.font = `500 ${26 * k}px Geist,"PingFang SC",sans-serif`; ctx.fillText('件完成', P + nW + 14 * k, fy + 80 * k);
-      if (info.focus) { const fx = P + 420 * k, fW = dotCanvas(ctx, String(info.focus), fx, fy, 9 * k, '#111'); ctx.fillText('分钟专注', fx + fW + 14 * k, fy + 80 * k); }
-      ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(W - P, fy + 40 * k, 9 * k, 0, 7); ctx.fill();
-      return c;
-    }
-  };
-
-  /* ---------- Thumbnails for theme cards ---------- */
-  function thumb(id, w = 196, h = 132) {
-    const c = document.createElement('canvas'), dpr = 2; c.width = w * dpr; c.height = h * dpr; const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
-    if (id === 'liquid') { const low = document.createElement('canvas'); low.width = 40; low.height = 27; BG.liquid(low.getContext('2d'), 40, 27, 0); ctx.drawImage(low, 0, 0, w, h); } else BG[id](ctx, w, h, 0);
-    const rows = ['把想法做出来', '整理拍摄素材', '给家里打电话'];
-    if (id === 'liquid') { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(10, 42, w - 20, 80, 14); else ctx.rect(10, 42, w - 20, 80); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1; ctx.stroke(); }
-    rows.forEach((t, i) => {
-      const y = 58 + i * 25;
-      if (id === 'liquid') { const g = ctx.createRadialGradient(22, y - 2, 1, 23, y, 7); g.addColorStop(0, '#fff'); g.addColorStop(1, i ? 'rgba(120,130,160,.25)' : 'rgba(110,120,255,.55)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(23, y, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#1b1d24'; ctx.font = '12px Geist,"PingFang SC",sans-serif'; ctx.fillText(t, 36, y + 4); }
-      if (id === 'ink') { ctx.strokeStyle = '#1d1a16'; ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(20, y, 5.5, 0, 7); ctx.stroke(); ctx.fillStyle = i ? '#1d1a16' : '#9b948a'; ctx.font = `300 12px ${SONG}`; ctx.fillText(t, 34, y + 4); if (!i) { ctx.fillStyle = '#9b948a'; ctx.fillRect(34, y, 72, .8); } ctx.fillStyle = 'rgba(29,26,22,.12)'; ctx.fillRect(34, y + 12, w - 48, .6); }
-      if (id === 'dot') { ctx.fillStyle = '#111'; for (let a = 0; a < 12; a++) { const an = a / 12 * 6.283; ctx.beginPath(); ctx.arc(20 + Math.cos(an) * 5.5, y + Math.sin(an) * 5.5, .9, 0, 7); ctx.fill(); } ctx.font = '12px Geist,"PingFang SC",sans-serif'; ctx.fillText(t, 34, y + 4); }
-      if (id === 'noir') { ctx.strokeStyle = hexA(GOLD, .8); ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(20, y, 5.5, 0, 7); ctx.stroke(); ctx.fillStyle = '#efe6d6'; ctx.font = '12px Geist,"PingFang SC",sans-serif'; ctx.fillText(t, 34, y + 4); ctx.fillStyle = hexA(GOLD, .3); ctx.fillRect(34, y + 12, w - 48, .5); }
-    });
-    if (id === 'liquid') { ctx.fillStyle = '#1b1d24'; ctx.font = '200 28px Geist,sans-serif'; ctx.fillText('2/6', 14, 32); }
-    if (id === 'ink') { ctx.fillStyle = '#1d1a16'; ctx.font = `300 20px ${SONG}`; ctx.fillText('今日', 14, 30); ctx.fillStyle = CINNABAR; ctx.beginPath(); ctx.arc(62, 24, 2.5, 0, 7); ctx.fill(); }
-    if (id === 'dot') { dotCanvas(ctx, '02/06', 14, 12, 2.6, '#111'); ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(w - 18, 20, 3, 0, 7); ctx.fill(); }
-    if (id === 'noir') { ctx.fillStyle = GOLD; ctx.font = `400 26px ${SERIF}`; ctx.fillText('N° 02', 14, 32); }
-    return c.toDataURL('image/png');
-  }
-
-  window.SuiSuiSkins = { mount, unmount, head, jar, art: (id, entries, start, size) => ART[id] ? ART[id](entries, start, size) : null, thumb, dotSvg, isoWeek, fonts() {}, fontReady: () => Promise.resolve() };
+  window.SuiSuiSkins = { mount, unmount, head, jar, mock, art: (id, D) => artSvg(id, D || DEMO), data };
 })();
