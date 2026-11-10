@@ -1,12 +1,12 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-11-10-pro-preview-1';
+const VERSION = '2026-11-10-pro-preview-3';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
   './motion.js',
-  './', './index.html', './privacy.html', './iphone.html', './styles.css', './night.css', './looks.css', './i18n.js', './app.js', './pro.js', './pro.css', './pwa.js', './vendor/fonts/Geist-Variable.woff2',
+  './', './index.html', './privacy.html', './iphone.html', './styles.css', './night.css', './looks.css', './i18n.js', './app.js', './pro-skins.js', './pro.js', './pro.css', './pwa.js', './vendor/fonts/Geist-Variable.woff2',
   './manifest.webmanifest', './vendor/anime.umd.min.js', './vendor/lucide.min.js',
   './assets/lake.jpg',
   ...['mist', 'dusk', 'forest', 'sea', 'night', 'aurora', 'dunes', 'pine'].flatMap(n => [`./assets/wallpapers/${n}.jpg`, `./assets/wallpapers/${n}-thumb.jpg`]),

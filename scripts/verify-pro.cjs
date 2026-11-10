@@ -42,7 +42,7 @@ let browser;
     await page.locator('#pro-banner').click();
     assert.equal(await page.locator('#pro-sheet').isVisible(), true, 'Pro page opens');
     for (const part of ['effects', 'themes', 'jar']) assert.equal(await page.locator(`[data-pro-section=${part}]`).count(), 1, `Pro page has ${part}`);
-    await page.locator('[data-pro-effect=pixel]').click();
+    await page.locator('[data-pro-effect=dots]').click();
     await page.waitForTimeout(150);
     assert.ok(await page.locator('.pro-fx').count() > 0, 'Effects can be tried before buying');
     await page.screenshot({ path: path.join(review, 'pro-sheet-free-390.png') });
@@ -72,17 +72,20 @@ let browser;
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '已解锁');
     await page.locator('[data-settings-page=look]').click();
-    await page.locator('[data-pro-theme-pick=aurora]').click();
-    assert.equal(await html(page, 'proTheme'), 'aurora'); assert.equal(await html(page, 'style'), 'night', '极光 sits on 夜光');
-    assert.equal((await saved(page)).proTheme, 'aurora');
-    await page.locator('[data-pro-effect-pick=burn]').click();
-    assert.equal((await saved(page)).proEffect, 'burn');
-    await page.screenshot({ path: path.join(review, 'pro-look-aurora-390.png') });
+    await page.locator('[data-pro-theme-pick=noir]').click();
+    assert.equal(await html(page, 'proTheme'), 'noir'); assert.equal(await html(page, 'style'), 'night', '暗金 sits on 夜光');
+    assert.equal(await html(page, 'proSkin'), 'noir', 'The theme brings its own background and header');
+    assert.equal(await page.locator('#pro-head').count(), 1);
+    assert.equal((await saved(page)).proTheme, 'noir');
+    await page.locator('[data-pro-effect-pick=gold]').click();
+    assert.equal((await saved(page)).proEffect, 'gold');
+    await page.screenshot({ path: path.join(review, 'pro-look-noir-390.png') });
     // A free style takes the Pro theme off
     await page.locator('[data-ui-style=paper]').click();
     await page.waitForTimeout(50);
-    assert.equal(await html(page, 'proTheme'), '', 'Picking 纸墨 takes off 极光');
-    await page.locator('[data-pro-theme-pick=darkroom]').click();
+    assert.equal(await html(page, 'proTheme'), '', 'Picking 纸墨 takes off 暗金');
+    await page.locator('[data-pro-theme-pick=liquid]').click();
+    assert.equal(await html(page, 'style'), 'glass', '液态玻璃 sits on 玻璃');
     await page.locator('#settings-back').click();
     await page.locator('.nav-button[data-view=tasks]').click();
     // Countdown
@@ -92,7 +95,7 @@ let browser;
     await page.locator('#pro-cd-date').fill(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
     await page.locator('#pro-cd-add button').click();
     await page.locator('#pro-close').click();
-    assert.match(await page.locator('#pro-countdowns').textContent(), /12天期末考试/, 'Countdown on 今天');
+    assert.match(await page.locator('#pro-head').textContent(), /12天期末考试/, 'Countdown in the theme header');
     // Pro completion: the chosen effect, no shatter; shards fly to the jar
     await page.locator('.task-row[data-task-id=a] .check-task').click();
     await page.waitForTimeout(150);
@@ -116,12 +119,14 @@ let browser;
     // Reset (local preview only)
     await page.evaluate(() => window.SuiSuiPro.reset());
     assert.equal(await html(page, 'proTheme'), '', 'After reset the free look is back');
+    assert.equal(await page.locator('#pro-head').count(), 0, 'and the theme header is gone');
+    assert.equal(await page.locator('#today-side #pro-jar-button').count(), 1, 'the jar is back next to the ring');
     await context.close();
   }
 
   /* An ended trial: the saved theme stays saved but is not shown */
   {
-    const { context, page } = await open({ pro: { owned: false, trialUsed: true, trialEnds: Date.now() - 1000 }, proTheme: 'pixel' });
+    const { context, page } = await open({ pro: { owned: false, trialUsed: true, trialEnds: Date.now() - 1000 }, proTheme: 'dot' });
     assert.equal(await html(page, 'proTheme'), '', 'Ended trial → free look');
     assert.equal(await page.evaluate(() => window.SuiSuiPro.isPro()), false);
     await context.close();

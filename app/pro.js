@@ -11,20 +11,22 @@
   const PRICE = '¥18', LIST_PRICE = '¥28', TRIAL_DAYS = 3;
 
   /* ---------- Themes: each one is a whole world (colours, type, shard material, completion effect, sound) ---------- */
+  const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
   const THEMES = {
-    aurora: { name: '极光', line: '深夜天幕，流光掠过', base: 'night', effect: 'stardust', sound: 'glass', accent: '#7ef0d8', soft: '#7ef0d81f', on: '#04211c',
-      shards: ['#7ef0d8', '#7fb2ff', '#c59bff', '#e9fbff'], bg: '#070b1f', ink: '#eaf6ff', muted: '#8ea3c0', mode: 'screen', font: 'Geist,"PingFang SC","Microsoft YaHei",sans-serif' },
-    ink: { name: '宣纸', line: '墨落纸上，盖一枚朱印', base: 'paper', effect: 'ink', sound: 'wood', accent: '#b8322a', soft: '#b8322a14', on: '#fff8ef',
-      shards: ['#1d1a16', '#3d362e', '#6d6358', '#b8322a'], bg: '#f1ebdd', ink: '#1d1a16', muted: '#7a7166', mode: 'multiply', font: '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif' },
-    darkroom: { name: '暗房', line: '红灯下，显影一整天', base: 'night', effect: 'burn', sound: 'shutter', accent: '#ff5b3a', soft: '#ff5b3a1c', on: '#1a0805',
-      shards: ['#ff5b3a', '#ffb36b', '#9c2f1c', '#f3e2cf'], bg: '#120907', ink: '#f3e2cf', muted: '#9c8070', mode: 'screen', font: 'Geist,"PingFang SC","Microsoft YaHei",sans-serif' },
-    pixel: { name: '像素', line: '四种绿，一台老掌机', base: 'night', effect: 'pixel', sound: 'chip', accent: '#9bbc0f', soft: '#9bbc0f26', on: '#0f380f',
-      shards: ['#9bbc0f', '#8bac0f', '#306230', '#cfe28a'], bg: '#0f380f', ink: '#cfe28a', muted: '#8bac0f', mode: 'source-over', font: '"Courier New",ui-monospace,monospace' }
+    liquid: { name: '液态玻璃', line: '通透的玻璃，细的数字', base: 'glass', effect: 'stardust', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
+      shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#6b7080', mode: 'multiply', font: SANS },
+    ink: { name: '东方留白', line: '大片留白，一点朱砂', base: 'paper', effect: 'ink', sound: 'wood', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
+      shards: ['#1d1a16', '#3d362e', '#6d6358', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#7a7166', mode: 'multiply', font: SONG },
+    dot: { name: '点阵', line: '黑白点阵，只留一个红点', base: 'paper', effect: 'dots', sound: 'click', accent: '#111111', soft: '#1111110f', on: '#ffffff',
+      shards: ['#111111', '#111111', '#4a4a48', '#d71921'], bg: '#f1f1ee', ink: '#111111', muted: '#6b6b66', mode: 'source-over', font: SANS },
+    noir: { name: '暗金', line: '深黑，香槟金的细线', base: 'night', effect: 'gold', sound: 'chime', accent: '#c8a66a', soft: '#c8a66a1f', on: '#0d0c0a',
+      shards: ['#c8a66a', '#e8d3a4', '#9c7f47', '#f4e8cc'], bg: '#0d0c0a', ink: '#efe6d6', muted: '#8c8170', mode: 'screen', font: SANS }
   };
+  const BRAND = { shards: ['#d9d6ff', '#c9f0e6', '#ffe0d2', '#f5f5f7'] };
   const SOON = [{ name: '猫咪', line: '一只猫陪你做完今天' }, { name: '二十四节气', line: '每个节气自动换装' }];
   const PLAIN = { shards: ['#9fd8ff', '#ffffff', '#a7b4ff', '#7ee0c8'], bg: '#0c0e14', ink: '#f1f3f7', muted: '#8b93a3', accent: '#9fd8ff', mode: 'screen', font: 'Geist,"PingFang SC","Microsoft YaHei",sans-serif' };
-  const EFFECTS = { auto: '跟随主题', shatter: '碎裂', stardust: '星尘', ink: '墨染', plane: '纸飞机', burn: '燃尽', pixel: '像素' };
-  const EFFECT_LINE = { shatter: '文字碎成玻璃片', stardust: '散成一把星尘', ink: '墨晕开，盖上朱印', plane: '折成纸飞机飞走', burn: '从左烧到右', pixel: '一格一格掉落' };
+  const EFFECTS = { auto: '跟随主题', shatter: '碎裂', stardust: '流光', ink: '墨染', plane: '纸飞机', dots: '点阵', gold: '金箔' };
+  const EFFECT_LINE = { shatter: '文字碎成玻璃片', stardust: '化成一缕光', ink: '墨晕开，落一枚印', plane: '折成纸飞机飞走', dots: '散成一粒粒点', gold: '金箔慢慢飘落' };
 
   /* ---------- Entitlement (simulated purchase in this build) ---------- */
   const info = () => { const p = S().pro; return p && typeof p === 'object' ? p : (S().pro = { owned: false, trialEnds: 0, trialUsed: false }); };
@@ -77,7 +79,9 @@
     wood: c => { tone(c, { f: 520, f2: 300, d: .18, g: .2, type: 'triangle' }); hiss(c, { d: .04, g: .07, hp: 300, lp: 2200 }); tone(c, { f: 784, t: .12, d: .45, g: .04 }); },
     shutter: c => { hiss(c, { d: .025, g: .28, hp: 2600 }); hiss(c, { t: .075, d: .045, g: .2, hp: 1400 }); tone(c, { f: 150, f2: 90, t: .075, d: .12, g: .06, type: 'square' }); },
     chip: c => { [523, 659, 784, 1047].forEach((f, i) => tone(c, { f, type: 'square', t: i * .055, d: .09, g: .045 })); },
-    soft: c => { tone(c, { f: 880, f2: 1320, d: .18, g: .07 }); tone(c, { f: 1760, t: .06, d: .3, g: .025 }); }
+    soft: c => { tone(c, { f: 880, f2: 1320, d: .18, g: .07 }); tone(c, { f: 1760, t: .06, d: .3, g: .025 }); },
+    click: c => { hiss(c, { d: .012, g: .22, hp: 3200 }); tone(c, { f: 2400, d: .035, g: .04, type: 'square' }); hiss(c, { t: .06, d: .01, g: .12, hp: 4000 }); },
+    chime: c => { tone(c, { f: 660, d: 1.3, g: .075 }); tone(c, { f: 990, t: .02, d: 1.1, g: .045 }); tone(c, { f: 1485, t: .04, d: .8, g: .02 }); }
   };
   const soundOn = () => S().proSound !== false;
   function playSound(id) { if (!soundOn()) return; const c = audio(); if (!c) return; try { (SOUNDS[id] || SOUNDS.soft)(c); } catch { /* optional */ } }
@@ -115,7 +119,8 @@
       requestAnimationFrame(tick); setTimeout(resolve, resolveAt);
     });
   }
-  const dark = () => look() !== THEMES.ink;
+  const LIGHT = ['liquid', 'ink', 'dot'];
+  const dark = () => !LIGHT.includes(activeTheme());
   const FX = {
     stardust(src, s) {
       const L = look(), parts = s.pts.slice(0, 900).map((p, i) => { const r = rng(i * 977 + 13); return { ...p, vx: (r() - .35) * 46, vy: -(28 + r() * 90), size: 1 + r() * 1.8, c: L.shards[i % L.shards.length], ph: r() * 6, d: (p.x - s.left) / s.w * 260 }; });
@@ -131,13 +136,24 @@
         ctx.globalCompositeOperation = 'source-over';
       });
     },
-    pixel(src, s) {
-      const L = look(), step = 4, parts = s.pts.filter((_, i) => i % 1 === 0).map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: r() * 380, vx: (r() - .5) * 60, c: r() < .5 ? s.color : L.shards[i % 2] }; });
-      return overlay(1150, (ctx, ms) => {
+    dots(src, s) {
+      const parts = s.pts.map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: (p.x - s.left) / s.w * 300 + r() * 120, vy: -(8 + r() * 26), vx: (r() - .5) * 16, red: activeTheme() === 'dot' && r() < .04 }; });
+      return overlay(1100, (ctx, ms) => {
         for (const p of parts) {
-          const t = Math.max(0, ms - p.d) / 1000, y = p.y + .5 * 1700 * t * t, a = clamp(1 - (ms - p.d - 380) / 380);
-          if (a <= 0) continue; ctx.fillStyle = p.c; ctx.globalAlpha = a;
-          ctx.fillRect(Math.round((p.x + p.vx * t) / step) * step, Math.round(y / step) * step, step, step);
+          const t = clamp((ms - p.d) / 520), sc = t <= 0 ? 1 : 1 - easeOut(t);
+          if (sc <= .02) continue; ctx.fillStyle = p.red ? '#d71921' : s.color;
+          ctx.beginPath(); ctx.arc(p.x + p.vx * easeOut(t), p.y + p.vy * easeOut(t), 1.7 * sc + (t > 0 ? .4 : 0), 0, 7); ctx.fill();
+        }
+      });
+    },
+    gold(src, s) {
+      const parts = s.pts.filter((_, i) => i % 3 === 0).map((p, i) => { const r = rng(i * 13 + 5); return { ...p, d: r() * 260, sway: 8 + r() * 18, ph: r() * 6, sz: 2 + r() * 3.5, spin: (r() - .5) * 8, fall: 60 + r() * 90, c: ['#c8a66a', '#e8d3a4', '#f4e8cc', '#9c7f47'][i % 4] }; });
+      return overlay(1500, (ctx, ms) => {
+        ctx.globalAlpha = clamp(1 - ms / 380); ctx.drawImage(s.image, s.left, s.top); ctx.globalAlpha = 1;
+        for (const p of parts) {
+          const t = clamp((ms - p.d) / 1150); if (t <= 0 || t >= 1) continue;
+          const x = p.x + Math.sin(p.ph + t * 5) * p.sway * t, y = p.y + p.fall * t * t + t * 10, a = t < .15 ? t / .15 : 1 - (t - .15) / .85;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(p.spin * t); ctx.scale(1, Math.abs(Math.cos(p.ph + t * 7)) * .8 + .2); ctx.globalAlpha = a; ctx.fillStyle = p.c; ctx.fillRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz * .7); ctx.restore();
         }
         ctx.globalAlpha = 1;
       });
@@ -158,25 +174,9 @@
         }
         ctx.filter = 'none';
         const st = clamp((ms - 300) / 220); if (st > 0) {
-          const k = 1.7 - .7 * easeOut(st); ctx.save(); ctx.translate(seal.x, seal.y); ctx.rotate(-.08); ctx.scale(k, k); ctx.globalAlpha = clamp(st * 1.4) * fade;
-          ctx.fillStyle = '#b8322a'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#fbf3e6'; ctx.font = '600 17px "Songti SC","STSong","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('完', 0, 1); ctx.restore(); ctx.globalAlpha = 1;
+          const k = 1.5 - .5 * easeOut(st); ctx.save(); ctx.translate(seal.x, seal.y); ctx.scale(k, k); ctx.globalAlpha = clamp(st * 1.4) * fade;
+          ctx.fillStyle = '#b43a2c'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, 7); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
         }
-      });
-    },
-    burn(src, s) {
-      const parts = s.pts.filter((_, i) => i % 2 === 0).map((p, i) => { const r = rng(i * 53 + 3); return { ...p, vx: (r() - .5) * 26, vy: -(30 + r() * 70), life: 420 + r() * 380, size: 1 + r() * 1.6 }; });
-      const sweepMs = 620;
-      return overlay(1250, (ctx, ms) => {
-        const line = s.left + easeIn(clamp(ms / sweepMs)) * 0 + clamp(ms / sweepMs) * (s.w + 16);
-        ctx.save(); ctx.beginPath(); ctx.rect(line, s.top, s.w + 40, s.h); ctx.clip(); ctx.drawImage(s.image, s.left, s.top); ctx.restore();
-        if (ms < sweepMs + 60) { const g = ctx.createLinearGradient(line - 10, 0, line + 6, 0); g.addColorStop(0, 'rgba(255,91,58,0)'); g.addColorStop(.6, 'rgba(255,140,70,.85)'); g.addColorStop(1, 'rgba(255,214,150,0)'); ctx.fillStyle = g; ctx.fillRect(line - 10, s.top + 2, 16, s.h - 4); }
-        ctx.globalCompositeOperation = dark() ? 'lighter' : 'source-over';
-        for (const p of parts) {
-          const born = (p.x - s.left) / (s.w + 16) * sweepMs, t = clamp((ms - born) / p.life); if (t <= 0 || t >= 1) continue;
-          const e = easeOut(t), heat = 1 - t; ctx.fillStyle = `rgba(255,${Math.round(90 + 130 * heat)},${Math.round(40 + 60 * heat)},${heat})`;
-          ctx.beginPath(); ctx.arc(p.x + p.vx * e, p.y + p.vy * e, p.size, 0, 7); ctx.fill();
-        }
-        ctx.globalCompositeOperation = 'source-over';
       });
     },
     plane(src, s) {
@@ -184,7 +184,7 @@
       const c1 = { x: P.x + 120, y: P.y + 40 }, c2 = { x: innerWidth * .7, y: P.y - 60 };
       const at = t => { const u = 1 - t; return { x: u * u * u * P.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * end.x, y: u * u * u * P.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * end.y }; };
       const parts = s.pts.filter((_, i) => i % 2 === 0).map((p, i) => ({ ...p, d: rng(i + 9)() * 120 }));
-      const L = look(), stroke = L === THEMES.ink ? '#1d1a16' : L.accent || '#7fb2ff';
+      const L = look(), stroke = L === PLAIN ? '#7fb2ff' : L.accent;
       return overlay(1350, (ctx, ms) => {
         ctx.fillStyle = s.color;
         for (const p of parts) { const t = easeIn(clamp((ms - p.d) / 300)); if (t >= 1) continue; ctx.globalAlpha = 1 - t * .6; ctx.fillRect(p.x + (P.x - p.x) * t, p.y + (P.y - p.y) * t, 1.6, 1.6); }
@@ -203,7 +203,7 @@
   function effect(source, textNode) {
     const id = chosenEffect();
     if (!id || id === 'shatter' || !FX[id]) return null;
-    try { const s = sampleText(textNode, id === 'pixel' ? 4 : id === 'stardust' ? 2 : 3); return FX[id](source, s); } catch { return null; }
+    try { const s = sampleText(textNode, id === 'dots' ? 4 : id === 'stardust' ? 2 : 3); return FX[id](source, s); } catch { return null; }
   }
 
   /* ---------- 碎片罐: today's completions as shards in a glass jar ---------- */
@@ -218,7 +218,7 @@
     } };
   }
   /** Lays the shards in a pile, deterministically: the same day always looks the same. */
-  function pile(entries, J, per, sz) {
+  function pile(entries, J, per, sz, colorOf = shardColor) {
     const cols = Math.max(4, Math.round(J.w / (sz * .95))), cw = (J.w - sz * .6) / cols, level = new Array(cols).fill(0), out = [];
     let full = false;
     entries.forEach(e => {
@@ -228,55 +228,43 @@
         const x = J.x + sz * .3 + (col + .5) * cw + (r() - .5) * cw * .7, y = J.y + J.h - sz * .55 - level[col] * sz * .5 - r() * sz * .15;
         if (y < J.bodyTop + sz * .9) { full = true; continue; }
         level[col] += 1;
-        const nPts = 3 + (r() < .4 ? 1 : 0);
-        const pts = Array.from({ length: nPts }, (_, i) => { const ang = (i / nPts) * Math.PI * 2 + r() * 1.4, rad = sz * (.32 + r() * .32); return [x + Math.cos(ang) * rad, y + Math.sin(ang) * rad * .8]; });
-        out.push({ pts, color: shardColor(e, k), tw: r() * 6 });
+        out.push({ x, y, rot: r() * 6.28, s: sz * (.9 + r() * .5), color: colorOf(e, k), seed: hash(`${e.id}${e.at}${k}`) });
       }
     });
     return { shards: out, full };
   }
   const pageDark = () => { const t = activeTheme(), st = document.documentElement.dataset.style; return t ? t !== 'ink' : st === 'night' || (st === 'glass' && matchMedia('(prefers-color-scheme: dark)').matches); };
+  const jarKind = () => activeTheme() || 'plain';
   function drawJar(ctx, x, y, w, h, entries, { per = 4, sz = w / 7, ms = 0, lid = true, dark } = {}) {
-    const J = jarShape(x, y, w, h), L = look(), onDark = dark ?? L !== THEMES.ink;
-    ctx.save(); J.path(ctx);
-    const body = ctx.createLinearGradient(x, 0, x + w, 0);
-    body.addColorStop(0, onDark ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.55)'); body.addColorStop(.5, onDark ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.25)'); body.addColorStop(1, onDark ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.5)');
-    ctx.fillStyle = body; ctx.fill(); ctx.clip();
+    const kind = jarKind(), J = jarShape(x, y, w, h), onDark = dark ?? !LIGHT.includes(kind);
     const { shards } = pile(entries, J, per, sz);
-    ctx.globalCompositeOperation = onDark ? 'lighter' : 'multiply';
-    for (const s of shards) {
-      const glint = ms ? .78 + .22 * Math.sin(s.tw + ms / 500) : .9;
-      ctx.beginPath(); s.pts.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.closePath();
-      ctx.fillStyle = hex(s.color, onDark ? .55 * glint : .7); ctx.fill();
-      ctx.strokeStyle = onDark ? `rgba(255,255,255,${.35 * glint})` : 'rgba(255,255,255,.5)'; ctx.lineWidth = Math.max(.6, sz / 22); ctx.stroke();
-    }
-    ctx.globalCompositeOperation = 'source-over';
-    if (ms) { const sx = x - w + ((ms / 2600) % 1) * w * 3, g = ctx.createLinearGradient(sx, 0, sx + w * .5, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.16)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); }
-    ctx.restore();
-    J.path(ctx); ctx.strokeStyle = onDark ? 'rgba(235,245,255,.7)' : 'rgba(40,34,28,.55)'; ctx.lineWidth = Math.max(1, w / 60); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + w * .14, J.bodyTop + J.r * .9); ctx.lineTo(x + w * .14, y + h - J.r * 1.1); ctx.strokeStyle = onDark ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.8)'; ctx.lineWidth = Math.max(1.2, w / 34); ctx.lineCap = 'round'; ctx.stroke();
-    if (lid) { ctx.fillStyle = onDark ? 'rgba(235,245,255,.82)' : 'rgba(40,34,28,.75)'; const lh = h * .07; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(J.nx - w * .04, y, J.neck + w * .08, lh, lh / 2.4) : ctx.rect(J.nx - w * .04, y, J.neck + w * .08, lh); ctx.fill(); }
+    window.SuiSuiSkins.jar(kind, ctx, x, y, w, h, shards, { ms, lid, onDark });
     return shards.length;
   }
 
   /* ---------- 每周碎片画: a picture only this week of yours could make ---------- */
   function drawArt(entries, start, L = look(), size = 1080) {
-    const W = size, H = Math.round(size * 1.25), k = W / 1080, pixel = L === THEMES.pixel;
+    const id = Object.keys(THEMES).find(k => THEMES[k] === L);
+    const skinned = id && window.SuiSuiSkins?.art(id, [...entries].sort((a, b) => a.at - b.at), start, size);
+    if (skinned) return skinned;
+    const W = size, H = Math.round(size * 1.25), k = W / 1080, pixel = false;
     const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
     const out = canvas.getContext('2d');
-    const work = pixel ? document.createElement('canvas') : canvas; if (pixel) { work.width = Math.round(W / 6); work.height = Math.round(H / 6); }
+    const work = canvas;
     const ctx = work.getContext('2d'), q = pixel ? 1 / 6 : 1, sc = v => v * k * q;
     ctx.fillStyle = L.bg; ctx.fillRect(0, 0, work.width, work.height);
     const cx = work.width / 2, cy = sc(650);
-    if (L === THEMES.aurora || L === PLAIN) { [['#1fd1b5', -.25, .3, 620], ['#6b4bff', .3, .1, 560], ['#2f7bff', 0, .55, 520]].forEach(([c, dx, dy, r]) => { const g = ctx.createRadialGradient(cx + dx * work.width, sc(dy * 1350), 0, cx + dx * work.width, sc(dy * 1350), sc(r)); g.addColorStop(0, hex(c, L === PLAIN ? .16 : .3)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, work.width, work.height); }); }
+    if (L === THEMES.liquid) { [['#c9c2ff', .2, .2, 700], ['#bfeee2', .85, .4, 640], ['#ffd9c7', .3, .85, 620]].forEach(([c, x, y, r]) => { const g = ctx.createRadialGradient(x * W, y * H, 0, x * W, y * H, sc(r)); g.addColorStop(0, hex(c, .75)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }); }
+    if (L === THEMES.noir) { const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sc(700)); g.addColorStop(0, 'rgba(200,166,106,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(200,166,106,.35)'; ctx.lineWidth = sc(1); [470, 530].forEach(rad => { ctx.beginPath(); ctx.arc(cx, cy, sc(rad), 0, 7); ctx.stroke(); }); }
+    if (L === PLAIN) { [['#1fd1b5', -.25, .3, 620], ['#6b4bff', .3, .1, 560], ['#2f7bff', 0, .55, 520]].forEach(([c, dx, dy, r]) => { const g = ctx.createRadialGradient(cx + dx * work.width, sc(dy * 1350), 0, cx + dx * work.width, sc(dy * 1350), sc(r)); g.addColorStop(0, hex(c, L === PLAIN ? .16 : .3)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, work.width, work.height); }); }
+    if (L === PLAIN) { const r = rng(17); for (let i = 0; i < 220; i++) { const x = r() * work.width, y = r() * work.height, s = r() < .06 ? 2.2 : .6 + r(); ctx.fillStyle = `rgba(235,245,255,${.2 + r() * .55})`; ctx.beginPath(); ctx.arc(x, y, sc(s), 0, 7); ctx.fill(); } }
     if (L === THEMES.ink) { const r = rng(7); ctx.strokeStyle = 'rgba(120,100,70,.08)'; ctx.lineWidth = sc(1.2); for (let i = 0; i < 900; i++) { const x = r() * work.width, y = r() * work.height, a = r() * 6.3, l = sc(6 + r() * 26); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); ctx.stroke(); } }
-    if (L === THEMES.darkroom) { const g = ctx.createRadialGradient(cx, cy, sc(80), cx, cy, sc(900)); g.addColorStop(0, 'rgba(255,91,58,.16)'); g.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, work.width, work.height); }
     ctx.strokeStyle = hex(L.muted, .28); ctx.lineWidth = sc(1.2);
     for (let d = 0; d < 7; d++) { const a = -Math.PI / 2 + d / 7 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * sc(492), cy + Math.sin(a) * sc(492)); ctx.lineTo(cx + Math.cos(a) * sc(510), cy + Math.sin(a) * sc(510)); ctx.stroke(); }
     ctx.globalCompositeOperation = L.mode;
     entries.forEach((e, i) => {
       const r = rng(hash(`${e.id}${e.at}`)), when = new Date(e.at), d = (when.getDay() + 6) % 7, hr = when.getHours() + when.getMinutes() / 60;
-      const a = -Math.PI / 2 + (d + hr / 24) / 7 * Math.PI * 2 + (r() - .5) * .06, dir = [Math.cos(a), Math.sin(a)], perp = [-dir[1], dir[0]];
+      const a = -Math.PI / 2 + (i + .5) / Math.max(entries.length, 1) * Math.PI * 2 + (d / 7 + hr / 168 - .5) * .35 + (r() - .5) * .08, dir = [Math.cos(a), Math.sin(a)], perp = [-dir[1], dir[0]];
       const d0 = sc(26 + r() * 50), len = sc(150 + Math.min(e.min || 0, 120) * 2.1 + r() * 130), wb = sc(22 + r() * 46), kink = (r() - .5) * wb * .9;
       const B1 = [cx + dir[0] * d0 + perp[0] * wb / 2, cy + dir[1] * d0 + perp[1] * wb / 2], B2 = [cx + dir[0] * d0 - perp[0] * wb / 2, cy + dir[1] * d0 - perp[1] * wb / 2];
       const M = [cx + dir[0] * (d0 + len * .56) + perp[0] * kink, cy + dir[1] * (d0 + len * .56) + perp[1] * kink], T = [cx + dir[0] * (d0 + len), cy + dir[1] * (d0 + len)];
@@ -308,7 +296,7 @@
     out.fillStyle = L.muted; out.font = `400 ${28 * k}px ${L.font}`; out.fillText(lines.slice(1).join('，'), P, H - P - 44 * k);
     if (L === THEMES.ink) { out.save(); out.translate(W - P - 34 * k, H - P - 70 * k); out.rotate(-.06); out.fillStyle = '#b8322a'; out.fillRect(-34 * k, -34 * k, 68 * k, 68 * k); out.fillStyle = '#fbf3e6'; out.font = `600 ${40 * k}px ${L.font}`; out.textAlign = 'center'; out.textBaseline = 'middle'; out.fillText('碎', 0, 2 * k); out.restore(); }
     else { out.fillStyle = hex(L.muted.length === 7 ? L.muted : '#8b93a3', .9); out.font = `500 ${24 * k}px ${L.font}`; out.textAlign = 'right'; out.fillText('碎碎清单 Pro', W - P, H - P - 44 * k); out.textAlign = 'left'; }
-    if (L === THEMES.darkroom) { const r = rng(3), img = out.getImageData(0, 0, W, H), dt = img.data; for (let i = 0; i < dt.length; i += 4 * 3) { const n = (r() - .5) * 22; dt[i] += n; dt[i + 1] += n; dt[i + 2] += n; } out.putImageData(img, 0, 0); }
+    if (L === THEMES.noir) { const r = rng(3), img = out.getImageData(0, 0, W, H), dt = img.data; for (let i = 0; i < dt.length; i += 4 * 3) { const n = (r() - .5) * 22; dt[i] += n; dt[i + 1] += n; dt[i + 2] += n; } out.putImageData(img, 0, 0); }
     return canvas;
   }
 
@@ -323,14 +311,15 @@
     const html = document.documentElement, id = activeTheme(), t = THEMES[id];
     if (API.lockMode) return;
     if (!t) {
-      if (html.dataset.proTheme) { delete html.dataset.proTheme; API.applySettings(); }
+      if (html.dataset.proTheme) { delete html.dataset.proTheme; window.SuiSuiSkins.unmount(); API.applySettings(); }
       return;
     }
     html.dataset.proTheme = id; html.dataset.style = t.base; html.dataset.palette = 'pro';
     const r = html.style;
     r.setProperty('--accent', t.accent); r.setProperty('--accent-fill', t.accent); r.setProperty('--accent-soft', t.soft); r.setProperty('--on-accent', t.on);
     r.setProperty('--pro-font', t.font);
-    if (id === 'ink' || id === 'pixel') r.setProperty('--app-font', t.font);
+    if (id === 'ink') r.setProperty('--app-font', t.font);
+    window.SuiSuiSkins.mount(id);
   }
   function setTheme(id) {
     if (!isPro()) { startTry(id); return; }
@@ -386,6 +375,7 @@
     if (appLook) { const f = document.createElement('fieldset'); f.className = 'pro-look'; f.id = 'pro-look'; appLook.after(f); }
     const motionSet = document.querySelector('.motion-settings');
     if (motionSet) { const f = document.createElement('div'); f.className = 'pro-effects-inline'; f.id = 'pro-effects-inline'; motionSet.append(f); }
+    document.addEventListener('click', e => { if (e.target.closest('[data-settings-page=look]')) loadThumbFonts(); }, true);
     // Choosing a free interface style takes off a Pro theme
     document.addEventListener('click', e => { if (e.target.closest('[data-ui-style]') && S().proTheme) { S().proTheme = ''; setTimeout(() => { applyTheme(); refreshAll(); }, 0); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('pro-celebrate').hidden) closeCelebrate(); else if (!$('pro-jar-sheet').hidden) closeJar(); else if (!$('pro-sheet').hidden) closeSheet(); } });
@@ -393,8 +383,11 @@
 
   function themeMock(id) {
     const t = THEMES[id];
-    void t; return `<span class="pro-mock" data-mock="${id}" aria-hidden="true"><b>${{ aurora: '4/7', ink: '十', darkroom: '04', pixel: '3/5' }[id] || ''}</b><i></i><i></i><i></i></span>`;
+    void t; return `<img class="pro-thumb" src="${thumbOf(id)}" alt="" aria-hidden="true">`;
   }
+  const thumbs = {};
+  function thumbOf(id) { return thumbs[id] || (thumbs[id] = window.SuiSuiSkins.thumb(id)); }
+  function loadThumbFonts() { /* the themes use system and bundled fonts only; nothing to wait for */ }
   function renderLookInline() {
     const f = $('pro-look'); if (!f) return;
     const pro = isPro(), cur = activeTheme();
@@ -411,6 +404,7 @@
 
   /* ---------- The Pro page ---------- */
   function openSheet(section = '') {
+    loadThumbFonts();
     const s = $('pro-sheet'); renderSheet(); s.hidden = false; document.body.classList.add('pro-open');
     s.scrollTop = 0; startHero();
     if (section) requestAnimationFrame(() => s.querySelector(`[data-pro-section=${section}]`)?.scrollIntoView({ block: 'start' }));
@@ -438,7 +432,7 @@
       <section class="pro-part" data-pro-section="themes">
         <h2>主题</h2>
         <p class="pro-lead">不只是换颜色：字体、碎片的材质、完成的动效和声音，整套一起换。${pro ? '' : '可以先试穿 90 秒。'}</p>
-        <div class="pro-themes">${Object.keys(THEMES).map(id => `<article class="pro-theme${cur === id ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${THEMES[id].name}</h3><p>${THEMES[id].line}</p><small>${EFFECTS[THEMES[id].effect]} · ${{ glass: '玻璃铃声', wood: '木鱼轻响', shutter: '快门声', chip: '掌机音效' }[THEMES[id].sound]}</small><button type="button" data-pro-theme="${id}">${pro ? (cur === id ? '使用中' : '使用') : '试穿'}</button></article>`).join('')}
+        <div class="pro-themes">${Object.keys(THEMES).map(id => `<article class="pro-theme${cur === id ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${THEMES[id].name}</h3><p>${THEMES[id].line}</p><small>${EFFECTS[THEMES[id].effect]} · ${{ glass: '玻璃轻响', wood: '木鱼一声', click: '机械轻响', chime: '铜铃余音' }[THEMES[id].sound]}</small><button type="button" data-pro-theme="${id}">${pro ? (cur === id ? '使用中' : '使用') : '试穿'}</button></article>`).join('')}
         ${SOON.map(t => `<article class="pro-theme soon"><span class="pro-mock" data-mock="soon" aria-hidden="true">${icon('sparkles')}</span><h3>${t.name}</h3><p>${t.line}</p><small>即将上线，已购用户免费</small></article>`).join('')}</div>
       </section>
 
@@ -491,7 +485,7 @@
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
     renderCountdownList();
     // Demo jar + art
-    const dj = $('pro-demo-jar'); if (dj) { const ctx = canvasFor(dj, 132, 168); drawJarWith(THEMES.aurora, ctx, 8, 6, 116, 156, demoEntries(startOfDay(), 9), 0); }
+    const dj = $('pro-demo-jar'); if (dj) { const ctx = canvasFor(dj, 132, 168); drawJarWith(BRAND, ctx, 8, 6, 116, 156, demoEntries(startOfDay(), 9), 0); }
     const art = drawArt(pro && logBetween(weekStart().getTime(), Date.now() + 1).length ? logBetween(weekStart().getTime(), weekStart().getTime() + 7 * 864e5) : demoEntries(), weekStart(), look(), 540);
     $('pro-demo-art').src = art.toDataURL('image/png');
   }
@@ -501,8 +495,8 @@
     if (!title || title.dataset.busy) return;
     const pick = isPro() ? ((S().proEffect || 'auto') === 'auto' ? (THEMES[activeTheme()]?.effect || 'shatter') : S().proEffect) : (demoPick || 'stardust');
     title.dataset.busy = '1'; check.classList.add('done');
-    playSound(isPro() && !(S().proEffect && S().proEffect !== 'auto') ? themeSound() : ({ stardust: 'glass', ink: 'wood', burn: 'shutter', pixel: 'chip' }[pick] || 'soft'));
-    const run = pick === 'shatter' ? shatterDemo(title) : (demoEffect = pick, FX[pick](title, sampleText(title, pick === 'pixel' ? 4 : pick === 'stardust' ? 2 : 3)));
+    playSound(isPro() && !(S().proEffect && S().proEffect !== 'auto') ? themeSound() : ({ stardust: 'glass', ink: 'wood', dots: 'click', gold: 'chime' }[pick] || 'soft'));
+    const run = pick === 'shatter' ? shatterDemo(title) : (demoEffect = pick, FX[pick](title, sampleText(title, pick === 'dots' ? 4 : pick === 'stardust' ? 2 : 3)));
     demoEffect = '';
     title.style.visibility = 'hidden';
     Promise.resolve(run).then(() => setTimeout(() => { title.style.visibility = ''; check.classList.remove('done'); delete title.dataset.busy; title.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }, 700));
@@ -525,31 +519,33 @@
     const frame = now => {
       const ms = now - t0, shown = still ? base.length : Math.min(base.length, Math.floor(ms / 700) + 2);
       ctx.clearRect(0, 0, W, H);
-      const L0 = look(); const saved = THEMES.aurora; // the Pro hero always speaks 极光
-      drawJarWith(saved, ctx, 22, 12, 126, 190, base.slice(0, shown), still ? 0 : ms);
+      drawJarWith(BRAND, ctx, 22, 12, 126, 190, base.slice(0, shown), still ? 0 : ms);
       if (!still && shown < base.length) { // one shard falling into the jar
         const t = (ms % 700) / 700, x = 85 + Math.sin(shown) * 18, y = -10 + easeIn(t) * 120;
-        ctx.save(); ctx.translate(x, y); ctx.rotate(t * 4); ctx.fillStyle = hex(THEMES.aurora.shards[shown % 4], .85); ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(6, 5); ctx.lineTo(-5, 4); ctx.closePath(); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.translate(x, y); ctx.rotate(t * 4); ctx.fillStyle = hex(BRAND.shards[shown % 4], .85); ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(6, 5); ctx.lineTo(-5, 4); ctx.closePath(); ctx.fill(); ctx.restore();
       }
-      void L0;
       if (!still && !$('pro-sheet').hidden) heroRaf = requestAnimationFrame(frame);
     };
     heroRaf = requestAnimationFrame(frame);
   }
   function stopHero() { cancelAnimationFrame(heroRaf); heroRaf = 0; }
-  function drawJarWith(theme, ctx, x, y, w, h, entries, ms) { const keep = tryOn; tryOn = theme === THEMES.aurora ? 'aurora' : tryOn; const n = drawJar(ctx, x, y, w, h, entries, { per: 4, sz: w / 7, ms }); tryOn = keep; return n; }
+  /** The Pro page's own jar: brand colours, whatever theme is on. */
+  function drawJarWith(brand, ctx, x, y, w, h, entries, ms) {
+    const { shards } = pile(entries, jarShape(x, y, w, h), 4, w / 7, (e, k) => brand.shards[(hash(`${e.id}${e.at}`) + k) % brand.shards.length]);
+    window.SuiSuiSkins.jar('plain', ctx, x, y, w, h, shards, { ms, onDark: true }); return shards.length;
+  }
 
   /* ---------- The jar page ---------- */
   let jarRaf = 0, weekOffset = 0;
-  function openJar() { weekOffset = 0; const s = $('pro-jar-sheet'); renderJar(); s.hidden = false; document.body.classList.add('pro-open'); }
-  function closeJar() { const s = $('pro-jar-sheet'); s.hidden = true; document.body.classList.remove('pro-open'); cancelAnimationFrame(jarRaf); }
+  function openJar() { weekOffset = 0; const s = $('pro-jar-sheet'); renderJar(); s.hidden = false; s.scrollTop = 0; document.body.classList.add('pro-open'); }
+  function closeJar() { const s = $('pro-jar-sheet'); s.hidden = true; document.body.classList.remove('pro-open'); cancelAnimationFrame(jarRaf); tiltOff?.(); }
   function renderJar() {
-    const s = $('pro-jar-sheet'), L = look(); s.style.setProperty('--js-bg', L.bg); s.style.setProperty('--js-ink', L.ink); s.style.setProperty('--js-muted', L.muted); s.dataset.light = L === THEMES.ink ? '1' : '';
+    const s = $('pro-jar-sheet'), L = look(); s.style.setProperty('--js-bg', L.bg); s.style.setProperty('--js-ink', L.ink); s.style.setProperty('--js-muted', L.muted); s.dataset.light = LIGHT.includes(activeTheme()) ? '1' : '';
     const today = todayLog(), ws = new Date(weekStart().getTime() + weekOffset * 7 * 864e5), we = ws.getTime() + 7 * 864e5, week = logBetween(ws.getTime(), we);
     const days = Array.from({ length: 7 }, (_, d) => logBetween(ws.getTime() + d * 864e5, ws.getTime() + (d + 1) * 864e5));
     s.innerHTML = `
       <header class="pro-jar-top"><button type="button" class="pro-close" id="pro-jar-close" aria-label="关闭">${icon('x')}</button><h1>碎片罐</h1></header>
-      <div class="pro-jar-big"><canvas id="pro-jar-big" aria-hidden="true"></canvas><p><b>${today.length}</b> 件今天完成${today.length ? '' : '，第一片还在路上'}</p></div>
+      <div class="pro-jar-big"><canvas id="pro-jar-big" aria-hidden="true"></canvas><p><b>${today.length}</b> 件今天完成${today.length ? '' : '，第一片还在路上'}</p>${today.length ? '<small>拖动罐子，或倾斜手机，碎片会滚动</small>' : ''}</div>
       <div class="pro-week-nav"><button type="button" class="icon-button" id="pro-week-prev" aria-label="上一周">${icon('chevron-left')}</button><strong>${weekOffset ? `第 ${isoWeek(ws)} 周` : '这一周'}</strong><button type="button" class="icon-button" id="pro-week-next" aria-label="下一周" ${weekOffset >= 0 ? 'disabled' : ''}>${icon('chevron-right')}</button></div>
       <div class="pro-week">${days.map((d, i) => `<span><canvas data-day-jar="${i}" aria-hidden="true"></canvas><small>周${'一二三四五六日'[i]}</small><b>${d.length}</b></span>`).join('')}</div>
       <div class="pro-art"><img id="pro-art-img" alt="本周碎片画"><button type="button" class="primary-button" id="pro-art-save">${icon('image-down')}保存这幅碎片画</button></div>`;
@@ -561,10 +557,66 @@
     const art = drawArt(week, ws, look(), 1080);
     $('pro-art-img').src = art.toDataURL('image/png');
     $('pro-art-save').addEventListener('click', () => API.saveImage(art, `碎碎清单-第${isoWeek(ws)}周碎片画.png`));
-    const big = $('pro-jar-big'), W = 220, H = 280, ctx = canvasFor(big, W, H), t0 = performance.now(), still = reduce();
-    cancelAnimationFrame(jarRaf);
-    const frame = now => { ctx.clearRect(0, 0, W, H); drawJar(ctx, 20, 8, 180, 264, today, { per: 5, sz: 22, ms: still ? 0 : now - t0 }); if (!still && !s.hidden) jarRaf = requestAnimationFrame(frame); };
+    physicsJar($('pro-jar-big'), today, s);
+  }
+  /** The big jar: shards fall in one by one, pile up, and roll when the jar is dragged or the phone is tilted. */
+  let tiltOff = null;
+  function physicsJar(canvas, entries, sheet) {
+    cancelAnimationFrame(jarRaf); tiltOff?.();
+    const W = 220, H = 280, ctx = canvasFor(canvas, W, H), jx = 20, jy = 8, jw = 180, jh = 264, J = jarShape(jx, jy, jw, jh), kind = jarKind();
+    const vase = kind === 'ink', L = look(), neckL = vase ? jx + jw * .35 : J.nx, neckR = vase ? jx + jw * .65 : J.nx + J.neck;
+    const left = jx + (vase ? jw * .1 : 4), right = jx + jw - (vase ? jw * .1 : 4), bottom = jy + jh - 5, bodyTop = vase ? jy + jh * .24 : J.bodyTop + J.r * .5, R = vase ? jw * .32 : J.r;
+    const queue = []; entries.forEach(e => { const r = rng(hash(`${e.id}${e.at}`)); for (let k = 0; k < 5; k++) queue.push({ s: 20 * (.85 + r() * .5), color: shardColor(e, k, L), seed: hash(`${e.id}${e.at}${k}`), rot: r() * 6.28 }); });
+    queue.splice(150);
+    const bodies = []; let spawnAt = 0, g = [0, 1], calm = 0, last = performance.now(), t0 = last;
+    if (reduce()) { // no motion: the settled pile, drawn once
+      ctx.clearRect(0, 0, W, H); drawJar(ctx, jx, jy, jw, jh, entries, { per: 5, sz: 22 }); return;
+    }
+    const spawn = () => { const q = queue.shift(); if (!q) return; bodies.push({ ...q, x: (neckL + neckR) / 2 + (Math.random() - .5) * 14, y: jy + jh * .08, vx: (Math.random() - .5) * 40, vy: 60, vr: (Math.random() - .5) * 6, r: q.s * .38 }); };
+    const wall = b => {
+      const top = b.y < bodyTop, lo = top ? neckL : left, hi = top ? neckR : right;
+      if (b.x < lo + b.r) { b.x = lo + b.r; b.vx = Math.abs(b.vx) * .25; b.vr += b.vy * .004; }
+      if (b.x > hi - b.r) { b.x = hi - b.r; b.vx = -Math.abs(b.vx) * .25; b.vr -= b.vy * .004; }
+      if (b.y > bottom - b.r) { b.y = bottom - b.r; b.vy = -Math.abs(b.vy) * .2; b.vx *= .9; b.vr = b.vr * .8 + b.vx * .02; }
+      if (b.y < jy + 6) { b.y = jy + 6; b.vy = Math.abs(b.vy) * .2; }
+      for (const cx of [left + R, right - R]) { // rounded bottom corners
+        const cy = bottom - R; if ((cx < (left + right) / 2 ? b.x < cx : b.x > cx) && b.y > cy) { const dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy), max = R - b.r; if (d > max) { const nx = dx / d, ny = dy / d; b.x = cx + nx * max; b.y = cy + ny * max; const vn = b.vx * nx + b.vy * ny; if (vn > 0) { b.vx -= 1.25 * vn * nx; b.vy -= 1.25 * vn * ny; } } }
+      }
+    };
+    const step = dt => {
+      for (const b of bodies) { b.vx += g[0] * 1500 * dt; b.vy += g[1] * 1500 * dt; b.vx *= .998; b.vy *= .998; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt; b.vr *= .985; }
+      for (let it = 0; it < 3; it++) {
+        for (let i = 0; i < bodies.length; i++) for (let j = i + 1; j < bodies.length; j++) {
+          const a = bodies[i], b = bodies[j], dx = b.x - a.x, dy = b.y - a.y, min = a.r + b.r, d2 = dx * dx + dy * dy;
+          if (d2 >= min * min || d2 === 0) continue;
+          const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, push = (min - d) / 2;
+          a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+          const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rv < 0) { const imp = -1.15 * rv / 2; a.vx -= imp * nx; a.vy -= imp * ny; b.vx += imp * nx; b.vy += imp * ny; const tx = -ny, ty = nx, rt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty; a.vr += rt * .01; b.vr -= rt * .01; a.vx += tx * rt * .05; b.vx -= tx * rt * .05; }
+        }
+        bodies.forEach(wall);
+      }
+    };
+    const frame = now => {
+      if (sheet.hidden) return;
+      const dt = Math.min(.033, (now - last) / 1000); last = now;
+      if (queue.length && now - t0 > spawnAt) { spawn(); spawnAt += queue.length > 40 ? 45 : 90; }
+      step(dt / 2); step(dt / 2);
+      ctx.clearRect(0, 0, W, H);
+      window.SuiSuiSkins.jar(kind, ctx, jx, jy, jw, jh, bodies, { ms: now - t0, onDark: !LIGHT.includes(kind) });
+      const moving = bodies.some(b => Math.abs(b.vx) + Math.abs(b.vy) > 12);
+      calm = moving || queue.length ? 0 : calm + dt;
+      jarRaf = requestAnimationFrame(frame);
+    };
     jarRaf = requestAnimationFrame(frame);
+    // Drag to shake; tilt to pour
+    let drag = null;
+    canvas.onpointerdown = e => { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture?.(e.pointerId); };
+    canvas.onpointermove = e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY }; bodies.forEach(b => { b.vx += dx * 14; b.vy += dy * 14; b.vr += dx * .05; }); };
+    canvas.onpointerup = canvas.onpointercancel = () => { drag = null; };
+    const tilt = e => { if (e.gamma == null) return; const gx = Math.sin((e.gamma || 0) * Math.PI / 180), gy = Math.max(.25, Math.cos((e.gamma || 0) * Math.PI / 180) * Math.sign(Math.cos(((e.beta ?? 90) - 0) * Math.PI / 180) || 1)); const n = Math.hypot(gx, gy) || 1; g = [gx / n, gy / n]; };
+    addEventListener('deviceorientation', tilt); tiltOff = () => removeEventListener('deviceorientation', tilt);
+    const ask = window.DeviceOrientationEvent?.requestPermission; if (ask) canvas.addEventListener('click', () => ask().catch(() => {}), { once: true });
   }
   function drawMiniJar(bump) {
     const c = $('pro-jar-mini'); if (!c) return;
@@ -607,6 +659,7 @@
   }
   function cdText(c) { const n = daysTo(c.date); return n > 0 ? `还有 ${n} 天` : n === 0 ? '就是今天' : `已过 ${-n} 天`; }
   function renderCountdowns() {
+    window.SuiSuiSkins?.head();
     const list = isPro() ? countdowns().filter(c => daysTo(c.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)) : [];
     [$('pro-countdowns'), $('pro-lock-countdowns')].forEach(box => {
       if (!box) return;
@@ -644,14 +697,14 @@
   function refreshAll() {
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
     const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : `试用 ${trialLeft()} 天`) : PRICE;
-    const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); const keep = tryOn; tryOn = 'aurora'; drawJar(ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), { per: 3, sz: 7 }); tryOn = keep; }
+    const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
   window.SuiSuiPro = { effect, isPro, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   mount();
   applyTheme(); refreshAll();
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
-  window.addEventListener('suisui:render', () => { renderCountdowns(); drawMiniJar(false); });
+  window.addEventListener('suisui:render', () => { window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
   window.addEventListener('suisui:completing', () => { if (isPro() || tryOn) playSound(themeSound()); });
   window.addEventListener('suisui:done', e => {
     const { rect, allDone } = e.detail || {};
