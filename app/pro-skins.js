@@ -140,7 +140,9 @@
     Array.from(`${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`).forEach((ch, i) => { v += `<text x="324" y="${22 + i * 22}" text-anchor="middle" font-family='${SONG}' font-size="19" fill="#1d1a16">${ch}</text>`; });
     Array.from(`星期${WEEK[D.d.getDay()]}${D.lunar ? `　${D.lunar}` : ''}`).slice(0, 8).forEach((ch, i) => { v += `<text x="300" y="${21 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${esc(ch)}</text>`; });
     const foot = D.total ? `<tspan fill="#8a8279">圈了 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
-    return { H, pts, land: { x: 120, y: 24 }, svg: `${g}${v}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>` };
+    const hint = D.total ? `<text x="1" y="${gridH + 26}" font-family='${SONG}' font-size="11.5" fill="#8a8279" fill-opacity=".85" letter-spacing="1">一格一件事，做完画圈；点字能找到它</text>` : '';
+    const taps = Object.entries(pts).map(([id, p]) => `<rect class="ph-tap" data-task="${esc(id)}" x="${p.x - cell / 2}" y="${p.y - cell / 2}" width="${cell}" height="${cell}" fill="transparent"/>`).join('');
+    return { H, pts, land: { x: 120, y: 24 }, svg: `${g}${v}${hint}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>${taps}` };
   }
 
   /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the list is clear */
@@ -180,10 +182,11 @@
     const stars = placed.map((p, i) => p.it.done
       ? `<g class="ph-star${A && A.id === p.it.id ? ' ph-new' : ''}" style="transform-origin:${f1(p.x)}px ${f1(p.y)}px;animation-delay:${(i * .37 % 3).toFixed(2)}s"><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="11" fill="url(#pn-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 7)}" fill="#f6f8ff"/></g>${A && A.id === p.it.id ? `<circle class="ph-burst" style="transform-origin:${f1(p.x)}px ${f1(p.y)}px" cx="${f1(p.x)}" cy="${f1(p.y)}" r="14" fill="none" stroke="#c9d6ff" stroke-width="1"/>` : ''}`
       : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.7" fill="#dfe6ff" fill-opacity=".55"/><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="5" fill="none" stroke="#dfe6ff" stroke-opacity=".17" stroke-width=".7"/>`).join('');
+    const taps = Object.entries(pts).map(([id, p]) => `<circle class="ph-tap" data-task="${esc(id)}" cx="${p.x}" cy="${p.y}" r="14" fill="transparent"/>`).join('');
     return { H, pts, land: { x: 230, y: 70 }, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#a9bcff" stop-opacity=".6"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
       <text x="2" y="26" font-family="${SANS_UI}" font-size="12" fill="#7d8496" letter-spacing=".3">${dateLine(D)}</text>
       <text class="${A ? 'ph-pop' : ''}" x="0" y="98" font-family="${SANS_UI}" fill="#eef1fa"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
-      <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>` };
+      <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>${taps}` };
   }
   const ART = { dawn: dawnArt, day: dayArt, dusk: duskArt, night: nightArt };
   let uid = 0;
@@ -239,6 +242,16 @@
     el.innerHTML = html; lastHtml = landing ? '' : html;
     const jar = $('pro-jar-button'), slot = el.querySelector('.pro-head-jar'); if (jar && slot) slot.append(jar);
   }
+  /** Tapping a character cell (昼) or a star (夜) shows which task it is: its row scrolls into view and glows. */
+  document.addEventListener('click', e => {
+    const tap = e.target.closest?.('#pro-head .ph-tap'); if (!tap) return;
+    const id = tap.dataset.task, row = document.querySelector(`.task-row[data-task-id="${CSS.escape(id)}"]`) || document.querySelector(`.done-row[data-completed-id="${CSS.escape(id)}"]`);
+    if (!row) return;
+    if (row.classList.contains('done-row')) { const sec = $('completed-section'); if (sec) sec.open = true; }
+    row.scrollIntoView({ block: 'center', behavior: reduce() ? 'auto' : 'smooth' });
+    row.classList.remove('pro-flash'); void row.offsetWidth; row.classList.add('pro-flash');
+    setTimeout(() => row.classList.remove('pro-flash'), 1600);
+  });
   /** The flying pieces reached the picture: show the task as done, animating just that one. */
   function arrive(id) {
     if (!arriving.has(id)) return;

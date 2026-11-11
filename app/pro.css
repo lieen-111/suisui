@@ -302,8 +302,11 @@ html[data-pro-skin=dawn] #completed-list{background:#ffffff70!important;border-r
 html[data-pro-skin=dawn] :is(#task-list,#later-list,#completed-list):empty{display:none}
 html[data-pro-skin=dawn] :is(#task-list,#later-list) .task-row{border:0!important;border-radius:20px!important;margin:0 0 8px;padding-right:8px;background:#ffffff94!important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 .5px #ffffffe6,0 14px 28px -22px #2a2f5a73!important;-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7)}
 html[data-pro-skin=dawn] .task-title{font-weight:500;color:#1b1d24}
-html[data-pro-skin=dawn] .nav-add{background:radial-gradient(circle at 34% 26%,#ffffff 0 10%,#ffffffb3 30%,#ffffff33 70%),linear-gradient(140deg,#c9c2ff,#bfeee2 55%,#ffd9c7)!important;color:#1b1d24!important;box-shadow:inset 0 0 0 1px #ffffff,inset 0 -6px 14px #1b1d2414,0 18px 36px -14px #4b4f9a66!important}
-html[data-pro-skin=dawn] .nav-add svg{color:#1b1d24!important}
+/* 晨's add button: a drop of water in glass, half full */
+html[data-pro-skin=dawn] .nav-add{width:60px!important;height:60px!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:#1b1d24!important;overflow:visible}
+html[data-pro-skin=dawn] .nav-add:before{content:"";position:absolute;inset:3px;border-radius:50% 0 50% 50%;rotate:-45deg;background:linear-gradient(225deg,#ffffffb3 0 47%,#ffffff00 47%),linear-gradient(225deg,#ffffff4d 0 47%,#a99fff 47%,#86dcc6 74%,#ffb99b);box-shadow:inset 0 0 0 1.3px #ffffff,inset -6px 6px 12px #ffffff80,0 18px 30px -12px #4b4f9a8c;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html[data-pro-skin=dawn] .nav-add:after{content:"";position:absolute;left:17px;top:22px;width:6px;height:11px;border-radius:50%;background:#fff;rotate:28deg;opacity:.9}
+html[data-pro-skin=dawn] .nav-add svg{position:relative;z-index:1;margin-top:9px;color:#1b1d24!important;stroke-width:1.8}
 html[data-pro-skin=dawn] :is(.toast,.gesture-tips){background:#ffffffc2!important;color:#1b1d24!important;border:0!important;box-shadow:inset 0 0 0 1px #ffffff,0 18px 36px -18px #2a2f5a59!important;-webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8)}
 
 /* ---------- 昼 · 纸 ---------- */
@@ -343,8 +346,12 @@ html[data-pro-skin=dusk] .task-row{border:0!important;border-bottom:.5px solid #
 html[data-pro-skin=dusk] .task-title{font-weight:400;letter-spacing:.03em;color:#efe6d6}
 html[data-pro-skin=dusk] .meta-repeat{color:#c8a66a!important}
 html[data-pro-skin=dusk] .done-text{color:#6f6658!important;text-decoration-color:#c8a66a99!important;opacity:1!important}
-html[data-pro-skin=dusk] .nav-add{width:58px!important;height:58px!important;border-radius:50%!important;background:#15110c!important;color:#c8a66a!important;box-shadow:inset 0 0 0 1px #c8a66a,0 0 0 5px #c8a66a12,0 16px 34px -14px #000!important}
-html[data-pro-skin=dusk] .nav-add svg{color:#c8a66a!important;stroke-width:1.3}
+/* 暮's add button: the sun, with a ring of rays that turns slowly */
+html[data-pro-skin=dusk] .nav-add{width:66px!important;height:66px!important;border-radius:50%!important;background:none!important;box-shadow:none!important;color:#15110c!important}
+html[data-pro-skin=dusk] .nav-add:before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(#c8a66a 0 1.6deg,transparent 1.6deg 22.5deg);-webkit-mask:radial-gradient(circle,transparent 0 25px,#000 26px 33px,transparent 33.5px);mask:radial-gradient(circle,transparent 0 25px,#000 26px 33px,transparent 33.5px);animation:pro-rays 60s linear infinite}
+html[data-pro-skin=dusk] .nav-add:after{content:"";position:absolute;inset:12px;border-radius:50%;background:radial-gradient(circle at 36% 32%,#fbf1da,#d9b97c 52%,#9c7f47);box-shadow:0 0 0 .5px #f4e8cc80 inset,0 0 26px #c8a66a73,0 14px 28px -10px #000}
+html[data-pro-skin=dusk] .nav-add svg{position:relative;z-index:1;width:22px!important;height:22px!important;color:#2a1f10!important;stroke-width:1.7}
+@keyframes pro-rays{to{rotate:360deg}}
 html[data-pro-skin=dusk] :is(.toast,.gesture-tips){background:#17150f!important;color:#efe6d6!important;border:.5px solid #c8a66a66!important;border-radius:4px!important;box-shadow:0 18px 36px -18px #000!important}
 html[data-pro-skin=dusk] .toast button{color:#c8a66a!important}
 
@@ -360,8 +367,12 @@ html[data-pro-skin=night] .task-row{border:0!important;border-bottom:.5px solid 
 html[data-pro-skin=night] .task-title{font-weight:400;color:#e8ecf7}
 html[data-pro-skin=night] .meta-repeat{color:#9fb4ff!important}
 html[data-pro-skin=night] .done-text{color:#5d6476!important;text-decoration-color:#9fb4ff80!important;opacity:1!important}
-html[data-pro-skin=night] .nav-add{width:58px!important;height:58px!important;border-radius:50%!important;background:#0f1220!important;color:#dfe6ff!important;box-shadow:inset 0 0 0 1px #dfe6ff80,0 0 26px #9fb4ff40,0 16px 34px -14px #000!important}
-html[data-pro-skin=night] .nav-add svg{color:#dfe6ff!important;stroke-width:1.3}
+/* 夜's add button: the plus is a four-point star that glows, in a small round piece of night sky */
+html[data-pro-skin=night] .nav-add{width:60px!important;height:60px!important;border-radius:50%!important;background:radial-gradient(circle at 50% 45%,#1d2547,#0b0e1a 72%)!important;color:#f6f8ff!important;box-shadow:inset 0 0 0 .7px #dfe6ff59,0 0 0 6px #dfe6ff0a,0 0 34px #9fb4ff38,0 16px 34px -14px #000!important}
+html[data-pro-skin=night] .nav-add svg{opacity:0}
+html[data-pro-skin=night] .nav-add:after{content:"";position:absolute;inset:15px;background:#f6f8ff;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%200C12.7%209%2015%2011.3%2024%2012C15%2012.7%2012.7%2015%2012%2024C11.3%2015%209%2012.7%200%2012C9%2011.3%2011.3%209%2012%200Z%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%200C12.7%209%2015%2011.3%2024%2012C15%2012.7%2012.7%2015%2012%2024C11.3%2015%209%2012.7%200%2012C9%2011.3%2011.3%209%2012%200Z%27/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 5px #9fb4ff) drop-shadow(0 0 1.5px #fff);animation:pro-glint 3.2s ease-in-out infinite alternate}
+html[data-pro-skin=night] .nav-add:before{content:"";position:absolute;top:9px;right:11px;width:3px;height:3px;border-radius:50%;background:#dfe6ff;box-shadow:0 0 4px #9fb4ff;opacity:.8}
+@keyframes pro-glint{from{scale:1;opacity:1}to{scale:.86;opacity:.8}}
 html[data-pro-skin=night] :is(.toast,.gesture-tips){background:#10131dee!important;color:#e8ecf7!important;border:.5px solid #dfe6ff33!important;border-radius:14px!important;box-shadow:0 18px 36px -18px #000!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 html[data-pro-skin=night] .toast button{color:#dfe6ff!important}
 
@@ -447,3 +458,11 @@ html[data-pro-skin=night] .chip.active{background:#eef1fa!important;border-color
 html[data-pro-skin=night] .add-submit{background:#eef1fa!important;color:#07080d!important}
 html[data-pro-skin=night] .empty-state{color:#aab2c6!important}
 html[data-pro-skin=night] .empty-state svg{color:#c9d6ff!important;filter:drop-shadow(0 0 6px #9fb4ff)}
+
+/* tapping a character (昼) or a star (夜) finds its task */
+.ph-tap{cursor:pointer}
+.pro-flash{outline:1.5px solid transparent;outline-offset:-2px;animation:pro-flash 1.6s ease-out}
+@keyframes pro-flash{0%,45%{outline-color:var(--pro-flash,#b43a2c)}100%{outline-color:transparent}}
+html[data-pro-skin=dawn]{--pro-flash:#8b7fff}html[data-pro-skin=dusk]{--pro-flash:#c8a66a}html[data-pro-skin=night]{--pro-flash:#c9d6ff}
+html[data-motion=off] :is(.pro-flash,.nav-add:before,.nav-add:after){animation:none!important}
+@media (prefers-reduced-motion:reduce){:is(.pro-flash,.nav-add:before,.nav-add:after){animation:none!important}}
