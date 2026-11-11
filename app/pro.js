@@ -458,12 +458,20 @@
   /* ---------- Applying a theme to the app ---------- */
   function applyTheme() {
     const html = document.documentElement, id = activeTheme(), t = THEMES[id];
-    if (API.lockMode) return;
+    if (API.lockMode) {
+      // the lock screen follows the theme unless turned off in Pro settings
+      const lock = t && S().proLock !== false ? id : '';
+      if (lock) html.dataset.proLock = lock; else delete html.dataset.proLock;
+      window.SuiSuiSkins.lockStrip(lock);
+      return;
+    }
     if (!t) {
+      delete html.dataset.proPreview;
       if (html.dataset.proTheme) { delete html.dataset.proTheme; window.SuiSuiSkins.unmount(); API.applySettings(); }
       return;
     }
     html.dataset.proTheme = id; html.dataset.style = t.base; html.dataset.palette = 'pro';
+    if (S().proLock !== false) html.dataset.proPreview = id; else delete html.dataset.proPreview;
     const r = html.style;
     r.setProperty('--accent', t.accent); r.setProperty('--accent-fill', t.accent); r.setProperty('--accent-soft', t.soft); r.setProperty('--on-accent', t.on);
     r.setProperty('--pro-font', t.font);
@@ -603,6 +611,7 @@
       ${pro ? `<section class="pro-part" data-pro-section="settings">
         <h2>Pro 设置</h2>
         <label class="pro-switch"><span><b>完成音效</b><small>跟着主题换声音</small></span><input type="checkbox" class="switch" id="pro-sound" ${soundOn() ? 'checked' : ''}></label>
+        <label class="pro-switch"><span><b>锁屏也用主题</b><small>安卓锁屏上的卡片跟着换</small></span><input type="checkbox" class="switch" id="pro-lock" ${S().proLock !== false ? 'checked' : ''}></label>
         <h3 class="pro-sub">倒数日</h3>
         <div class="pro-cd-list" id="pro-cd-list"></div>
         <form class="pro-cd-add" id="pro-cd-add"><input id="pro-cd-title" maxlength="12" placeholder="比如：考试" aria-label="倒数日名称" required><input type="date" id="pro-cd-date" aria-label="日期" required><button type="submit" class="primary-button">添加</button></form>
@@ -639,6 +648,7 @@
     $('pro-trial')?.addEventListener('click', startTrial);
     $('pro-restore')?.addEventListener('click', restore);
     $('pro-reset').addEventListener('click', resetLocal);
+    $('pro-lock')?.addEventListener('change', e => { S().proLock = e.target.checked; persist(); applyTheme(); });
     $('pro-sound')?.addEventListener('change', e => { S().proSound = e.target.checked; persist(); if (e.target.checked) playSound(themeSound()); });
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
     renderCountdownList();
@@ -871,7 +881,10 @@
     S().proCelebrated = key; persist();
     const box = $('pro-celebrate'), today = todayLog(), focus = today.reduce((n, e) => n + (e.min || 0), 0), L = look();
     box.style.setProperty('--cel-bg', L.bg); box.style.setProperty('--cel-ink', L.ink); box.style.setProperty('--cel-muted', L.muted);
-    box.innerHTML = `<canvas id="pro-cel-canvas" aria-hidden="true"></canvas><div class="pro-cel-text"><h2>今天的事，全部完成。</h2><p>${today.length} 件${focus ? `，专注 ${focus} 分钟` : ''}，都收进碎片罐了。</p><button type="button" id="pro-cel-close">收好了</button></div>`;
+    const th = activeTheme(), focusText = focus ? `，专注 ${focus} 分钟` : '';
+    const words = { dawn: ['杯子满了。', `今天 ${today.length} 件${focusText}，一滴不剩。`, '收好了'], day: ['今日事，今日毕。', `${today.length} 件${focusText}，这一页写完了。`, '收笔'], dusk: ['日落，收工。', `${today.length} 件${focusText}，今天到此为止。`, '收工'], night: ['今天的星座，连好了。', `${today.length} 颗星${focusText}，晚安。`, '晚安'] }[th] || ['今天的事，全部完成。', `${today.length} 件${focusText}，都收进碎片罐了。`, '收好了'];
+    box.className = `pro-celebrate${th ? ` pro-cel-${th}` : ''}`;
+    box.innerHTML = `<canvas id="pro-cel-canvas" aria-hidden="true"></canvas><div class="pro-cel-text"><h2>${words[0]}</h2><p>${words[1]}</p><button type="button" id="pro-cel-close">${words[2]}</button></div>`;
     box.hidden = false;
     $('pro-cel-close').addEventListener('click', closeCelebrate);
     box.addEventListener('click', e => { if (e.target === box) closeCelebrate(); });
@@ -900,7 +913,7 @@
   mount();
   applyTheme(); refreshAll();
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
-  window.addEventListener('suisui:render', () => { window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
+  window.addEventListener('suisui:render', () => { if (API.lockMode) { window.SuiSuiSkins.lockStrip(document.documentElement.dataset.proLock || ''); return; } window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
   window.addEventListener('suisui:completing', () => { if (isPro() || tryOn) playSound(themeSound()); });
   window.addEventListener('suisui:done', e => {
     const { id, rect, allDone } = e.detail || {}, skin = window.SuiSuiSkins, theme = activeTheme();

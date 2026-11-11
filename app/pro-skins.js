@@ -129,19 +129,19 @@
   const PHRASES = {
     1: ['成', '好'], 2: ['加油', '很棒'], 3: ['你真棒', '稳稳的'],
     4: ['天天向上', '好好生活', '心想事成'], 5: ['日日是好日', '今天也很棒', '慢慢就会好'],
-    6: ['今日事今日毕', '一步一个脚印', '慢慢来比较快'], 7: ['星光不问赶路人', '积跬步以至千里'],
+    6: ['今日事今日毕', '一步一个脚印', '慢慢来比较快'], // the header always uses the first for 6 7: ['星光不问赶路人', '积跬步以至千里'],
     8: ['千里之行|始于足下', '日拱一卒|功不唐捐', '行而不辍|未来可期'], 9: ['慢慢来|一切都来得及'],
     10: ['所有的努力|都不会白费'], 11: ['今天的你|比昨天更好一点'], 12: ['你今天做的|每一件事都算数'],
     13: ['认真生活的人|运气都不会太差'], 14: ['长风破浪会有时|直挂云帆济沧海', '宝剑锋从磨砺出|梅花香自苦寒来']
   };
   /** The line for n tasks (more than 14 share a 14-character line). Stays the same all day for the same n. */
   function phrase(n, seed = '', step = 0) {
-    const k = Math.max(1, Math.min(14, n)), list = PHRASES[k], line = list[(hash(`${seed}:${k}`) + step) % list.length];
+    const k = Math.max(1, Math.min(14, n)), list = PHRASES[k], line = list[seed === '' ? step % list.length : (hash(`${seed}:${k}`) + step) % list.length];
     return { text: line.replace('|', ''), rows: line.split('|').map(r => Array.from(r)) };
   }
   const dayKeyOf = d => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   function dayArt(D, A) {
-    const cell = 35, n = D.total || 4, P = phrase(n, dayKeyOf(D.d)), len = P.text.length;
+    const cell = 35, n = D.total || 4, P = n === 6 ? phrase(6, '', 0) : phrase(n, dayKeyOf(D.d)), len = P.text.length;
     // with more than 14 tasks the line fills in proportion
     const written = D.total ? (D.total <= 14 ? D.done : D.left ? Math.floor(D.done / D.total * len) : len) : 0;
     const before = A ? (D.total <= 14 ? A.from : Math.floor(A.from / D.total * len)) : written;
@@ -261,6 +261,52 @@
     el.innerHTML = html; lastHtml = landing ? '' : html;
     const jar = $('pro-jar-button'), slot = el.querySelector('.pro-head-jar'); if (jar && slot) slot.append(jar);
   }
+  /* ---------- The lock screen: one small strip with the theme's picture of today, under 「今天的待办」 ---------- */
+  function lockStripSvg(id, D) {
+    const W = 340, pct = D.total ? D.done / D.total : 0;
+    if (id === 'dawn') {
+      const n = Math.min(D.total, 14); let ticks = '';
+      for (let i = 1; i < n; i++) ticks += `<line x1="${f1(6 + i / n * 328)}" x2="${f1(6 + i / n * 328)}" y1="11" y2="${i <= D.done ? 33 : 16}" stroke="#fff" stroke-opacity="${i <= D.done ? .7 : .55}" stroke-width="1"/>`;
+      return { H: 44, svg: `<defs><linearGradient id="pl-liq" x1="0" x2="1"><stop offset="0" stop-color="#a99fff"/><stop offset=".55" stop-color="#86dcc6"/><stop offset="1" stop-color="#ffb99b"/></linearGradient><clipPath id="pl-tube"><rect x="1" y="8" width="338" height="28" rx="14"/></clipPath></defs>
+        <rect x="1" y="8" width="338" height="28" rx="14" fill="#ffffff" fill-opacity=".38" stroke="#fff" stroke-opacity=".9"/>
+        <g clip-path="url(#pl-tube)"><rect x="1" y="8" width="${f1(pct * 338)}" height="28" fill="url(#pl-liq)" opacity=".92"/><rect x="1" y="9" width="338" height="6" fill="#fff" opacity=".35"/></g>${ticks}` };
+    }
+    if (id === 'day') {
+      const n = D.total || 4, P = n === 6 ? phrase(6, '', 0) : phrase(n, dayKeyOf(D.d)), chars = Array.from(P.text), len = chars.length, cell = Math.min(40, (W - 12) / len);
+      const written = D.total ? (D.total <= 14 ? D.done : D.left ? Math.floor(D.done / D.total * len) : len) : 0, w = cell * len + 12;
+      let g = `<rect x="0" y="0" width="${f1(w)}" height="${f1(cell + 12)}" rx="3" fill="#f5f2ec" fill-opacity=".95"/>`;
+      chars.forEach((ch, i) => { const x = 6 + i * cell, cx = x + cell / 2, cy = 6 + cell / 2, on = i < written;
+        g += `<rect x="${f1(x)}" y="6" width="${f1(cell)}" height="${f1(cell)}" fill="none" stroke="${CINNABAR}" stroke-opacity=".5" stroke-width=".7"/><text x="${f1(cx)}" y="${f1(cy + cell * .22)}" text-anchor="middle" font-family='${SONG}' font-size="${f1(cell * .6)}" fill="${on ? '#1d1a16' : CINNABAR}" fill-opacity="${on ? .92 : .32}">${esc(ch)}</text>${on ? `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(cell * .42)}" fill="none" stroke="${CINNABAR}" stroke-width="1.3"/>` : ''}`; });
+      return { H: cell + 12, svg: g };
+    }
+    if (id === 'dusk') {
+      // the sun's path is a shallow arc across the strip; one dot per task along it
+      const hz = 40, n = Math.min(D.total, 24); let ticks = '';
+      for (let i = 0; i < n; i++) { const t = (i + .5) / n, x = 20 + t * 300, y = hz - Math.sin(t * Math.PI) * 30; ticks += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${i < D.done ? 1.6 : 1}" fill="${GOLD}" fill-opacity="${i < D.done ? 1 : .45}"/>`; }
+      const sx = 20 + pct * 300, sy = hz - Math.sin(pct * Math.PI) * 30;
+      return { H: 46, svg: `<defs><radialGradient id="pl-sun" cx=".38" cy=".34"><stop offset="0" stop-color="#fbf1da"/><stop offset=".55" stop-color="#d9b97c"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pl-glow"><stop offset="0" stop-color="#e2c48a" stop-opacity=".5"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient></defs>
+        <path d="M20 ${hz}Q170 ${hz - 60} 320 ${hz}" fill="none" stroke="${GOLD}" stroke-opacity=".35" stroke-width=".8" stroke-dasharray="1.5 4"/>${ticks}
+        <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".7" stroke-width=".8"/>
+        <circle cx="${f1(sx)}" cy="${f1(sy)}" r="20" fill="url(#pl-glow)"/><circle cx="${f1(sx)}" cy="${f1(sy)}" r="7" fill="url(#pl-sun)"/>` };
+    }
+    if (id === 'night') {
+      const items = D.items.slice(0, 18), pts = items.map(it => { const r = rng(hash(it.id)); return { x: 10 + r() * 320, y: 6 + r() * 34, it }; });
+      const lit = pts.filter(p => p.it.done).sort((a, b) => a.it.at - b.it.at);
+      return { H: 46, svg: `<defs><radialGradient id="pl-glow"><stop offset="0" stop-color="#a9bcff" stop-opacity=".6"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>
+        ${lit.length > 1 ? `<polyline points="${lit.map(p => `${f1(p.x)},${f1(p.y)}`).join(' ')}" fill="none" stroke="#dfe6ff" stroke-opacity=".5" stroke-width=".8"/>` : ''}
+        ${pts.map(p => p.it.done ? `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="9" fill="url(#pl-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 5.5)}" fill="#f6f8ff"/>` : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.6" fill="#dfe6ff" fill-opacity=".7"/>`).join('')}` };
+    }
+    return null;
+  }
+  function lockStrip(id) {
+    const activity = $('activity'), old = $('pro-lock-strip');
+    if (!id || !ART[id] || !activity) { old?.remove(); return; }
+    const a = lockStripSvg(id, data()); if (!a) { old?.remove(); return; }
+    const el = old || document.createElement('div'); el.id = 'pro-lock-strip'; el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `<svg viewBox="0 0 340 ${a.H}" width="340" height="${a.H}">${a.svg}</svg>`;
+    if (!old) activity.querySelector('.activity-heading')?.after(el);
+  }
+
   /** Tapping a character cell (昼) or a star (夜) shows which task it is: its row scrolls into view and glows. */
   document.addEventListener('click', e => {
     const tap = e.target.closest?.('#pro-head .ph-tap'); if (!tap) return;
@@ -324,5 +370,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { mount, unmount, head, arrive, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
+  window.SuiSuiSkins = { mount, unmount, head, arrive, lockStrip, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();

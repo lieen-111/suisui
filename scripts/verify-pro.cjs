@@ -165,6 +165,25 @@ let browser;
     await context.close();
   }
 
+  /* The Android lock screen follows the theme (and can be told not to) */
+  for (const proLock of [undefined, false]) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const rec = JSON.stringify({ schema: 2, rev: 1, day: new Date().toISOString().slice(0, 10), tasks, archive: [], log: [], groups: [{ id: 'work', name: '工作', color: '#2f6fd0', icon: 'briefcase' }, { id: 'life', name: '生活', color: '#d2566f', icon: 'leaf' }], settings: { palette2: true, tipsSeen: true, firstUse: Date.now(), pro: { owned: true }, proTheme: 'day', ...(proLock === false ? { proLock } : {}) } });
+    await context.addInitScript(raw => { let r = raw; window.SuiSuiAndroid = { load: () => r, save: j => { r = j; }, isLockMode: () => true, notificationsAllowed: () => true, permissions: () => '{"notifications":true,"overlay":true}', requestNotificationPermission() {}, openNotificationSettings() {}, openOverlaySettings() {}, openAppPermissions() {}, unlock() {}, exportBackup() {}, version: () => 'test', hasSystemWallpaper: () => false }; }, rec);
+    const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+    await page.goto(url + '?mode=lock', { waitUntil: 'networkidle' });
+    if (proLock === false) {
+      assert.equal(await html(page, 'proLock'), '', 'Lock theme turned off → the plain lock card');
+      assert.equal(await page.locator('#pro-lock-strip').count(), 0);
+    } else {
+      assert.equal(await html(page, 'proLock'), 'day', 'The lock screen wears the theme');
+      assert.equal(await page.locator('#pro-lock-strip svg text').count(), 3, '昼 writes a three-character line for three tasks');
+      await page.locator('.lock-task[data-id=a]').click(); await page.waitForTimeout(1500);
+      assert.equal(await page.locator('#pro-lock-strip circle').count(), 1, 'One task done → one character circled on the lock screen');
+    }
+    await context.close();
+  }
+
   /* iPhone: App Store purchase and restore */
   {
     const { context, page } = await open({}, '?pay=ios');
@@ -186,6 +205,6 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone, completion flies into the theme picture and only that task animates, bundled fonts.');
+  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone, completion flies into the theme picture and only that task animates, bundled fonts, themed Android lock screen with its own strip (and a switch to keep it plain).');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });
