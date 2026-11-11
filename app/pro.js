@@ -363,16 +363,16 @@
       { const r = rng(4); for (let i = 0; i < W * H / 40; i++) { ctx.fillStyle = `rgba(90,70,40,${.05 * r()})`; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); } }
       const cell = sc(96), rows = 8, gx = W - Pd - 7 * cell, gy = sc(250), red = '#b43a2c';
       for (let d = 0; d < 7; d++) {
-        const x = W - Pd - (d + 1) * cell, list = byDay[d];
+        const x = W - Pd - (d + 1) * cell, list = byDay[d], words = list.length ? Array.from(window.SuiSuiSkins.phrase(Math.min(list.length, rows), `${start.getTime()}`, d).text) : [];
+        if (list.length) { ctx.fillStyle = L.muted; ctx.font = `400 ${sc(22)}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText(`${CN(list.length)}件`, x + cell / 2, gy + rows * cell + sc(42)); }
         ctx.fillStyle = red; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText(`周${'一二三四五六日'[d]}`, x + cell / 2, gy - sc(22));
         for (let r = 0; r < rows; r++) {
           const y = gy + r * cell, cx = x + cell / 2, cy = y + cell / 2;
           ctx.strokeStyle = hex(red, .45); ctx.lineWidth = sc(1.3); ctx.strokeRect(x, y, cell, cell);
           ctx.save(); ctx.setLineDash([sc(4), sc(5)]); ctx.strokeStyle = hex(red, .15); ctx.lineWidth = sc(1); ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.moveTo(cx, y); ctx.lineTo(cx, y + cell); ctx.stroke(); ctx.restore();
-          const e = list[r]; if (!e) continue;
-          const more = r === rows - 1 && list.length > rows;
-          ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(more ? 34 : 58)}px ${SONG}`; ctx.fillText(more ? `+${list.length - rows + 1}` : firstChar(e.title), cx, cy + sc(more ? 12 : 20));
-          if (!more && (e.min || 0) >= 20) { const q = rng(hash(`${e.id}${e.at}`)); ctx.save(); ctx.translate(cx, cy); ctx.rotate((q() - .5) * .8); ctx.strokeStyle = red; ctx.lineWidth = sc(3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, sc(38), sc(35), 0, .25, Math.PI * 2 - .05); ctx.stroke(); ctx.restore(); }
+          const e = list[r]; if (!e || !words[r]) continue;
+          ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(58)}px ${SONG}`; ctx.fillText(words[r], cx, cy + sc(20));
+          if ((e.min || 0) >= 20) { const q = rng(hash(`${e.id}${e.at}`)); ctx.save(); ctx.translate(cx, cy); ctx.rotate((q() - .5) * .8); ctx.strokeStyle = red; ctx.lineWidth = sc(3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, sc(38), sc(35), 0, .25, Math.PI * 2 - .05); ctx.stroke(); ctx.restore(); }
         }
       }
       ctx.textAlign = 'center';
@@ -384,8 +384,8 @@
       ctx.fillStyle = '#f5f2ec'; ctx.font = `600 ${sc(50)}px ${SONG}`; [['碎', -1, -1], ['碎', -1, 1], ['清', 1, -1], ['单', 1, 1]].forEach(([c, cxk, cyk]) => ctx.fillText(c, -cxk * s * .23, cyk * s * .23 + sc(17)));
       { const r = rng(11); ctx.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 180; i++) { ctx.fillStyle = `rgba(0,0,0,${.3 + r() * .5})`; ctx.fillRect((r() - .5) * s, (r() - .5) * s, sc(1 + r() * 3), sc(1 + r() * 2)); } }
       ctx.restore(); ctx.textAlign = 'left';
-      ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}件事` : '这一页还空着', Pd, H - Pd - sc(70));
-      ctx.fillStyle = L.muted; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? `${st.focusText ? `${st.focusText}，` : ''}周${st.busiest}写得最多。朱圈是专注过的事` : '完成一件事，就写下第一个字', Pd, H - Pd - sc(24));
+      ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}件事${st.focusText ? `，${st.focusText}` : ''}` : '这一页还空着', Pd, H - Pd - sc(70));
+      ctx.fillStyle = L.muted; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? `周${st.busiest}写得最多。做完几件，写几个字；朱圈是专注过的` : '完成一件事，就写下第一个字', Pd, H - Pd - sc(24));
       return canvas;
     }
 
@@ -444,7 +444,7 @@
   const fontsDone = new Set();
   function artFonts(L, entries) {
     const mat = L.material, faces = mat === 'paper' ? ['400 40px "Noto Serif SC"'] : mat === 'gold' ? ['400 40px "Noto Serif SC"', '400 40px "Bodoni Moda"', 'italic 400 40px "Bodoni Moda"'] : [];
-    const text = `${entries.map(e => Array.from(String(e.title || ''))[0] || '').join('')}第周件事一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
+    const text = `${window.SuiSuiSkins?.phraseChars || ''}第周件事一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
     const key = faces.join() + text; if (!faces.length || !document.fonts?.load || fontsDone.has(key)) return Promise.resolve(false);
     return Promise.all(faces.map(f => document.fonts.load(f, text))).then(() => { fontsDone.add(key); return true; }, () => false);
   }

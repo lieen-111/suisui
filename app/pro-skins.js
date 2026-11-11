@@ -123,26 +123,45 @@
       <text x="26" y="${H - 18}" font-family="${SANS_UI}" font-size="12.5" font-weight="500" fill="#1b1d24" fill-opacity=".78">${state}</text>` };
   }
 
-  /* 昼 · 纸 — manuscript paper: each task is one character in a grid, circled in red when it is done */
+  /* 昼's words: a line of encouragement with one character per task. Not yet done = traced in light red, like a
+     copybook (描红); done = written in ink and circled. Finish the day and the whole line is written.
+     "|" is where the line breaks onto the next row of the grid (at most 7 per row). */
+  const PHRASES = {
+    1: ['成', '好'], 2: ['加油', '很棒'], 3: ['你真棒', '稳稳的'],
+    4: ['天天向上', '好好生活', '心想事成'], 5: ['日日是好日', '今天也很棒', '慢慢就会好'],
+    6: ['今日事今日毕', '一步一个脚印', '慢慢来比较快'], 7: ['星光不问赶路人', '积跬步以至千里'],
+    8: ['千里之行|始于足下', '日拱一卒|功不唐捐', '行而不辍|未来可期'], 9: ['慢慢来|一切都来得及'],
+    10: ['所有的努力|都不会白费'], 11: ['今天的你|比昨天更好一点'], 12: ['你今天做的|每一件事都算数'],
+    13: ['认真生活的人|运气都不会太差'], 14: ['长风破浪会有时|直挂云帆济沧海', '宝剑锋从磨砺出|梅花香自苦寒来']
+  };
+  /** The line for n tasks (more than 14 share a 14-character line). Stays the same all day for the same n. */
+  function phrase(n, seed = '', step = 0) {
+    const k = Math.max(1, Math.min(14, n)), list = PHRASES[k], line = list[(hash(`${seed}:${k}`) + step) % list.length];
+    return { text: line.replace('|', ''), rows: line.split('|').map(r => Array.from(r)) };
+  }
+  const dayKeyOf = d => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   function dayArt(D, A) {
-    const per = 7, cell = 35, items = D.items.slice(0, 14), n = Math.max(items.length, 5), rows = Math.ceil(n / per), gridH = rows * cell, H = Math.max(gridH + 60, 150), pts = {};
-    let g = '';
-    for (let i = 0; i < n; i++) {
-      const x = (i % per) * cell + .5, y = Math.floor(i / per) * cell + 4.5, cx = x + cell / 2, cy = y + cell / 2, it = items[i];
+    const cell = 35, n = D.total || 4, P = phrase(n, dayKeyOf(D.d)), len = P.text.length;
+    // with more than 14 tasks the line fills in proportion
+    const written = D.total ? (D.total <= 14 ? D.done : D.left ? Math.floor(D.done / D.total * len) : len) : 0;
+    const before = A ? (D.total <= 14 ? A.from : Math.floor(A.from / D.total * len)) : written;
+    const gridH = P.rows.length * cell, H = Math.max(gridH + 64, 150);
+    let g = '', k = 0, land = { x: cell / 2, y: cell / 2 + 4.5 };
+    P.rows.forEach((row, r) => row.forEach((ch, c) => {
+      const x = c * cell + .5, y = r * cell + 4.5, cx = x + cell / 2, cy = y + cell / 2, on = k < written, fresh = on && k >= before;
+      if (k === before) land = { x: cx, y: cy };
       g += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="none" stroke="${CINNABAR}" stroke-opacity=".5" stroke-width=".8"/>
-        <path d="M${x} ${cy}H${x + cell}M${cx} ${y}V${y + cell}" stroke="${CINNABAR}" stroke-opacity=".17" stroke-width=".6" stroke-dasharray="2 2.4"/>`;
-      if (!it) continue;
-      pts[it.id] = { x: cx, y: cy };
-      g += `<text x="${cx}" y="${cy + 7.4}" text-anchor="middle" font-family='${SONG}' font-size="21" fill="#1d1a16" fill-opacity="${it.done ? .92 : .8}">${first(it.title)}</text>`;
-      if (it.done) { const r = rng(hash(it.id)), rot = f1((r() - .5) * 50); g += `<path class="ph-circle${A && A.id === it.id ? ' ph-new' : ''}" pathLength="1" transform="rotate(${rot} ${cx} ${cy})" d="M${cx - 14} ${cy - 1}C${cx - 14} ${cy - 13} ${cx + 13} ${cy - 15} ${cx + 14.5} ${cy - 1}C${cx + 15.5} ${cy + 12} ${cx - 6} ${cy + 16.5} ${cx - 13} ${cy + 6}C${cx - 15} ${cy + 1} ${cx - 12} ${cy - 7} ${cx - 6} ${cy - 11.5}" fill="none" stroke="${CINNABAR}" stroke-width="1.7" stroke-linecap="round"/>`; }
-    }
+        <path d="M${x} ${cy}H${x + cell}M${cx} ${y}V${y + cell}M${x} ${y}L${x + cell} ${y + cell}M${x + cell} ${y}L${x} ${y + cell}" stroke="${CINNABAR}" stroke-opacity=".13" stroke-width=".55" stroke-dasharray="2 2.4"/>
+        <text class="${fresh ? 'ph-written' : ''}" x="${cx}" y="${cy + 7.4}" text-anchor="middle" font-family='${SONG}' font-size="21" fill="${on ? '#1d1a16' : CINNABAR}" fill-opacity="${on ? .92 : .3}">${esc(ch)}</text>`;
+      if (on) { const q = rng(hash(`${ch}${k}`)), rot = f1((q() - .5) * 50); g += `<path class="ph-circle${fresh ? ' ph-new' : ''}" pathLength="1" transform="rotate(${rot} ${cx} ${cy})" d="M${cx - 14} ${cy - 1}C${cx - 14} ${cy - 13} ${cx + 13} ${cy - 15} ${cx + 14.5} ${cy - 1}C${cx + 15.5} ${cy + 12} ${cx - 6} ${cy + 16.5} ${cx - 13} ${cy + 6}C${cx - 15} ${cy + 1} ${cx - 12} ${cy - 7} ${cx - 6} ${cy - 11.5}" fill="none" stroke="${CINNABAR}" stroke-width="1.7" stroke-linecap="round"/>`; }
+      k++;
+    }));
     let v = '';
     Array.from(`${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`).forEach((ch, i) => { v += `<text x="324" y="${22 + i * 22}" text-anchor="middle" font-family='${SONG}' font-size="19" fill="#1d1a16">${ch}</text>`; });
     Array.from(`星期${WEEK[D.d.getDay()]}${D.lunar ? `　${D.lunar}` : ''}`).slice(0, 8).forEach((ch, i) => { v += `<text x="300" y="${21 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${esc(ch)}</text>`; });
-    const foot = D.total ? `<tspan fill="#8a8279">圈了 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
-    const hint = D.total ? `<text x="1" y="${gridH + 26}" font-family='${SONG}' font-size="11.5" fill="#8a8279" fill-opacity=".85" letter-spacing="1">一格一件事，做完画圈；点字能找到它</text>` : '';
-    const taps = Object.entries(pts).map(([id, p]) => `<rect class="ph-tap" data-task="${esc(id)}" x="${p.x - cell / 2}" y="${p.y - cell / 2}" width="${cell}" height="${cell}" fill="transparent"/>`).join('');
-    return { H, pts, land: { x: 120, y: 24 }, svg: `${g}${v}${hint}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>${taps}` };
+    const hint = `<text x="1" y="${gridH + 27}" font-family='${SONG}' font-size="11.5" fill="#8a8279" fill-opacity=".85" letter-spacing="1">${!D.total ? '加一件事，就多一个字' : D.total <= 14 ? '做完一件，写下一个字' : '做得越多，写下的字越多'}</text>`;
+    const foot = D.total ? `<tspan fill="#8a8279">做完 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
+    return { H, land, svg: `${g}${v}${hint}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>` };
   }
 
   /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the list is clear */
@@ -305,5 +324,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { mount, unmount, head, arrive, target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
+  window.SuiSuiSkins = { mount, unmount, head, arrive, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();
