@@ -187,7 +187,7 @@ body:has(.pro-tryon:not([hidden])) .nav-add{bottom:calc(84px + env(safe-area-ins
 .pro-cel-text p{font-size:14.5px;color:var(--cel-muted);margin:8px 0 22px}
 .pro-cel-text button{padding:13px 30px;border-radius:16px;font-size:15px;font-weight:650;background:var(--cel-ink);color:var(--cel-bg)}
 
-/* ================= Pro skins —「一日四时」 (html[data-pro-skin] = dawn | day | dusk | night) =================
+/* ================= Pro skins (html[data-pro-skin] = dawn | day | night | bloom | tape | riso) =================
    Shared by all four: the shard-shaped check, the header layout with the crystal of the day, the jar. The material
    (glass, paper, gold, light) is the only thing that changes. Background on #pro-skin, header in #pro-head. */
 #pro-skin{position:fixed;inset:0;z-index:-1;pointer-events:none}
@@ -234,7 +234,6 @@ html[data-pro-skin] .done-row:before{content:"";flex:none;margin:0 11px 0 5px}
 @keyframes ph-growr{from{transform:scale(0)}}
 .ph-pop{transform-box:fill-box;transform-origin:20% 90%;animation:ph-pop .6s .2s cubic-bezier(.3,1.7,.5,1) both}
 @keyframes ph-pop{from{transform:scale(.8);opacity:.3}}
-.pro-head-dusk .ph-pop{transform-origin:50% 90%}
 .ph-circle.ph-new{stroke-dasharray:1;animation:ph-ink .8s .05s cubic-bezier(.55,.05,.3,1) both}
 @keyframes ph-ink{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .ph-ink{animation:ph-fill .5s .7s both}
@@ -276,15 +275,6 @@ html[data-pro-skin=day] .task-row .check-circle{width:19px;height:19px;border-ra
 html[data-pro-skin=day] .task-row .check-task:hover .check-circle{border-radius:50%!important;background:none!important;box-shadow:inset 0 0 0 1.4px #b43a2c!important;transform:rotate(-8deg)}
 html[data-pro-skin=day] .done-row:before{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1.3px #b43a2c}
 
-/* 暮: a gold diamond, rows numbered in Roman figures */
-.pro-head-dusk .ph-cds span{border:.5px solid #c8a66a73;color:#d9cdb6}
-.pro-head-dusk .ph-cds b{font-weight:400;color:#c8a66a}
-html[data-pro-skin=dusk] #task-list{counter-reset:dusk}
-html[data-pro-skin=dusk] #task-list .task-row{counter-increment:dusk}
-html[data-pro-skin=dusk] #task-list .task-title:before{content:counter(dusk,upper-roman);display:inline-block;min-width:30px;font:italic 400 13px/1 "Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif;color:#c8a66a;letter-spacing:.04em}
-html[data-pro-skin=dusk] .task-row .check-circle{width:13px;height:13px;border-radius:1px!important;background:none!important;box-shadow:inset 0 0 0 1px #c8a66a!important;transform:rotate(45deg)}
-html[data-pro-skin=dusk] .task-row .check-task:hover .check-circle{background:#c8a66a!important;box-shadow:0 0 12px #c8a66a80!important}
-html[data-pro-skin=dusk] .done-row:before{width:8px;height:8px;margin:0 13px 0 8px;background:#c8a66a;transform:rotate(45deg)}
 
 /* 夜: a four-point star that lights up */
 .pro-head-night .ph-cds span{border-radius:14px;color:#aab2c6;box-shadow:inset 0 0 0 .5px #dfe6ff40}
@@ -335,27 +325,6 @@ html[data-pro-skin=day] .nav-add{width:54px!important;height:54px!important;bord
 html[data-pro-skin=day] .nav-add svg{color:#f5f2ec!important;stroke-width:1.4}
 html[data-pro-skin=day] :is(.toast,.gesture-tips){background:#faf8f3!important;color:#1d1a16!important;border:.5px solid #1d1a164d!important;border-radius:2px!important;box-shadow:0 16px 30px -22px #3b2b1a66!important;font-family:"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif}
 html[data-pro-skin=day] .toast button{color:#b43a2c!important}
-
-/* ---------- 暮 · 金 ---------- */
-html[data-pro-skin=dusk]{--ink:#efe6d6;--muted:#8c8170;--line:#c8a66a26;--hair:#c8a66a1f;--surface:#17150f;--chip-bg:#17150f;--chip-ink:#d9cdb6;--card:#141210;--group-bg-2:#141210;--page:#15110c;--tile-bg:#141210;--tile-line:#c8a66a26;--tile-ink:#efe6d6;--tile-sub:#8c8170}
-html[data-pro-skin=dusk] body{background:#15110c!important}
-html[data-pro-skin=dusk] .app-header{background:#15110ce6!important;border:0!important}
-html[data-pro-skin=dusk] .filter-tabs button{background:transparent!important;border:.5px solid #c8a66a59!important;color:#b3a68e!important}
-html[data-pro-skin=dusk] .filter-tabs button.active{background:#c8a66a!important;border-color:#c8a66a!important;color:#15110c!important}
-html[data-pro-skin=dusk] .filter-tabs button.active span{color:#15110c99!important}
-html[data-pro-skin=dusk] :is(#task-list,#later-list,#completed-list){background:none!important;box-shadow:none!important;padding:0!important}
-html[data-pro-skin=dusk] .task-row{border:0!important;border-bottom:.5px solid #c8a66a33!important;border-radius:0!important;background:none!important;min-height:60px}
-html[data-pro-skin=dusk] .task-title{font-weight:400;letter-spacing:.03em;color:#efe6d6}
-html[data-pro-skin=dusk] .meta-repeat{color:#c8a66a!important}
-html[data-pro-skin=dusk] .done-text{color:#6f6658!important;text-decoration-color:#c8a66a99!important;opacity:1!important}
-/* 暮's add button: the sun, with a ring of rays that turns slowly */
-html[data-pro-skin=dusk] .nav-add{width:66px!important;height:66px!important;border-radius:50%!important;background:none!important;box-shadow:none!important;color:#15110c!important}
-html[data-pro-skin=dusk] .nav-add:before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(#c8a66a 0 1.6deg,transparent 1.6deg 22.5deg);-webkit-mask:radial-gradient(circle,transparent 0 25px,#000 26px 33px,transparent 33.5px);mask:radial-gradient(circle,transparent 0 25px,#000 26px 33px,transparent 33.5px);animation:pro-rays 60s linear infinite}
-html[data-pro-skin=dusk] .nav-add:after{content:"";position:absolute;inset:12px;border-radius:50%;background:radial-gradient(circle at 36% 32%,#fbf1da,#d9b97c 52%,#9c7f47);box-shadow:0 0 0 .5px #f4e8cc80 inset,0 0 26px #c8a66a73,0 14px 28px -10px #000}
-html[data-pro-skin=dusk] .nav-add svg{position:relative;z-index:1;width:22px!important;height:22px!important;color:#2a1f10!important;stroke-width:1.7}
-@keyframes pro-rays{to{rotate:360deg}}
-html[data-pro-skin=dusk] :is(.toast,.gesture-tips){background:#17150f!important;color:#efe6d6!important;border:.5px solid #c8a66a66!important;border-radius:4px!important;box-shadow:0 18px 36px -18px #000!important}
-html[data-pro-skin=dusk] .toast button{color:#c8a66a!important}
 
 /* ---------- 夜 · 光 ---------- */
 html[data-pro-skin=night]{--ink:#e8ecf7;--muted:#7d8496;--line:#dfe6ff1a;--hair:#dfe6ff14;--surface:#10131d;--chip-bg:#10131d;--chip-ink:#c4cbe0;--card:#0d1019;--group-bg-2:#10131d;--page:#07080d;--tile-bg:#0e111b;--tile-line:#dfe6ff1f;--tile-ink:#e8ecf7;--tile-sub:#7d8496}
@@ -419,28 +388,6 @@ html[data-pro-skin=day] .toast{border-left:3px solid #b43a2c!important}
 html[data-pro-skin=day] .empty-state{color:#5c554c!important;font-size:15px}
 html[data-pro-skin=day] .empty-state svg{color:#b43a2c!important}
 
-/* 暮 · 金: Art Deco — text tabs with a gold diamond, centred gold rules, gold-lined sheets */
-html[data-pro-skin=dusk] .filter-tabs{gap:2px!important}
-html[data-pro-skin=dusk] .filter-tabs button{position:relative;background:none!important;border:0!important;box-shadow:none!important;color:#8c8170!important;font-family:var(--pro-song);letter-spacing:.14em;padding:6px 11px 12px!important}
-html[data-pro-skin=dusk] .filter-tabs button.active{background:none!important;color:#e2c48a!important}
-html[data-pro-skin=dusk] .filter-tabs button span{color:#8c817099!important}
-html[data-pro-skin=dusk] .filter-tabs button.active span{color:#c8a66a!important}
-html[data-pro-skin=dusk] .filter-tabs button.active:after{content:"";position:absolute;left:50%;bottom:2px;width:5px;height:5px;margin-left:-2.5px;background:#c8a66a;transform:rotate(45deg)}
-html[data-pro-skin=dusk] .filter-tabs .dot{opacity:.7}
-html[data-pro-skin=dusk] .completed-section summary{justify-content:center;color:#c8a66a!important;font-family:var(--pro-song);letter-spacing:.3em;font-size:13px}
-html[data-pro-skin=dusk] .completed-section summary:before,html[data-pro-skin=dusk] .completed-section summary:after{content:"";flex:1;height:.5px;background:linear-gradient(90deg,transparent,#c8a66a80)}
-html[data-pro-skin=dusk] .completed-section summary:after{background:linear-gradient(90deg,#c8a66a80,transparent)}
-html[data-pro-skin=dusk] .completed-section summary span:last-child{color:#8c8170!important;letter-spacing:.05em;font-family:var(--pro-serif);font-style:italic}
-html[data-pro-skin=dusk] .completed-tools{color:#8c8170!important}
-html[data-pro-skin=dusk] :is(.completed-tools,.editor-footer) .text-button{color:#c8a66a!important;background:none!important}
-html[data-pro-skin=dusk] .timer-pill{background:none!important;border:.6px solid #c8a66a!important;color:#c8a66a!important;border-radius:2px!important;box-shadow:none!important}
-html[data-pro-skin=dusk] .timer-pill.is-on{background:#c8a66a!important;color:#15110c!important}
-html[data-pro-skin=dusk] :is(body.adding .add-form,.sheet){background:#17140f!important;border:0!important;box-shadow:inset 0 .5px 0 #c8a66a99,0 -24px 50px -20px #000!important}
-html[data-pro-skin=dusk] .chip{background:none!important;border:.6px solid #c8a66a4d!important;border-radius:2px!important;color:#b3a68e!important;box-shadow:none!important}
-html[data-pro-skin=dusk] .chip.active{border-color:#c8a66a!important;color:#15110c!important;background:#c8a66a!important}
-html[data-pro-skin=dusk] .add-submit{background:#c8a66a!important;color:#15110c!important;border-radius:2px!important}
-html[data-pro-skin=dusk] .empty-state{color:#b3a68e!important;font-family:var(--pro-song);letter-spacing:.12em}
-html[data-pro-skin=dusk] .empty-state svg{color:#c8a66a!important}
 
 /* 夜 · 光: quiet text tabs, the active one glows with a small star; sheets like the night sky */
 html[data-pro-skin=night] .filter-tabs{gap:2px!important}
@@ -465,7 +412,7 @@ html[data-pro-skin=night] .empty-state svg{color:#c9d6ff!important;filter:drop-s
 .ph-tap{cursor:pointer}
 .pro-flash{outline:1.5px solid transparent;outline-offset:-2px;animation:pro-flash 1.6s ease-out}
 @keyframes pro-flash{0%,45%{outline-color:var(--pro-flash,#b43a2c)}100%{outline-color:transparent}}
-html[data-pro-skin=dawn]{--pro-flash:#8b7fff}html[data-pro-skin=dusk]{--pro-flash:#c8a66a}html[data-pro-skin=night]{--pro-flash:#c9d6ff}
+html[data-pro-skin=dawn]{--pro-flash:#8b7fff}html[data-pro-skin=night]{--pro-flash:#c9d6ff}html[data-pro-skin=bloom]{--pro-flash:#3b5a87}html[data-pro-skin=tape]{--pro-flash:#f3ecdc}html[data-pro-skin=riso]{--pro-flash:#ff4fa3}
 html[data-motion=off] .pro-flash,html[data-motion=off] .nav-add:before,html[data-motion=off] .nav-add:after{animation:none!important}
 @media (prefers-reduced-motion:reduce){.pro-flash,.nav-add:before,.nav-add:after{animation:none!important}}
 
@@ -497,20 +444,6 @@ html[data-pro-skin=day] .pill-segment button:is(.active,[aria-pressed=true]){col
 html[data-pro-skin=day] .row-ico{background:none!important;box-shadow:inset 0 0 0 .8px #b43a2c80!important;border-radius:2px!important;color:#b43a2c!important}
 html[data-pro-skin=day] .settings-tiles button .row-label{font-size:17px}
 
-/* 暮: black lacquer and gold leaf — gold hairlines, letterspaced Song, gold switches */
-html[data-pro-skin=dusk] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#17140fcc!important;border:.5px solid #c8a66a40!important;border-radius:3px!important;box-shadow:none!important}
-html[data-pro-skin=dusk] :is(.settings-top h1,.settings-page legend,.settings-tiles .row-label,.settings-list .row-label,.review-top h1,.review-card h2,.review-card h3){font-family:var(--pro-song)!important;letter-spacing:.18em}
-html[data-pro-skin=dusk] :is(.settings-top h1,.review-top h1){color:#e2c48a!important}
-html[data-pro-skin=dusk] .settings-page legend{color:#c8a66a!important}
-html[data-pro-skin=dusk] .review-stats b{font-family:var(--pro-serif)!important;font-weight:400!important}
-html[data-pro-skin=dusk] .review-stats>div:first-child{background:linear-gradient(160deg,#e2c48a,#c8a66a 60%,#9c7f47)!important;border-color:#c8a66a!important}
-html[data-pro-skin=dusk] .review-stats>div:first-child *{color:#15110c!important}
-html[data-pro-skin=dusk] .switch:checked{background:#c8a66a!important}
-html[data-pro-skin=dusk] :is(.secondary-button){background:none!important;color:#c8a66a!important;border:.5px solid #c8a66a80!important;border-radius:3px!important;box-shadow:none!important}
-html[data-pro-skin=dusk] .review-panel .primary-button{background:#c8a66a!important;color:#15110c!important;border-radius:3px!important}
-html[data-pro-skin=dusk] .pill-segment button:is(.active,[aria-pressed=true]){background:#c8a66a!important;color:#15110c!important;border-radius:2px!important}
-html[data-pro-skin=dusk] .row-ico{background:none!important;box-shadow:inset 0 0 0 .5px #c8a66a99!important;border-radius:50%!important;color:#c8a66a!important}
-html[data-pro-skin=dusk] :is(.tile-arrow,.row-chev){color:#c8a66a99!important}
 
 /* 夜: deep glass — soft blue glow, white switches that shine */
 html[data-pro-skin=night] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#0d1019b3!important;border:.5px solid #dfe6ff1f!important;border-radius:18px!important;box-shadow:inset 0 1px 0 #dfe6ff0f!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -527,18 +460,15 @@ html[data-pro-skin=night] .row-ico{background:#9fb4ff14!important;box-shadow:ins
 
 /* 清空时刻: each theme says it its own way */
 .pro-cel-day h2{font-family:var(--pro-song,serif);font-weight:400;letter-spacing:.2em}
-.pro-cel-dusk h2{font-family:var(--pro-song,serif);font-weight:400;letter-spacing:.3em;color:#e2c48a!important}
 .pro-cel-night h2{font-weight:300;letter-spacing:.04em;text-shadow:0 0 24px #9fb4ff99}
 .pro-cel-dawn h2{font-weight:300}
 .pro-cel-day #pro-cel-close{background:#b43a2c!important;color:#f5f2ec!important;border-radius:4px!important;font-family:var(--pro-song,serif);letter-spacing:.2em}
-.pro-cel-dusk #pro-cel-close{background:none!important;color:#c8a66a!important;box-shadow:inset 0 0 0 .6px #c8a66a!important;border-radius:2px!important;letter-spacing:.3em}
 .pro-cel-night #pro-cel-close{box-shadow:0 0 24px #9fb4ff59!important}
 .pro-cel-dawn #pro-cel-close{background:linear-gradient(140deg,#a99fff,#86dcc6 60%,#ffb99b)!important;color:#1b1d24!important}
 
 /* ================= The lock screen (Android lock view, ?mode=lock) in each theme ================= */
 #pro-lock-strip{margin:0 4px 10px}
 #pro-lock-strip svg{display:block;width:100%;height:auto;overflow:visible}
-html[data-pro-lock=dusk] #pro-lock-strip{padding:6px 12px 4px;background:#15110cd9;border:.5px solid #c8a66a66;border-radius:4px;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
 html[data-pro-lock=night] #pro-lock-strip{padding:6px 14px;background:#07080dbf;border:.5px solid #dfe6ff2e;border-radius:20px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 html[data-pro-lock=dawn] #pro-lock-strip{filter:drop-shadow(0 10px 20px #0003)}
 html[data-pro-lock=day] #pro-lock-strip{filter:drop-shadow(0 10px 20px #0005)}
@@ -567,15 +497,6 @@ html[data-pro-lock=day] .lock-task .check-circle{border:0!important;border-radiu
 html[data-pro-lock=day] .lock-task.is-done .check-circle{border-radius:50%!important;box-shadow:inset 0 0 0 1.5px #b43a2c!important}
 html[data-pro-lock=day] .lock-task.is-done .completed-title{color:#a39b90!important}
 
-/* 暮 */
-html[data-pro-lock=dusk] #lock-time{font-family:var(--pro-serif,serif)!important;font-weight:400!important;color:#f4e8cc!important;text-shadow:0 2px 24px #0008}
-html[data-pro-lock=dusk] .lock-group{background:#15110cd9!important;color:#efe6d6!important;border:.5px solid #c8a66a66!important;border-radius:4px!important;box-shadow:0 20px 40px -24px #000c!important;-webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important}
-html[data-pro-lock=dusk] .lock-group *{color:#efe6d6!important}
-html[data-pro-lock=dusk] .lock-group-head b{font-family:var(--pro-song,serif);letter-spacing:.2em;color:#e2c48a!important}
-html[data-pro-lock=dusk] .lock-group-count{background:none!important;color:#c8a66a!important;font-family:var(--pro-serif,serif);font-style:italic}
-html[data-pro-lock=dusk] .lock-group-icon,html[data-pro-lock=dusk] .lock-group-icon *{color:#c8a66a!important}
-html[data-pro-lock=dusk] .lock-task .check-circle{width:13px!important;height:13px!important;margin:0 4px;border:0!important;border-radius:1px!important;background:none!important;box-shadow:inset 0 0 0 1px #c8a66a!important;transform:rotate(45deg)}
-html[data-pro-lock=dusk] .lock-task.is-done .check-circle{background:#c8a66a!important}
 
 /* 夜 */
 html[data-pro-lock=night] #lock-time{font-weight:200!important;text-shadow:0 0 30px #9fb4ff80}
@@ -587,7 +508,6 @@ html[data-pro-lock=night] .lock-task.is-done .check-circle{background:#f6f8ff!im
 
 html[data-pro-skin] .button-row .secondary-button{border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important}
 html[data-pro-skin=day] .button-row .secondary-button+.secondary-button{border-top:.5px solid #b43a2c33!important}
-html[data-pro-skin=dusk] .button-row .secondary-button+.secondary-button{border-top:.5px solid #c8a66a33!important}
 html[data-pro-skin=night] .button-row .secondary-button+.secondary-button{border-top:.5px solid #dfe6ff1a!important}
 html[data-pro-skin=dawn] .button-row .secondary-button+.secondary-button{border-top:.5px solid #1b1d2412!important}
 
@@ -595,7 +515,6 @@ html[data-pro-skin=dawn] .button-row .secondary-button+.secondary-button{border-
 html[data-pro-preview] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){transition:none}
 html[data-pro-preview=dawn] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#ffffffb8!important;color:#1b1d24!important;border:0!important;border-radius:20px!important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px #ffffffcc!important}
 html[data-pro-preview=day] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#f5f2ecf2!important;color:#1d1a16!important;border:0!important;border-radius:4px!important;box-shadow:0 12px 24px -18px #000a!important;font-family:var(--pro-song,serif)}
-html[data-pro-preview=dusk] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#15110cd9!important;color:#efe6d6!important;border:.5px solid #c8a66a66!important;border-radius:4px!important;box-shadow:none!important}
 html[data-pro-preview=night] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#07080dc7!important;color:#e8ecf7!important;border:.5px solid #dfe6ff2e!important;border-radius:18px!important;box-shadow:0 0 30px -10px #9fb4ff33!important}
 html[data-pro-preview] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group) *{color:inherit!important}
 html[data-pro-preview] :is(.mini-row,.lock-task) .check-circle svg{display:none}
@@ -607,9 +526,6 @@ html[data-pro-preview=dawn] .mini-row.is-done .check-circle{background:radial-gr
 html[data-pro-preview=day] .mini-row .check-circle{border:0!important;border-radius:0!important;background:none!important;box-shadow:inset 0 0 0 .9px #1d1a16a6!important}
 html[data-pro-preview=day] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:0!important;background:none!important;box-shadow:inset 0 0 0 .9px #1d1a16a6!important}
 html[data-pro-preview=day] .mini-row.is-done .check-circle{border-radius:50%!important;box-shadow:inset 0 0 0 1.3px #b43a2c!important}
-html[data-pro-preview=dusk] .mini-row .check-circle{width:10px!important;height:10px!important;margin:0 2px;border:0!important;border-radius:1px!important;background:none!important;box-shadow:inset 0 0 0 1px #c8a66a!important;transform:rotate(45deg)}
-html[data-pro-preview=dusk] .settings-home-hero .hero-card #home-card-rows>span:before{width:10px!important;height:10px!important;margin:0 2px;border:0!important;border-radius:1px!important;background:none!important;box-shadow:inset 0 0 0 1px #c8a66a!important;transform:rotate(45deg)}
-html[data-pro-preview=dusk] .mini-row.is-done .check-circle{background:#c8a66a!important}
 html[data-pro-preview=night] .mini-row .check-circle{border:0!important;border-radius:0!important;background:#dfe6ffcc!important;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%201.5C13%209%2015%2011%2022.5%2012C15%2013%2013%2015%2012%2022.5C11%2015%209%2013%201.5%2012C9%2011%2011%209%2012%201.5Z%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.6%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%201.5C13%209%2015%2011%2022.5%2012C15%2013%2013%2015%2012%2022.5C11%2015%209%2013%201.5%2012C9%2011%2011%209%2012%201.5Z%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.6%27/%3E%3C/svg%3E") center/contain no-repeat}
 html[data-pro-preview=night] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:0!important;background:#dfe6ffcc!important;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%201.5C13%209%2015%2011%2022.5%2012C15%2013%2013%2015%2012%2022.5C11%2015%209%2013%201.5%2012C9%2011%2011%209%2012%201.5Z%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.6%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%201.5C13%209%2015%2011%2022.5%2012C15%2013%2013%2015%2012%2022.5C11%2015%209%2013%201.5%2012C9%2011%2011%209%2012%201.5Z%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.6%27/%3E%3C/svg%3E") center/contain no-repeat}
 
@@ -620,10 +536,6 @@ html[data-pro-skin=day] .look-tabs{background:none!important;border-bottom:.5px 
 html[data-pro-skin=day] .look-tabs button{font-family:var(--pro-song);letter-spacing:.1em;background:none!important;color:#8a8279!important;border-radius:0!important;box-shadow:none!important}
 html[data-pro-skin=day] .look-tabs button[aria-selected=true]{color:#1d1a16!important;box-shadow:inset 0 -2px 0 #b43a2c!important}
 html[data-pro-skin=day] .look-group{font-family:var(--pro-song);font-weight:400!important;letter-spacing:.06em}
-html[data-pro-skin=dusk] .look-tabs{background:none!important;border:.5px solid #c8a66a4d;border-radius:3px!important;box-shadow:none!important}
-html[data-pro-skin=dusk] .look-tabs button{background:none!important;color:#8c8170!important;border-radius:2px!important;letter-spacing:.14em}
-html[data-pro-skin=dusk] .look-tabs button[aria-selected=true]{background:#c8a66a!important;color:#15110c!important}
-html[data-pro-skin=dusk] .look-group{font-family:var(--pro-song);font-weight:400!important;letter-spacing:.2em;color:#e2c48a}
 html[data-pro-skin=night] .look-tabs{background:#0d1019b3!important;border:.5px solid #dfe6ff1f;border-radius:999px!important}
 html[data-pro-skin=night] .look-tabs button{background:none!important;color:#7d8496!important;border-radius:999px!important}
 html[data-pro-skin=night] .look-tabs button[aria-selected=true]{background:#eef1fa!important;color:#07080d!important;box-shadow:0 0 18px #9fb4ff40!important}
@@ -631,5 +543,235 @@ html[data-pro-skin=night] .look-tabs button[aria-selected=true]{background:#eef1
 /* the sheet's 完成 and 回顾's export button: each theme's main button */
 html[data-pro-skin=dawn] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:linear-gradient(140deg,#a99fff,#86dcc6 60%,#ffb99b)!important;color:#1b1d24!important;box-shadow:inset 0 0 0 1px #ffffffb3!important}
 html[data-pro-skin=day] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#b43a2c!important;color:#f5f2ec!important;border-radius:4px!important;font-family:var(--pro-song);letter-spacing:.12em}
-html[data-pro-skin=dusk] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#c8a66a!important;color:#15110c!important;border-radius:3px!important;letter-spacing:.12em}
 html[data-pro-skin=night] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#eef1fa!important;color:#07080d!important;box-shadow:0 0 22px #9fb4ff4d!important}
+
+.pro-head-bloom .pro-head-jar{top:4px;right:4px}
+.pro-head-tape .pro-head-jar{top:-2px;right:2px}
+.pro-head-riso .pro-head-jar{top:4px;bottom:auto;right:auto;left:29%}
+.ph-late{animation-delay:.5s!important}
+.ph-tape{cursor:pointer}
+.ph-punch{animation:ph-punch .55s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes ph-punch{from{transform:scale(0)}}
+.ph-hole{transition:filter .15s}
+.ph-hole.is-ringing{filter:drop-shadow(0 0 4px #e2725b)}
+.ph-print{transform-box:fill-box;transform-origin:center;animation:ph-stamp .5s cubic-bezier(.3,1.5,.5,1) both}
+.ph-print .ph-ink-p{animation:ph-fade .35s .3s ease-out both}
+@keyframes ph-stamp{from{transform:scale(1.25);opacity:0}}
+@keyframes ph-fade{from{opacity:0}}
+html[data-motion=off] :is(.ph-punch,.ph-print,.ph-print .ph-ink-p){animation:none!important}
+@media (prefers-reduced-motion:reduce){:is(.ph-punch,.ph-print,.ph-print .ph-ink-p){animation:none!important}}
+
+
+
+/* ================= 乐 · 纸带: green velvet lining, cream paper, punched holes ================= */
+html[data-pro-skin=tape]{--ink:#f3ecdc;--muted:#9fb5ad;--line:#f3ecdc1f;--hair:#f3ecdc14;--surface:#173a33;--chip-bg:#173a33;--chip-ink:#e6dcc4;--card:#163a33;--group-bg-2:#173a33;--page:#12302a;--tile-bg:#163a33;--tile-line:#f3ecdc1f;--tile-ink:#f3ecdc;--tile-sub:#9fb5ad}
+html[data-pro-skin=tape] body{background:#12302a!important}
+html[data-pro-skin=tape] .app-header{background:#12302ae6!important;border:0!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html[data-pro-skin=tape] .filter-tabs button{position:relative;background:none!important;border:0!important;box-shadow:none!important;color:#9fb5ad!important;padding:6px 10px 12px!important}
+html[data-pro-skin=tape] .filter-tabs button.active{color:#f3ecdc!important}
+html[data-pro-skin=tape] .filter-tabs button.active:after{content:"";position:absolute;left:10px;right:10px;bottom:3px;height:3px;background:radial-gradient(circle,#f3ecdc 1.1px,transparent 1.4px) 0 0/6px 3px repeat-x}
+html[data-pro-skin=tape] .filter-tabs button span{color:#9fb5ad99!important}
+html[data-pro-skin=tape] :is(#task-list,#later-list,#completed-list){background:none!important;box-shadow:none!important;padding:0!important}
+html[data-pro-skin=tape] .task-row{border:0!important;border-bottom:1px dashed #f3ecdc26!important;border-radius:0!important;background:none!important;min-height:58px}
+html[data-pro-skin=tape] .task-title{color:#f3ecdc;font-weight:400}
+html[data-pro-skin=tape] .meta-repeat{color:#e2a58f!important}
+html[data-pro-skin=tape] .done-text{color:#6f8a82!important;text-decoration-color:#f3ecdc66!important;opacity:1!important}
+html[data-pro-skin=tape] .task-row .check-circle{width:20px;height:20px;border-radius:50%!important;background:none!important;box-shadow:none!important;outline:1.2px dashed #f3ecdcb3;outline-offset:-1px}
+html[data-pro-skin=tape] .task-row .check-task:hover .check-circle{outline:0;background:#0b1f1b!important;box-shadow:0 0 0 1.5px #f3ecdc,inset 0 2px 3px #000!important}
+html[data-pro-skin=tape] .done-row:before{width:12px;height:12px;border-radius:50%;background:#0b1f1b;box-shadow:0 0 0 1.4px #f3ecdc,inset 0 1.5px 2px #000}
+html[data-pro-skin=tape] .nav-add{width:60px!important;height:60px!important;border-radius:50%!important;background:#f3ecdc!important;color:#12302a!important;box-shadow:inset 0 0 0 5px #f3ecdc,inset 0 0 0 6.2px #12302a59,0 16px 30px -12px #000!important}
+html[data-pro-skin=tape] .nav-add:after{content:"";position:absolute;inset:4px;border-radius:50%;border:1.4px dashed #12302a73}
+html[data-pro-skin=tape] .nav-add svg{color:#12302a!important;stroke-width:1.8}
+html[data-pro-skin=tape] :is(.toast,.gesture-tips){background:#f3ecdc!important;color:#12302a!important;border:0!important;border-radius:6px!important;box-shadow:0 18px 36px -18px #000!important}
+html[data-pro-skin=tape] .toast button{color:#b5503b!important}
+html[data-pro-skin=tape] .completed-section summary{color:#cfdcd6!important}
+html[data-pro-skin=tape] .completed-tools{color:#9fb5ad!important}
+html[data-pro-skin=tape] :is(.completed-tools,.editor-footer) .text-button{color:#f3ecdc!important;background:none!important}
+html[data-pro-skin=tape] .timer-pill{background:none!important;border:1px dashed #f3ecdc80!important;color:#f3ecdc!important;box-shadow:none!important}
+html[data-pro-skin=tape] .timer-pill.is-on{background:#f3ecdc!important;color:#12302a!important;border-style:solid!important}
+html[data-pro-skin=tape] :is(body.adding .add-form,.sheet){background:#163a33f7!important;border:0!important;box-shadow:inset 0 1px 0 #f3ecdc1f,0 -22px 50px -20px #000!important}
+html[data-pro-skin=tape] .chip{background:none!important;border:1px dashed #f3ecdc4d!important;color:#cfdcd6!important;box-shadow:none!important}
+html[data-pro-skin=tape] .chip.active{background:#f3ecdc!important;border:1px solid #f3ecdc!important;color:#12302a!important}
+html[data-pro-skin=tape] .add-submit{background:#f3ecdc!important;color:#12302a!important}
+html[data-pro-skin=tape] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#173a33cc!important;border:.5px solid #f3ecdc1f!important;border-radius:14px!important;box-shadow:none!important}
+html[data-pro-skin=tape] .settings-page legend{color:#e6dcc4!important}
+html[data-pro-skin=tape] .review-stats>div:first-child{background:#f3ecdc!important}
+html[data-pro-skin=tape] .review-stats>div:first-child *{color:#12302a!important}
+html[data-pro-skin=tape] .switch:checked{background:#f3ecdc!important}
+html[data-pro-skin=tape] .switch:checked:after,html[data-pro-skin=tape] .switch:checked:before{background:#12302a!important}
+html[data-pro-skin=tape] .secondary-button{background:none!important;color:#f3ecdc!important;border:1px dashed #f3ecdc4d!important;box-shadow:none!important}
+html[data-pro-skin=tape] :is(.pill-segment button.active,.pill-segment button[aria-pressed=true],.look-tabs button[aria-selected=true]){background:#f3ecdc!important;color:#12302a!important}
+html[data-pro-skin=tape] .row-ico{background:#f3ecdc14!important;box-shadow:inset 0 0 0 1px #f3ecdc33!important;color:#f3ecdc!important;border-radius:50%!important}
+html[data-pro-skin=tape] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#f3ecdc!important;color:#12302a!important}
+
+/* ================= 印 · 孔版: paper, riso blue and fluorescent pink, a pink pass a hair off register ================= */
+html[data-pro-skin=riso]{--ink:#1f2a44;--muted:#6b7184;--line:#2f5fb31f;--hair:#2f5fb31a;--surface:#efede7;--chip-bg:#fbfaf6;--chip-ink:#1f2a44;--card:#fbfaf6;--group-bg-2:#efede7;--page:#f6f4ef;--tile-bg:#fbfaf6;--tile-line:#2f5fb31f;--tile-ink:#1f2a44;--tile-sub:#6b7184}
+html[data-pro-skin=riso] body{background:#f6f4ef!important}
+html[data-pro-skin=riso] .app-header{background:#f6f4efeb!important;border:0!important}
+html[data-pro-skin=riso] .filter-tabs button{background:none!important;border:1.2px solid #2f5fb366!important;box-shadow:none!important;color:#2f5fb3!important;font-weight:600}
+html[data-pro-skin=riso] .filter-tabs button.active{background:#2f5fb3!important;border-color:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2.5px 2px 0 #ff4fa3!important}
+html[data-pro-skin=riso] .filter-tabs button span{color:inherit!important;opacity:.6}
+html[data-pro-skin=riso] :is(#task-list,#later-list,#completed-list){background:none!important;box-shadow:none!important;padding:0!important}
+html[data-pro-skin=riso] .task-row{border:0!important;border-bottom:1.2px dotted #2f5fb359!important;border-radius:0!important;background:none!important;min-height:58px}
+html[data-pro-skin=riso] .task-title{color:#1f2a44;font-weight:500}
+html[data-pro-skin=riso] .meta-repeat{color:#e0328a!important}
+html[data-pro-skin=riso] .done-text{color:#8a8fa0!important;text-decoration-color:#ff4fa3!important;opacity:1!important}
+html[data-pro-skin=riso] .task-row .check-circle{width:20px;height:20px;border-radius:50%!important;background:none!important;box-shadow:inset 0 0 0 1.6px #2f5fb3,1.6px -1.2px 0 0 #ff4fa3!important}
+html[data-pro-skin=riso] .task-row .check-task:hover .check-circle{background:radial-gradient(circle,#ff4fa3 1.1px,transparent 1.4px) 0 0/3.4px 3.4px!important}
+html[data-pro-skin=riso] .done-row:before{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle,#ff4fa3 1px,transparent 1.3px) 0 0/3px 3px,#ff4fa333;box-shadow:inset 0 0 0 1.4px #2f5fb3,1.4px -1px 0 0 #ff4fa3}
+html[data-pro-skin=riso] .nav-add{width:58px!important;height:58px!important;border-radius:50%!important;background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:4px 3px 0 #ff4fa3,0 14px 26px -12px #2f5fb380!important}
+html[data-pro-skin=riso] .nav-add svg{color:#fbfaf6!important;stroke-width:2.6}
+html[data-pro-skin=riso] :is(.toast,.gesture-tips){background:#fbfaf6!important;color:#1f2a44!important;border:1.2px solid #2f5fb3!important;border-radius:8px!important;box-shadow:4px 4px 0 #ff4fa3!important}
+html[data-pro-skin=riso] .toast button{color:#e0328a!important}
+html[data-pro-skin=riso] .completed-section summary{color:#2f5fb3!important;font-weight:700}
+html[data-pro-skin=riso] .completed-tools{color:#6b7184!important}
+html[data-pro-skin=riso] :is(.completed-tools,.editor-footer) .text-button{color:#2f5fb3!important;background:none!important;font-weight:600}
+html[data-pro-skin=riso] .timer-pill{background:none!important;border:1.2px solid #2f5fb3!important;color:#2f5fb3!important;box-shadow:none!important}
+html[data-pro-skin=riso] .timer-pill.is-on{background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
+html[data-pro-skin=riso] :is(body.adding .add-form,.sheet){background:#fbfaf6!important;border:0!important;box-shadow:inset 0 2px 0 #2f5fb3,0 -20px 40px -24px #2f5fb366!important}
+html[data-pro-skin=riso] .chip{background:none!important;border:1.2px solid #2f5fb359!important;color:#2f5fb3!important;box-shadow:none!important}
+html[data-pro-skin=riso] .chip.active{background:#2f5fb3!important;border-color:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
+html[data-pro-skin=riso] .add-submit{background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
+html[data-pro-skin=riso] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf6!important;border:1.2px solid #2f5fb340!important;border-radius:10px!important;box-shadow:3px 3px 0 #ff4fa333!important}
+html[data-pro-skin=riso] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#2f5fb3!important;font-weight:800!important}
+html[data-pro-skin=riso] .review-stats>div:first-child{background:#2f5fb3!important;box-shadow:3px 3px 0 #ff4fa3!important}
+html[data-pro-skin=riso] .review-stats>div:first-child *{color:#fbfaf6!important}
+html[data-pro-skin=riso] .switch:checked{background:#2f5fb3!important}
+html[data-pro-skin=riso] .secondary-button{background:none!important;color:#2f5fb3!important;border:1.2px solid #2f5fb366!important;box-shadow:none!important}
+html[data-pro-skin=riso] :is(.pill-segment button.active,.pill-segment button[aria-pressed=true],.look-tabs button[aria-selected=true]){background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
+html[data-pro-skin=riso] .row-ico{background:#ff4fa31f!important;box-shadow:inset 0 0 0 1.2px #2f5fb3!important;color:#2f5fb3!important}
+html[data-pro-skin=riso] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
+
+/* the three on the lock screen and in the lock previews */
+html[data-pro-lock=tape] .lock-group,html[data-pro-preview=tape] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#12302ae0!important;color:#f3ecdc!important;border:.5px solid #f3ecdc2e!important;border-radius:16px!important;box-shadow:0 18px 36px -24px #000c!important;-webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important}
+html[data-pro-lock=tape] .lock-group *{color:#f3ecdc!important}
+html[data-pro-lock=tape] .lock-group-count{background:#f3ecdc1a!important}
+html[data-pro-lock=tape] .lock-task .check-circle,html[data-pro-preview=tape] .mini-row .check-circle,html[data-pro-preview=tape] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:50%!important;background:none!important;box-shadow:none!important;outline:1.2px dashed #f3ecdcb3;outline-offset:-1px}
+html[data-pro-lock=tape] .lock-task.is-done .check-circle,html[data-pro-preview=tape] .mini-row.is-done .check-circle{outline:0;background:#0b1f1b!important;box-shadow:0 0 0 1.5px #f3ecdc!important}
+html[data-pro-lock=riso] #lock-time{font-weight:800!important;text-shadow:4px 3px 0 #ff4fa3!important}
+html[data-pro-lock=riso] .lock-group,html[data-pro-preview=riso] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#fbfaf6f5!important;color:#1f2a44!important;border:1.2px solid #2f5fb3!important;border-radius:10px!important;box-shadow:4px 4px 0 #ff4fa3!important}
+html[data-pro-lock=riso] .lock-group *{color:#1f2a44!important}
+html[data-pro-lock=riso] .lock-group-head b{color:#2f5fb3!important;font-weight:800}
+html[data-pro-lock=riso] .lock-group-count{background:#2f5fb3!important;color:#fbfaf6!important}
+html[data-pro-lock=riso] .lock-task .check-circle,html[data-pro-preview=riso] .mini-row .check-circle,html[data-pro-preview=riso] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:50%!important;background:none!important;box-shadow:inset 0 0 0 1.6px #2f5fb3,1.6px -1.2px 0 0 #ff4fa3!important}
+html[data-pro-lock=riso] .lock-task.is-done .check-circle,html[data-pro-preview=riso] .mini-row.is-done .check-circle{background:radial-gradient(circle,#ff4fa3 1px,transparent 1.3px) 0 0/3px 3px!important}
+html[data-pro-preview=riso] .settings-home-hero .hero-card *{color:#1f2a44!important}
+html[data-pro-lock=riso] #pro-lock-strip{filter:drop-shadow(3px 3px 0 #ff4fa3)}
+html[data-pro-lock=tape] #pro-lock-strip{filter:drop-shadow(0 10px 20px #0006)}
+
+/* 清空时刻 */
+.pro-cel-tape h2{font-weight:300}
+.pro-cel-tape #pro-cel-close{background:#f3ecdc!important;color:#12302a!important}
+.pro-cel-riso h2{font-weight:800;color:#2f5fb3!important;text-shadow:3px 2px 0 #ff4fa3}
+.pro-cel-riso #pro-cel-close{background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:3px 3px 0 #ff4fa3!important}
+
+/* ================= 晕 · 彩墨: still water on white paper, colour drops, Song type ================= */
+html[data-pro-skin=bloom]{--ink:#2b2b2e;--muted:#7a7c80;--line:#2b2b2e1a;--hair:#2b2b2e14;--surface:#e9ebea;--chip-bg:#f7f8f7;--chip-ink:#2b2b2e;--card:#f7f8f7;--group-bg-2:#e9ebea;--page:#f2f3f2;--tile-bg:#f7f8f7;--tile-line:#2b2b2e14;--tile-ink:#2b2b2e;--tile-sub:#7a7c80}
+html[data-pro-skin=bloom] body{background:#f2f3f2!important}
+html[data-pro-skin=bloom] .app-header{background:#f2f3f2eb!important;border:0!important}
+html[data-pro-skin=bloom] .filter-tabs button{position:relative;background:none!important;border:0!important;box-shadow:none!important;color:#7a7c80!important;font-family:var(--pro-song);letter-spacing:.08em;padding:6px 11px 12px!important}
+html[data-pro-skin=bloom] .filter-tabs button.active{color:#2b2b2e!important}
+html[data-pro-skin=bloom] .filter-tabs button.active:before{content:"";position:absolute;left:50%;bottom:-1px;width:30px;height:12px;margin-left:-15px;border-radius:50%;background:radial-gradient(closest-side,#3b5a8766,#3b5a8726 70%,transparent);filter:blur(.4px)}
+html[data-pro-skin=bloom] .filter-tabs button span{color:#7a7c8099!important}
+html[data-pro-skin=bloom] :is(#task-list,#later-list,#completed-list){background:none!important;box-shadow:none!important;padding:0!important}
+html[data-pro-skin=bloom] .task-row{border:0!important;border-bottom:.5px solid #2b2b2e1f!important;border-radius:0!important;background:none!important;min-height:58px}
+html[data-pro-skin=bloom] .task-title{font-family:var(--pro-song);font-weight:400;letter-spacing:.03em;color:#2b2b2e}
+html[data-pro-skin=bloom] .meta-repeat{color:#3b5a87!important}
+html[data-pro-skin=bloom] .done-text{color:#9a9ca0!important;text-decoration-color:#3b5a8799!important;opacity:1!important}
+html[data-pro-skin=bloom] .task-row .check-circle{width:20px;height:20px;border-radius:50%!important;background:none!important;box-shadow:inset 0 0 0 1px #2b2b2e73!important}
+html[data-pro-skin=bloom] .task-row .check-task:hover .check-circle{background:radial-gradient(circle at 45% 45%,#3b5a8766 0 40%,#3b5a8740 60%,#3b5a87a6 86%,#3b5a8700 100%)!important;box-shadow:none!important}
+html[data-pro-skin=bloom] .done-row:before{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 45% 45%,#3b5a8766 0 40%,#3b5a8740 60%,#3b5a87a6 86%,#3b5a8700 100%)}
+html[data-pro-skin=bloom] .nav-add{width:60px!important;height:60px!important;border-radius:47% 53% 51% 49%/52% 46% 54% 48%!important;background:radial-gradient(circle at 45% 42%,#3a3a3e,#2b2b2e 62%,#1d1d20)!important;color:#f7f8f7!important;box-shadow:0 0 0 3px #2b2b2e14,0 0 14px #2b2b2e40,0 14px 26px -12px #2b2b2e99!important}
+html[data-pro-skin=bloom] .nav-add svg{color:#f7f8f7!important;stroke-width:1.6}
+html[data-pro-skin=bloom] :is(.toast,.gesture-tips){background:#fbfbfa!important;color:#2b2b2e!important;border:.5px solid #2b2b2e26!important;border-radius:14px!important;box-shadow:0 18px 36px -20px #2b2b2e66!important}
+html[data-pro-skin=bloom] .toast button{color:#3b5a87!important}
+html[data-pro-skin=bloom] :is(.completed-section summary,.completed-tools,.empty-state,.task-meta,.chip,.add-label,.timer-pill,.settings-page legend,.setting-row,.settings-tiles .row-label,.settings-list .row-label,.review-top h1,.review-card h2,.review-card h3,.settings-top h1,.secondary-button,.look-group){font-family:var(--pro-song)!important;letter-spacing:.05em}
+html[data-pro-skin=bloom] .completed-section summary span:last-child{color:#3b5a87!important}
+html[data-pro-skin=bloom] :is(.completed-tools,.editor-footer) .text-button{color:#3b5a87!important;background:none!important}
+html[data-pro-skin=bloom] .timer-pill{background:none!important;border:.7px solid #2b2b2e66!important;color:#2b2b2e!important;box-shadow:none!important}
+html[data-pro-skin=bloom] .timer-pill.is-on{background:#2b2b2e!important;color:#f7f8f7!important}
+html[data-pro-skin=bloom] :is(body.adding .add-form,.sheet){background:#f8f9f8f7!important;border:0!important;box-shadow:0 -22px 50px -24px #2b2b2e59!important}
+html[data-pro-skin=bloom] .chip{background:none!important;border:.7px solid #2b2b2e40!important;color:#4a4c50!important;box-shadow:none!important}
+html[data-pro-skin=bloom] .chip.active{background:#2b2b2e!important;border-color:#2b2b2e!important;color:#f7f8f7!important}
+html[data-pro-skin=bloom] .add-submit{background:#2b2b2e!important;color:#f7f8f7!important}
+html[data-pro-skin=bloom] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#f8f9f8!important;border:.5px solid #2b2b2e1a!important;border-radius:16px!important;box-shadow:0 10px 24px -20px #2b2b2e66!important}
+html[data-pro-skin=bloom] .settings-page legend{color:#3b5a87!important}
+html[data-pro-skin=bloom] .review-stats>div:first-child{background:radial-gradient(circle at 35% 30%,#7d97be,#3b5a87)!important}
+html[data-pro-skin=bloom] .review-stats>div:first-child *{color:#f8f9f8!important}
+html[data-pro-skin=bloom] .switch:checked{background:#3b5a87!important}
+html[data-pro-skin=bloom] .secondary-button{background:none!important;color:#2b2b2e!important;border:.7px solid #2b2b2e4d!important;box-shadow:none!important}
+html[data-pro-skin=bloom] :is(.pill-segment button.active,.pill-segment button[aria-pressed=true],.look-tabs button[aria-selected=true]){background:#2b2b2e!important;color:#f8f9f8!important;border-radius:12px!important}
+html[data-pro-skin=bloom] .row-ico{background:radial-gradient(circle at 45% 45%,#3b5a8726,#3b5a8714 70%,#3b5a8733)!important;box-shadow:none!important;color:#2b2b2e!important;border-radius:50%!important}
+html[data-pro-skin=bloom] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#2b2b2e!important;color:#f8f9f8!important}
+html[data-pro-lock=bloom] #lock-time{font-family:var(--pro-song,serif)!important;font-weight:400!important}
+html[data-pro-lock=bloom] .lock-group,html[data-pro-preview=bloom] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#f4f5f4f2!important;color:#2b2b2e!important;border:0!important;border-radius:18px!important;box-shadow:0 18px 36px -24px #000a!important}
+html[data-pro-lock=bloom] .lock-group *,html[data-pro-preview=bloom] .settings-home-hero .hero-card *{color:#2b2b2e!important}
+html[data-pro-lock=bloom] .lock-group-head b{font-family:var(--pro-song,serif);letter-spacing:.1em}
+html[data-pro-lock=bloom] .lock-group-count{background:#2b2b2e10!important}
+html[data-pro-lock=bloom] .lock-task .check-circle,html[data-pro-preview=bloom] .mini-row .check-circle,html[data-pro-preview=bloom] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:50%!important;background:none!important;box-shadow:inset 0 0 0 1px #2b2b2e73!important}
+html[data-pro-lock=bloom] .lock-task.is-done .check-circle,html[data-pro-preview=bloom] .mini-row.is-done .check-circle{background:radial-gradient(circle at 45% 45%,#3b5a8766 0 40%,#3b5a8740 60%,#3b5a87a6 86%,#3b5a8700 100%)!important;box-shadow:none!important}
+html[data-pro-lock=bloom] #pro-lock-strip{filter:drop-shadow(0 10px 20px #0004)}
+.pro-cel-bloom h2{font-family:var(--pro-song,serif);font-weight:400;letter-spacing:.24em}
+.pro-cel-bloom #pro-cel-close{background:#2b2b2e!important;color:#f8f9f8!important;font-family:var(--pro-song,serif);letter-spacing:.2em}
+/* a drop lands and slowly spreads */
+.ph-bloom{animation:ph-bloom 2.6s cubic-bezier(.2,.75,.2,1) both}
+@keyframes ph-bloom{0%{transform:scale(.12);opacity:.2}25%{opacity:1}100%{transform:scale(1);opacity:1}}
+html[data-motion=off] .ph-bloom{animation:none!important}
+@media (prefers-reduced-motion:reduce){.ph-bloom{animation:none!important}}
+
+.pro-theme-row{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+
+/* ================= Checkout ================= */
+.pro-pay{position:fixed;inset:0;z-index:95;display:grid;align-items:end;justify-items:center;background:#0009;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pro-pay-in .25s ease-out}
+.pro-pay[hidden]{display:none}
+@keyframes pro-pay-in{from{opacity:0}}
+.pro-pay-card{width:min(100%,520px);max-height:92svh;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px calc(18px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;background:#fbfbfc;color:#111114;font-family:Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;box-shadow:0 -20px 60px -20px #000c;outline:0;animation:pro-pay-up .38s cubic-bezier(.2,.9,.2,1)}
+@keyframes pro-pay-up{from{transform:translateY(40px);opacity:.4}}
+.pro-pay-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pro-pay-head h2{margin:0;font-size:19px;font-weight:650;letter-spacing:-.01em}
+.pro-pay-x{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0000000d;color:#111114}
+.pro-pay-x svg{width:18px;height:18px}
+.pro-pay-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:14px 16px;border-radius:18px;background:#111114;color:#fff}
+.pro-pay-price b{font-size:34px;font-weight:650;letter-spacing:-.02em}
+.pro-pay-price s{font-size:16px;color:#ffffff73}
+.pro-pay-price span{flex-basis:100%;font-size:12.5px;line-height:1.5;color:#ffffffa6}
+.pro-pay-list{list-style:none;margin:14px 0 4px;padding:0;display:grid;gap:10px}
+.pro-pay-list li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:center}
+.pro-pay-list svg{width:32px;height:32px;padding:7px;border-radius:10px;background:#0000000a;color:#111114}
+.pro-pay-list b{display:block;font-size:14.5px;font-weight:600}
+.pro-pay-list small{display:block;margin-top:1px;font-size:12.5px;color:#6b6b72}
+.pro-pay-main{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:14px;border-radius:16px;background:#111114;color:#fff;font-size:16px;font-weight:600}
+.pro-pay-main:focus-visible,.pro-pay-link:focus-visible,.pro-pay-x:focus-visible,.pro-pay-redeem button:focus-visible,.pro-pay-sim button:focus-visible{outline:2px solid #3b6ef5;outline-offset:2px}
+.pro-pay-fine{margin:10px 2px 0;font-size:12.5px;line-height:1.55;color:#6b6b72;text-align:center}
+.pro-pay-link{display:block;margin:4px auto 0;padding:8px 12px;font-size:14px;font-weight:600;color:#111114;text-decoration:underline;text-underline-offset:4px}
+.pro-pay-steps{list-style:none;counter-reset:step;margin:16px 0 0;padding:0;display:grid;gap:14px}
+.pro-pay-steps li{counter-increment:step;position:relative;padding-left:36px}
+.pro-pay-steps li:before{content:counter(step);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:650;background:#111114;color:#fff}
+.pro-pay-steps li:not(:last-child):after{content:"";position:absolute;left:11.5px;top:28px;bottom:-12px;width:1px;background:#0000001a}
+.pro-pay-steps b{display:block;font-size:15px;font-weight:600;line-height:24px}
+.pro-pay-steps small{display:block;font-size:12.5px;line-height:1.5;color:#6b6b72}
+.pro-pay-steps .pro-pay-main{margin-top:10px;min-height:48px}
+.pro-pay-redeem{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-top:10px}
+.pro-pay-redeem input{min-width:0;padding:12px 12px;border-radius:12px;border:0;background:#0000000a;box-shadow:inset 0 0 0 1px #0000001a;font:600 14px Geist,ui-monospace,monospace;letter-spacing:.04em;color:#111114}
+.pro-pay-redeem input:focus-visible{outline:0;box-shadow:inset 0 0 0 1.6px #111114}
+.pro-pay-redeem button{padding:0 14px;border-radius:12px;font-size:14px;font-weight:600;background:#111114;color:#fff}
+.pro-pay-redeem .pro-pay-paste{background:#0000000d;color:#111114}
+.pro-pay-note{margin:14px 0 0;padding:12px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;background:#0000000a;color:#111114}
+.pro-pay-note.is-error{background:#fdecec;color:#9b1c1c}
+.pro-pay-code{font:600 13px Geist,ui-monospace,monospace;letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;color:#111114}
+.pro-pay-working{display:grid;justify-items:center;gap:14px;padding:46px 0 40px;color:#3a3a40;font-size:14.5px}
+.pro-spin{width:30px;height:30px;border-radius:50%;border:2.5px solid #0000001a;border-top-color:#111114;animation:pro-spin .8s linear infinite}
+@keyframes pro-spin{to{transform:rotate(360deg)}}
+.pro-pay-done{display:grid;justify-items:center;text-align:center;gap:6px;padding:4px 0}
+.pro-pay-badge svg{width:46px;height:46px;color:#111114}
+.pro-pay-done p{margin:4px 0 8px;font-size:14px;line-height:1.6;color:#3a3a40}
+.pro-pay-themes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.pro-pay-themes button{display:grid;gap:4px;padding:0;border-radius:12px;text-align:center}
+.pro-pay-themes .pro-mock-svg{height:70px!important;aspect-ratio:auto;border-radius:10px;box-shadow:inset 0 0 0 1px #0000001a}
+.pro-pay-themes small{font-size:11.5px;color:#3a3a40}
+.pro-pay-sim{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:16px;padding-top:12px;border-top:1px dashed #0000001f;font-size:11.5px;color:#8a8a90}
+.pro-pay-sim span{margin-right:auto}
+.pro-pay-sim button{padding:4px 10px;border-radius:9px;font-size:11.5px;color:#3a3a40;box-shadow:inset 0 0 0 1px #00000024}
+.pro-pay-sim button[aria-pressed=true]{background:#111114;color:#fff;box-shadow:none}
+body.pro-paying{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.pro-pay,.pro-pay-card{animation:none}.pro-spin{animation-duration:2s}}

@@ -8,29 +8,34 @@
   const $ = id => document.getElementById(id);
   const S = () => API.state.settings;
   const reduce = () => !S().motion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const PRICE = '¥18', LIST_PRICE = '¥28', TRIAL_DAYS = 3;
+  // 39.9 to keep, 28 for the first month after launch
+  const PRICE = '¥28', LIST_PRICE = '¥39.9', PRICE_NOTE = '首发价，上架后第一个月', TRIAL_DAYS = 3;
 
   /* ---------- Themes: each one is a whole world (colours, type, shard material, completion effect, sound) ---------- */
   const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
   const SERIF = '"Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
-  /* 「一日四时」: four times of day. Each theme draws today in its own way (measuring glass, manuscript paper, sunset
-     dial, constellation), has its own check and its own weekly picture. Shared: things break into pieces when done,
-     in the theme's material, and the pieces go into the same jar. */
+  /* Six Pro themes. Each draws today in its own way — 晨 a measuring glass, 昼 a copybook line, 夜 a constellation,
+     晕 colour drops blooming in water, 乐 a music-box strip, 印 a risograph print — with its own check, screens and weekly
+     picture. Shared: things break into pieces when done, in the theme's material, and the pieces go into the jar.
+     (暮 · 金 was removed in v8; a saved 'dusk' shows 夜.) */
   const THEMES = {
     dawn: { name: '晨', full: '晨 · 玻璃', line: '一只量杯，做完一件，满一点', base: 'glass', material: 'glass', effect: 'shards', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
       shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#6b7080', mode: 'multiply', font: SANS, display: SANS },
     day: { name: '昼', full: '昼 · 纸', line: '稿纸一格一个字，做完画个红圈', base: 'paper', material: 'paper', effect: 'shards', sound: 'paper', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
       shards: ['#fbf8f1', '#e9e2d4', '#d9d0bf', '#1d1a16', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#8a8279', mode: 'source-over', font: SONG, display: SONG },
-    dusk: { name: '暮', full: '暮 · 金', line: '太阳跟着进度走，清空就日落', base: 'night', material: 'gold', effect: 'shards', sound: 'chime', accent: '#c8a66a', soft: '#c8a66a1f', on: '#15110c',
-      shards: ['#c8a66a', '#e8d3a4', '#9c7f47', '#f4e8cc'], bg: '#15110c', ink: '#efe6d6', muted: '#8c8170', mode: 'screen', font: SANS, display: SERIF },
     night: { name: '夜', full: '夜 · 光', line: '每件事一颗星，做完连成星座', base: 'night', material: 'light', effect: 'shards', sound: 'night', accent: '#dfe6ff', soft: '#dfe6ff1a', on: '#07080d',
-      shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#7d8496', mode: 'screen', font: SANS, display: SANS }
+      shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#7d8496', mode: 'screen', font: SANS, display: SANS },
+    bloom: { name: '晕', full: '晕 · 彩墨', line: '每做完一件，滴一滴颜色，慢慢晕开', base: 'paper', material: 'bloom', effect: 'shards', sound: 'drip', chip: '#fbfbfa', accent: '#2b2b2e', soft: '#2b2b2e12', on: '#f4f5f4',
+      shards: ['#3b5a87', '#b8475a', '#d9a43a', '#3f8aa6', '#2b2b2e'], bg: '#f2f3f2', ink: '#2b2b2e', muted: '#7a7c80', mode: 'multiply', font: SANS, display: SONG },
+    tape: { name: '乐', full: '乐 · 纸带', line: '每做完一件打一个音孔，做完弹给你听', base: 'night', material: 'tape', effect: 'shards', sound: 'punch', chip: '#f3ecdc', accent: '#f3ecdc', soft: '#f3ecdc1a', on: '#12302a',
+      shards: ['#f3ecdc', '#e6dcc4', '#cdbf9f', '#ffffff'], bg: '#12302a', ink: '#f3ecdc', muted: '#9fb5ad', mode: 'source-over', font: SANS, display: SANS },
+    riso: { name: '印', full: '印 · 孔版', line: '每做完一件，印上一张小插画', base: 'paper', material: 'riso', effect: 'shards', sound: 'press', chip: '#fbfaf6', accent: '#2f5fb3', soft: '#2f5fb314', on: '#f6f4ef',
+      shards: ['#ff4fa3', '#2f5fb3', '#8a4fb0', '#f6f4ef'], bg: '#f6f4ef', ink: '#1f2a44', muted: '#6b7184', mode: 'multiply', font: SANS, display: SANS }
   };
-  const ORDER = ['dawn', 'day', 'dusk', 'night'];
-  /** 跟随时间: 5–10 晨, 10–17 昼, 17–20 暮, 20–5 夜. */
-  const byTime = (d = new Date()) => { const h = d.getHours(); return h >= 5 && h < 10 ? 'dawn' : h >= 10 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night'; };
+  const ORDER = ['dawn', 'day', 'night', 'bloom', 'tape', 'riso'];
+  /** 跟随时间: 5–10 晨, 10–18 昼, 18–5 夜. */
+  const byTime = (d = new Date()) => { const h = d.getHours(); return h >= 5 && h < 10 ? 'dawn' : h >= 10 && h < 18 ? 'day' : 'night'; };
   const BRAND = { shards: ['#d9d6ff', '#c9f0e6', '#ffe0d2', '#f5f5f7'] };
-  const SOON = [{ name: '二十四节气', line: '每个节气，一种新的材质' }];
   const PLAIN = { material: 'plain', shards: ['#9fd8ff', '#ffffff', '#a7b4ff', '#7ee0c8'], bg: '#0c0e14', ink: '#f1f3f7', muted: '#8b93a3', accent: '#9fd8ff', mode: 'screen', font: SANS, display: SANS };
   const EFFECTS = { auto: '跟随主题', shards: '碎裂', stardust: '流光', ink: '墨染', plane: '纸飞机', dots: '点阵', gold: '金箔' };
   const EFFECT_LINE = { shards: '按主题的材质碎开', stardust: '化成一缕光', ink: '墨晕开，落一点红', plane: '折成纸飞机飞走', dots: '散成一粒粒点', gold: '金箔慢慢飘落' };
@@ -41,10 +46,11 @@
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
   const status = () => info().owned ? '已解锁' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
-  const activeTheme = () => tryOn || (!isPro() ? '' : S().proTheme === 'auto' ? byTime() : THEMES[S().proTheme] ? S().proTheme : '');
+  const savedTheme = () => S().proTheme === 'dusk' ? 'night' : S().proTheme;
+  const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
   function persist() { API.save(); }
-  function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); celebrateUnlock(); }
+  function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); }
   function startTrial() { const p = info(); if (p.trialUsed) return; p.trialUsed = true; p.trialEnds = Date.now() + TRIAL_DAYS * 864e5; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast(`已开始 ${TRIAL_DAYS} 天免费试用，Pro 全部可用`); }
   function restore() { API.showToast(info().owned ? '已恢复购买' : '没有找到购买记录（本地预览）'); }
   /* ---------- How people pay, by platform ----------
@@ -64,6 +70,75 @@
     if (!codeOk(value)) { API.showToast('兑换码不对，检查一下有没有输错'); return false; }
     info().via = 'code'; info().code = normCode(value); buy(); return true;
   }
+  /* ---------- Checkout ----------
+     One sheet, by platform.
+     iPhone: what you get → 「用 App Store 购买」 → Apple's own sheet (simulated here) → 已解锁 / 已取消 / 失败 / 等家长同意;
+       「恢复购买」 finds an earlier purchase on the same Apple account.
+     Android and the web: ① 打开付款页 ② the payment page shows a code ③ paste it here → 验证 → 已解锁, or a clear reason.
+     In this preview nothing is charged; the 「模拟结果」 row picks what the store or the code server answers. */
+  let payStep = 'start', payNote = '', payOutcome = 'ok';
+  const OUTCOMES = { ios: [['ok', '成功'], ['cancel', '取消'], ['fail', '失败'], ['ask', '家长同意']], code: [['ok', '成功'], ['used', '已被用过'], ['offline', '没网']] };
+  const INCLUDES = [['palette', '6 套主题', '每套一种看今天的方式，所有界面都换'], ['lock-keyhole', '锁屏也换', '安卓锁屏卡片跟着主题'], ['sparkles', '完成动效与音效', '碎片飞进画面，每套自己的声音'], ['archive', '碎片罐与每周画', '一周做完的事，存成一幅画'], ['calendar-clock', '倒数日', '考试、生日，写在头部']];
+  function openPay(step = 'start') {
+    let el = $('pro-pay');
+    if (!el) { el = document.createElement('div'); el.id = 'pro-pay'; el.className = 'pro-pay'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'pro-pay-title'); document.body.append(el);
+      el.addEventListener('click', e => { if (e.target === el && payStep !== 'working') closePay(); }); }
+    payStep = step; payNote = ''; el.hidden = false; renderPay(); document.body.classList.add('pro-paying');
+    requestAnimationFrame(() => el.querySelector('.pro-pay-card')?.focus());
+  }
+  function closePay() { const el = $('pro-pay'); if (el) el.hidden = true; document.body.classList.remove('pro-paying'); }
+  const ios = () => payPlatform() === 'ios';
+  function renderPay() {
+    const el = $('pro-pay'); if (!el) return;
+    const kind = ios() ? 'ios' : 'code', working = payStep === 'working';
+    const head = `<header class="pro-pay-head"><h2 id="pro-pay-title">${payStep === 'done' ? 'Pro 已解锁' : '碎碎清单 Pro'}</h2>${working ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
+    let body = '';
+    if (payStep === 'done') {
+      body = `<div class="pro-pay-done"><span class="pro-pay-badge">${icon('badge-check')}</span><p>谢谢你支持碎碎清单。六套主题、锁屏、动效、碎片罐都已经可以用了。</p>
+        <div class="pro-pay-themes">${ORDER.map(id => `<button type="button" data-pay-theme="${id}" aria-label="用「${THEMES[id].full}」">${themeMock(id)}<small>${THEMES[id].full}</small></button>`).join('')}</div>
+        <button type="button" class="pro-pay-main" id="pro-pay-finish">先挑一个主题</button></div>`;
+    } else if (working) {
+      body = `<div class="pro-pay-working" role="status"><span class="pro-spin" aria-hidden="true"></span><p>${ios() ? (payNote === 'restore' ? '正在查找这个 Apple 账户的购买记录…' : '正在连接 App Store…') : '正在验证兑换码…'}</p></div>`;
+    } else {
+      const price = `<div class="pro-pay-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}；一次买断，永久使用，以后的新主题也包含在内</span></div>`;
+      const list = `<ul class="pro-pay-list">${INCLUDES.map(([ic, t, d]) => `<li>${icon(ic)}<span><b>${t}</b><small>${d}</small></span></li>`).join('')}</ul>`;
+      const note = payNote ? `<p class="pro-pay-note${/^(fail|used|offline|bad|none)/.test(payNote) ? ' is-error' : ''}" role="alert">${{ cancel: '已取消，没有扣款。', fail: '没能完成付款：连不上 App Store。检查网络后再试一次。', ask: '已经发给家长了。家长同意后，Pro 会自动解锁。', none: '这个 Apple 账户没有买过 Pro。换手机前用的是别的 Apple 账户吗？', used: '这个兑换码已经在 3 台设备上用过了。需要帮助，就在“关于”里给我们留言。', offline: '验证兑换码要联网。连上网再试一次。', bad: '兑换码不对：应该是 SUISUI 开头，后面 12 位字母和数字。', sent: '本地预览没有真的付款页。付完款，付款页会显示一串兑换码，像这样：' }[payNote] || ''}${payNote === 'sent' ? ` <button type="button" class="pro-pay-code" id="pro-pay-fill">${demoCode}</button>` : ''}</p>` : '';
+      body = ios()
+        ? `${price}${list}${note}<button type="button" class="pro-pay-main" id="pro-pay-go">用 App Store 购买 ${PRICE}</button>
+           <p class="pro-pay-fine">付款由 Apple 处理，买过的换手机也能用：点“恢复购买”。</p><button type="button" class="pro-pay-link" id="pro-pay-restore">恢复购买</button>`
+        : `${price}${list}<ol class="pro-pay-steps">
+             <li><b>打开付款页</b><small>支付宝、微信都可以付</small><button type="button" class="pro-pay-main" id="pro-pay-go">打开付款页 · ${PRICE}</button></li>
+             <li><b>复制兑换码</b><small>付完款，页面上会显示一串兑换码，记得截图保存</small></li>
+             <li><b>粘贴兑换</b><small>安卓和网页都能用，一个码最多用在 3 台设备上</small>
+               <form class="pro-pay-redeem" id="pro-pay-redeem"><input id="pro-pay-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SUISUI-XXXX-XXXX-XXXX" aria-label="兑换码"><button type="button" class="pro-pay-paste" id="pro-pay-paste">粘贴</button><button type="submit">兑换</button></form></li></ol>${note}`;
+    }
+    const sim = payStep === 'done' || working ? '' : `<div class="pro-pay-sim" role="group" aria-label="模拟结果"><span>本地预览 · 模拟结果</span>${OUTCOMES[kind].map(([id, n]) => `<button type="button" data-pay-outcome="${id}" aria-pressed="${payOutcome === id}">${n}</button>`).join('')}</div>`;
+    el.innerHTML = `<div class="pro-pay-card" tabindex="-1">${head}${body}${sim}</div>`;
+    API.icons(el);
+    $('pro-pay-close')?.addEventListener('click', closePay);
+    el.querySelectorAll('[data-pay-outcome]').forEach(b => b.addEventListener('click', () => { payOutcome = b.dataset.payOutcome; renderPay(); }));
+    $('pro-pay-go')?.addEventListener('click', () => {
+      if (!ios()) { payNote = 'sent'; renderPay(); $('pro-pay-code')?.focus(); return; }
+      payStep = 'working'; payNote = ''; renderPay();
+      setTimeout(() => { if (payOutcome === 'ok') { buy(); payStep = 'done'; } else { payStep = 'start'; payNote = payOutcome; } renderPay(); }, 1100);
+    });
+    $('pro-pay-restore')?.addEventListener('click', () => {
+      payStep = 'working'; payNote = 'restore'; renderPay();
+      setTimeout(() => { if (info().owned || payOutcome === 'ok') { info().via = 'appstore'; buy(); payStep = 'done'; } else { payStep = 'start'; payNote = 'none'; } renderPay(); }, 900);
+    });
+    $('pro-pay-fill')?.addEventListener('click', () => { $('pro-pay-code').value = demoCode; $('pro-pay-code').focus(); });
+    $('pro-pay-paste')?.addEventListener('click', async () => { try { const t = await navigator.clipboard.readText(); if (t) $('pro-pay-code').value = t.trim(); } catch { API.showToast('没能读取剪贴板，请长按输入框粘贴'); } });
+    $('pro-pay-code')?.addEventListener('input', e => { const b = normCode(e.target.value).slice(0, 12); e.target.value = b ? `SUISUI-${b.match(/.{1,4}/g).join('-')}` : ''; });
+    $('pro-pay-redeem')?.addEventListener('submit', e => {
+      e.preventDefault(); const v = $('pro-pay-code').value;
+      if (!codeOk(v)) { payNote = 'bad'; renderPay(); if ($('pro-pay-code')) $('pro-pay-code').value = v; return; }
+      payStep = 'working'; payNote = ''; renderPay();
+      setTimeout(() => { if (payOutcome === 'ok') { redeem(v); payStep = 'done'; } else { payStep = 'start'; payNote = payOutcome; } renderPay(); const input = $('pro-pay-code'); if (payNote && input) input.value = v; }, 900);
+    });
+    el.querySelectorAll('[data-pay-theme]').forEach(b => b.addEventListener('click', () => { S().proTheme = b.dataset.payTheme; persist(); applyTheme(); refreshAll(); closePay(); closeSheet(); API.showToast(`已换上「${THEMES[b.dataset.payTheme].full}」`); }));
+    $('pro-pay-finish')?.addEventListener('click', () => { closePay(); $('pro-sheet')?.querySelector('[data-pro-section=themes]')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+  }
+
   function resetLocal() { S().pro = { owned: false, trialEnds: 0, trialUsed: false }; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('已重置为未购买（本地预览）'); }
 
   /* ---------- Small helpers ---------- */
@@ -108,6 +183,9 @@
     paper: c => { hiss(c, { d: .09, g: .14, hp: 900, lp: 5200 }); hiss(c, { t: .07, d: .12, g: .09, hp: 1400, lp: 6000 }); },
     night: c => { tone(c, { f: 1568, d: .7, g: .05 }); tone(c, { f: 2349, t: .09, d: .8, g: .035 }); tone(c, { f: 3136, t: .2, d: .6, g: .02 }); },
     click: c => { hiss(c, { d: .012, g: .22, hp: 3200 }); tone(c, { f: 2400, d: .035, g: .04, type: 'square' }); hiss(c, { t: .06, d: .01, g: .12, hp: 4000 }); },
+    drip: c => { tone(c, { f: 380, f2: 1150, d: .12, g: .11 }); tone(c, { f: 900, f2: 1500, t: .07, d: .16, g: .035 }); },
+    punch: c => { hiss(c, { d: .02, g: .2, hp: 1800, lp: 7000 }); tone(c, { f: 180, f2: 110, d: .06, g: .06, type: 'triangle' }); },
+    press: c => { tone(c, { f: 130, f2: 70, d: .14, g: .14, type: 'triangle' }); hiss(c, { t: .01, d: .06, g: .1, hp: 600, lp: 3000 }); hiss(c, { t: .1, d: .08, g: .05, hp: 2000 }); },
     chime: c => { tone(c, { f: 660, d: 1.3, g: .075 }); tone(c, { f: 990, t: .02, d: 1.1, g: .045 }); tone(c, { f: 1485, t: .04, d: .8, g: .02 }); }
   };
   const soundOn = () => S().proSound !== false;
@@ -146,12 +224,12 @@
       requestAnimationFrame(tick); setTimeout(resolve, resolveAt);
     });
   }
-  const LIGHT = ['dawn', 'day'];
+  const LIGHT = ['dawn', 'day', 'bloom', 'riso'];
   const dark = () => !LIGHT.includes(activeTheme());
   const FX = {
     /** 碎裂, in the theme's material: glass flies apart, paper scraps flutter down, gold leaf falls, light drifts up. */
     shards(src, s) {
-      const mat = look().material || 'glass', L = look(), cols = Math.max(4, Math.round(s.w / 24)), rows = 2, cw = s.w / cols, ch = s.h / rows, pieces = [];
+      const L = look(), mat = { bloom: 'paper', tape: 'paper', riso: 'paper' }[L.material] || L.material || 'glass', cols = Math.max(4, Math.round(s.w / 24)), rows = 2, cw = s.w / cols, ch = s.h / rows, pieces = [];
       for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) for (let t = 0; t < 2; t++) {
         const x0 = s.left + x * cw, y0 = s.top + y * ch, pts = t ? [[x0 + cw, y0], [x0 + cw, y0 + ch], [x0, y0 + ch]] : [[x0, y0], [x0 + cw, y0], [x0, y0 + ch]];
         const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3, r = rng(x * 31 + y * 7 + t * 3 + 1), spread = x / Math.max(1, cols - 1) - .5;
@@ -169,7 +247,7 @@
           const dx = p.vx * tt + Math.sin(tt * 6 + p.cx) * p.sway * tt, dy = p.vy * tt + .5 * p.g * tt * tt;
           ctx.save(); ctx.globalAlpha = a; ctx.translate(p.cx + dx, p.cy + dy); ctx.rotate(p.spin * tt); ctx.translate(-p.cx, -p.cy);
           ctx.beginPath(); ctx.moveTo(...p.pts[0]); ctx.lineTo(...p.pts[1]); ctx.lineTo(...p.pts[2]); ctx.closePath();
-          if (mat === 'paper') { ctx.shadowColor = 'rgba(60,40,20,.2)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2; ctx.fillStyle = '#fbf8f1'; ctx.fill(); ctx.shadowColor = 'transparent'; }
+          if (mat === 'paper') { ctx.shadowColor = 'rgba(60,40,20,.2)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2; ctx.fillStyle = L.chip || '#fbf8f1'; ctx.fill(); ctx.shadowColor = 'transparent'; }
           else if (mat === 'gold') { const g = ctx.createLinearGradient(p.pts[0][0], p.pts[0][1], p.pts[1][0], p.pts[2][1]); g.addColorStop(0, '#9c7f47'); g.addColorStop(.5, '#f4e8cc'); g.addColorStop(1, '#c8a66a'); ctx.fillStyle = g; ctx.globalAlpha = a * .8; ctx.fill(); ctx.globalAlpha = a; }
           else if (mat === 'glass') { ctx.fillStyle = hex(p.c, .2); ctx.fill(); }
           else if (mat === 'plain') { ctx.fillStyle = 'rgba(160,200,255,.22)'; ctx.fill(); }
@@ -303,7 +381,7 @@
   /* ---------- 每周碎片画: a picture only this week of yours could make ---------- */
   /** The weekly picture. Each theme draws the week its own way:
       晨 seven glasses filled with the day's things, 昼 a manuscript page with one character per thing,
-      暮 a setting sun with one ray per thing, 夜 a star map with one constellation per day. */
+      晕 colour drops by hour and day, 乐 seven music-box strips, 印 a two-colour poster, 夜 a star map with one constellation per day. */
   const CN = n => { const D = '零一二三四五六七八九'; return n < 10 ? D[n] : n < 20 ? `十${n % 10 ? D[n % 10] : ''}` : n < 100 ? `${D[Math.floor(n / 10)]}十${n % 10 ? D[n % 10] : ''}` : String(n); };
   const firstChar = s => Array.from(String(s || '').trim())[0] || '·';
   const mixWhite = (c, t) => { const n = parseInt(c.slice(1), 16), m = v => Math.round(v + (255 - v) * t); return `rgb(${m(n >> 16 & 255)},${m(n >> 8 & 255)},${m(n & 255)})`; };
@@ -389,26 +467,65 @@
       return canvas;
     }
 
-    if (mat === 'gold') { /* ---- 暮: the week as a setting sun ---- */
-      ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
-      const hz = sc(900), cx = W / 2, R = sc(118);
-      { const g = ctx.createRadialGradient(cx, hz, 0, cx, hz, sc(820)); g.addColorStop(0, 'rgba(200,150,90,.26)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-      const span = 7 * 864e5, rays = entries.map((e, i) => { const r = rng(hash(`${e.id}${e.at}`)), f = clamp((e.at - start.getTime()) / span, 0, 1); return { a: Math.PI - (.04 + f * .92) * Math.PI + (r() - .5) * .02, len: sc(170 + Math.min(e.min || 0, 120) * 2.6 + r() * 120), w: sc(5 + r() * 5 + Math.min(e.min || 0, 90) / 18), e }; });
-      const drawRays = (mirror, alpha) => rays.forEach(({ a, len, w }) => {
-        const dx = Math.cos(a), dy = -Math.sin(a) * mirror, px = -dy, py = dx, r0 = R + sc(26), x0 = cx + dx * r0, y0 = hz + dy * r0, x1 = cx + dx * (r0 + len), y1 = hz + dy * (r0 + len);
-        const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, `rgba(244,232,204,${alpha})`); g.addColorStop(.35, `rgba(200,166,106,${alpha * .9})`); g.addColorStop(1, 'rgba(156,127,71,0)');
-        ctx.beginPath(); ctx.moveTo(x0 + px * w / 2, y0 + py * w / 2); ctx.lineTo(x1, y1); ctx.lineTo(x0 - px * w / 2, y0 - py * w / 2); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+    const SK = window.SuiSuiSkins;
+    if (mat === 'bloom') { /* ---- 晕: the week as one wash, a band of water per day, each drop a colour ---- */
+      const g0 = ctx.createLinearGradient(0, 0, 0, H); g0.addColorStop(0, '#f6f7f6'); g0.addColorStop(1, '#ebedec'); ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+      { const r = rng(51); for (let i = 0; i < W * H / 50; i++) { ctx.fillStyle = `rgba(40,50,60,${.04 * r()})`; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); } }
+      caption(`400 ${sc(80)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#2b2b2e', '#7a7c80');
+      const top = sc(270), band = sc(108), bx = Pd, bw = W - 2 * Pd;
+      ctx.globalCompositeOperation = 'multiply';
+      byDay.forEach((list, d) => list.forEach(e => {
+        // across: the hour it was done; down: its day; size: how long it was focused on
+        const when = new Date(e.at), hr = when.getHours() + when.getMinutes() / 60, r = rng(hash(`${e.id}w`)), c = SK.PIGMENTS[hash(`drop:${e.id}${e.at}`) % SK.PIGMENTS.length][1];
+        const R = sc(58 + Math.min(e.min || 0, 90) * .7) * (.85 + r() * .3), x = bx + R * .6 + clamp((hr - 6) / 17) * (bw - sc(90) - R * 1.2), y = top + d * band + band / 2 + (r() - .5) * band * .5;
+        for (let k = 0; k < 4; k++) {
+          const RR = R * (.86 + r() * .22), xx = x + (r() - .5) * R * .2, yy = y + (r() - .5) * R * .2, g = ctx.createRadialGradient(xx, yy, 0, xx, yy, RR);
+          g.addColorStop(0, hex(c, .06)); g.addColorStop(.72, hex(c, .07)); g.addColorStop(.94, hex(c, .1)); g.addColorStop(1, hex(c, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(xx, yy, RR, 0, 7); ctx.fill();
+        }
+      }));
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#7a7c80'; ctx.font = `400 ${sc(22)}px ${SONG}`; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, W - Pd - sc(56), top + d * band + band / 2 + sc(8)));
+      ctx.fillStyle = '#2b2b2e'; ctx.font = `400 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}滴颜色` : '一盆清水', Pd, H - Pd - sc(70));
+      ctx.fillStyle = '#7a7c80'; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? [st.focusText, `周${st.busiest}最浓。专注越久，晕得越大`].filter(Boolean).join('，') : '做完一件事，就滴下第一滴', Pd, H - Pd - sc(24));
+      return canvas;
+    }
+    if (mat === 'tape') { /* ---- 乐: seven strips, one a day; each hole a note at the hour it was done ---- */
+      ctx.fillStyle = '#12302a'; ctx.fillRect(0, 0, W, H);
+      { const r = rng(21); for (let i = 0; i < W * H / 60; i++) { ctx.fillStyle = `rgba(200,230,215,${.06 * r()})`; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); } }
+      caption(`300 ${sc(76)}px ${SANS}`, `第 ${isoWeek(start)} 周`, range, '#f3ecdc', '#9fb5ad');
+      const top = sc(280), sh = sc(96), gap = sc(18), lx = Pd + sc(70), rx = W - Pd;
+      byDay.forEach((list, d) => {
+        const y = top + d * (sh + gap);
+        ctx.fillStyle = '#9fb5ad'; ctx.font = `400 ${sc(24)}px ${SANS}`; ctx.fillText(`周${'一二三四五六日'[d]}`, Pd, y + sh / 2 + sc(9));
+        const pg = ctx.createLinearGradient(0, y, 0, y + sh); pg.addColorStop(0, '#f6f0e2'); pg.addColorStop(1, '#ebe2cc'); ctx.fillStyle = pg; ctx.fillRect(lx, y, rx - lx, sh);
+        for (let r = 0; r < 7; r++) { ctx.fillStyle = `rgba(18,48,42,${r % 2 ? .07 : .13})`; ctx.fillRect(lx, y + sc(10) + r * sc(15), rx - lx, sc(1)); }
+        for (let x = lx + sc(8); x < rx; x += sc(16)) { ctx.fillStyle = 'rgba(18,48,42,.5)'; ctx.beginPath(); ctx.arc(x, y + sc(4), sc(1.6), 0, 7); ctx.arc(x, y + sh - sc(4), sc(1.6), 0, 7); ctx.fill(); }
+        list.forEach(e => { const when = new Date(e.at), hr = when.getHours() + when.getMinutes() / 60, x = lx + sc(20) + (rx - lx - sc(40)) * clamp((hr - 6) / 18, 0, 1), yy = y + sc(10) + SK.pitchOf(`${e.id}`) * sc(15);
+          ctx.fillStyle = '#12302a'; ctx.beginPath(); ctx.arc(x, yy, sc(6.5), 0, 7); ctx.fill(); });
       });
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, hz); ctx.clip(); drawRays(1, 1);
-      const sun = ctx.createRadialGradient(cx - R * .3, hz - R * .4, 0, cx, hz, R); sun.addColorStop(0, '#f4e8cc'); sun.addColorStop(.6, '#c8a66a'); sun.addColorStop(1, '#9c7f47'); ctx.fillStyle = sun; ctx.beginPath(); ctx.arc(cx, hz, R, 0, 7); ctx.fill(); ctx.restore();
-      ctx.save(); ctx.beginPath(); ctx.rect(0, hz, W, H - hz); ctx.clip(); ctx.globalAlpha = .22; drawRays(-.55, .8); ctx.restore();
-      for (let i = 0; i < 6; i++) { ctx.fillStyle = `rgba(200,166,106,${.32 - i * .045})`; const wv = R * (1.6 - i * .2); ctx.fillRect(cx - wv, hz + sc(16 + i * 18), wv * 2, sc(2)); }
-      ctx.fillStyle = 'rgba(200,166,106,.7)'; ctx.fillRect(Pd, hz, W - 2 * Pd, sc(1.5));
-      ctx.textAlign = 'center'; ctx.font = `italic 400 ${sc(28)}px ${SERIF}`;
-      ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].forEach((t, d) => { const a = Math.PI - (.04 + (d + .5) / 7 * .92) * Math.PI, rr = sc(520); ctx.fillStyle = byDay[d].length ? 'rgba(200,166,106,.8)' : 'rgba(200,166,106,.3)'; ctx.fillText(t, cx + Math.cos(a) * rr, hz - Math.sin(a) * rr); });
-      ctx.textAlign = 'left';
-      caption(`400 ${sc(80)}px ${SERIF}`, `第 ${isoWeek(start)} 周`, range, '#c8a66a', L.muted);
-      footer(`400 ${sc(46)}px ${SERIF}`, '#efe6d6');
+      footer(`500 ${sc(44)}px ${SANS}`, '#f3ecdc', '#9fb5ad');
+      return canvas;
+    }
+    if (mat === 'riso') { /* ---- 印: a two-colour poster, each day a column of little prints ---- */
+      ctx.fillStyle = '#f6f4ef'; ctx.fillRect(0, 0, W, H);
+      const dots = document.createElement('canvas'); dots.width = dots.height = Math.max(4, Math.round(sc(9))); { const d = dots.getContext('2d'); d.fillStyle = '#ff4fa3'; d.beginPath(); d.arc(dots.width / 2, dots.height / 2, dots.width * .36, 0, 7); d.fill(); }
+      const pink = ctx.createPattern(dots, 'repeat');
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.font = `800 ${sc(300)}px ${SANS}`; ctx.fillStyle = '#2f5fb3'; ctx.fillText(String(isoWeek(start)), Pd - sc(10), sc(345));
+      ctx.fillStyle = pink; ctx.fillText(String(isoWeek(start)), Pd + sc(4), sc(335));
+      const colW = (W - 2 * Pd) / 7, s0 = Math.min(sc(96), colW * .92);
+      byDay.forEach((list, d) => list.slice(0, 6).forEach((e, i) => {
+        const m = SK.MOTIFS[SK.motifOf({ id: e.id, title: e.title })], r = rng(hash(`${e.id}${e.at}`)), x = Pd + d * colW + (colW - s0) / 2 + (r() - .5) * sc(10), y = sc(400) + i * (s0 + sc(12)), k = s0 / 40, line = !m.p || /M20 4v6|M4 10l16|M8 32L26/.test(m.p);
+        ctx.save(); ctx.translate(x + s0 / 2, y + s0 / 2); ctx.rotate((r() - .5) * .3); ctx.translate(-s0 / 2, -s0 / 2); ctx.scale(k, k);
+        ctx.save(); ctx.translate(1.8, -1.3); if (line) { ctx.strokeStyle = '#ff4fa3'; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.stroke(new Path2D(m.p)); } else { ctx.fillStyle = pink; ctx.fill(new Path2D(m.p)); ctx.fillStyle = 'rgba(255,79,163,.35)'; ctx.fill(new Path2D(m.p)); } ctx.restore();
+        if (/M20 4v6/.test(m.b)) { ctx.strokeStyle = '#2f5fb3'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke(new Path2D(m.b)); } else { ctx.fillStyle = 'rgba(47,95,179,.92)'; ctx.fill(new Path2D(m.b)); }
+        ctx.restore();
+      }));
+      ctx.globalCompositeOperation = 'source-over';
+      { const r = rng(5); for (let i = 0; i < W * H / 70; i++) { ctx.fillStyle = 'rgba(246,244,239,.9)'; ctx.fillRect(r() * W, r() * H, sc(1 + r() * 1.5), sc(1 + r())); } }
+      ctx.font = `400 ${sc(22)}px ${SANS}`; ctx.fillStyle = '#6b7184'; ctx.textAlign = 'center'; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, Pd + d * colW + colW / 2, sc(388))); ctx.textAlign = 'left';
+      ctx.fillStyle = '#2f5fb3'; ctx.font = `600 ${sc(24)}px ${SANS}`; ctx.fillText(range, Pd, sc(70));
+      footer(`800 ${sc(44)}px ${SANS}`, '#2f5fb3', '#6b7184');
       return canvas;
     }
 
@@ -443,7 +560,7 @@
       characters it will draw, and tell the caller whether it should draw again. */
   const fontsDone = new Set();
   function artFonts(L, entries) {
-    const mat = L.material, faces = mat === 'paper' ? ['400 40px "Noto Serif SC"'] : mat === 'gold' ? ['400 40px "Noto Serif SC"', '400 40px "Bodoni Moda"', 'italic 400 40px "Bodoni Moda"'] : [];
+    const mat = L.material, faces = mat === 'paper' ? ['400 40px "Noto Serif SC"'] : mat === 'bloom' ? ['400 40px "Noto Serif SC"'] : [];
     const text = `${window.SuiSuiSkins?.phraseChars || ''}第周件事一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
     const key = faces.join() + text; if (!faces.length || !document.fonts?.load || fontsDone.has(key)) return Promise.resolve(false);
     return Promise.all(faces.map(f => document.fonts.load(f, text))).then(() => { fontsDone.add(key); return true; }, () => false);
@@ -545,8 +662,8 @@
     // a Pro theme replaces the free style, so the free style cards show nothing selected while one is on
     if (activeTheme()) document.querySelectorAll('[data-ui-style]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
     const f = $('pro-look'); if (!f) return;
-    const pro = isPro(), cur = tryOn || (pro ? S().proTheme || '' : '');
-    f.innerHTML = `<legend>Pro 主题 · 一日四时${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
+    const pro = isPro(), cur = tryOn || (pro ? savedTheme() || '' : '');
+    f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
     f.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proThemePick)));
     const e = $('pro-effects-inline');
     if (e) {
@@ -585,10 +702,9 @@
       </section>
 
       <section class="pro-part" data-pro-section="themes">
-        <h2>一日四时</h2>
-        <p class="pro-lead">一天里的四个时刻，四种看今天的方式：清晨的杯子一点点满起来，白天在稿纸上一格一格圈掉，傍晚太阳随着进度落下，夜里每件事是一颗星。打开“跟随时间”，一天里会自己换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
-        <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? S().proTheme : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，暮 17 点，夜 20 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
-        ${SOON.map(t => `<article class="pro-theme soon"><span class="pro-mock" data-mock="soon" aria-hidden="true">${icon('sparkles')}</span><h3>${t.name}</h3><p>${t.line}</p><small>即将上线，已购用户免费</small></article>`).join('')}</div>
+        <h2>六套主题</h2>
+        <p class="pro-lead">六种看今天的方式：清晨的杯子一点点满起来，稿纸上的一句话一个字一个字写完，夜里每件事是一颗星；一滴滴颜色在水里晕开，八音盒纸带上打满音孔，一张孔版小海报慢慢印好。每套都换掉所有界面，连锁屏也一起换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
+        <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，夜 18 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
       </section>
 
       <section class="pro-part" data-pro-section="jar">
@@ -619,12 +735,9 @@
 
       <footer class="pro-buy" data-pay="${payPlatform()}">
         ${owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
-          : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>首发价，一次买断，永久使用</span></div>
-             <div class="pro-actions">${info().trialUsed ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? 'App Store 购买' : '购买兑换码'}</button></div>
-             ${payPlatform() === 'ios' ? '<p class="pro-paynote">用 Apple 账户付款。换了手机，点下面的“恢复购买”。</p>'
-              : `<form class="pro-redeem" id="pro-redeem"><input id="pro-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="已有兑换码？输入兑换" aria-label="兑换码"><button type="submit">兑换</button></form>
-                 <p class="pro-paynote" id="pro-paynote">付款后会收到一串兑换码，安卓和网页都能用。</p>`}`}
-        <p class="pro-legal">${payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<span></span>'}<span>本地预览：付款是模拟的</span><button type="button" id="pro-reset">重置</button></p>
+          : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}，一次买断，永久使用</span></div>
+             <div class="pro-actions">${info().trialUsed ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `购买兑换码 · ${PRICE}`}</button></div>`}
+        <p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>本地预览：付款是模拟的</span><button type="button" id="pro-reset">重置</button></p>
         <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>
       </footer>`;
     API.icons(s);
@@ -637,16 +750,11 @@
       if (id !== 'auto') playDemo();
     }));
     s.querySelectorAll('[data-pro-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proTheme)));
-    $('pro-buy')?.addEventListener('click', () => {
-      if (payPlatform() === 'ios') { buy(); return; }
-      const note = $('pro-paynote'); if (!note) return;
-      note.innerHTML = `正式版会打开付款页，付完显示兑换码。本地预览可以用这个：<button type="button" id="pro-fill-code">${demoCode}</button>`;
-      $('pro-fill-code').addEventListener('click', () => { $('pro-code').value = demoCode; $('pro-code').focus(); });
-    });
-    $('pro-redeem')?.addEventListener('submit', e => { e.preventDefault(); redeem($('pro-code').value); });
+    $('pro-buy')?.addEventListener('click', () => openPay());
+    $('pro-have-code')?.addEventListener('click', () => { openPay(); $('pro-pay-code')?.focus(); });
     s.querySelectorAll('[data-pay-preview]').forEach(b => b.addEventListener('click', () => { payPreview = b.dataset.payPreview; renderSheet(); s.querySelector('.pro-buy')?.scrollIntoView({ block: 'end' }); }));
     $('pro-trial')?.addEventListener('click', startTrial);
-    $('pro-restore')?.addEventListener('click', restore);
+    $('pro-restore')?.addEventListener('click', () => { openPay(); $('pro-pay-restore')?.click(); });
     $('pro-reset').addEventListener('click', resetLocal);
     $('pro-lock')?.addEventListener('change', e => { S().proLock = e.target.checked; persist(); applyTheme(); });
     $('pro-sound')?.addEventListener('change', e => { S().proSound = e.target.checked; persist(); if (e.target.checked) playSound(themeSound()); });
@@ -811,8 +919,7 @@
   }
 
   /** The task's pieces fly from its row into the theme's picture of today, and land at `to`.
-      晨: droplets fall into the glass. 昼: a drop of red ink arcs to the character's cell. 暮: gold leaf drifts up
-      to the sun. 夜: a spark with a tail flies up to its star. Resolves when they land. */
+      晨: droplets fall into the glass. 昼: a drop of red ink arcs to the character's cell. 晕: a drop of ink falls into the water. 乐: a paper dot to its column. 印: pink and blue ink dots. 夜: a spark with a tail flies up to its star. Resolves when they land. */
   function flyToHead(rect, to, theme) {
     const from = { x: rect.left + Math.min(rect.width * .3, 120), y: rect.top + rect.height / 2 }, dur = theme === 'night' ? 640 : 600;
     const lift = Math.min(150, Math.max(70, Math.abs(from.y - to.y) * .35));
@@ -827,13 +934,15 @@
       });
     } else if (theme === 'day') {
       draw = (ctx, ms) => { for (let k = 14; k >= 0; k--) { const t = (ms - k * 9) / dur; if (t <= 0 || t >= 1) continue; const p = path(t); ctx.globalAlpha = (1 - k / 15) * .9; ctx.fillStyle = '#b43a2c'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.2 * (1 - k / 18), 0, 7); ctx.fill(); } ctx.globalAlpha = 1; };
-    } else if (theme === 'dusk') {
-      const leaves = Array.from({ length: 9 }, (_, i) => { const r = rng(i * 11 + 1); return { d: i * 28, dx: (r() - .5) * 110, s: 3 + r() * 3.5, lag: r() * 50, spin: 4 + r() * 6, c: ['#e8d3a4', '#c8a66a', '#f4e8cc'][i % 3] }; });
-      draw = (ctx, ms) => leaves.forEach(b => {
-        const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag), flip = Math.cos(t * b.spin * Math.PI);
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(t * b.spin); ctx.scale(Math.max(.15, Math.abs(flip)), 1); ctx.globalAlpha = 1 - t * .25;
-        ctx.fillStyle = flip > 0 ? b.c : '#9c7f47'; ctx.beginPath(); ctx.moveTo(-b.s, -b.s * .6); ctx.lineTo(b.s * .9, -b.s * .8); ctx.lineTo(b.s, b.s * .5); ctx.lineTo(-b.s * .7, b.s * .8); ctx.closePath(); ctx.fill(); ctx.restore();
-      });
+    } else if (theme === 'bloom') {
+      const col = window.SuiSuiSkins?.PIGMENTS?.[0]?.[1] || '#3b5a87';
+      draw = (ctx, ms) => { const t = ms / dur; if (t >= 1) return; const p = path(t), q = path(Math.max(0, t - .04)), a = Math.atan2(p.y - q.y, p.x - q.x) - Math.PI / 2, s = 5;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = 'rgba(43,43,46,.85)'; ctx.beginPath(); ctx.moveTo(0, -s * 1.9); ctx.bezierCurveTo(s * .9, -s * .5, s, s * .6, 0, s); ctx.bezierCurveTo(-s, s * .6, -s * .9, -s * .5, 0, -s * 1.9); ctx.fill(); ctx.restore(); void col; };
+    } else if (theme === 'tape') {
+      draw = (ctx, ms) => { for (let k = 10; k >= 0; k--) { const t = (ms - k * 10) / dur; if (t <= 0 || t >= 1) continue; const p = path(t); ctx.fillStyle = `rgba(243,236,220,${(1 - k / 11) * .9})`; ctx.beginPath(); ctx.arc(p.x, p.y, 4.6 * (1 - k / 14), 0, 7); ctx.fill(); } };
+    } else if (theme === 'riso') {
+      const dots = Array.from({ length: 10 }, (_, i) => { const r = rng(i * 17 + 3); return { d: i * 22, dx: (r() - .5) * 110, s: 2.4 + r() * 3, lag: r() * 40, c: i % 2 ? 'rgba(255,79,163,.85)' : 'rgba(47,95,179,.85)' }; });
+      draw = (ctx, ms) => { ctx.globalCompositeOperation = 'multiply'; dots.forEach(b => { const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag); ctx.fillStyle = b.c; ctx.beginPath(); ctx.arc(p.x, p.y, b.s, 0, 7); ctx.fill(); }); ctx.globalCompositeOperation = 'source-over'; };
     } else {
       draw = (ctx, ms) => {
         const t = ms / dur; if (t >= 1) return;
@@ -842,8 +951,8 @@
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
       };
     }
-    const span = theme === 'dawn' ? dur + 6 * 34 : theme === 'dusk' ? dur + 9 * 28 : dur + 140;
-    return overlay(span, draw, theme === 'dawn' || theme === 'dusk' ? dur + 60 : dur);
+    const span = theme === 'dawn' ? dur + 6 * 34 :  theme === 'riso' ? dur + 10 * 22 : dur + 140;
+    return overlay(span, draw, ['dawn', 'riso'].includes(theme) ? dur + 60 : dur);
   }
 
   /* ---------- 倒数日 ---------- */
@@ -882,7 +991,8 @@
     const box = $('pro-celebrate'), today = todayLog(), focus = today.reduce((n, e) => n + (e.min || 0), 0), L = look();
     box.style.setProperty('--cel-bg', L.bg); box.style.setProperty('--cel-ink', L.ink); box.style.setProperty('--cel-muted', L.muted);
     const th = activeTheme(), focusText = focus ? `，专注 ${focus} 分钟` : '';
-    const words = { dawn: ['杯子满了。', `今天 ${today.length} 件${focusText}，一滴不剩。`, '收好了'], day: ['今日事，今日毕。', `${today.length} 件${focusText}，这一页写完了。`, '收笔'], dusk: ['日落，收工。', `${today.length} 件${focusText}，今天到此为止。`, '收工'], night: ['今天的星座，连好了。', `${today.length} 颗星${focusText}，晚安。`, '晚安'] }[th] || ['今天的事，全部完成。', `${today.length} 件${focusText}，都收进碎片罐了。`, '收好了'];
+    const words = { dawn: ['杯子满了。', `今天 ${today.length} 件${focusText}，一滴不剩。`, '收好了'], day: ['今日事，今日毕。', `${today.length} 件${focusText}，这一页写完了。`, '收笔'], night: ['今天的星座，连好了。', `${today.length} 颗星${focusText}，晚安。`, '晚安'],
+      bloom: ['晕好了。', `${today.length} 滴颜色${focusText}，今天这幅画干了。`, '落款'], tape: ['曲子打好了。', `${today.length} 个音${focusText}，八音盒弹给你听。`, '好听'], riso: ['印完了。', `${today.length} 张小画${focusText}，今天这张海报印好了。`, '收藏'] }[th] || ['今天的事，全部完成。', `${today.length} 件${focusText}，都收进碎片罐了。`, '收好了'];
     box.className = `pro-celebrate${th ? ` pro-cel-${th}` : ''}`;
     box.innerHTML = `<canvas id="pro-cel-canvas" aria-hidden="true"></canvas><div class="pro-cel-text"><h2>${words[0]}</h2><p>${words[1]}</p><button type="button" id="pro-cel-close">${words[2]}</button></div>`;
     box.hidden = false;
@@ -909,7 +1019,7 @@
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, openPay, closePay, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   mount();
   applyTheme(); refreshAll();
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });

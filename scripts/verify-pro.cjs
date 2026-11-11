@@ -35,9 +35,9 @@ let browser;
     assert.ok(await page.locator('.shard').count() > 0, 'Free completion keeps the shatter');
     await page.waitForTimeout(900);
     await page.locator('.nav-button[data-view=settings]').click();
-    assert.equal(await page.locator('#pro-banner-state').textContent(), '¥18');
+    assert.equal(await page.locator('#pro-banner-state').textContent(), '¥28');
     await page.locator('[data-settings-page=look]').click();
-    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 5, '外观 shows 跟随时间 and the four Pro themes');
+    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 7, '外观 shows 跟随时间 and the six Pro themes');
     assert.equal(await page.locator('[data-pro-theme-pick=day] .pro-lock-badge').count(), 1, '… locked');
     await page.locator('#settings-back').click();
     await page.locator('#pro-banner').click();
@@ -68,28 +68,42 @@ let browser;
     assert.equal(p1.trialUsed, true); assert.ok(p1.trialEnds > Date.now() + 2.9 * 864e5, '3-day trial');
     assert.equal(await page.locator('#pro-trial').count(), 0, 'Trial is offered once');
     // Android and the web: a redeem code
-    assert.equal(await page.locator('#pro-buy').textContent(), '购买兑换码', 'The web build sells a redeem code');
+    assert.equal(await page.locator('#pro-buy').textContent(), '购买兑换码 · ¥28', 'The web build sells a redeem code at the launch price');
     await page.locator('#pro-buy').click();
-    assert.match(await page.locator('#pro-paynote').textContent(), /SUISUI-/, 'Preview shows a code to try');
-    await page.locator('#pro-code').fill('SUISUI-AAAA-BBBB-CCCC');
-    await page.locator('#pro-redeem button').click();
+    assert.equal(await page.locator('#pro-pay').isVisible(), true, 'Checkout opens');
+    assert.equal(await page.locator('.pro-pay-steps li').count(), 3, '① 打开付款页 ② 复制兑换码 ③ 粘贴兑换');
+    await page.locator('#pro-pay-go').click();
+    assert.match(await page.locator('.pro-pay-note').textContent(), /SUISUI-/, 'Preview shows a code to try');
+    await page.locator('#pro-pay-code').fill('suisui aaaa');
+    assert.equal(await page.locator('#pro-pay-code').inputValue(), 'SUISUI-AAAA', 'The code formats itself as you type');
+    await page.locator('#pro-pay-redeem button[type=submit]').click();
+    assert.match(await page.locator('.pro-pay-note.is-error').textContent(), /兑换码不对/, 'A malformed code says what is wrong');
     assert.equal((await saved(page)).pro.owned, false, 'A wrong code unlocks nothing');
-    await page.locator('#pro-fill-code').click();
-    await page.locator('#pro-redeem button').click();
+    const code = await page.evaluate(() => window.SuiSuiPro.demoCode);
+    await page.locator('[data-pay-outcome=used]').click();
+    await page.locator('#pro-pay-code').fill(code); await page.locator('#pro-pay-redeem button[type=submit]').click();
+    await page.waitForTimeout(1200);
+    assert.match(await page.locator('.pro-pay-note.is-error').textContent(), /3 台设备/, 'A used-up code says so');
+    assert.equal((await saved(page)).pro.owned, false);
+    await page.locator('[data-pay-outcome=ok]').click();
+    await page.locator('#pro-pay-code').fill(code); await page.locator('#pro-pay-redeem button[type=submit]').click();
+    await page.waitForTimeout(1200);
     assert.equal((await saved(page)).pro.owned, true, 'The code unlocks Pro and is remembered');
     assert.equal((await saved(page)).pro.via, 'code');
+    assert.equal(await page.locator('.pro-pay-themes button').count(), 6, 'Unlocked: pick one of the six themes');
+    await page.locator('#pro-pay-finish').click();
     await page.locator('#pro-close').click();
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '已解锁');
     await page.locator('[data-settings-page=look]').click();
-    await page.locator('[data-pro-theme-pick=dusk]').click();
-    assert.equal(await html(page, 'proTheme'), 'dusk'); assert.equal(await html(page, 'style'), 'night', '暮 sits on 夜光');
-    assert.equal(await html(page, 'proSkin'), 'dusk', 'The theme brings its own background and header');
+    await page.locator('[data-pro-theme-pick=tape]').click();
+    assert.equal(await html(page, 'proTheme'), 'tape'); assert.equal(await html(page, 'style'), 'night', '乐 sits on 夜光');
+    assert.equal(await html(page, 'proSkin'), 'tape', 'The theme brings its own background and header');
     assert.equal(await page.locator('#pro-head').count(), 1);
-    assert.equal((await saved(page)).proTheme, 'dusk');
+    assert.equal((await saved(page)).proTheme, 'tape');
     await page.locator('[data-pro-effect-pick=gold]').click();
     assert.equal((await saved(page)).proEffect, 'gold');
-    await page.screenshot({ path: path.join(review, 'pro-look-dusk-390.png') });
+    await page.screenshot({ path: path.join(review, 'pro-look-tape-390.png') });
     // A free style takes the Pro theme off
     await page.locator('[data-ui-style=paper]').click();
     await page.waitForTimeout(50);
@@ -107,8 +121,8 @@ let browser;
     await page.locator('#pro-close').click();
     assert.match(await page.locator('#pro-head').textContent(), /12天期末考试/, 'Countdown in the theme header');
     // Each theme draws today its own way
-    const marks = { dawn: '.ph-wave', day: 'rect', dusk: 'circle', night: 'circle' };
-    for (const id of ['dawn', 'day', 'dusk', 'night']) {
+    const marks = { dawn: '.ph-wave', day: 'rect', night: 'circle', bloom: 'text', tape: '.ph-tape', riso: 'rect' };
+    for (const id of ['dawn', 'day', 'night', 'bloom', 'tape', 'riso']) {
       await page.evaluate(t => { window.suisui.pro.state.settings.proTheme = t; window.suisui.pro.applySettings(); window.suisui.pro.render(); }, id);
       assert.equal(await html(page, 'proSkin'), id);
       assert.ok(await page.locator(`#pro-head.pro-head-${id} svg.ph-art ${marks[id]}`).count() > 0, `${id} draws its own header`);
@@ -137,8 +151,8 @@ let browser;
     assert.match(await page.locator('.pro-jar-big p').textContent(), /3 件今天完成/);
     const art = await page.evaluate(() => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5)); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] !== d[0] || d[i + 1] !== d[1]) n++; return { w: c.width, h: c.height, varied: n }; });
     assert.equal(art.w, 1080); assert.equal(art.h, 1350); assert.ok(art.varied > 500, 'Weekly art has content');
-    const arts = await page.evaluate(() => ['dawn', 'day', 'dusk', 'night'].map(id => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5), window.SuiSuiPro.THEMES[id], 270); return c.toDataURL().length + ':' + c.toDataURL().slice(-200); }));
-    assert.equal(new Set(arts).size, 4, 'Four themes, four different weekly pictures');
+    const arts = await page.evaluate(() => ['dawn', 'day', 'night', 'bloom', 'tape', 'riso'].map(id => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5), window.SuiSuiPro.THEMES[id], 270); return c.toDataURL().length + ':' + c.toDataURL().slice(-200); }));
+    assert.equal(new Set(arts).size, 6, 'Six themes, six different weekly pictures');
     await page.screenshot({ path: path.join(review, 'pro-jar-390.png') });
     await page.locator('#pro-jar-close').click();
     // Reset (local preview only)
@@ -188,11 +202,31 @@ let browser;
   {
     const { context, page } = await open({}, '?pay=ios');
     await page.evaluate(() => window.SuiSuiPro.open());
-    assert.equal(await page.locator('#pro-buy').textContent(), 'App Store 购买');
-    assert.equal(await page.locator('#pro-redeem').count(), 0, 'No redeem code on iPhone');
+    assert.equal(await page.locator('#pro-buy').textContent(), '购买 · ¥28');
     assert.equal(await page.locator('#pro-restore').count(), 1, 'Restore purchases on iPhone');
     await page.locator('#pro-buy').click();
+    assert.equal(await page.locator('.pro-pay-redeem').count(), 0, 'No redeem code on iPhone');
+    assert.match(await page.locator('#pro-pay-go').textContent(), /用 App Store 购买 ¥28/);
+    for (const [outcome, says] of [['cancel', /没有扣款/], ['fail', /再试一次/], ['ask', /家长同意/]]) {
+      await page.locator(`[data-pay-outcome=${outcome}]`).click(); await page.locator('#pro-pay-go').click();
+      assert.equal(await page.locator('.pro-pay-working').isVisible(), true, 'Waiting for the App Store');
+      await page.waitForTimeout(1400);
+      assert.match(await page.locator('.pro-pay-note').textContent(), says, `${outcome} is explained`);
+      assert.equal(!!(await saved(page)).pro?.owned, false);
+    }
+    await page.locator('#pro-pay-restore').click(); await page.waitForTimeout(1200);
+    // the simulated outcome is still 家长同意 → nothing to restore
+    assert.match(await page.locator('.pro-pay-note').textContent(), /没有买过/, 'Restore with nothing bought says so');
+    await page.locator('[data-pay-outcome=ok]').click(); await page.locator('#pro-pay-go').click(); await page.waitForTimeout(1400);
     assert.equal((await saved(page)).pro.owned, true); assert.equal((await saved(page)).pro.via, 'appstore');
+    assert.equal(await page.locator('.pro-pay-done').isVisible(), true, 'Unlocked screen');
+    await context.close();
+  }
+
+  /* 暮 · 金 was removed: a saved 'dusk' shows 夜 */
+  {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: 'dusk' });
+    assert.equal(await html(page, 'proTheme'), 'night', 'A saved 暮 falls back to 夜');
     await context.close();
   }
 
@@ -205,6 +239,6 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone, completion flies into the theme picture and only that task animates, bundled fonts, themed Android lock screen with its own strip (and a switch to keep it plain).');
+  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone (cancel / fail / parental approval / restore explained), ¥28 launch price, six themes, completion flies into the theme picture and only that task animates, bundled fonts, themed Android lock screen with its own strip (and a switch to keep it plain).');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

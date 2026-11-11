@@ -1,8 +1,10 @@
 /* 碎碎清单 Pro skins —「一日四时」: four times of day, each with its own way of drawing today.
      dawn  晨 · 玻璃   a measuring glass that fills with light as things get done
      day   昼 · 纸     manuscript paper: one character per task, circled in red when done
-     dusk  暮 · 金     a sunset dial: the sun crosses the sky and sets when the list is clear
      night 夜 · 光     a constellation: every task is a star, done ones light up and join
+     bloom 晕 · 彩墨   clear water: every task drops one colour that slowly blooms; drops mix
+     tape  乐 · 纸带   a music-box strip: every task punches one note; clear the list and it plays
+     riso  印 · 孔版   a two-colour risograph print: every task prints one little illustration
    What they share: completion still breaks the task into pieces (in the theme's material), and the pieces go into
    the same jar. Everything else — header, check, rows, weekly picture — belongs to the theme.
    The list stays the subject: backgrounds are quiet. pro.js decides which theme is on. */
@@ -22,7 +24,7 @@
   const CINNABAR = '#b43a2c', GOLD = '#c8a66a';
   const SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
   const SERIF = '"Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
-  const MAT = { dawn: 'glass', day: 'paper', dusk: 'gold', night: 'light' };
+  const MAT = { dawn: 'glass', day: 'paper', night: 'light', bloom: 'paper', tape: 'plain', riso: 'paper' };
 
   /* ---------- Backgrounds: quiet ---------- */
   function grain(ctx, w, h, alpha, seed = 3, color = '0,0,0') {
@@ -39,17 +41,22 @@
       });
     },
     day(ctx, w, h) { ctx.fillStyle = '#f5f2ec'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .05, 4, '90,70,40'); },
-    dusk(ctx, w, h) {
-      ctx.fillStyle = '#15110c'; ctx.fillRect(0, 0, w, h);
-      const g = ctx.createRadialGradient(w * .5, -h * .1, 10, w * .5, -h * .1, h * 1.1); g.addColorStop(0, 'rgba(200,150,90,.16)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      grain(ctx, w, h, .05, 9, '255,240,210');
-    },
     night(ctx, w, h) {
       ctx.fillStyle = '#07080d'; ctx.fillRect(0, 0, w, h);
       const g = ctx.createRadialGradient(w * .5, -h * .2, 10, w * .5, -h * .2, h); g.addColorStop(0, 'rgba(90,110,190,.14)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       stars(ctx, w, h * .9, Math.round(w * h / 2600), 77, .45);
     }
   };
+  BG.bloom = (ctx, w, h) => { // still water on white paper
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#f4f5f4'); g.addColorStop(1, '#eceeed'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    grain(ctx, w, h, .035, 51, '40,50,60');
+  };
+  BG.tape = (ctx, w, h) => {
+    ctx.fillStyle = '#12302a'; ctx.fillRect(0, 0, w, h);
+    const g = ctx.createRadialGradient(w * .5, h * .25, 10, w * .5, h * .4, Math.max(w, h)); g.addColorStop(0, 'rgba(60,110,95,.35)'); g.addColorStop(1, 'rgba(0,0,0,.25)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    grain(ctx, w, h, .07, 21, '200,230,215'); // velvet
+  };
+  BG.riso = (ctx, w, h) => { ctx.fillStyle = '#f6f4ef'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .06, 41, '60,60,90'); };
   const RES = { dawn: 5 }, FPS = { dawn: 120 };
   let current = '', loop = 0;
   function paint(t = 0) {
@@ -164,26 +171,6 @@
     return { H, land, svg: `${g}${v}${hint}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>` };
   }
 
-  /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the list is clear */
-  function duskArt(D, A) {
-    const W = 340, H = 178, hz = 146, cx = 170, R = 116, n = Math.min(D.total, 24), pct = D.total ? D.done / D.total : 0, p0 = A && D.total ? A.from / D.total : pct;
-    let ticks = '';
-    for (let i = 0; i < n; i++) { const a = Math.PI - (i + .5) / n * Math.PI, on = i < D.done, fresh = A && i === D.done - 1, r0 = R + 7, r1 = r0 + (on ? 14 : 5); ticks += `<line class="${fresh ? 'ph-new ph-grow-r' : ''}" style="transform-origin:${f1(cx + Math.cos(a) * r0)}px ${f1(hz - Math.sin(a) * r0)}px" x1="${f1(cx + Math.cos(a) * r0)}" y1="${f1(hz - Math.sin(a) * r0)}" x2="${f1(cx + Math.cos(a) * r1)}" y2="${f1(hz - Math.sin(a) * r1)}" stroke="${GOLD}" stroke-opacity="${on ? 1 : .32}" stroke-width="${on ? 1.4 : .8}" stroke-linecap="round"/>`; }
-    // the sun is drawn at the left horizon and turned about the dial's centre, so a move is one rotation
-    const deg = f1(pct * 180), from = f1(p0 * 180), x0 = cx - R;
-    const arc = `M${cx - R} ${hz}A${R} ${R} 0 0 1 ${cx + R} ${hz}`;
-    return { H, land: { x: f1(cx + Math.cos(Math.PI - p0 * Math.PI) * R), y: f1(hz - Math.sin(Math.PI - p0 * Math.PI) * R) }, svg: `<defs><radialGradient id="pk-sun" cx=".38" cy=".34"><stop offset="0" stop-color="#fbf1da"/><stop offset=".55" stop-color="#d9b97c"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pk-glow"><stop offset="0" stop-color="#e2c48a" stop-opacity=".42"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient><clipPath id="pk-sky"><rect x="-20" y="-20" width="${W + 40}" height="${hz + 20}"/></clipPath></defs>
-      <path d="${arc}" fill="none" stroke="${GOLD}" stroke-opacity=".28" stroke-width=".8" stroke-dasharray="1.5 4.5"/>
-      <path class="${A ? 'ph-arc' : ''}" style="--a0:${f1(p0 * 1000) / 1000}" d="${arc}" pathLength="1" stroke-dasharray="${f1(pct * 1000) / 1000} 1" fill="none" stroke="${GOLD}" stroke-width="1.6" stroke-linecap="round"/>${ticks}
-      <g clip-path="url(#pk-sky)"><g class="ph-sun${A ? ' ph-sunmove' : ''}" style="--from:${from}deg;--to:${deg}deg;transform-origin:${cx}px ${hz}px;transform:rotate(${deg}deg)">
-        <circle class="${A ? 'ph-flare' : ''}" cx="${x0}" cy="${hz}" r="46" fill="url(#pk-glow)"/><circle cx="${x0}" cy="${hz}" r="11.5" fill="url(#pk-sun)"/></g></g>
-      <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".65" stroke-width=".8"/>
-      <line x1="${cx - 60}" x2="${cx + 60}" y1="${hz + 5}" y2="${hz + 5}" stroke="${GOLD}" stroke-opacity=".18" stroke-width=".7"/>
-      <text class="${A ? 'ph-pop' : ''}" x="${cx}" y="${hz - 32}" text-anchor="middle" font-family='${SERIF}' font-size="52" fill="${GOLD}" letter-spacing="-.5">${two(D.done)}</text>
-      <text x="${cx}" y="${hz - 12}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#9c907c" letter-spacing="3">${D.total ? (D.left ? `共 ${D.total} 件` : '日落　收工') : '今天还没有安排'}</text>
-      <text x="${cx}" y="${hz + 26}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#b3a68e" letter-spacing="2.5">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}${D.lunar ? `　${esc(D.lunar)}` : ''}</text>` };
-  }
-
   /* 夜 · 光 — a constellation: every task is a star; done ones light up and join into today's shape */
   const SPARK = (x, y, s) => `M${x} ${y - s}C${f1(x + s * .12)} ${f1(y - s * .12)} ${f1(x + s * .12)} ${f1(y - s * .12)} ${x + s} ${y}C${f1(x + s * .12)} ${f1(y + s * .12)} ${f1(x + s * .12)} ${f1(y + s * .12)} ${x} ${y + s}C${f1(x - s * .12)} ${f1(y + s * .12)} ${f1(x - s * .12)} ${f1(y + s * .12)} ${x - s} ${y}C${f1(x - s * .12)} ${f1(y - s * .12)} ${f1(x - s * .12)} ${f1(y - s * .12)} ${x} ${y - s}Z`;
   function nightArt(D, A) {
@@ -207,32 +194,136 @@
       <text class="${A ? 'ph-pop' : ''}" x="0" y="98" font-family="${SANS_UI}" fill="#eef1fa"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
       <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>${taps}` };
   }
-  const ART = { dawn: dawnArt, day: dayArt, dusk: duskArt, night: nightArt };
+  /* 晕 · 彩墨 — clear water: each finished task drops one colour (花青, 胭脂, 藤黄, 石青, 赭石, 墨) that slowly
+     blooms; overlapping drops mix. The day dries into its own little abstract painting. */
+  const PIGMENTS = [['花青', '#3b5a87'], ['胭脂', '#b8475a'], ['藤黄', '#d9a43a'], ['石青', '#3f8aa6'], ['赭石', '#a8673e'], ['墨', '#2b2b2e']];
+  /** Where and how the i-th task's drop lands inside a box, and its colour. Positions follow a low-discrepancy
+      sequence, so drops spread over the water instead of clumping. */
+  function drop(id, x0, y0, w, h, rmin = 22, rmax = 40, i = hash(id) % 97) {
+    const r = rng(hash(`drop:${id}`)), k = Math.floor(r() * PIGMENTS.length), fx = (.5 + i * .6180339) % 1, fy = (.5 + i * .7548777) % 1;
+    return { x: x0 + rmax * .7 + (fx + (r() - .5) * .12) * (w - rmax * 1.4), y: y0 + rmax * .6 + (fy + (r() - .5) * .12) * (h - rmax * 1.2), R: rmin + r() * (rmax - rmin), c: PIGMENTS[k][1], k };
+  }
+  const bloomDefs = u => `<filter id="pb-wet${u}" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="7"/><feGaussianBlur stdDeviation=".6"/></filter>
+    ${PIGMENTS.map(([, c], k) => `<radialGradient id="pb-c${k}${u}" cx=".46" cy=".44"><stop offset="0" stop-color="${c}" stop-opacity=".16"/><stop offset=".6" stop-color="${c}" stop-opacity=".22"/><stop offset=".86" stop-color="${c}" stop-opacity=".44"/><stop offset=".95" stop-color="${c}" stop-opacity=".18"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}`;
+  const bloomDot = (b, u, cls = '') => `<g class="${cls}" style="transform-origin:${f1(b.x)}px ${f1(b.y)}px"><circle cx="${f1(b.x)}" cy="${f1(b.y)}" r="${f1(b.R)}" fill="url(#pb-c${b.k}${u})" style="mix-blend-mode:multiply"/><ellipse cx="${f1(b.x - b.R * .2)}" cy="${f1(b.y + b.R * .15)}" rx="${f1(b.R * .62)}" ry="${f1(b.R * .5)}" fill="url(#pb-c${b.k}${u})" opacity=".7" style="mix-blend-mode:multiply"/></g>`;
+  function bloomArt(D, A) {
+    const W = 340, H = 164, bx = 120, by = 0, bw = W - bx - 44, bh = H - 4, idx = Object.fromEntries(D.items.map((it, i) => [it.id, i])), done = D.items.filter(i => i.done).sort((a, b) => a.at - b.at);
+    let blooms = '', land = { x: bx + bw / 2, y: by + bh / 2 }; const pts = {};
+    done.forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]), fresh = A && A.id === it.id; pts[it.id] = { x: b.x, y: b.y }; if (fresh) land = { x: b.x, y: b.y }; blooms += bloomDot(b, '', fresh ? 'ph-bloom' : ''); });
+    D.items.filter(i => !i.done).forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]); pts[it.id] = { x: b.x, y: b.y }; });
+    const state = D.total ? (D.left ? `晕开了 ${D.done} 滴，还有 ${D.left} 滴` : '今天这幅，晕好了') : '一盆清水，等第一滴墨';
+    return { H, pts, land, svg: `<defs>${bloomDefs('')}</defs>
+      <g filter="url(#pb-wet)">${blooms}</g>
+      <text class="${A ? 'ph-pop' : ''}" x="0" y="70" font-family='${SONG}' fill="#2b2b2e"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
+      <text x="2" y="96" font-family='${SONG}' font-size="12.5" fill="#7a7c80" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
+      <text x="2" y="${H - 22}" font-family='${SONG}' font-size="13" fill="#2b2b2e" fill-opacity=".8" letter-spacing="1">${state}</text>` };
+  }
+
+  /* 乐 · 纸带 — a music-box paper strip: each finished task punches one hole (a note of the pentatonic scale, so any
+     order sounds right). Tap the strip to hear today's tune so far; clear the list and it plays it for you. */
+  const NOTES = [1174.66, 1046.5, 880, 783.99, 659.25, 587.33, 523.25]; // top row = highest: D6 C6 A5 G5 E5 D5 C5
+  const pitchOf = id => hash(`note:${id}`) % 7;
+  function tapeArt(D, A) {
+    const W = 340, H = 178, top = 58, rows = 7, gap = 13, sh = rows * gap + 18, items = D.items.slice(0, 16), n = Math.max(items.length, 6), x0 = 26, x1 = 318, col = i => x0 + (x1 - x0) * (n === 1 ? .5 : i / (n - 1));
+    let lines = '', holes = '', perf = '', land = { x: col(0), y: top + 9 + 3 * gap };
+    for (let r = 0; r < rows; r++) lines += `<line x1="0" x2="${W}" y1="${top + 9 + r * gap}" y2="${top + 9 + r * gap}" stroke="#12302a" stroke-opacity="${r % 2 ? .07 : .13}" stroke-width=".7"/>`;
+    for (let i = 0; i < n; i++) lines += `<line x1="${f1(col(i))}" x2="${f1(col(i))}" y1="${top}" y2="${top + sh}" stroke="#12302a" stroke-opacity=".06" stroke-width=".7"/>`;
+    for (let x = 6; x < W; x += 12) perf += `<circle cx="${x}" cy="${top + 3.5}" r="1.3" fill="#12302a" fill-opacity=".55"/><circle cx="${x}" cy="${top + sh - 3.5}" r="1.3" fill="#12302a" fill-opacity=".55"/>`;
+    const tune = [];
+    items.forEach((it, i) => {
+      const x = f1(col(i)), y = top + 9 + pitchOf(it.id) * gap, fresh = A && A.id === it.id;
+      if (it.done) { tune.push({ x, p: pitchOf(it.id) }); holes += `<g data-hole="${x}" class="ph-hole${fresh ? ' ph-punch' : ''}" style="transform-origin:${x}px ${y}px"><circle cx="${x}" cy="${y}" r="5.2" fill="#12302a"/><circle cx="${x}" cy="${y}" r="5.2" fill="none" stroke="#000" stroke-opacity=".25" stroke-width="1"/><path d="M${x - 4} ${y - 2.5}A5 5 0 0 1 ${x + 2.5} ${y - 4.2}" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width=".8"/></g>`; }
+      else holes += `<circle cx="${x}" cy="${y}" r="4.6" fill="none" stroke="#12302a" stroke-opacity=".28" stroke-width=".8" stroke-dasharray="1.6 1.8"/>`;
+    });
+    // land on the column of the task that just got done
+    if (A) { const i = items.findIndex(it => it.id === A.id); if (i >= 0) land = { x: col(i), y: top + 9 + pitchOf(A.id) * gap }; }
+    return { H, land, tune, svg: `<defs><linearGradient id="pt-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f0e2"/><stop offset="1" stop-color="#ebe2cc"/></linearGradient></defs>
+      <text class="${A ? 'ph-pop' : ''}" x="2" y="38" font-family="${SANS_UI}" fill="#f3ecdc"><tspan font-size="40" font-weight="250" letter-spacing="-1">${D.done}</tspan><tspan font-size="17" fill-opacity=".45" dx="4">/ ${D.total} 个音</tspan></text>
+      <text x="${W - 60}" y="20" text-anchor="end" font-family="${SANS_UI}" font-size="12" fill="#9fb5ad">${dateLine(D)}</text>
+      <g class="ph-tape" data-tune="${tune.map(t => `${t.x}:${t.p}`).join(' ')}" data-x0="${x0}" data-x1="${x1}"><rect x="-8" y="${top}" width="${W + 16}" height="${sh}" fill="url(#pt-paper)"/>${perf}${lines}${holes}<rect class="ph-playhead" x="${x0 - 1}" y="${top}" width="2" height="${sh}" fill="#e2725b" opacity="0"/></g>
+      <text x="2" y="${top + sh + 24}" font-family="${SANS_UI}" font-size="12.5" fill="#cfdcd6">${D.total ? (D.left ? `还差 ${D.left} 个音。点纸带听听已经有的` : '全部打好了。点纸带再听一遍') : '今天的纸带还是空的'}</text>` };
+  }
+
+  /* 印 · 孔版 — a two-colour risograph print (fluorescent pink + blue, overprinted, slightly off register).
+     Each finished task prints one little illustration on today's sheet, picked from what the task says. */
+  const RISO = { pink: '#ff4fa3', blue: '#2f5fb3', paper: '#f6f4ef' };
+  const MOTIFS = {
+    phone: { b: 'M13 5h14a3 3 0 0 1 3 3v24a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z', p: 'M20 26a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM15 10h10v12H15z' },
+    book: { b: 'M5 9c5-2 10-2 15 1v23c-5-3-10-3-15-1zM35 9c-5-2-10-2-15 1v23c5-3 10-3 15-1z', p: 'M24 9h4v14l-2-2-2 2z' },
+    shoe: { b: 'M5 24c0-6 2-12 5-14l7 7c4 2 9 2 14 3 3 1 5 3 5 6H5z', p: 'M5 28h31v4H5zM13 15l3 3M16 12l3 3' },
+    bowl: { b: 'M4 20h32c0 9-7 14-16 14S4 29 4 20z', p: 'M10 20c0-6 4-10 10-10s10 4 10 10zM29 4l-6 14M34 6l-9 13' },
+    pencil: { b: 'M9 31L27 7l6 4-18 24-7 2z', p: 'M27 7l3-4 6 4-3 4zM9 31l-1 6 7-2z' },
+    cat: { b: 'M8 34V16L6 5l9 7h10l9-7-2 11v18z', p: 'M14 22a2 2 0 1 1 0 .1zM26 22a2 2 0 1 1 0 .1zM18 27h4l-2 2z' },
+    cup: { b: 'M7 13h22v12a9 9 0 0 1-9 9h-4a9 9 0 0 1-9-9zM29 16h3a4 4 0 0 1 0 8h-3', p: 'M13 3c2 2-2 4 0 7M19 3c2 2-2 4 0 7M5 35h28v2H5z' },
+    mail: { b: 'M4 10h32v21H4z', p: 'M4 10l16 12 16-12' },
+    plant: { b: 'M20 22c-8 0-12-6-12-13 7 0 12 5 12 13zM20 20c0-8 5-13 12-13 0 7-4 13-12 13z', p: 'M12 24h16l-2 12H14z' },
+    moon: { b: 'M27 6a15 15 0 1 0 8 22A12 12 0 0 1 27 6z', p: 'M10 8l1 3 3 1-3 1-1 3-1-3-3-1 3-1z' },
+    sun: { b: 'M20 4v6M20 30v6M4 20h6M30 20h6M8 8l4 4M28 28l4 4M8 32l4-4M28 12l4-4', p: 'M20 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16z' },
+    leaf: { b: 'M8 32C8 16 18 6 34 6c0 16-10 26-26 26z', p: 'M8 32L26 14' },
+    bag: { b: 'M7 14h26l-2 21H9z', p: 'M14 14v-3a6 6 0 0 1 12 0v3' }
+  };
+  const MOTIF_WORDS = [[/电话|打给|通话|联系/, 'phone'], [/读|书|看完|学习|背/, 'book'], [/跑|走|健身|运动|锻炼|散步/, 'shoe'], [/吃|饭|做饭|早餐|午餐|晚餐|菜/, 'bowl'], [/写|稿|文案|剪|改|画|设计|选题|记/, 'pencil'], [/猫|狗|喂|宠物/, 'cat'], [/水|喝|咖啡|茶/, 'cup'], [/邮件|回复|发给|消息|客户/, 'mail'], [/花|植物|浇/, 'plant'], [/睡|休息|早点/, 'moon'], [/买|购|超市|快递|取/, 'bag'], [/晒|出门|太阳/, 'sun']];
+  const motifOf = it => { for (const [re, k] of MOTIF_WORDS) if (re.test(it.title || '')) return k; return ['leaf', 'sun', 'plant', 'moon'][hash(it.id) % 4]; };
+  /** One printed motif at (x, y), size s, turned rot degrees: the blue pass solid, the pink pass in halftone dots and
+      a hair off register; both multiply like real overprinted ink. */
+  const printMotif = (k, x, y, s, rot, fresh, u) => { const m = MOTIFS[k], sc = s / 40, line = k === 'sun' || k === 'mail' || k === 'leaf';
+    return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${rot} ${f1(s / 2)} ${f1(s / 2)}) scale(${f1(sc * 100) / 100})"><g class="${fresh ? 'ph-print' : ''}">
+      <path class="ph-ink-p" d="${m.p}" transform="translate(1.8 -1.3)" fill="${line ? 'none' : `url(#pr-dots${u})`}" stroke="${line ? RISO.pink : 'none'}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="mix-blend-mode:multiply"/>
+      <path class="ph-ink-b" d="${m.b}" fill="${k === 'sun' ? 'none' : RISO.blue}" fill-opacity=".92" stroke="${k === 'sun' ? RISO.blue : 'none'}" stroke-width="3" stroke-linecap="round" style="mix-blend-mode:multiply"/>
+      <path d="${m.p}" transform="translate(1.8 -1.3)" fill="${line ? 'none' : RISO.pink}" fill-opacity=".35" stroke="none" style="mix-blend-mode:multiply"/></g></g>`; };
+  function risoArt(D, A, u = '') {
+    const W = 340, items = D.items.slice(0, 12), n = items.length, many = n > 6, cols = many ? 4 : 3, rowsN = many ? 3 : 2, s = many ? 40 : 54;
+    const px = 150, py = 6, pw = W - px - 2, ph = rowsN * (s + 8) + 22, H = Math.max(160, py + ph + 8);
+    let grid = '', land = { x: px + pw / 2, y: py + ph / 2 }; const pts = {};
+    items.forEach((it, i) => {
+      const r = rng(hash(`riso:${it.id}`)), c = i % cols, rr = Math.floor(i / cols), cw = (pw - 16) / cols, x = px + 8 + c * cw + (cw - s) / 2 + (r() - .5) * 8, y = py + 10 + rr * (s + 8) + (r() - .5) * 6;
+      pts[it.id] = { x: x + s / 2, y: y + s / 2 };
+      if (it.done) grid += printMotif(motifOf(it), x, y, s, f1((r() - .5) * 16), A && A.id === it.id, u);
+    });
+    const left = n - items.filter(i => i.done).length;
+    return { H, pts, land, svg: `<defs><pattern id="pr-dots${u}" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(18)"><circle cx="1.7" cy="1.7" r="1.25" fill="${RISO.pink}"/></pattern>
+        <pattern id="pr-speck${u}" width="46" height="46" patternUnits="userSpaceOnUse">${(() => { const q = rng(7); let t = ''; for (let k = 0; k < 70; k++) t += `<rect x="${f1(q() * 46)}" y="${f1(q() * 46)}" width="${f1(.6 + q() * 1.2)}" height="${f1(.6 + q())}" fill="${RISO.paper}"/>`; return t; })()}</pattern></defs>
+      <rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#fbfaf6" stroke="${RISO.blue}" stroke-opacity=".14"/>
+      ${n ? '' : `<text x="${px + pw / 2}" y="${py + ph / 2 + 5}" text-anchor="middle" font-family="${SANS_UI}" font-size="12" fill="${RISO.blue}" fill-opacity=".45">今天的纸还是白的</text>`}
+      ${grid}<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="url(#pr-speck${u})" opacity=".85"/>
+      <text x="${px + 6}" y="${py + ph - 7}" font-family="${SANS_UI}" font-size="9.5" font-weight="700" letter-spacing=".5" fill="${RISO.pink}" style="mix-blend-mode:multiply">${D.total ? (left ? `还差 ${left} 张` : '今天这张，印完了') : '做完一件，印一张'}</text>
+      <text x="${px + pw - 6}" y="${py + ph - 7}" text-anchor="end" font-family="${SANS_UI}" font-size="9" font-weight="700" letter-spacing="1" fill="${RISO.blue}" fill-opacity=".7">${D.done}/${D.total}</text>
+      <g class="${A ? 'ph-pop' : ''}"><text x="0" y="70" font-family="${SANS_UI}" font-weight="800" font-size="68" letter-spacing="-3" fill="${RISO.blue}" style="mix-blend-mode:multiply">${D.done}</text>
+      <text x="3.5" y="67.5" font-family="${SANS_UI}" font-weight="800" font-size="68" letter-spacing="-3" fill="url(#pr-dots${u})" style="mix-blend-mode:multiply">${D.done}</text></g>
+      <text x="2" y="94" font-family="${SANS_UI}" font-weight="700" font-size="15" fill="${RISO.blue}">/ ${D.total} 张</text>
+      <text x="2" y="116" font-family="${SANS_UI}" font-size="12" fill="#5b6276">${dateLine(D)}</text>
+` };
+  }
+  const ART = { dawn: dawnArt, day: dayArt, night: nightArt, bloom: bloomArt, tape: tapeArt, riso: risoArt };
   let uid = 0;
-  const unique = (svg, u) => svg.replace(/(id="|url\(#)(p[dkn]-[a-z]+)/g, (m, p, id) => `${p}${id}-${u}`);
+  const unique = (svg, u) => svg.replace(/(id="|url\(#)(p[a-z]-[a-z]+)/g, (m, p, id) => `${p}${id}-${u}`);
   const artSvg = (id, D, cls = 'ph-art', A = null) => { const a = ART[id](D, A); return { a, html: `<svg class="${cls}" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, ++uid)}</svg>` }; };
 
   /* ---------- Theme cards: the theme's own picture of today, then two rows with its own check ---------- */
   const CHECK = {
     dawn: (x, y, on) => `<circle cx="${x}" cy="${y}" r="9" fill="${on ? 'url(#pd-liq)' : '#1b1d240d'}" stroke="${on ? '#fff' : '#1b1d24'}" stroke-opacity="${on ? 1 : .35}" stroke-width="1.2"/><circle cx="${x - 3}" cy="${y - 3.5}" r="2.4" fill="#fff" opacity=".9"/>`,
     day: (x, y, on) => `<rect x="${x - 8.5}" y="${y - 8.5}" width="17" height="17" fill="none" stroke="#1d1a16" stroke-opacity=".6" stroke-width=".8"/>${on ? `<circle cx="${x}" cy="${y}" r="10" fill="none" stroke="${CINNABAR}" stroke-width="1.4"/>` : ''}`,
-    dusk: (x, y, on) => `<rect x="${x - 6}" y="${y - 6}" width="12" height="12" transform="rotate(45 ${x} ${y})" fill="${on ? GOLD : 'none'}" stroke="${GOLD}" stroke-width="1"/>`,
+    bloom: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8.5" fill="${on ? '#3b5a87' : 'none'}" fill-opacity=".45" stroke="#2b2b2e" stroke-opacity=".45" stroke-width="1"/>`,
+    tape: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8" fill="${on ? '#0b1f1b' : 'none'}" stroke="#f3ecdc" stroke-opacity=".7" stroke-width="1" stroke-dasharray="${on ? '' : '2 2'}"/>`,
+    riso: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8.5" fill="none" stroke="#2f5fb3" stroke-width="1.6"/><circle cx="${x + 1.5}" cy="${y - 1}" r="8.5" fill="none" stroke="#ff4fa3" stroke-width="1.6" style="mix-blend-mode:multiply"/>`,
     night: (x, y, on) => `<path d="${SPARK(x, y, 9)}" fill="${on ? '#f4f6ff' : 'none'}" stroke="#dfe6ff" stroke-opacity="${on ? 1 : .6}" stroke-width=".9"/>`
   };
   const MOCK_BG = {
     dawn: '<defs><radialGradient id="pd-b1" cx=".15" cy=".1" r=".8"><stop offset="0" stop-color="#c9c2ff"/><stop offset="1" stop-color="#c9c2ff" stop-opacity="0"/></radialGradient><radialGradient id="pd-b2" cx=".9" cy=".6" r=".7"><stop offset="0" stop-color="#bfeee2"/><stop offset="1" stop-color="#bfeee2" stop-opacity="0"/></radialGradient><radialGradient id="pd-b3" cx=".3" cy="1" r=".7"><stop offset="0" stop-color="#ffd9c7"/><stop offset="1" stop-color="#ffd9c7" stop-opacity="0"/></radialGradient></defs><rect width="380" height="270" fill="#eef0f4"/><rect width="380" height="270" fill="url(#pd-b1)"/><rect width="380" height="270" fill="url(#pd-b2)"/><rect width="380" height="270" fill="url(#pd-b3)"/>',
     day: '<rect width="380" height="270" fill="#f5f2ec"/>',
-    dusk: '<defs><radialGradient id="pk-bg" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#3a2a16"/><stop offset="1" stop-color="#15110c"/></radialGradient></defs><rect width="380" height="270" fill="url(#pk-bg)"/>',
+    bloom: '<rect width="380" height="270" fill="#f2f3f2"/>',
+    tape: '<rect width="380" height="270" fill="#12302a"/>',
+    riso: '<rect width="380" height="270" fill="#f6f4ef"/>',
     night: '<rect width="380" height="270" fill="#07080d"/>'
   };
-  const INK = { dawn: '#1b1d24', day: '#1d1a16', dusk: '#efe6d6', night: '#e8ecf7' }, ROWLINE = { dawn: '#1b1d2414', day: '#b43a2c40', dusk: '#c8a66a40', night: '#dfe6ff1f' };
+  const INK = { dawn: '#1b1d24', day: '#1d1a16', night: '#e8ecf7', bloom: '#2b2b2e', tape: '#f3ecdc', riso: '#1f2a44' }, ROWLINE = { dawn: '#1b1d2414', day: '#b43a2c40', night: '#dfe6ff1f', bloom: '#2b2b2e1c', tape: '#f3ecdc26', riso: '#2f5fb326' };
   function mock(id) {
     if (id === 'auto') {
-      const cols = [['#eef0f4', '#1b1d24'], ['#f5f2ec', '#1d1a16'], ['#15110c', GOLD], ['#07080d', '#dfe6ff']];
-      return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${cols.map(([b, c], i) => `<rect x="${i * 95}" width="95.5" height="270" fill="${b}"/><text x="${i * 95 + 47.5}" y="150" text-anchor="middle" font-family='${SONG}' font-size="44" font-weight="300" fill="${c}">${'晨昼暮夜'[i]}</text>`).join('')}</svg>`;
+      const cols = [['#eef0f4', '#1b1d24'], ['#f5f2ec', '#1d1a16'], ['#07080d', '#dfe6ff']];
+      return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${cols.map(([b, c], i) => `<rect x="${i * 127}" width="127.5" height="270" fill="${b}"/><text x="${i * 127 + 63.5}" y="150" text-anchor="middle" font-family='${SONG}' font-size="48" font-weight="300" fill="${c}">${'晨昼夜'[i]}</text>`).join('')}</svg>`;
     }
     const a = ART[id](DEMO, null), u = ++uid, y0 = a.H + 34;
-    const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' ? SONG : id === 'dusk' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
+    const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' || id === 'bloom' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
     const glass = id === 'dawn' ? `<rect x="20" y="16" width="340" height="${a.H}" rx="28" fill="#ffffff" fill-opacity=".45" stroke="#fff" stroke-opacity=".9"/>` : '';
     return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${unique(MOCK_BG[id], u)}${glass}<g transform="translate(20 16)">${unique(a.svg, u)}</g>${unique(rows, u)}</svg>`;
   }
@@ -279,15 +370,21 @@
         g += `<rect x="${f1(x)}" y="6" width="${f1(cell)}" height="${f1(cell)}" fill="none" stroke="${CINNABAR}" stroke-opacity=".5" stroke-width=".7"/><text x="${f1(cx)}" y="${f1(cy + cell * .22)}" text-anchor="middle" font-family='${SONG}' font-size="${f1(cell * .6)}" fill="${on ? '#1d1a16' : CINNABAR}" fill-opacity="${on ? .92 : .32}">${esc(ch)}</text>${on ? `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(cell * .42)}" fill="none" stroke="${CINNABAR}" stroke-width="1.3"/>` : ''}`; });
       return { H: cell + 12, svg: g };
     }
-    if (id === 'dusk') {
-      // the sun's path is a shallow arc across the strip; one dot per task along it
-      const hz = 40, n = Math.min(D.total, 24); let ticks = '';
-      for (let i = 0; i < n; i++) { const t = (i + .5) / n, x = 20 + t * 300, y = hz - Math.sin(t * Math.PI) * 30; ticks += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${i < D.done ? 1.6 : 1}" fill="${GOLD}" fill-opacity="${i < D.done ? 1 : .45}"/>`; }
-      const sx = 20 + pct * 300, sy = hz - Math.sin(pct * Math.PI) * 30;
-      return { H: 46, svg: `<defs><radialGradient id="pl-sun" cx=".38" cy=".34"><stop offset="0" stop-color="#fbf1da"/><stop offset=".55" stop-color="#d9b97c"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pl-glow"><stop offset="0" stop-color="#e2c48a" stop-opacity=".5"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient></defs>
-        <path d="M20 ${hz}Q170 ${hz - 60} 320 ${hz}" fill="none" stroke="${GOLD}" stroke-opacity=".35" stroke-width=".8" stroke-dasharray="1.5 4"/>${ticks}
-        <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".7" stroke-width=".8"/>
-        <circle cx="${f1(sx)}" cy="${f1(sy)}" r="20" fill="url(#pl-glow)"/><circle cx="${f1(sx)}" cy="${f1(sy)}" r="7" fill="url(#pl-sun)"/>` };
+    if (id === 'bloom') { // a strip of water with today's drops
+      const done = D.items.filter(i => i.done); let g = '';
+      done.forEach((it, i) => { const b = drop(it.id, 6, 2, 328, 40, 11, 19, D.items.findIndex(x => x.id === it.id)); g += bloomDot(b, '-l'); });
+      return { H: 44, svg: `<defs>${bloomDefs('-l')}</defs><rect x="0" y="0" width="340" height="44" rx="8" fill="#f4f5f4" fill-opacity=".96"/><g filter="url(#pb-wet-l)">${g}</g>` };
+    }
+    if (id === 'tape') { // the strip itself, smaller
+      const items = D.items.slice(0, 16), n = Math.max(items.length, 6); let h = '';
+      for (let r = 0; r < 7; r++) h += `<line x1="0" x2="340" y1="${7 + r * 5.5}" y2="${7 + r * 5.5}" stroke="#12302a" stroke-opacity=".1" stroke-width=".6"/>`;
+      items.forEach((it, i) => { const x = f1(14 + 312 * (n === 1 ? .5 : i / (n - 1))), y = 7 + pitchOf(it.id) * 5.5; h += it.done ? `<circle cx="${x}" cy="${y}" r="3" fill="#12302a"/>` : `<circle cx="${x}" cy="${y}" r="2.6" fill="none" stroke="#12302a" stroke-opacity=".3" stroke-width=".6" stroke-dasharray="1 1.2"/>`; });
+      return { H: 46, svg: `<rect x="0" y="1" width="340" height="44" rx="3" fill="#f3ecdc"/>${h}` };
+    }
+    if (id === 'riso') { // today's little prints in a row
+      const done = D.items.filter(i => i.done).slice(0, 9); let g = '';
+      done.forEach((it, i) => { g += printMotif(motifOf(it), 8 + i * 36, 5, 32, f1((rng(hash(`riso:${it.id}`))() - .5) * 16), false, ''); });
+      return { H: 44, svg: `<defs><pattern id="pr-dots" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(18)"><circle cx="1.7" cy="1.7" r="1.25" fill="${RISO.pink}"/></pattern></defs><rect x="0" y="0" width="340" height="44" rx="4" fill="#fbfaf6"/>${g || `<text x="170" y="27" text-anchor="middle" font-family="${SANS_UI}" font-size="12" fill="${RISO.blue}" fill-opacity=".5">做完一件，印一张</text>`}` };
     }
     if (id === 'night') {
       const items = D.items.slice(0, 18), pts = items.map(it => { const r = rng(hash(it.id)); return { x: 10 + r() * 320, y: 6 + r() * 34, it }; });
@@ -307,6 +404,29 @@
     if (!old) activity.querySelector('.activity-heading')?.after(el);
   }
 
+  /* ---------- 乐's music box: a few sine partials with a quick attack and a long ring ---------- */
+  let actx = null;
+  const soundOK = () => API.state.settings.proSound !== false && !document.hidden;
+  function boxNote(f, when = 0) {
+    try {
+      const c = actx || (actx = new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume();
+      const t = c.currentTime + when;
+      [[1, .5], [2, .14], [3.01, .05], [4.2, .025]].forEach(([m, g]) => { const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(g * .3, t + .004); v.gain.exponentialRampToValueAtTime(.0001, t + 1.5 / m + .25); o.connect(v).connect(c.destination); o.start(t); o.stop(t + 2); });
+    } catch { /* no audio: the picture still works */ }
+  }
+  /** Play the strip: a playhead runs across and each hole rings as it passes. */
+  function playTape(g) {
+    if (!g || g.dataset.playing) return;
+    const notes = (g.dataset.tune || '').split(' ').filter(Boolean).map(s => { const [x, p] = s.split(':').map(Number); return { x, p }; }).sort((a, b) => a.x - b.x);
+    const x0 = Number(g.dataset.x0), x1 = Number(g.dataset.x1), head = g.querySelector('.ph-playhead'), dur = Math.max(1400, (x1 - x0) * 7), t0 = performance.now();
+    if (soundOK()) notes.forEach(n => boxNote(NOTES[n.p], (n.x - x0) / (x1 - x0) * dur / 1000));
+    if (reduce() || !head) return;
+    g.dataset.playing = '1'; head.setAttribute('opacity', '.9');
+    const step = now => { const k = Math.min(1, (now - t0) / dur); head.setAttribute('x', String(x0 - 1 + (x1 - x0) * k)); notes.forEach(n => { const el = g.querySelector(`[data-hole="${n.x}"]`); if (el) el.classList.toggle('is-ringing', Math.abs((x0 + (x1 - x0) * k) - n.x) < 8); }); if (k < 1) requestAnimationFrame(step); else { head.setAttribute('opacity', '0'); delete g.dataset.playing; } };
+    requestAnimationFrame(step);
+  }
+  document.addEventListener('click', e => { const g = e.target.closest?.('#pro-head .ph-tape'); if (g) playTape(g); });
+
   /** Tapping a character cell (昼) or a star (夜) shows which task it is: its row scrolls into view and glows. */
   document.addEventListener('click', e => {
     const tap = e.target.closest?.('#pro-head .ph-tap'); if (!tap) return;
@@ -323,6 +443,7 @@
     clearTimeout(arriving.get(id));
     const from = data().done - arriving.size;
     arriving.delete(id); landing = { id, from }; head(); landing = null;
+    if (current === 'tape' && soundOK()) { boxNote(NOTES[pitchOf(id)]); if (!data().left && !arriving.size) setTimeout(() => playTape($('pro-head')?.querySelector('.ph-tape')), 900); }
   }
   /** Where on screen the task's pieces should land, or null when the header is not in view. */
   function target(id) {
@@ -370,5 +491,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { mount, unmount, head, arrive, lockStrip, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
+  window.SuiSuiSkins = { mount, unmount, head, arrive, lockStrip, drop, PIGMENTS, MOTIFS, motifOf, pitchOf, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();
