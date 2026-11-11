@@ -149,6 +149,22 @@ let browser;
     await context.close();
   }
 
+  /* The completion moment: the pieces fly into the picture, and only the task that landed animates */
+  {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: 'day' });
+    assert.equal(await page.locator('#pro-head .ph-circle').count(), 0);
+    await page.locator('.task-row[data-task-id=a] .check-task').click();
+    await page.waitForTimeout(200);
+    assert.equal(await page.locator('#pro-head .ph-circle').count(), 0, 'Not circled until the ink lands');
+    await page.waitForTimeout(2600);
+    assert.equal(await page.locator('#pro-head .ph-circle').count(), 1, 'Circled once it lands');
+    assert.equal(await page.locator('#pro-head .ph-circle.ph-new').count(), 1, 'Only the new circle animates');
+    await page.evaluate(() => window.suisui.pro.render());
+    assert.equal(await page.locator('#pro-head .ph-new').count(), 0, 'A later render does not animate it again');
+    assert.deepEqual(await page.evaluate(() => [...document.fonts].filter(f => /Bodoni|Noto Serif SC/.test(f.family) && f.status !== 'error').length > 2), true, 'Bundled Pro fonts are declared');
+    await context.close();
+  }
+
   /* iPhone: App Store purchase and restore */
   {
     const { context, page } = await open({}, '?pay=ios');
@@ -170,6 +186,6 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone.');
+  console.log('PASS: Pro visible and locked for free users (shatter kept), effects and themes can be tried, try-on saves nothing, 3-day trial once, purchase, Pro themes on their base styles, free style takes them off, countdowns, Pro effects replace the shatter, all-done celebration once a day, jar page, 1080×1350 weekly art, ended trial falls back, four distinct theme headers and weekly pictures, redeem code on Android/web (wrong code refused), App Store purchase on iPhone, completion flies into the theme picture and only that task animates, bundled fonts.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

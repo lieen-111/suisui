@@ -20,8 +20,8 @@
   const hexA = (c, a) => { const n = parseInt(c.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
   const two = n => String(n).padStart(2, '0');
   const CINNABAR = '#b43a2c', GOLD = '#c8a66a';
-  const SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
-  const SERIF = '"Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
+  const SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
+  const SERIF = '"Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
   const MAT = { dawn: 'glass', day: 'paper', dusk: 'gold', night: 'light' };
 
   /* ---------- Backgrounds: quiet ---------- */
@@ -87,7 +87,8 @@
     const st = API.state, todo = API.pending(), done = st.tasks.filter(t => t.done).sort((a, b) => (a.completedAt || 0) - (b.completedAt || 0)), d = new Date();
     const cds = (Array.isArray(st.settings.countdowns) ? st.settings.countdowns : []).map(c => { const [y, m, dd] = String(c.date).split('-').map(Number); return { title: c.title, n: Math.round((new Date(y, m - 1, dd) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5) }; }).filter(c => c.n >= 0).sort((a, b) => a.n - b.n);
     const lunar = (() => { try { return (API.lunar(d) || '').replace(/^.+?年/, ''); } catch { return ''; } })();
-    const items = [...todo.map(t => ({ id: t.id, title: t.title, done: false })), ...done.map(t => ({ id: t.id, title: t.title, done: true, at: t.completedAt || 0 }))];
+    // the list's own order, so a cell or a star never moves when its task gets done
+    const today = new Set([...todo, ...done].map(t => t.id)), items = st.tasks.filter(t => today.has(t.id)).map(t => ({ id: t.id, title: t.title, done: !!t.done, at: t.completedAt || 0 }));
     return { left: todo.length, done: done.length, total: todo.length + done.length, d, lunar, cds, items };
   }
   const DEMO = (() => {
@@ -96,81 +97,98 @@
   })();
   const first = s => esc(Array.from(String(s).trim())[0] || '·');
   const f1 = v => Math.round(v * 10) / 10;
+  const SANS_UI = "Geist,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
+  const dateLine = D => `${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}`;
+  // A = the task that just landed in the picture: { id, from: how many were done before it }. Only that one animates.
 
-  /* 晨 · 玻璃 — a measuring glass: it fills with light as the day's things get done */
-  function dawnArt(D, H = 150) {
-    const W = 340, pct = D.total ? D.done / D.total : 0, level = H - Math.max(10, pct * (H - 26)), n = Math.min(D.total, 14);
-    const wave = (y, amp, ph) => { let p = `M0 ${y}`; for (let x = 0; x <= W * 2; x += 20) p += ` L${x} ${f1(y + Math.sin(x / 340 * Math.PI * 2 * 2 + ph) * amp)}`; return `${p} L${W * 2} ${H} L0 ${H} Z`; };
+  /* 晨 · 玻璃 — a measuring glass: it fills as the day's things get done */
+  function dawnArt(D, A) {
+    const W = 340, H = 156, lv = p => H - 12 - p * (H - 34), pct = D.total ? D.done / D.total : 0, level = D.done ? lv(pct) : H - 6, n = Math.min(D.total, 14);
+    const from = A && D.total ? (A.from ? lv(A.from / D.total) : H - 6) : level, rise = f1(from - level);
+    const wave = (y, amp, ph) => { let p = `M0 ${f1(y)}`; for (let x = 0; x <= W * 2; x += 17) p += ` L${x} ${f1(y + Math.sin(x / 340 * Math.PI * 4 + ph) * amp)}`; return `${p} L${W * 2} ${H + 40} L0 ${H + 40} Z`; };
     let ticks = '';
-    for (let i = 1; i <= n; i++) { const y = f1(H - 13 - i / n * (H - 26)); ticks += `<line x1="14" x2="${i <= D.done ? 26 : 21}" y1="${y}" y2="${y}" stroke="#1b1d24" stroke-opacity="${i <= D.done ? .55 : .2}" stroke-width="1"/>`; }
-    return { H, svg: `<defs><linearGradient id="pd-liq" x1="0" y1="0" x2="1" y2=".4"><stop offset="0" stop-color="#ada4ff"/><stop offset=".55" stop-color="#8fe0cb"/><stop offset="1" stop-color="#ffbfa3"/></linearGradient><clipPath id="pd-clip"><rect width="${W}" height="${H}" rx="28"/></clipPath></defs>
-      <g clip-path="url(#pd-clip)"><g class="ph-wave ph-wave-b"><path d="${wave(level - 3, 4, 1.4)}" fill="url(#pd-liq)" opacity=".45"/></g><g class="ph-wave"><path d="${wave(level, 5, 0)}" fill="url(#pd-liq)" opacity=".85"/></g>
-      <rect x="0" y="${f1(level)}" width="${W}" height="1.2" fill="#fff" opacity=".7"/></g>${ticks}
-      <text x="40" y="66" font-family="Geist,-apple-system,sans-serif" fill="#1b1d24"><tspan font-size="54" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="22" fill-opacity=".4" dx="4">/${D.total}</tspan></text>
-      <text x="42" y="90" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#6b7080" letter-spacing=".4">${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}${D.lunar ? ` · ${esc(D.lunar)}` : ''}</text>
-      <text x="42" y="${H - 18}" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#1b1d24" fill-opacity=".72">${D.total ? (D.left ? `杯子满了 ${Math.round(pct * 100)}%，还差 ${D.left} 件` : '满了。今天的都做完了') : '今天还是一只空杯子'}</text>` };
+    for (let i = 1; i <= n; i++) { const y = f1(lv(i / n)), on = i <= D.done, fresh = A && i === D.done; ticks += `<line class="${fresh ? 'ph-new ph-grow' : ''}" style="transform-origin:${W - 16}px ${y}px" x1="${W - 16}" x2="${on ? W - 30 : W - 23}" y1="${y}" y2="${y}" stroke="#1b1d24" stroke-opacity="${on ? .5 : .18}" stroke-width="1.1" stroke-linecap="round"/>`; }
+    const r = rng(9); let bubbles = '';
+    if (D.done) for (let i = 0; i < 9; i++) { const x = f1(30 + r() * 250), s = f1(1.2 + r() * 2.2); bubbles += `<circle class="ph-bubble" cx="${x}" cy="${H - 4}" r="${s}" fill="#fff" fill-opacity=".75" style="--b:${f1(level - H + 10)}px;animation-delay:${f1(r() * 6)}s;animation-duration:${f1(4 + r() * 4)}s"/>`; }
+    const state = D.total ? (D.left ? `满了 ${Math.round(pct * 100)}%，还差 ${D.left} 件` : '满了。今天的都做完了') : '今天是一只空杯子';
+    return { H, land: { x: 200, y: level }, svg: `<defs><linearGradient id="pd-liq" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#a99fff"/><stop offset=".5" stop-color="#86dcc6"/><stop offset="1" stop-color="#ffb99b"/></linearGradient><linearGradient id="pd-deep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#3c3a8a" stop-opacity=".12"/></linearGradient><clipPath id="pd-clip"><rect width="${W}" height="${H}" rx="30"/></clipPath></defs>
+      <g clip-path="url(#pd-clip)"><g class="${A ? 'ph-rise' : ''}" style="--rise:${rise}px">
+        <g class="ph-wave ph-wave-b"><path d="${wave(level - 4, 4, 1.4)}" fill="url(#pd-liq)" opacity=".42"/></g>
+        <g class="ph-wave"><path d="${wave(level, 4.5, 0)}" fill="url(#pd-liq)" opacity=".9"/></g>
+        <rect y="${f1(level)}" width="${W}" height="${H}" fill="url(#pd-deep)"/>${bubbles}
+        ${A ? `<ellipse class="ph-ripple" cx="200" cy="${f1(level)}" rx="26" ry="5" fill="none" stroke="#fff" stroke-width="1.4"/>` : ''}
+      </g></g>${ticks}
+      <text class="${A ? 'ph-pop' : ''}" x="24" y="66" font-family="${SANS_UI}" fill="#1b1d24"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="22" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
+      <text x="26" y="92" font-family="${SANS_UI}" font-size="12.5" fill="#5d6273" letter-spacing=".3">${dateLine(D)}${D.lunar ? ` · ${esc(D.lunar)}` : ''}</text>
+      <text x="26" y="${H - 18}" font-family="${SANS_UI}" font-size="12.5" font-weight="500" fill="#1b1d24" fill-opacity=".78">${state}</text>` };
   }
 
-  /* 昼 · 纸 — manuscript paper: each task is one character in a grid, a red circle when it is done */
-  function dayArt(D) {
-    const per = 7, cell = 31, items = D.items.slice(0, 14), n = Math.max(items.length, 4), rows = Math.ceil(n / per), gridH = rows * cell, H = Math.max(gridH + 46, 128);
+  /* 昼 · 纸 — manuscript paper: each task is one character in a grid, circled in red when it is done */
+  function dayArt(D, A) {
+    const per = 7, cell = 35, items = D.items.slice(0, 14), n = Math.max(items.length, 5), rows = Math.ceil(n / per), gridH = rows * cell, H = Math.max(gridH + 60, 150), pts = {};
     let g = '';
     for (let i = 0; i < n; i++) {
-      const x = (i % per) * cell + 1, y = Math.floor(i / per) * cell + 6, cx = x + cell / 2, cy = y + cell / 2, it = items[i];
-      g += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="none" stroke="${CINNABAR}" stroke-opacity=".45" stroke-width=".7"/>
-        <path d="M${x} ${cy}H${x + cell}M${cx} ${y}V${y + cell}" stroke="${CINNABAR}" stroke-opacity=".16" stroke-width=".6" stroke-dasharray="2 2"/>`;
-      if (it) {
-        g += `<text x="${cx}" y="${cy + 6.5}" text-anchor="middle" font-family='${SONG}' font-size="18" fill="#1d1a16" fill-opacity="${it.done ? .9 : .78}">${first(it.title)}</text>`;
-        if (it.done) { const r = rng(hash(it.id)), rot = f1((r() - .5) * 40); g += `<path class="ph-circle" transform="rotate(${rot} ${cx} ${cy})" d="M${cx - 12} ${cy - 1}C${cx - 12} ${cy - 11} ${cx + 11} ${cy - 13} ${cx + 12.5} ${cy - 1}C${cx + 13.5} ${cy + 10} ${cx - 5} ${cy + 14} ${cx - 11} ${cy + 5}C${cx - 13} ${cy + 1} ${cx - 10} ${cy - 6} ${cx - 5} ${cy - 10}" fill="none" stroke="${CINNABAR}" stroke-width="1.5" stroke-linecap="round" pathLength="1"/>`; }
-      }
+      const x = (i % per) * cell + .5, y = Math.floor(i / per) * cell + 4.5, cx = x + cell / 2, cy = y + cell / 2, it = items[i];
+      g += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="none" stroke="${CINNABAR}" stroke-opacity=".5" stroke-width=".8"/>
+        <path d="M${x} ${cy}H${x + cell}M${cx} ${y}V${y + cell}" stroke="${CINNABAR}" stroke-opacity=".17" stroke-width=".6" stroke-dasharray="2 2.4"/>`;
+      if (!it) continue;
+      pts[it.id] = { x: cx, y: cy };
+      g += `<text x="${cx}" y="${cy + 7.4}" text-anchor="middle" font-family='${SONG}' font-size="21" fill="#1d1a16" fill-opacity="${it.done ? .92 : .8}">${first(it.title)}</text>`;
+      if (it.done) { const r = rng(hash(it.id)), rot = f1((r() - .5) * 50); g += `<path class="ph-circle${A && A.id === it.id ? ' ph-new' : ''}" pathLength="1" transform="rotate(${rot} ${cx} ${cy})" d="M${cx - 14} ${cy - 1}C${cx - 14} ${cy - 13} ${cx + 13} ${cy - 15} ${cx + 14.5} ${cy - 1}C${cx + 15.5} ${cy + 12} ${cx - 6} ${cy + 16.5} ${cx - 13} ${cy + 6}C${cx - 15} ${cy + 1} ${cx - 12} ${cy - 7} ${cx - 6} ${cy - 11.5}" fill="none" stroke="${CINNABAR}" stroke-width="1.7" stroke-linecap="round"/>`; }
     }
-    const date = `${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`;
-    let v = ''; Array.from(date).forEach((ch, i) => { v += `<text x="322" y="${24 + i * 21}" text-anchor="middle" font-family='${SONG}' font-size="18" fill="#1d1a16">${ch}</text>`; });
-    Array.from(`星期${WEEK[D.d.getDay()]}`).forEach((ch, i) => { v += `<text x="298" y="${22 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${ch}</text>`; });
-    if (D.lunar) Array.from(D.lunar).slice(0, 5).forEach((ch, i) => { v += `<text x="280" y="${22 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279" fill-opacity=".7">${esc(ch)}</text>`; });
-    const foot = D.total ? `<tspan fill="#8a8279">圈了 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : '<tspan fill="#8a8279">　今日毕</tspan>'}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
-    return { H, svg: `${g}${v}<text x="2" y="${gridH + 32}" font-family='${SONG}' font-size="13.5" letter-spacing="1.5">${foot}</text>` };
+    let v = '';
+    Array.from(`${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`).forEach((ch, i) => { v += `<text x="324" y="${22 + i * 22}" text-anchor="middle" font-family='${SONG}' font-size="19" fill="#1d1a16">${ch}</text>`; });
+    Array.from(`星期${WEEK[D.d.getDay()]}${D.lunar ? `　${D.lunar}` : ''}`).slice(0, 8).forEach((ch, i) => { v += `<text x="300" y="${21 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${esc(ch)}</text>`; });
+    const foot = D.total ? `<tspan fill="#8a8279">圈了 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
+    return { H, pts, land: { x: 120, y: 24 }, svg: `${g}${v}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>` };
   }
 
-  /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the day's list is clear */
-  function duskArt(D) {
-    const W = 340, H = 176, hz = 146, cx = 170, R = 112, n = Math.min(D.total, 24), pct = D.total ? D.done / D.total : 0;
-    const sa = Math.PI - pct * Math.PI, sx = f1(cx + Math.cos(sa) * R), sy = f1(hz - Math.sin(sa) * R);
+  /* 暮 · 金 — sunset: the sun crosses the sky as tasks get done and sets when the list is clear */
+  function duskArt(D, A) {
+    const W = 340, H = 178, hz = 146, cx = 170, R = 116, n = Math.min(D.total, 24), pct = D.total ? D.done / D.total : 0, p0 = A && D.total ? A.from / D.total : pct;
     let ticks = '';
-    for (let i = 0; i < n; i++) { const a = Math.PI - (i + .5) / n * Math.PI, on = i < D.done, r0 = R + 6, r1 = r0 + (on ? 13 : 5); ticks += `<line x1="${f1(cx + Math.cos(a) * r0)}" y1="${f1(hz - Math.sin(a) * r0)}" x2="${f1(cx + Math.cos(a) * r1)}" y2="${f1(hz - Math.sin(a) * r1)}" stroke="${GOLD}" stroke-opacity="${on ? 1 : .35}" stroke-width="${on ? 1.3 : .8}"/>`; }
-    return { H, svg: `<defs><radialGradient id="pk-sun"><stop offset="0" stop-color="#f4e8cc"/><stop offset=".6" stop-color="#c8a66a"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pk-glow"><stop offset="0" stop-color="#c8a66a" stop-opacity=".35"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient><clipPath id="pk-sky"><rect width="${W}" height="${hz}"/></clipPath></defs>
-      <path d="M${cx - R} ${hz}A${R} ${R} 0 0 1 ${cx + R} ${hz}" fill="none" stroke="${GOLD}" stroke-opacity=".25" stroke-width=".7" stroke-dasharray="1 4"/>${pct ? `<path d="M${cx - R} ${hz}A${R} ${R} 0 0 1 ${sx} ${sy}" fill="none" stroke="${GOLD}" stroke-width="1.4" stroke-linecap="round"/>` : ''}${ticks}
-      <g clip-path="url(#pk-sky)"><circle cx="${sx}" cy="${sy}" r="34" fill="url(#pk-glow)"/><circle cx="${sx}" cy="${sy}" r="9" fill="url(#pk-sun)"/></g>
-      <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".6" stroke-width=".7"/>
-      <text x="${cx}" y="${hz - 30}" text-anchor="middle" font-family='${SERIF}' fill="${GOLD}"><tspan font-size="50" letter-spacing="-1">${two(D.done)}</tspan></text>
-      <text x="${cx}" y="${hz - 10}" text-anchor="middle" font-family='${SERIF}' font-size="12" fill="#8c8170" letter-spacing="3">${D.total ? (D.left ? `OF ${two(D.total)}` : '日落 · 收工') : '— —'}</text>
-      <text x="${cx}" y="${hz + 22}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#b3a68e" letter-spacing="2.5">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}${D.lunar ? `　${esc(D.lunar)}` : ''}</text>` };
+    for (let i = 0; i < n; i++) { const a = Math.PI - (i + .5) / n * Math.PI, on = i < D.done, fresh = A && i === D.done - 1, r0 = R + 7, r1 = r0 + (on ? 14 : 5); ticks += `<line class="${fresh ? 'ph-new ph-grow-r' : ''}" style="transform-origin:${f1(cx + Math.cos(a) * r0)}px ${f1(hz - Math.sin(a) * r0)}px" x1="${f1(cx + Math.cos(a) * r0)}" y1="${f1(hz - Math.sin(a) * r0)}" x2="${f1(cx + Math.cos(a) * r1)}" y2="${f1(hz - Math.sin(a) * r1)}" stroke="${GOLD}" stroke-opacity="${on ? 1 : .32}" stroke-width="${on ? 1.4 : .8}" stroke-linecap="round"/>`; }
+    // the sun is drawn at the left horizon and turned about the dial's centre, so a move is one rotation
+    const deg = f1(pct * 180), from = f1(p0 * 180), x0 = cx - R;
+    const arc = `M${cx - R} ${hz}A${R} ${R} 0 0 1 ${cx + R} ${hz}`;
+    return { H, land: { x: f1(cx + Math.cos(Math.PI - p0 * Math.PI) * R), y: f1(hz - Math.sin(Math.PI - p0 * Math.PI) * R) }, svg: `<defs><radialGradient id="pk-sun" cx=".38" cy=".34"><stop offset="0" stop-color="#fbf1da"/><stop offset=".55" stop-color="#d9b97c"/><stop offset="1" stop-color="#9c7f47"/></radialGradient><radialGradient id="pk-glow"><stop offset="0" stop-color="#e2c48a" stop-opacity=".42"/><stop offset="1" stop-color="#c8a66a" stop-opacity="0"/></radialGradient><clipPath id="pk-sky"><rect x="-20" y="-20" width="${W + 40}" height="${hz + 20}"/></clipPath></defs>
+      <path d="${arc}" fill="none" stroke="${GOLD}" stroke-opacity=".28" stroke-width=".8" stroke-dasharray="1.5 4.5"/>
+      <path class="${A ? 'ph-arc' : ''}" style="--a0:${f1(p0 * 1000) / 1000}" d="${arc}" pathLength="1" stroke-dasharray="${f1(pct * 1000) / 1000} 1" fill="none" stroke="${GOLD}" stroke-width="1.6" stroke-linecap="round"/>${ticks}
+      <g clip-path="url(#pk-sky)"><g class="ph-sun${A ? ' ph-sunmove' : ''}" style="--from:${from}deg;--to:${deg}deg;transform-origin:${cx}px ${hz}px;transform:rotate(${deg}deg)">
+        <circle class="${A ? 'ph-flare' : ''}" cx="${x0}" cy="${hz}" r="46" fill="url(#pk-glow)"/><circle cx="${x0}" cy="${hz}" r="11.5" fill="url(#pk-sun)"/></g></g>
+      <line x1="0" x2="${W}" y1="${hz}" y2="${hz}" stroke="${GOLD}" stroke-opacity=".65" stroke-width=".8"/>
+      <line x1="${cx - 60}" x2="${cx + 60}" y1="${hz + 5}" y2="${hz + 5}" stroke="${GOLD}" stroke-opacity=".18" stroke-width=".7"/>
+      <text class="${A ? 'ph-pop' : ''}" x="${cx}" y="${hz - 32}" text-anchor="middle" font-family='${SERIF}' font-size="52" fill="${GOLD}" letter-spacing="-.5">${two(D.done)}</text>
+      <text x="${cx}" y="${hz - 12}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#9c907c" letter-spacing="3">${D.total ? (D.left ? `共 ${D.total} 件` : '日落　收工') : '今天还没有安排'}</text>
+      <text x="${cx}" y="${hz + 26}" text-anchor="middle" font-family='${SONG}' font-size="11.5" fill="#b3a68e" letter-spacing="2.5">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}${D.lunar ? `　${esc(D.lunar)}` : ''}</text>` };
   }
 
   /* 夜 · 光 — a constellation: every task is a star; done ones light up and join into today's shape */
   const SPARK = (x, y, s) => `M${x} ${y - s}C${f1(x + s * .12)} ${f1(y - s * .12)} ${f1(x + s * .12)} ${f1(y - s * .12)} ${x + s} ${y}C${f1(x + s * .12)} ${f1(y + s * .12)} ${f1(x + s * .12)} ${f1(y + s * .12)} ${x} ${y + s}C${f1(x - s * .12)} ${f1(y + s * .12)} ${f1(x - s * .12)} ${f1(y + s * .12)} ${x - s} ${y}C${f1(x - s * .12)} ${f1(y - s * .12)} ${f1(x - s * .12)} ${f1(y - s * .12)} ${x} ${y - s}Z`;
-  function nightArt(D) {
-    const W = 340, H = 152, items = D.items.slice(0, 16), placed = [];
+  function nightArt(D, A) {
+    const W = 340, H = 156, items = D.items.slice(0, 18), placed = [], pts = {};
     for (const it of items) {
       const r = rng(hash(it.id)); let best = null, bd = -1;
-      for (let k = 0; k < 14; k++) { const x = 136 + r() * 180, y = 16 + r() * 120; if (x > 280 && y < 56) continue; const d = placed.reduce((m, p) => Math.min(m, Math.hypot(p.x - x, p.y - y)), 999); if (d > bd) { bd = d; best = { x, y }; } if (d > 30) break; }
-      placed.push({ ...(best || { x: 200, y: 80 }), it });
+      for (let k = 0; k < 16; k++) { const x = 134 + r() * 186, y = 16 + r() * 124; if (x > 278 && y < 60) continue; const d = placed.reduce((m, p) => Math.min(m, Math.hypot(p.x - x, p.y - y)), 999); if (d > bd) { bd = d; best = { x, y }; } if (d > 32) break; }
+      const p = { ...(best || { x: 200, y: 80 }), it }; placed.push(p); pts[it.id] = { x: f1(p.x), y: f1(p.y) };
     }
-    const lit = placed.filter(p => p.it.done).sort((a, b) => a.it.at - b.it.at);
-    const bg = (() => { const r = rng(5); let s = ''; for (let i = 0; i < 46; i++) s += `<circle cx="${f1(r() * W)}" cy="${f1(r() * H)}" r="${f1(.3 + r() * .6)}" fill="#dfe6ff" fill-opacity="${f1(.1 + r() * .3)}"/>`; return s; })();
-    const lines = lit.length > 1 ? `<polyline points="${lit.map(p => `${f1(p.x)},${f1(p.y)}`).join(' ')}" fill="none" stroke="#dfe6ff" stroke-opacity=".38" stroke-width=".8"/>` : '';
+    const lit = placed.filter(p => p.it.done).sort((a, b) => a.it.at - b.it.at), fresh = A && lit.length && lit[lit.length - 1].it.id === A.id;
+    const bg = (() => { const r = rng(5); let s = ''; for (let i = 0; i < 52; i++) s += `<circle cx="${f1(r() * W)}" cy="${f1(r() * H)}" r="${f1(.3 + r() * .6)}" fill="#dfe6ff" fill-opacity="${f1(.08 + r() * .3)}"/>`; return s; })();
+    const old = fresh ? lit.slice(0, -1) : lit;
+    let lines = old.length > 1 ? `<polyline points="${old.map(p => `${f1(p.x)},${f1(p.y)}`).join(' ')}" fill="none" stroke="#dfe6ff" stroke-opacity=".4" stroke-width=".9" stroke-linejoin="round"/>` : '';
+    if (fresh && lit.length > 1) { const a = lit[lit.length - 2], b = lit[lit.length - 1]; lines += `<line class="ph-draw" pathLength="1" x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(b.x)}" y2="${f1(b.y)}" stroke="#dfe6ff" stroke-opacity=".55" stroke-width="1"/>`; }
     const stars = placed.map((p, i) => p.it.done
-      ? `<g class="ph-star" style="animation-delay:${(i * .37 % 3).toFixed(2)}s"><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="9" fill="url(#pn-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 6.5)}" fill="#f4f6ff"/></g>`
-      : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.6" fill="#dfe6ff" fill-opacity=".5"/><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="4.5" fill="none" stroke="#dfe6ff" stroke-opacity=".16" stroke-width=".7"/>`).join('');
-    return { H, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#9fb4ff" stop-opacity=".55"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
-      <text x="4" y="26" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12" fill="#7d8496" letter-spacing=".4">${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}</text>
-      <text x="2" y="96" font-family="Geist,-apple-system,sans-serif" fill="#e8ecf7"><tspan font-size="52" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="20" fill-opacity=".4" dx="3">/${D.total}</tspan></text>
-      <text x="4" y="122" font-family="Geist,-apple-system,'PingFang SC',sans-serif" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>` };
+      ? `<g class="ph-star${A && A.id === p.it.id ? ' ph-new' : ''}" style="transform-origin:${f1(p.x)}px ${f1(p.y)}px;animation-delay:${(i * .37 % 3).toFixed(2)}s"><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="11" fill="url(#pn-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 7)}" fill="#f6f8ff"/></g>${A && A.id === p.it.id ? `<circle class="ph-burst" style="transform-origin:${f1(p.x)}px ${f1(p.y)}px" cx="${f1(p.x)}" cy="${f1(p.y)}" r="14" fill="none" stroke="#c9d6ff" stroke-width="1"/>` : ''}`
+      : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.7" fill="#dfe6ff" fill-opacity=".55"/><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="5" fill="none" stroke="#dfe6ff" stroke-opacity=".17" stroke-width=".7"/>`).join('');
+    return { H, pts, land: { x: 230, y: 70 }, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#a9bcff" stop-opacity=".6"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
+      <text x="2" y="26" font-family="${SANS_UI}" font-size="12" fill="#7d8496" letter-spacing=".3">${dateLine(D)}</text>
+      <text class="${A ? 'ph-pop' : ''}" x="0" y="98" font-family="${SANS_UI}" fill="#eef1fa"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
+      <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>` };
   }
   const ART = { dawn: dawnArt, day: dayArt, dusk: duskArt, night: nightArt };
   let uid = 0;
   const unique = (svg, u) => svg.replace(/(id="|url\(#)(p[dkn]-[a-z]+)/g, (m, p, id) => `${p}${id}-${u}`);
-  const artSvg = (id, D, cls = 'ph-art') => { const a = ART[id](D); return `<svg class="${cls}" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, ++uid)}</svg>`; };
+  const artSvg = (id, D, cls = 'ph-art', A = null) => { const a = ART[id](D, A); return { a, html: `<svg class="${cls}" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, ++uid)}</svg>` }; };
 
   /* ---------- Theme cards: the theme's own picture of today, then two rows with its own check ---------- */
   const CHECK = {
@@ -191,23 +209,49 @@
       const cols = [['#eef0f4', '#1b1d24'], ['#f5f2ec', '#1d1a16'], ['#15110c', GOLD], ['#07080d', '#dfe6ff']];
       return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${cols.map(([b, c], i) => `<rect x="${i * 95}" width="95.5" height="270" fill="${b}"/><text x="${i * 95 + 47.5}" y="150" text-anchor="middle" font-family='${SONG}' font-size="44" font-weight="300" fill="${c}">${'晨昼暮夜'[i]}</text>`).join('')}</svg>`;
     }
-    const a = ART[id](DEMO), u = ++uid, y0 = a.H + 34;
+    const a = ART[id](DEMO, null), u = ++uid, y0 = a.H + 34;
     const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' ? SONG : id === 'dusk' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
     const glass = id === 'dawn' ? `<rect x="20" y="16" width="340" height="${a.H}" rx="28" fill="#ffffff" fill-opacity=".45" stroke="#fff" stroke-opacity=".9"/>` : '';
     return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${unique(MOCK_BG[id], u)}${glass}<g transform="translate(20 16)">${unique(a.svg, u)}</g>${unique(rows, u)}</svg>`;
   }
 
-  /* ---------- Header: each theme draws today its own way; the countdowns sit under it ---------- */
+  /* ---------- Header: each theme draws today its own way; the countdowns sit under it ----------
+     When a task is completed, its pieces fly into the picture (pro.js) and land: until then the header still shows it
+     as not done; on landing (arrive) the picture changes with that one task animated. */
+  let seen = null, seenTheme = '', geo = null, landing = null, lastHtml = '';
+  const arriving = new Map();
   function head() {
     if (!current) return;
     const top = $('tasks-panel')?.querySelector('.today-top'); if (!top) return;
-    let el = $('pro-head'); if (!el) { el = document.createElement('div'); el.id = 'pro-head'; top.before(el); }
-    const keepJar = $('pro-jar-button'); if (keepJar && el.contains(keepJar)) $('today-side')?.prepend(keepJar);
-    const D = data(), label = `${D.d.getMonth() + 1}月${D.d.getDate()}日，完成 ${D.done} / ${D.total}`;
-    el.className = `pro-head pro-head-${current}`;
-    el.innerHTML = `<div class="ph-stage" role="img" aria-label="${label}">${artSvg(current, D)}<span class="pro-head-jar"></span></div>
+    let el = $('pro-head'); if (!el) { el = document.createElement('div'); el.id = 'pro-head'; top.before(el); lastHtml = ''; }
+    const D = data(), doneIds = D.items.filter(i => i.done).map(i => i.id);
+    if (seen && seenTheme === current && !reduce()) doneIds.forEach(id => { if (!seen.has(id) && !arriving.has(id)) arriving.set(id, setTimeout(() => arrive(id), 1800)); });
+    for (const [id, t] of arriving) if (!doneIds.includes(id) || seenTheme !== current) { clearTimeout(t); arriving.delete(id); }
+    seen = new Set(doneIds); seenTheme = current;
+    const shown = arriving.size ? { ...D, done: D.done - arriving.size, left: D.left + arriving.size, items: D.items.map(i => arriving.has(i.id) ? { ...i, done: false } : i) } : D;
+    const a = ART[current](shown, landing); geo = a;
+    const label = `${D.d.getMonth() + 1}月${D.d.getDate()}日，完成 ${shown.done} / ${shown.total}`;
+    const html = `<div class="ph-stage" role="img" aria-label="${label}"><svg class="ph-art" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, 'h')}</svg><span class="pro-head-jar"></span></div>
       ${D.cds.length ? `<div class="ph-cds">${D.cds.slice(0, 3).map(c => `<span><b>${current === 'day' ? (c.n ? cn(c.n) : '今') : c.n || '今天'}</b><small>${c.n ? (current === 'day' ? '日' : '天') : ''}</small>${esc(c.title)}</span>`).join('')}</div>` : ''}`;
+    el.className = `pro-head pro-head-${current}`;
+    if (html === lastHtml && !landing) return;
+    const keepJar = $('pro-jar-button'); if (keepJar && el.contains(keepJar)) $('today-side')?.prepend(keepJar);
+    el.innerHTML = html; lastHtml = landing ? '' : html;
     const jar = $('pro-jar-button'), slot = el.querySelector('.pro-head-jar'); if (jar && slot) slot.append(jar);
+  }
+  /** The flying pieces reached the picture: show the task as done, animating just that one. */
+  function arrive(id) {
+    if (!arriving.has(id)) return;
+    clearTimeout(arriving.get(id));
+    const from = data().done - arriving.size;
+    arriving.delete(id); landing = { id, from }; head(); landing = null;
+  }
+  /** Where on screen the task's pieces should land, or null when the header is not in view. */
+  function target(id) {
+    const svg = $('pro-head')?.querySelector('.ph-art'); if (!svg || !geo) return null;
+    const b = svg.getBoundingClientRect(); if (!b.width || b.bottom < 30 || b.top > innerHeight - 60) return null;
+    const k = b.width / 340, p = (geo.pts && geo.pts[id]) || geo.land;
+    return { x: b.left + p.x * k, y: b.top + p.y * k };
   }
 
   /* ---------- The jar: one silhouette, four materials inside ---------- */
@@ -248,5 +292,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { mount, unmount, head, jar, mock, art: (id, D) => artSvg(id, D || DEMO), data };
+  window.SuiSuiSkins = { mount, unmount, head, arrive, target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();

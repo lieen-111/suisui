@@ -11,8 +11,8 @@
   const PRICE = '¥18', LIST_PRICE = '¥28', TRIAL_DAYS = 3;
 
   /* ---------- Themes: each one is a whole world (colours, type, shard material, completion effect, sound) ---------- */
-  const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
-  const SERIF = '"Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
+  const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
+  const SERIF = '"Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
   /* 「一日四时」: four times of day. Each theme draws today in its own way (measuring glass, manuscript paper, sunset
      dial, constellation), has its own check and its own weekly picture. Shared: things break into pieces when done,
      in the theme's material, and the pieces go into the same jar. */
@@ -71,6 +71,7 @@
   const rng = seed => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const easeOut = t => 1 - Math.pow(1 - t, 3), easeIn = t => t * t * t;
+  const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const startOfDay = (d = new Date()) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   const weekStart = (d = new Date()) => { const x = startOfDay(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
   const isoWeek = d => { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return Math.ceil(((x - y0) / 864e5 + 1) / 7); };
@@ -370,12 +371,12 @@
           ctx.save(); ctx.setLineDash([sc(4), sc(5)]); ctx.strokeStyle = hex(red, .15); ctx.lineWidth = sc(1); ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.moveTo(cx, y); ctx.lineTo(cx, y + cell); ctx.stroke(); ctx.restore();
           const e = list[r]; if (!e) continue;
           const more = r === rows - 1 && list.length > rows;
-          ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(more ? 34 : 58)}px ${SONG}`; ctx.fillText(more ? `+${list.length - rows + 1}` : firstChar(e.title), cx, cy + sc(more ? 12 : 20));
+          ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(more ? 34 : 58)}px ${SONG}`; ctx.fillText(more ? `+${list.length - rows + 1}` : firstChar(e.title), cx, cy + sc(more ? 12 : 20));
           if (!more && (e.min || 0) >= 20) { const q = rng(hash(`${e.id}${e.at}`)); ctx.save(); ctx.translate(cx, cy); ctx.rotate((q() - .5) * .8); ctx.strokeStyle = red; ctx.lineWidth = sc(3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, sc(38), sc(35), 0, .25, Math.PI * 2 - .05); ctx.stroke(); ctx.restore(); }
         }
       }
       ctx.textAlign = 'center';
-      Array.from(`第${CN(isoWeek(start))}周`).forEach((ch, i) => { ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(64)}px ${SONG}`; ctx.fillText(ch, Pd + sc(44), gy + sc(60) + i * sc(80)); });
+      Array.from(`第${CN(isoWeek(start))}周`).forEach((ch, i) => { ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(64)}px ${SONG}`; ctx.fillText(ch, Pd + sc(44), gy + sc(60) + i * sc(80)); });
       Array.from(`${CN(start.getMonth() + 1)}月${CN(start.getDate())}日起`).forEach((ch, i) => { ctx.fillStyle = L.muted; ctx.font = `400 ${sc(24)}px ${SONG}`; ctx.fillText(ch, Pd + sc(130), gy + sc(40) + i * sc(34)); });
       // seal
       const sx = Pd + sc(4), sy = gy + rows * cell - sc(150), s = sc(140);
@@ -383,7 +384,7 @@
       ctx.fillStyle = '#f5f2ec'; ctx.font = `600 ${sc(50)}px ${SONG}`; [['碎', -1, -1], ['碎', -1, 1], ['清', 1, -1], ['单', 1, 1]].forEach(([c, cxk, cyk]) => ctx.fillText(c, -cxk * s * .23, cyk * s * .23 + sc(17)));
       { const r = rng(11); ctx.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 180; i++) { ctx.fillStyle = `rgba(0,0,0,${.3 + r() * .5})`; ctx.fillRect((r() - .5) * s, (r() - .5) * s, sc(1 + r() * 3), sc(1 + r() * 2)); } }
       ctx.restore(); ctx.textAlign = 'left';
-      ctx.fillStyle = '#1d1a16'; ctx.font = `300 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}件事` : '这一页还空着', Pd, H - Pd - sc(70));
+      ctx.fillStyle = '#1d1a16'; ctx.font = `400 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}件事` : '这一页还空着', Pd, H - Pd - sc(70));
       ctx.fillStyle = L.muted; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? `${st.focusText ? `${st.focusText}，` : ''}周${st.busiest}写得最多。朱圈是专注过的事` : '完成一件事，就写下第一个字', Pd, H - Pd - sc(24));
       return canvas;
     }
@@ -436,6 +437,16 @@
     caption(`300 ${sc(80)}px ${SANS}`, `第 ${isoWeek(start)} 周`, range);
     footer(`500 ${sc(44)}px ${SANS}`);
     return canvas;
+  }
+
+  /** The weekly picture is drawn on a canvas, which does not wait for web fonts: load the theme's fonts for the
+      characters it will draw, and tell the caller whether it should draw again. */
+  const fontsDone = new Set();
+  function artFonts(L, entries) {
+    const mat = L.material, faces = mat === 'paper' ? ['400 40px "Noto Serif SC"'] : mat === 'gold' ? ['400 40px "Noto Serif SC"', '400 40px "Bodoni Moda"', 'italic 400 40px "Bodoni Moda"'] : [];
+    const text = `${entries.map(e => Array.from(String(e.title || ''))[0] || '').join('')}第周件事一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
+    const key = faces.join() + text; if (!faces.length || !document.fonts?.load || fontsDone.has(key)) return Promise.resolve(false);
+    return Promise.all(faces.map(f => document.fonts.load(f, text))).then(() => { fontsDone.add(key); return true; }, () => false);
   }
 
   /* ---------- Demo data for previews (free users see what Pro makes) ---------- */
@@ -523,6 +534,8 @@
   function themeMock(id) { return window.SuiSuiSkins.mock(id); }
   function loadThumbFonts() { /* the themes use system and bundled fonts only; nothing to wait for */ }
   function renderLookInline() {
+    // a Pro theme replaces the free style, so the free style cards show nothing selected while one is on
+    if (activeTheme()) document.querySelectorAll('[data-ui-style]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
     const f = $('pro-look'); if (!f) return;
     const pro = isPro(), cur = tryOn || (pro ? S().proTheme || '' : '');
     f.innerHTML = `<legend>Pro 主题 · 一日四时${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
@@ -631,8 +644,9 @@
     renderCountdownList();
     // Demo jar + art
     const dj = $('pro-demo-jar'); if (dj) { const ctx = canvasFor(dj, 132, 168); drawJarWith(BRAND, ctx, 8, 6, 116, 156, demoEntries(startOfDay(), 9), 0); }
-    const art = drawArt(pro && logBetween(weekStart().getTime(), Date.now() + 1).length ? logBetween(weekStart().getTime(), weekStart().getTime() + 7 * 864e5) : demoEntries(), weekStart(), look(), 540);
-    $('pro-demo-art').src = art.toDataURL('image/png');
+    const entries = pro && logBetween(weekStart().getTime(), Date.now() + 1).length ? logBetween(weekStart().getTime(), weekStart().getTime() + 7 * 864e5) : demoEntries();
+    $('pro-demo-art').src = drawArt(entries, weekStart(), look(), 540).toDataURL('image/png');
+    artFonts(look(), entries).then(fresh => { if (fresh && $('pro-demo-art')) $('pro-demo-art').src = drawArt(entries, weekStart(), look(), 540).toDataURL('image/png'); });
   }
   let demoPick = '';
   function playDemo() {
@@ -699,8 +713,9 @@
     $('pro-week-prev').addEventListener('click', () => { weekOffset--; renderJar(); });
     $('pro-week-next').addEventListener('click', () => { if (weekOffset < 0) { weekOffset++; renderJar(); } });
     s.querySelectorAll('[data-day-jar]').forEach(c => { const ctx = canvasFor(c, 34, 44); drawJar(ctx, 2, 2, 30, 40, days[Number(c.dataset.dayJar)], { per: 2, sz: 6, lid: false }); });
-    const art = drawArt(week, ws, look(), 1080);
+    let art = drawArt(week, ws, look(), 1080);
     $('pro-art-img').src = art.toDataURL('image/png');
+    artFonts(look(), week).then(fresh => { if (fresh && $('pro-art-img')) { art = drawArt(week, ws, look(), 1080); $('pro-art-img').src = art.toDataURL('image/png'); } });
     $('pro-art-save').addEventListener('click', () => API.saveImage(art, `碎碎清单-第${isoWeek(ws)}周碎片画.png`));
     physicsJar($('pro-jar-big'), today, s);
   }
@@ -785,6 +800,42 @@
     setTimeout(() => drawMiniJar(true), 640);
   }
 
+  /** The task's pieces fly from its row into the theme's picture of today, and land at `to`.
+      晨: droplets fall into the glass. 昼: a drop of red ink arcs to the character's cell. 暮: gold leaf drifts up
+      to the sun. 夜: a spark with a tail flies up to its star. Resolves when they land. */
+  function flyToHead(rect, to, theme) {
+    const from = { x: rect.left + Math.min(rect.width * .3, 120), y: rect.top + rect.height / 2 }, dur = theme === 'night' ? 640 : 600;
+    const lift = Math.min(150, Math.max(70, Math.abs(from.y - to.y) * .35));
+    const path = (t, dx = 0, lag = 0) => { const e = easeInOut(clamp(t)), x = from.x + dx * (1 - e) + (to.x - from.x) * e, y = from.y + (to.y - from.y) * e - Math.sin(clamp(t) * Math.PI) * (lift + lag); return { x, y }; };
+    let draw;
+    if (theme === 'dawn') {
+      const drops = Array.from({ length: 6 }, (_, i) => { const r = rng(i * 7 + 3); return { d: i * 34, dx: (r() - .5) * 90, s: 2.6 + r() * 2.8, lag: r() * 30, c: ['#a99fff', '#86dcc6', '#ffb99b'][i % 3] }; });
+      draw = (ctx, ms) => drops.forEach(b => {
+        const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag);
+        const g = ctx.createRadialGradient(p.x - b.s * .35, p.y - b.s * .4, 0, p.x, p.y, b.s); g.addColorStop(0, '#fff'); g.addColorStop(.45, b.c); g.addColorStop(1, hex(b.c, .55));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, b.s, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = .8; ctx.stroke();
+      });
+    } else if (theme === 'day') {
+      draw = (ctx, ms) => { for (let k = 14; k >= 0; k--) { const t = (ms - k * 9) / dur; if (t <= 0 || t >= 1) continue; const p = path(t); ctx.globalAlpha = (1 - k / 15) * .9; ctx.fillStyle = '#b43a2c'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.2 * (1 - k / 18), 0, 7); ctx.fill(); } ctx.globalAlpha = 1; };
+    } else if (theme === 'dusk') {
+      const leaves = Array.from({ length: 9 }, (_, i) => { const r = rng(i * 11 + 1); return { d: i * 28, dx: (r() - .5) * 110, s: 3 + r() * 3.5, lag: r() * 50, spin: 4 + r() * 6, c: ['#e8d3a4', '#c8a66a', '#f4e8cc'][i % 3] }; });
+      draw = (ctx, ms) => leaves.forEach(b => {
+        const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag), flip = Math.cos(t * b.spin * Math.PI);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(t * b.spin); ctx.scale(Math.max(.15, Math.abs(flip)), 1); ctx.globalAlpha = 1 - t * .25;
+        ctx.fillStyle = flip > 0 ? b.c : '#9c7f47'; ctx.beginPath(); ctx.moveTo(-b.s, -b.s * .6); ctx.lineTo(b.s * .9, -b.s * .8); ctx.lineTo(b.s, b.s * .5); ctx.lineTo(-b.s * .7, b.s * .8); ctx.closePath(); ctx.fill(); ctx.restore();
+      });
+    } else {
+      draw = (ctx, ms) => {
+        const t = ms / dur; if (t >= 1) return;
+        for (let k = 22; k >= 1; k--) { const q = path(t - k * .012); if (t - k * .012 <= 0) continue; ctx.fillStyle = `rgba(201,214,255,${(1 - k / 23) * .5})`; ctx.beginPath(); ctx.arc(q.x, q.y, 2.6 * (1 - k / 26), 0, 7); ctx.fill(); }
+        const p = path(t); const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(201,214,255,.8)'); g.addColorStop(1, 'rgba(159,180,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
+      };
+    }
+    const span = theme === 'dawn' ? dur + 6 * 34 : theme === 'dusk' ? dur + 9 * 28 : dur + 140;
+    return overlay(span, draw, theme === 'dawn' || theme === 'dusk' ? dur + 60 : dur);
+  }
+
   /* ---------- 倒数日 ---------- */
   const countdowns = () => (Array.isArray(S().countdowns) ? S().countdowns : []).filter(c => c && typeof c.title === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(c.date));
   const daysTo = date => { const [y, m, d] = date.split('-').map(Number); return Math.round((new Date(y, m - 1, d) - startOfDay()) / 864e5); };
@@ -852,8 +903,12 @@
   window.addEventListener('suisui:render', () => { window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
   window.addEventListener('suisui:completing', () => { if (isPro() || tryOn) playSound(themeSound()); });
   window.addEventListener('suisui:done', e => {
-    const { rect, allDone } = e.detail || {};
-    if (rect) flyToJar(rect); else drawMiniJar(true);
+    const { id, rect, allDone } = e.detail || {}, skin = window.SuiSuiSkins, theme = activeTheme();
+    if (theme && skin?.arriving?.(id)) {
+      const to = rect && !reduce() ? skin.target(id) : null;
+      if (to) flyToHead(rect, to, theme).then(() => { skin.arrive(id); drawMiniJar(true); });
+      else { skin.arrive(id); drawMiniJar(true); }
+    } else if (rect) flyToJar(rect); else drawMiniJar(true);
     if (allDone) setTimeout(celebrate, 900);
   });
   // A trial that ends while the app is open: the free look comes back.
