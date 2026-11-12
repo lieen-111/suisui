@@ -86,7 +86,13 @@
   function openPay(step = 'start') {
     let el = $('pro-pay');
     if (!el) { el = document.createElement('div'); el.id = 'pro-pay'; el.className = 'pro-pay'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'pro-pay-title'); document.body.append(el);
-      el.addEventListener('click', e => { if (e.target === el && payStep !== 'working') closePay(); }); }
+      el.addEventListener('click', e => { if (e.target === el && payStep !== 'working') closePay(); });
+      // drag the top of the card down to close it
+      let y0 = null;
+      el.addEventListener('pointerdown', e => { const card = el.querySelector('.pro-pay-card'); if (!card || payStep === 'working' || !e.target.closest('.pro-pay-grab, .pro-pay-head')) return; y0 = e.clientY; card.style.transition = 'none'; });
+      el.addEventListener('pointermove', e => { if (y0 == null) return; const d = Math.max(0, e.clientY - y0); el.querySelector('.pro-pay-card').style.transform = `translateY(${d}px)`; });
+      const end = e => { if (y0 == null) return; const card = el.querySelector('.pro-pay-card'), d = e.clientY - y0; y0 = null; card.style.transition = ''; card.style.transform = ''; if (d > 70) closePay(); };
+      el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
     payStep = step; payNote = ''; el.hidden = false; renderPay(); document.body.classList.add('pro-paying');
     requestAnimationFrame(() => el.querySelector('.pro-pay-card')?.focus());
   }
@@ -95,26 +101,24 @@
   function renderPay() {
     const el = $('pro-pay'); if (!el) return;
     const kind = ios() ? 'ios' : 'code', working = payStep === 'working';
-    const head = `<header class="pro-pay-head"><h2 id="pro-pay-title">${payStep === 'done' ? 'Pro 已解锁' : '碎碎清单 Pro'}</h2>${working ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
+    const head = `<span class="pro-pay-grab" aria-hidden="true"></span><header class="pro-pay-head"><h2 id="pro-pay-title">${payStep === 'done' ? 'Pro 已解锁' : '碎碎清单 Pro'}</h2>${working ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
     let body = '';
     if (payStep === 'done') {
-      body = `<div class="pro-pay-done"><span class="pro-pay-badge">${icon('badge-check')}</span><p>谢谢你支持碎碎清单。七套主题、锁屏、动效、碎片罐都已经可以用了。</p>
+      body = `<div class="pro-pay-done"><p><span class="pro-pay-badge">${icon('badge-check')}</span>谢谢支持，全部功能已经可以用了。挑一个主题试试：</p>
         <div class="pro-pay-themes">${ORDER.map(id => `<button type="button" data-pay-theme="${id}" aria-label="用「${THEMES[id].full}」">${themeMock(id)}<small>${THEMES[id].full}</small></button>`).join('')}</div>
-        <button type="button" class="pro-pay-main" id="pro-pay-finish">先挑一个主题</button></div>`;
+        <button type="button" class="pro-pay-link" id="pro-pay-finish">以后再说</button></div>`;
     } else if (working) {
       body = `<div class="pro-pay-working" role="status"><span class="pro-spin" aria-hidden="true"></span><p>${ios() ? (payNote === 'restore' ? '正在查找这个 Apple 账户的购买记录…' : '正在连接 App Store…') : '正在验证兑换码…'}</p></div>`;
     } else {
-      const price = `<div class="pro-pay-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}；一次买断，永久使用，以后的新主题也包含在内</span></div>`;
-      const list = `<ul class="pro-pay-list">${INCLUDES.map(([ic, t, d]) => `<li>${icon(ic)}<span><b>${t}</b><small>${d}</small></span></li>`).join('')}</ul>`;
+      const price = `<div class="pro-pay-sum"><span class="pro-pay-amt"><b>${PRICE}</b><s>${LIST_PRICE}</s></span><span class="pro-pay-what">一次买断，永久使用<small>${PRICE_NOTE}</small></span></div>`;
       const note = payNote ? `<p class="pro-pay-note${/^(fail|used|offline|bad|none)/.test(payNote) ? ' is-error' : ''}" role="alert">${{ cancel: '已取消，没有扣款。', fail: '没能完成付款：连不上 App Store。检查网络后再试一次。', ask: '已经发给家长了。家长同意后，Pro 会自动解锁。', none: '这个 Apple 账户没有买过 Pro。换手机前用的是别的 Apple 账户吗？', used: '这个兑换码已经在 3 台设备上用过了。需要帮助，就在“关于”里给我们留言。', offline: '验证兑换码要联网。连上网再试一次。', bad: '兑换码不对：应该是 SUISUI 开头，后面 12 位字母和数字。', sent: '本地预览没有真的付款页。付完款，付款页会显示一串兑换码，像这样：' }[payNote] || ''}${payNote === 'sent' ? ` <button type="button" class="pro-pay-code" id="pro-pay-fill">${demoCode}</button>` : ''}</p>` : '';
       body = ios()
-        ? `${price}${list}${note}<button type="button" class="pro-pay-main" id="pro-pay-go">用 App Store 购买 ${PRICE}</button>
-           <p class="pro-pay-fine">付款由 Apple 处理，买过的换手机也能用：点“恢复购买”。</p><button type="button" class="pro-pay-link" id="pro-pay-restore">恢复购买</button>`
-        : `${price}${list}<ol class="pro-pay-steps">
-             <li><b>打开付款页</b><small>支付宝、微信都可以付</small><button type="button" class="pro-pay-main" id="pro-pay-go">打开付款页 · ${PRICE}</button></li>
-             <li><b>复制兑换码</b><small>付完款，页面上会显示一串兑换码，记得截图保存</small></li>
-             <li><b>粘贴兑换</b><small>安卓和网页都能用，一个码最多用在 3 台设备上</small>
-               <form class="pro-pay-redeem" id="pro-pay-redeem"><input id="pro-pay-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SUISUI-XXXX-XXXX-XXXX" aria-label="兑换码"><button type="button" class="pro-pay-paste" id="pro-pay-paste">粘贴</button><button type="submit">兑换</button></form></li></ol>${note}`;
+        ? `${price}${note}<button type="button" class="pro-pay-main" id="pro-pay-go">用 App Store 购买 ${PRICE}</button>
+           <p class="pro-pay-fine">付款由 Apple 处理 · <button type="button" class="pro-pay-link" id="pro-pay-restore">恢复购买</button></p>`
+        : `${price}<ol class="pro-pay-steps"><li>付款</li><li>拿到兑换码</li><li>粘贴兑换</li></ol>
+           <button type="button" class="pro-pay-main" id="pro-pay-go">打开付款页 · ${PRICE}</button>
+           <form class="pro-pay-redeem" id="pro-pay-redeem"><input id="pro-pay-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="已有兑换码？SUISUI-…" aria-label="兑换码"><button type="button" class="pro-pay-paste" id="pro-pay-paste">粘贴</button><button type="submit">兑换</button></form>${note}
+           <p class="pro-pay-fine">支付宝、微信都能付 · 一个码最多用在 3 台设备上</p>`;
     }
     const sim = payStep === 'done' || working ? '' : `<div class="pro-pay-sim" role="group" aria-label="模拟结果"><span>本地预览 · 模拟结果</span>${OUTCOMES[kind].map(([id, n]) => `<button type="button" data-pay-outcome="${id}" aria-pressed="${payOutcome === id}">${n}</button>`).join('')}</div>`;
     el.innerHTML = `<div class="pro-pay-card" tabindex="-1">${head}${body}${sim}</div>`;

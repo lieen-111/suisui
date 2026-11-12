@@ -205,6 +205,7 @@ let browser;
     assert.equal(await page.locator('#pro-buy').textContent(), '购买 · ¥28');
     assert.equal(await page.locator('#pro-restore').count(), 1, 'Restore purchases on iPhone');
     await page.locator('#pro-buy').click();
+    { const h = await page.locator('.pro-pay-card').evaluate(c => c.getBoundingClientRect().height - (c.querySelector('.pro-pay-sim')?.offsetHeight || 0)); assert.ok(h < 844 * .4, `Checkout stays small (${Math.round(h)}px) so the app is still usable behind it`); }
     assert.equal(await page.locator('.pro-pay-redeem').count(), 0, 'No redeem code on iPhone');
     assert.match(await page.locator('#pro-pay-go').textContent(), /用 App Store 购买 ¥28/);
     for (const [outcome, says] of [['cancel', /没有扣款/], ['fail', /再试一次/], ['ask', /家长同意/]]) {
