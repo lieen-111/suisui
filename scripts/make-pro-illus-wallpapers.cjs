@@ -23,7 +23,7 @@ const OUT = path.join(__dirname, '..', 'app', 'assets', 'wallpapers');
       grain(ctx, '44,58,32', 26000, 3);
       // clear-line clouds by the clock
       ctx.strokeStyle = line; ctx.lineWidth = 3; ctx.fillStyle = '#fbf8ee'; ctx.lineJoin = 'round';
-      [[170, 260, 1], [880, 430, .8]].forEach(([x, y, s]) => { const bumps = [[-62, -10, 34], [-20, -38, 46], [34, -24, 38], [70, -4, 26]], base = () => { ctx.beginPath(); bumps.forEach(([dx, dy, r]) => { ctx.moveTo(x + (dx + r) * s, y + dy * s); ctx.arc(x + dx * s, y + dy * s, r * s, 0, 7); }); ctx.rect(x - 92 * s, y - 14 * s, 184 * s, 22 * s); };
+      [[150, 150, .62], [940, 175, .5]].forEach(([x, y, s]) => { const bumps = [[-62, -10, 34], [-20, -38, 46], [34, -24, 38], [70, -4, 26]], base = () => { ctx.beginPath(); bumps.forEach(([dx, dy, r]) => { ctx.moveTo(x + (dx + r) * s, y + dy * s); ctx.arc(x + dx * s, y + dy * s, r * s, 0, 7); }); ctx.rect(x - 92 * s, y - 14 * s, 184 * s, 22 * s); };
         ctx.lineWidth = 6; ctx.strokeStyle = line; base(); ctx.stroke(); ctx.fillStyle = '#fbf8ee'; base(); ctx.fill(); });
       // the ground
       const gy = 1790; ctx.fillStyle = '#b39a5f'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#8fb35e'; ctx.fillRect(0, gy - 26, W, 30);
@@ -45,9 +45,9 @@ const OUT = path.join(__dirname, '..', 'app', 'assets', 'wallpapers');
       ctx.fillStyle = '#f8f7f4'; ctx.fillRect(0, 0, W, H); grain(ctx, '20,20,22', 30000, 5);
       const s = 7.6, x = W / 2 - 90 * s, y = H - 125 * s;
       ctx.save(); ctx.translate(x, y); ctx.scale(s, s); SK.furStrokes(ctx, 0, SK.furTotal()); SK.furFace(ctx, 1, 1); ctx.restore();
-      // a few loose hairs floating up toward the clock
+      // a few loose hairs drifting just above its ears
       const r = rng(11); ctx.strokeStyle = 'rgba(20,20,22,.55)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-      for (let i = 0; i < 9; i++) { const hx = 120 + r() * (W - 240), hy = 300 + r() * 240, a = r() * 6, l = 26 + r() * 30; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx + Math.cos(a + .7) * l * .6, hy + Math.sin(a + .7) * l * .6, hx + Math.cos(a) * l, hy + Math.sin(a) * l); ctx.stroke(); }
+      for (let i = 0; i < 9; i++) { const hx = 140 + r() * (W - 280), hy = 1520 + r() * 160, a = r() * 6, l = 26 + r() * 30; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx + Math.cos(a + .7) * l * .6, hy + Math.sin(a + .7) * l * .6, hx + Math.cos(a) * l, hy + Math.sin(a) * l); ctx.stroke(); }
       finish(c, 'pro-fluff');
     }
     return out;
