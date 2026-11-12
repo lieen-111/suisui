@@ -768,7 +768,7 @@
 
       <section class="pro-part" data-pro-section="themes">
         <h2>七套主题</h2>
-        <p class="pro-lead">六种看今天的方式：清晨的杯子一点点满起来，稿纸上的一句话一个字一个字写完，夜里每件事是一颗星；一滴滴颜色在水里晕开，八音盒纸带上打满音孔，一张孔版小海报慢慢印好。每套都换掉所有界面，连锁屏也一起换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
+        <p class="pro-lead">七种看今天的方式：清晨的杯子一点点满起来，稿纸上的一句话一个字一个字写完，夜里每件事是一颗星；一滴滴颜色在水里晕开，一张孔版小海报慢慢印好，一间小屋一件件摆满家具，一只毛团小猫一层层长出毛。每套都换掉所有界面，连锁屏和壁纸也一起换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
         <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，夜 18 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
       </section>
 
