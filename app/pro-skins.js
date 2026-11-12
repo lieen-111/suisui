@@ -24,7 +24,7 @@
   const CINNABAR = '#b43a2c', GOLD = '#c8a66a';
   const SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
   const SERIF = '"Bodoni Moda","Didot","Bodoni 72","Playfair Display","Noto Serif","Times New Roman",serif';
-  const MAT = { dawn: 'glass', day: 'paper', night: 'light', bloom: 'paper', tape: 'plain', riso: 'paper' };
+  const MAT = { dawn: 'glass', day: 'paper', night: 'light', bloom: 'paper', tape: 'plain', riso: 'paper', room: 'paper', fluff: 'paper' };
 
   /* ---------- Backgrounds: quiet ---------- */
   function grain(ctx, w, h, alpha, seed = 3, color = '0,0,0') {
@@ -56,6 +56,10 @@
     const g = ctx.createRadialGradient(w * .5, h * .25, 10, w * .5, h * .4, Math.max(w, h)); g.addColorStop(0, 'rgba(60,110,95,.35)'); g.addColorStop(1, 'rgba(0,0,0,.25)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     grain(ctx, w, h, .07, 21, '200,230,215'); // velvet
   };
+  BG.room = (ctx, w, h) => { // soft green, like the grass above the room
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#e9f0d6'); g.addColorStop(1, '#dfe8c6'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .04, 71, '60,80,30');
+  };
+  BG.fluff = (ctx, w, h) => { ctx.fillStyle = '#f8f7f4'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .03, 81, '40,40,40'); };
   BG.riso = (ctx, w, h) => { ctx.fillStyle = '#f6f4ef'; ctx.fillRect(0, 0, w, h); grain(ctx, w, h, .06, 41, '60,60,90'); };
   const RES = { dawn: 5 }, FPS = { dawn: 120 };
   let current = '', loop = 0;
@@ -210,10 +214,12 @@
     const W = 340, H = 164, bx = 120, by = 0, bw = W - bx - 44, bh = H - 4, idx = Object.fromEntries(D.items.map((it, i) => [it.id, i])), done = D.items.filter(i => i.done).sort((a, b) => a.at - b.at);
     let blooms = '', land = { x: bx + bw / 2, y: by + bh / 2 }; const pts = {};
     done.forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]), fresh = A && A.id === it.id; pts[it.id] = { x: b.x, y: b.y }; if (fresh) land = { x: b.x, y: b.y }; blooms += bloomDot(b, '', fresh ? 'ph-bloom' : ''); });
-    D.items.filter(i => !i.done).forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]); pts[it.id] = { x: b.x, y: b.y }; });
+    let waiting = ''; // drops still to come: a faint pencil ring where each will land
+    D.items.filter(i => !i.done).forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]); pts[it.id] = { x: b.x, y: b.y }; waiting += `<circle cx="${f1(b.x)}" cy="${f1(b.y)}" r="${f1(b.R * .55)}" fill="none" stroke="${b.c}" stroke-opacity=".45" stroke-width=".8" stroke-dasharray="2 2.4"/>`; });
+    const basin = `<ellipse cx="${bx + bw / 2}" cy="${by + bh / 2}" rx="${bw / 2 + 6}" ry="${bh / 2 - 2}" fill="#dfe8ec" fill-opacity="${D.total ? .32 : .55}"/>`;
     const state = D.total ? (D.left ? `晕开了 ${D.done} 滴，还有 ${D.left} 滴` : '今天这幅，晕好了') : '一盆清水，等第一滴墨';
     return { H, pts, land, svg: `<defs>${bloomDefs('')}</defs>
-      <g filter="url(#pb-wet)">${blooms}</g>
+      <g filter="url(#pb-wet)">${basin}${blooms}</g>${waiting}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="70" font-family='${SONG}' fill="#2b2b2e"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
       <text x="2" y="96" font-family='${SONG}' font-size="12.5" fill="#7a7c80" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
       <text x="2" y="${H - 22}" font-family='${SONG}' font-size="13" fill="#2b2b2e" fill-opacity=".8" letter-spacing="1">${state}</text>` };
@@ -294,7 +300,198 @@
       <text x="2" y="116" font-family="${SANS_UI}" font-size="12" fill="#5b6276">${dateLine(D)}</text>
 ` };
   }
-  const ART = { dawn: dawnArt, day: dayArt, night: nightArt, bloom: bloomArt, tape: tapeArt, riso: risoArt };
+  /* 屋 · 线描 — an isometric cutaway of a little room in the ground, drawn in clear line with hatching.
+     Each finished task puts one thing in the room (rug, bed, desk, lamp, shelf, plant …); things still to do are a
+     pencil sketch. When the day is done the lamp comes on. */
+  const ROOM = { line: '#2c3a20', grass: '#8fb35e', grassDark: '#6f9443', soil: '#b39a5f', soilDark: '#937b45', wallL: '#dbe8b6', wallR: '#cbdca2', floor: '#efe7c9', plank: '#d9cfa8', wood: '#c99a52', woodDark: '#a87a3a', yellow: '#f1d55a', yellowDark: '#d4b53a', white: '#fbf8ee', green: '#79a84f', greenDark: '#557f33', red: '#d9673a', blue: '#6f9fc4' };
+  /** Isometric projection: x runs right-down, y left-down, z up. u = size of one unit. */
+  const isoP = (ox, oy, u) => (x, y, z = 0) => [f1(ox + (x - y) * .866 * u), f1(oy + (x + y) * .5 * u - z * u)];
+  const poly = (pts, fill, extra = '') => `<path d="M${pts.map(p => p.join(' ')).join('L')}Z" fill="${fill}" stroke="${ROOM.line}" stroke-width=".9" stroke-linejoin="round"${extra}/>`;
+  /** A box: its top and its two faces toward us. ghost = a dashed pencil outline only. */
+  function isoBox(P, x, y, z, w, d, h, c, ghost) {
+    const top = [P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+    const right = [P(x + w, y, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x + w, y, z + h)];
+    const left = [P(x, y + d, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+    if (ghost) return [top, right, left].map(f => `<path d="M${f.map(p => p.join(' ')).join('L')}Z" fill="none" stroke="${ROOM.line}" stroke-opacity=".28" stroke-width=".7" stroke-dasharray="2 2"/>`).join('');
+    return poly(left, c[2] || c[0]) + poly(right, c[1] || c[0]) + poly(top, c[0]);
+  }
+  /** One flat shape on the back-right wall (plane y = 0) or the back-left wall (x = 0). */
+  const onWall = (P, wall, a, b, z0, z1) => wall === 'R' ? [P(a, 0, z0), P(b, 0, z0), P(b, 0, z1), P(a, 0, z1)] : [P(0, a, z0), P(0, b, z0), P(0, b, z1), P(0, a, z1)];
+  const ROOM_ITEMS = [ // in the order they arrive; each draws itself, solid or as a sketch
+    ['rug', (P, g) => isoBox(P, 1.7, 2, 0, 2.6, 2.3, .04, [ROOM.yellow, ROOM.yellowDark, ROOM.yellowDark], g) + (g ? '' : `<path d="M${P(2.1, 2, .05).join(' ')}L${P(2.1, 4.3, .05).join(' ')}M${P(3.9, 2, .05).join(' ')}L${P(3.9, 4.3, .05).join(' ')}" stroke="${ROOM.red}" stroke-width="1"/>`)],
+    ['bed', (P, g) => isoBox(P, .05, 3.3, 0, 2.2, 2.6, .5, [ROOM.wood, ROOM.woodDark, ROOM.woodDark], g) + isoBox(P, .1, 3.35, .5, 2.1, 2.5, .22, [ROOM.white, '#e8e2cf', '#e8e2cf'], g) + isoBox(P, .7, 3.35, .72, 1.55, 2.5, .08, [ROOM.green, ROOM.greenDark, ROOM.greenDark], g) + isoBox(P, .15, 3.6, .72, .5, 1.6, .2, [ROOM.white, '#e8e2cf', '#e8e2cf'], g)],
+    ['desk', (P, g) => [[3, .15], [4.95, .15], [3, .95], [4.95, .95]].map(([x, y]) => isoBox(P, x, y, 0, .1, .1, 1.3, [ROOM.woodDark], g)).join('') + isoBox(P, 2.9, .05, 1.3, 2.2, 1.05, .12, [ROOM.wood, ROOM.woodDark, ROOM.woodDark], g)],
+    ['lamp', (P, g, lit) => (lit && !g ? `<ellipse cx="${P(4.6, .5, 2).join('" cy="')}" rx="${f1(3.1 * P(1, 0)[0] - 3.1 * P(0, 0)[0])}" ry="${f1(2.6 * P(1, 0)[0] - 2.6 * P(0, 0)[0])}" fill="url(#pi-glow)"/>` : '') + isoBox(P, 4.45, .35, 1.42, .3, .3, .07, [ROOM.line], g) + isoBox(P, 4.56, .46, 1.49, .08, .08, .55, [ROOM.line], g) + isoBox(P, 4.38, .28, 2.0, .45, .45, .28, [lit ? '#fff2a8' : ROOM.yellow, ROOM.yellowDark, ROOM.yellowDark], g)],
+    ['shelf', (P, g) => isoBox(P, .6, .05, 0, 1.4, .55, 2.7, [ROOM.wood, ROOM.woodDark, ROOM.woodDark], g) + (g ? '' : [0.7, 1.4, 2.1].map((z, i) => [0, 1, 2, 3].map(k => isoBox(P, .7 + k * .3, .6, z, .22, .02, .5 - (k % 2) * .1, [[ROOM.red, ROOM.blue, ROOM.green, ROOM.yellow][(k + i) % 4]])).join('')).join(''))],
+    ['plant', (P, g) => isoBox(P, 5.2, 4.9, 0, .6, .6, .55, ['#c7653a', '#a9512c', '#a9512c'], g) + (g ? `<circle cx="${P(5.5, 5.2, 1.2).join('" cy="')}" r="13" fill="none" stroke="${ROOM.line}" stroke-opacity=".28" stroke-dasharray="2 2"/>` : [[-10, -4, 9], [8, -8, 10], [0, -16, 11], [-6, -24, 8], [9, -22, 7]].map(([dx, dy, r]) => { const [x, y] = P(5.5, 5.2, .55); return `<ellipse cx="${f1(x + dx)}" cy="${f1(y + dy)}" rx="${r}" ry="${f1(r * .62)}" transform="rotate(${dx * 3} ${f1(x + dx)} ${f1(y + dy)})" fill="${ROOM.green}" stroke="${ROOM.line}" stroke-width=".8"/>`; }).join(''))],
+    ['window', (P, g, lit) => { const f = onWall(P, 'R', 2.9, 4.7, 2.2, 3.7); return g ? `<path d="M${f.map(p => p.join(' ')).join('L')}Z" fill="none" stroke="${ROOM.line}" stroke-opacity=".28" stroke-dasharray="2 2"/>` : poly(f, lit ? '#3c5a8a' : '#cfe6f2') + `<path d="M${P(3.8, 0, 2.2).join(' ')}L${P(3.8, 0, 3.7).join(' ')}M${P(2.9, 0, 2.95).join(' ')}L${P(4.7, 0, 2.95).join(' ')}" stroke="${ROOM.line}" stroke-width=".9"/>`; }],
+    ['picture', (P, g) => { const f = onWall(P, 'L', 1.3, 2.4, 2.1, 3.0); return g ? `<path d="M${f.map(p => p.join(' ')).join('L')}Z" fill="none" stroke="${ROOM.line}" stroke-opacity=".28" stroke-dasharray="2 2"/>` : poly(f, ROOM.white) + poly(onWall(P, 'L', 1.45, 2.25, 2.25, 2.85), '#bfd7a0'); }],
+    ['chair', (P, g) => [[3.55, 1.5], [4.15, 1.5], [3.55, 2.1], [4.15, 2.1]].map(([x, y]) => isoBox(P, x, y, 0, .08, .08, .7, [ROOM.woodDark], g)).join('') + isoBox(P, 3.5, 1.45, .7, .75, .75, .1, [ROOM.red, '#b8522c', '#b8522c'], g) + isoBox(P, 3.5, 2.12, .8, .75, .08, .8, [ROOM.red, '#b8522c', '#b8522c'], g)],
+    ['clock', (P, g) => { const pts = Array.from({ length: 18 }, (_, i) => P(0, 4.6 + Math.cos(i / 18 * 2 * Math.PI) * .38, 3.3 + Math.sin(i / 18 * 2 * Math.PI) * .38)); return g ? `<path d="M${pts.map(p => p.join(' ')).join('L')}Z" fill="none" stroke="${ROOM.line}" stroke-opacity=".28" stroke-dasharray="2 2"/>` : poly(pts, ROOM.white) + `<path d="M${P(0, 4.6, 3.3).join(' ')}L${P(0, 4.6, 3.55).join(' ')}M${P(0, 4.6, 3.3).join(' ')}L${P(0, 4.78, 3.3).join(' ')}" stroke="${ROOM.line}" stroke-width=".9"/>`; }],
+    ['mug', (P, g) => isoBox(P, 3.15, .3, 1.42, .22, .22, .25, [ROOM.white, '#e8e2cf', '#e8e2cf'], g)],
+    ['shoes', (P, g) => isoBox(P, 4.4, 5.4, 0, .5, .22, .15, [ROOM.blue, '#55809f', '#55809f'], g) + isoBox(P, 4.5, 5.75, 0, .5, .22, .15, [ROOM.blue, '#55809f', '#55809f'], g)],
+    ['books', (P, g) => [0, 1, 2].map(k => isoBox(P, 2.2, 4.8, k * .12, .7 - k * .06, .5, .12, [[ROOM.red, ROOM.blue, ROOM.yellow][k], ROOM.line, ROOM.line], g)).join('')],
+    ['cushion', (P, g) => isoBox(P, 4.5, 3.2, 0, .9, .9, .18, [ROOM.green, ROOM.greenDark, ROOM.greenDark], g)]
+  ];
+  // painter's order: flat things first, then things on the walls, then the far to near furniture
+  const ROOM_DRAW = ['rug', 'window', 'picture', 'clock', 'shelf', 'desk', 'mug', 'lamp', 'chair', 'bed', 'cushion', 'books', 'plant', 'shoes'];
+  function roomScene(P, D, A, u, only) {
+    const n = Math.min(D.total, ROOM_ITEMS.length), state = {};
+    if (D.total <= ROOM_ITEMS.length) D.items.slice(0, n).forEach((it, i) => { state[ROOM_ITEMS[i][0]] = { done: it.done, fresh: A && A.id === it.id }; });
+    else { // more tasks than furniture: the room fills in proportion
+      const k = D.left ? Math.floor(D.done / D.total * n) : n, k0 = A ? Math.floor(A.from / D.total * n) : k;
+      ROOM_ITEMS.forEach(([id], i) => { state[id] = { done: i < k, fresh: !!A && i >= k0 && i < k }; });
+    }
+    const lit = D.total > 0 && !D.left, R = 6, Hh = 4.4, T = .55;
+    let s = '';
+    if (only && only !== 'shell') { const item = ROOM_ITEMS.find(i => i[0] === only); return item ? item[1](P, false, lit) : ''; }
+    // the cut block: soil faces, grass on top, then the hollow room
+    s += poly([P(-T, R + T, -1.2), P(R + T, R + T, -1.2), P(R + T, R + T, 0), P(-T, R + T, 0)], ROOM.soil) + poly([P(R + T, -T, -1.2), P(R + T, R + T, -1.2), P(R + T, R + T, 0), P(R + T, -T, 0)], ROOM.soilDark);
+    s += poly([P(-T, -T, 0), P(R + T, -T, 0), P(R + T, 0, 0), P(0, 0, 0), P(0, R + T, 0), P(-T, R + T, 0)], ROOM.soilDark);
+    s += poly([P(0, 0, 0), P(R, 0, 0), P(R, 0, Hh), P(0, 0, Hh)], ROOM.wallR) + poly([P(0, 0, 0), P(0, R, 0), P(0, R, Hh), P(0, 0, Hh)], ROOM.wallL);
+    s += poly([P(0, 0, 0), P(R, 0, 0), P(R, R, 0), P(0, R, 0)], ROOM.floor);
+    for (let k = 1; k < 8; k++) s += `<path d="M${P(k * R / 8, 0).join(' ')}L${P(k * R / 8, R).join(' ')}" stroke="${ROOM.plank}" stroke-width=".7"/>`;
+    // wall thickness and the grass on top
+    s += poly([P(-T, -T, Hh), P(R + T, -T, Hh), P(R + T, 0, Hh), P(0, 0, Hh), P(0, R + T, Hh), P(-T, R + T, Hh)], ROOM.grass);
+    s += poly([P(R + T, -T, Hh), P(R + T, 0, Hh), P(R + T, 0, Hh - .5), P(R + T, -T, Hh - .5)], ROOM.grassDark) + poly([P(-T, R + T, Hh), P(0, R + T, Hh), P(0, R + T, Hh - .5), P(-T, R + T, Hh - .5)], ROOM.grassDark);
+    for (let k = 0; k < 9; k++) { const [x, y] = P(-T * .5 + k * .75, -T * .5, Hh); s += `<path d="M${x} ${y}l1.5 -4M${f1(x + 3)} ${y}l-1 -3" stroke="${ROOM.greenDark}" stroke-width=".7"/>`; }
+    // hatching on the soil (clear-line comics)
+    const hatch = (a, b) => { let h = ''; for (let k = 0; k < 7; k++) { const [x0, y0] = P(a[0] + (b[0] - a[0]) * k / 7, a[1] + (b[1] - a[1]) * k / 7, -.25); h += `<path d="M${x0} ${y0}l4 9" stroke="${ROOM.line}" stroke-opacity=".35" stroke-width=".6"/>`; } return h; };
+    s += hatch([-T, R + T], [R + T, R + T]) + hatch([R + T, -T], [R + T, R + T]);
+    // stones and roots in the cut, like a page from a picture book
+    [[.6, R + T, -.7, 4.2], [2.9, R + T, -.45, 3], [4.6, R + T, -.85, 3.6], [R + T, 1.3, -.6, 3.4], [R + T, 3.6, -.9, 4.4], [R + T, 5.4, -.4, 2.6]].forEach(([x, y, z, r]) => {
+      const [sx, sy] = P(x, y, z), tilt = y === R + T ? -27 : 27; s += `<ellipse cx="${sx}" cy="${sy}" rx="${f1(r * u / 15)}" ry="${f1(r * u / 15 * .6)}" transform="rotate(${tilt} ${sx} ${sy})" fill="#e6dbb6" stroke="${ROOM.line}" stroke-width=".7"/>`; });
+    const [r1x, r1y] = P(1.6, R + T, -.05), [r2x, r2y] = P(R + T, 2.4, -.05);
+    s += `<path d="M${r1x} ${r1y}c${f1(-2 * u / 15)} ${f1(5 * u / 15)} ${f1(3 * u / 15)} ${f1(7 * u / 15)} ${f1(1 * u / 15)} ${f1(13 * u / 15)}M${r2x} ${r2y}c${f1(2 * u / 15)} ${f1(4 * u / 15)} ${f1(-3 * u / 15)} ${f1(8 * u / 15)} 0 ${f1(12 * u / 15)}" fill="none" stroke="${ROOM.line}" stroke-opacity=".55" stroke-width=".8" stroke-linecap="round"/>`;
+    // a small flower in the grass
+    { const [fx, fy] = P(R + T * .5, 1.2, Hh); s += `<path d="M${fx} ${fy}v${f1(-7 * u / 15)}" stroke="${ROOM.greenDark}" stroke-width=".8"/><circle cx="${fx}" cy="${f1(fy - 8 * u / 15)}" r="${f1(2.2 * u / 15)}" fill="${ROOM.yellow}" stroke="${ROOM.line}" stroke-width=".6"/>`; }
+    if (only === 'shell') return s;
+    ROOM_DRAW.forEach(k => { const st = state[k]; if (!st) return; const item = ROOM_ITEMS.find(i => i[0] === k); s += `<g class="${st.fresh ? 'ph-place' : ''}">${item[1](P, !st.done, lit)}</g>`; });
+    return s;
+  }
+  function roomArt(D, A) {
+    const W = 340, H = 172, P = isoP(254, 70, 15);
+    const state = D.total ? (D.left ? `布置了 ${D.done} 件，还差 ${D.left} 件` : '房间布置好了，开灯') : '一间空房间';
+    return { H, land: { x: 254, y: 120 }, svg: `<defs><radialGradient id="pi-glow"><stop offset="0" stop-color="#fff2a8" stop-opacity=".85"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></radialGradient></defs>
+      ${roomScene(P, D, A, 15)}
+      <text class="${A ? 'ph-pop' : ''}" x="0" y="66" font-family="${SANS_UI}" fill="${ROOM.line}"><tspan font-size="54" font-weight="300" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".45" dx="4">/ ${D.total}</tspan></text>
+      <text x="2" y="92" font-family="${SANS_UI}" font-size="12.5" fill="#5d6b4c">${dateLine(D)}</text>
+      <text x="2" y="${H - 16}" font-family="${SANS_UI}" font-size="12.5" font-weight="600" fill="${ROOM.line}">${state}</text>` };
+  }
+
+  /** The room as a picture for canvas drawings (weekly picture, the end-of-day moment): 200 × 224, cached.
+      only = 'shell' (the empty room) or one item's key (that item alone, for animating it in). */
+  const roomImgs = new Map();
+  function roomImg({ done = 0, total = 0, lit = false, only = '' } = {}) {
+    const key = `${done}/${total}/${lit}/${only}`; if (roomImgs.has(key)) return roomImgs.get(key);
+    const D = { total, done, left: lit ? 0 : Math.max(1, total - done), items: Array.from({ length: total }, (_, i) => ({ id: `r${i}`, done: i < done })) };
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 224" width="400" height="448"><defs><radialGradient id="pi-glow"><stop offset="0" stop-color="#fff2a8" stop-opacity=".85"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></radialGradient><clipPath id="pi-clip"><rect width="200" height="224"/></clipPath></defs><g clip-path="url(#pi-clip)">${roomScene(isoP(100, 90, 15), D, null, 15, only || undefined)}</g></svg>`;
+    const img = new Image(); img.decoding = 'async'; img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    roomImgs.set(key, img); return img;
+  }
+  const roomReady = imgs => Promise.all(imgs.map(i => i.complete && i.naturalWidth ? true : i.decode().then(() => true, () => false)));
+  const ROOM_ORDER = ROOM_ITEMS.map(i => i[0]);
+
+  /* 毛 · 团 — a round little cat drawn stroke by stroke in fine pen. At first it is a pencil outline; each finished task
+     adds another layer of fur, so it gets fluffier through the day; when everything is done it opens its eyes. */
+  const furCache = new Map();
+  /** All the strokes of the finished drawing, in the order they get drawn (random, so the fur fills in evenly). */
+  const FUR = (() => {
+    const r = rng(77), list = [], cx = 90, cy = 98, rx = 62, ry = 52, E = 2.4;
+    const se = (x, y) => Math.pow(Math.abs((x - cx) / rx), E) + Math.pow(Math.abs((y - cy) / (y > cy ? ry * .94 : ry)), E);
+    const ears = [[cx - 38, cy - 40, -1], [cx + 38, cy - 40, 1]];
+    const earT = (x, y) => { for (const [ex, ey, s] of ears) { const t = (ey - y) / 28; if (t < -.15 || t > 1) continue; const half = 17 * (1 - t); if (Math.abs(x - (ex + s * 7 * t)) <= half) return { t, s }; } return null; };
+    const face = [cx, cy - 2];
+    // one direction per point: fur parts from the nose on the face, flows outward and a little down on the body
+    const flow = (x, y) => {
+      const dx = x - face[0], dy = y - face[1], d = Math.hypot(dx / 1.25, dy);
+      const out = Math.atan2(dy, dx);
+      if (d < 30) return out + (dy < 0 ? 0 : .2 * Math.sign(dx));
+      const down = Math.PI / 2, w = y > cy ? .35 : .08;
+      return Math.atan2(Math.sin(out) * (1 - w) + Math.sin(down) * w, Math.cos(out) * (1 - w) + Math.cos(down) * w);
+    };
+    const add = (x, y, ang, len, dark, bend, light) => list.push([x, y, ang, len, dark, bend, light ? 1 : 0, r()]);
+    for (let i = 0; i < 16000; i++) {
+      const x = cx - rx - 14 + r() * (rx * 2 + 28), y = cy - ry - 44 + r() * (ry * 2 + 50);
+      const e = se(x, y), ear = earT(x, y), body = e <= 1;
+      if (!body && !ear) continue;
+      if (ear) { add(x, y, -Math.PI / 2 + ear.s * (.35 + ear.t * .3) + (r() - .5) * .5, 3 + r() * 4 + ear.t * 5, .75 + r() * .2, (r() - .5) * 2, false); continue; }
+      const edge = Math.min(1, e), ang = flow(x, y) + (r() - .5) * .55;
+      // the top-left catches the light: a few pale strokes on top of the dark coat
+      const lit = Math.hypot(x - (cx - 24), y - (cy - 30)) < 30 && r() < .32;
+      const faceZone = Math.hypot((x - face[0]) / 1.25, y - face[1]) < 22;
+      const len = (faceZone ? 2.2 : 3.4) + r() * (faceZone ? 2.4 : 4.5) + Math.pow(edge, 3) * 9;
+      add(x, y, ang, len, lit ? .55 + r() * .3 : (.42 + edge * .4 + r() * .18) * (faceZone ? .78 : 1), (r() - .5) * 2.4, lit);
+    }
+    // tufts on the outline: long, curled strokes that make the silhouette soft
+    for (let i = 0; i < 900; i++) {
+      const t = r() * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+      const k = Math.pow(Math.pow(Math.abs(c), E) + Math.pow(Math.abs(s * (s > 0 ? 1 / .94 : 1)), E), -1 / E);
+      const x = cx + rx * c * k * (.9 + r() * .1), y = cy + ry * s * k * (.9 + r() * .1);
+      add(x, y, t + (s > 0 ? .25 * Math.sign(c) : 0) + (r() - .5) * .5, 7 + r() * 10, .5 + r() * .4, (r() - .5) * 5, false);
+    }
+    for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+    return { list, cx, cy, rx, ry, E, ears, face };
+  })();
+  /** The pencil sketch the fur grows over: the round body and two ears. */
+  function furOutline(ctx) {
+    const { cx, cy, rx, ry, E, ears } = FUR; ctx.beginPath();
+    for (let i = 0; i <= 120; i++) { const t = i / 120 * Math.PI * 2, c = Math.cos(t), s = Math.sin(t), k = Math.pow(Math.pow(Math.abs(c), E) + Math.pow(Math.abs(s * (s > 0 ? 1 / .94 : 1)), E), -1 / E), x = cx + rx * c * k, y = cy + ry * s * k; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ears.forEach(([ex, ey, s]) => { ctx.moveTo(ex - 17, ey + 4); ctx.lineTo(ex + s * 7, ey - 28); ctx.lineTo(ex + 17, ey + 4); });
+  }
+  /** The drawing at a given stage, as a PNG (cached): p = 0..1 of the fur drawn; open = eyes open. */
+  const furCanvases = new Map();
+  function furImage(p, open) {
+    const key = `${Math.round(p * 60)}:${open}`;
+    if (furCache.has(key)) return furCache.get(key);
+    const url = furCanvas(p, open).toDataURL('image/png'); furCache.set(key, url); return url;
+  }
+  /** Fur strokes from..to (indexes into the shuffled list) onto a context already scaled to the 180 × 172 drawing. */
+  function furStrokes(ctx, from, to) {
+    const { list } = FUR; ctx.lineCap = 'round';
+    for (const pass of [0, 1]) for (let i = from; i < to; i++) { const [x, y, a, L, al, bend, light] = list[i]; if (light !== pass) continue;
+      const ex = x + Math.cos(a) * L, ey = y + Math.sin(a) * L, mx = (x + ex) / 2 - Math.sin(a) * bend * L / 8, my = (y + ey) / 2 + Math.cos(a) * bend * L / 8;
+      ctx.strokeStyle = pass ? `rgba(248,247,244,${al * .8})` : `rgba(20,20,22,${al})`; ctx.lineWidth = pass ? .45 : .5;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(mx, my, ex, ey); ctx.stroke(); }
+  }
+  /** Eyes (open = 0 asleep … 1 wide open, for blinking) and the nose. */
+  function furFace(ctx, p, open) {
+    const { cx, cy } = FUR, ey = cy - 6;
+    [cx - 21, cx + 21].forEach(ex => {
+      if (open > 0) {
+        ctx.save(); ctx.translate(ex, ey); ctx.scale(1, Math.max(.08, open));
+        ctx.fillStyle = '#f3efe2'; ctx.beginPath(); ctx.ellipse(0, 0, 8.4, 8.8, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#141416'; ctx.beginPath(); ctx.ellipse(.8, .6, 2.6, 6.6, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-2.4, -3, 1.5, 0, 7); ctx.fill(); ctx.restore();
+      } else if (p > .2) { ctx.strokeStyle = `rgba(243,239,226,${Math.min(1, (p - .2) * 3)})`; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(ex, ey - 3.5, 6.4, .22 * Math.PI, .78 * Math.PI); ctx.stroke(); }
+    });
+    if (p > .35) { ctx.fillStyle = `rgba(232,226,212,${Math.min(.9, (p - .35) * 2)})`; ctx.beginPath(); ctx.moveTo(cx - 3, cy + 6); ctx.lineTo(cx + 3, cy + 6); ctx.lineTo(cx, cy + 9.5); ctx.closePath(); ctx.fill(); }
+  }
+  /** The drawing at a given stage as a canvas (cached): p = 0..1 of the fur drawn; open = eyes open. */
+  function furCanvas(p, open, w = 180, h = 172) {
+    const key = `${Math.round(p * 60)}:${open}`;
+    if (furCanvases.has(key)) return furCanvases.get(key);
+    const k = 2, c = document.createElement('canvas'); c.width = w * k; c.height = h * k; const ctx = c.getContext('2d'); ctx.scale(k, k);
+    const { list, cx, cy } = FUR, n = furCount(p);
+    // the pencil sketch shows through until the fur covers it
+    furOutlineDraw(ctx, .42 * (1 - p * .9));
+    furStrokes(ctx, 0, n); furFace(ctx, p, open ? 1 : 0);
+    furCanvases.set(key, c); return c;
+  }
+  const furCount = p => Math.round(FUR.list.length * (.03 + .97 * Math.pow(p, .85)));
+  const furOutlineDraw = (ctx, a) => { ctx.strokeStyle = `rgba(40,40,44,${a})`; ctx.lineWidth = .7; ctx.setLineDash([3, 2.2]); furOutline(ctx); ctx.stroke(); ctx.setLineDash([]); };
+  function fluffArt(D, A) {
+    const W = 340, H = 172, p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left, p0 = A && D.total ? A.from / D.total : p;
+    const img = (q, o, cls = '') => `<image class="${cls}" href="${furImage(q, o)}" x="${W - 186}" y="-2" width="180" height="172"/>`;
+    const state = D.total ? (D.left ? `毛长了 ${Math.round(p * 100)}%，还差 ${D.left} 件` : '画好了，它醒了') : '还是一个铅笔圈';
+    return { H, land: { x: W - 96, y: 92 }, svg: `${A ? img(p0, false) : ''}${img(p, open, A ? 'ph-ink-in' : '')}
+      <text class="${A ? 'ph-pop' : ''}" x="0" y="66" font-family='${SONG}' fill="#141416"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
+      <text x="2" y="92" font-family='${SONG}' font-size="12.5" fill="#77777b" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
+      <text x="2" y="${H - 16}" font-family='${SONG}' font-size="13" fill="#141416" fill-opacity=".8" letter-spacing="1">${state}</text>` };
+  }
+
+
+  const ART = { dawn: dawnArt, day: dayArt, night: nightArt, bloom: bloomArt, tape: tapeArt, riso: risoArt, room: roomArt, fluff: fluffArt };
   let uid = 0;
   const unique = (svg, u) => svg.replace(/(id="|url\(#)(p[a-z]-[a-z]+)/g, (m, p, id) => `${p}${id}-${u}`);
   const artSvg = (id, D, cls = 'ph-art', A = null) => { const a = ART[id](D, A); return { a, html: `<svg class="${cls}" viewBox="0 0 340 ${a.H}" width="340" height="${a.H}" aria-hidden="true">${unique(a.svg, ++uid)}</svg>` }; };
@@ -306,7 +503,9 @@
     bloom: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8.5" fill="${on ? '#3b5a87' : 'none'}" fill-opacity=".45" stroke="#2b2b2e" stroke-opacity=".45" stroke-width="1"/>`,
     tape: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8" fill="${on ? '#0b1f1b' : 'none'}" stroke="#f3ecdc" stroke-opacity=".7" stroke-width="1" stroke-dasharray="${on ? '' : '2 2'}"/>`,
     riso: (x, y, on) => `<circle cx="${x}" cy="${y}" r="8.5" fill="none" stroke="#2f5fb3" stroke-width="1.6"/><circle cx="${x + 1.5}" cy="${y - 1}" r="8.5" fill="none" stroke="#ff4fa3" stroke-width="1.6" style="mix-blend-mode:multiply"/>`,
-    night: (x, y, on) => `<path d="${SPARK(x, y, 9)}" fill="${on ? '#f4f6ff' : 'none'}" stroke="#dfe6ff" stroke-opacity="${on ? 1 : .6}" stroke-width=".9"/>`
+    night: (x, y, on) => `<path d="${SPARK(x, y, 9)}" fill="${on ? '#f4f6ff' : 'none'}" stroke="#dfe6ff" stroke-opacity="${on ? 1 : .6}" stroke-width=".9"/>`,
+    room: (x, y, on) => `<path d="M${x} ${y - 9}l9 4.5v9l-9 4.5l-9-4.5v-9z" fill="${on ? '#f1d55a' : '#fffbe8'}" stroke="#2c3a20" stroke-width="1.3" stroke-linejoin="round" stroke-dasharray="${on ? '' : '2.4 1.8'}"/>${on ? `<path d="M${x - 9} ${y - 4.5}l9 4.5l9-4.5M${x} ${y}v9" fill="none" stroke="#2c3a20" stroke-width="1"/>` : ''}`,
+    fluff: (x, y, on) => on ? `<circle cx="${x}" cy="${y}" r="7.5" fill="#141416"/>${Array.from({ length: 22 }, (_, i) => { const a = i / 22 * 6.283, l = 7 + (i * 7 % 5) * .7; return `<line x1="${f1(x + Math.cos(a) * 6)}" y1="${f1(y + Math.sin(a) * 6)}" x2="${f1(x + Math.cos(a + .2) * (l + 2.5))}" y2="${f1(y + Math.sin(a + .2) * (l + 2.5))}" stroke="#141416" stroke-width=".7"/>`; }).join('')}` : `<circle cx="${x}" cy="${y}" r="8.5" fill="none" stroke="#141416" stroke-opacity=".5" stroke-width=".8" stroke-dasharray="2 1.6"/>`
   };
   const MOCK_BG = {
     dawn: '<defs><radialGradient id="pd-b1" cx=".15" cy=".1" r=".8"><stop offset="0" stop-color="#c9c2ff"/><stop offset="1" stop-color="#c9c2ff" stop-opacity="0"/></radialGradient><radialGradient id="pd-b2" cx=".9" cy=".6" r=".7"><stop offset="0" stop-color="#bfeee2"/><stop offset="1" stop-color="#bfeee2" stop-opacity="0"/></radialGradient><radialGradient id="pd-b3" cx=".3" cy="1" r=".7"><stop offset="0" stop-color="#ffd9c7"/><stop offset="1" stop-color="#ffd9c7" stop-opacity="0"/></radialGradient></defs><rect width="380" height="270" fill="#eef0f4"/><rect width="380" height="270" fill="url(#pd-b1)"/><rect width="380" height="270" fill="url(#pd-b2)"/><rect width="380" height="270" fill="url(#pd-b3)"/>',
@@ -314,16 +513,18 @@
     bloom: '<rect width="380" height="270" fill="#f2f3f2"/>',
     tape: '<rect width="380" height="270" fill="#12302a"/>',
     riso: '<rect width="380" height="270" fill="#f6f4ef"/>',
-    night: '<rect width="380" height="270" fill="#07080d"/>'
+    night: '<rect width="380" height="270" fill="#07080d"/>',
+    room: '<rect width="380" height="270" fill="#e6eed2"/>',
+    fluff: '<rect width="380" height="270" fill="#f8f7f4"/>'
   };
-  const INK = { dawn: '#1b1d24', day: '#1d1a16', night: '#e8ecf7', bloom: '#2b2b2e', tape: '#f3ecdc', riso: '#1f2a44' }, ROWLINE = { dawn: '#1b1d2414', day: '#b43a2c40', night: '#dfe6ff1f', bloom: '#2b2b2e1c', tape: '#f3ecdc26', riso: '#2f5fb326' };
+  const INK = { dawn: '#1b1d24', day: '#1d1a16', night: '#e8ecf7', bloom: '#2b2b2e', tape: '#f3ecdc', riso: '#1f2a44', room: '#2c3a20', fluff: '#141416' }, ROWLINE = { dawn: '#1b1d2414', day: '#b43a2c40', night: '#dfe6ff1f', bloom: '#2b2b2e1c', tape: '#f3ecdc26', riso: '#2f5fb326', room: '#2c3a2026', fluff: '#1414161c' };
   function mock(id) {
     if (id === 'auto') {
       const cols = [['#eef0f4', '#1b1d24'], ['#f5f2ec', '#1d1a16'], ['#07080d', '#dfe6ff']];
       return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${cols.map(([b, c], i) => `<rect x="${i * 127}" width="127.5" height="270" fill="${b}"/><text x="${i * 127 + 63.5}" y="150" text-anchor="middle" font-family='${SONG}' font-size="48" font-weight="300" fill="${c}">${'晨昼夜'[i]}</text>`).join('')}</svg>`;
     }
     const a = ART[id](DEMO, null), u = ++uid, y0 = a.H + 34;
-    const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' || id === 'bloom' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
+    const rows = ['读二十页书', '跑步三公里'].map((t, i) => { const y = y0 + i * 40; return `${CHECK[id](40, y, false)}<text x="62" y="${y + 5}" font-family='${id === 'day' || id === 'bloom' || id === 'fluff' ? SONG : "Geist,-apple-system,'PingFang SC',sans-serif"}' font-size="14" fill="${INK[id]}">${t}</text><rect x="62" y="${y + 19}" width="290" height=".7" fill="${ROWLINE[id]}"/>`; }).join('');
     const glass = id === 'dawn' ? `<rect x="20" y="16" width="340" height="${a.H}" rx="28" fill="#ffffff" fill-opacity=".45" stroke="#fff" stroke-opacity=".9"/>` : '';
     return `<svg class="pro-thumb pro-mock-svg" viewBox="0 0 380 270" preserveAspectRatio="xMinYMin slice" aria-hidden="true">${unique(MOCK_BG[id], u)}${glass}<g transform="translate(20 16)">${unique(a.svg, u)}</g>${unique(rows, u)}</svg>`;
   }
@@ -393,6 +594,16 @@
         ${lit.length > 1 ? `<polyline points="${lit.map(p => `${f1(p.x)},${f1(p.y)}`).join(' ')}" fill="none" stroke="#dfe6ff" stroke-opacity=".5" stroke-width=".8"/>` : ''}
         ${pts.map(p => p.it.done ? `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="9" fill="url(#pl-glow)"/><path d="${SPARK(f1(p.x), f1(p.y), 5.5)}" fill="#f6f8ff"/>` : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.6" fill="#dfe6ff" fill-opacity=".7"/>`).join('')}` };
     }
+    if (id === 'room') { // the room itself, small, beside one line
+      const P = isoP(56, 43, 6.4), lit = D.total > 0 && !D.left;
+      return { H: 104, svg: `<defs><radialGradient id="pi-glow"><stop offset="0" stop-color="#fff2a8" stop-opacity=".85"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></radialGradient></defs><rect x=".65" y=".65" width="338.7" height="102.7" rx="12" fill="#fbf8ee" fill-opacity=".96"/>${roomScene(P, D, null, 6.4)}
+        <text x="122" y="48" font-family="${SANS_UI}" font-size="15" font-weight="600" fill="${ROOM.line}">${D.total ? (lit ? '房间布置好了' : `布置了 ${D.done} 件`) : '一间空房间'}</text><text x="122" y="68" font-family="${SANS_UI}" font-size="12" fill="#5d6b4c">${D.total ? (lit ? '开灯' : `还差 ${D.left} 件家具`) : '做完一件，添一件家具'}</text>` };
+    }
+    if (id === 'fluff') { // the cat, small, beside one line
+      const p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left;
+      return { H: 84, svg: `<rect x="0" y="0" width="340" height="84" rx="14" fill="#f8f7f4" fill-opacity=".95"/><image href="${furImage(p, open)}" x="10" y="-1" width="90" height="86"/>
+        <text x="116" y="38" font-family='${SONG}' font-size="15" fill="#141416">${open ? '它醒了' : D.total ? `毛长了 ${Math.round(p * 100)}%` : '还是一个铅笔圈'}</text><text x="116" y="58" font-family='${SONG}' font-size="12" fill="#77777b" letter-spacing=".5">${open ? '今天的都做完了' : D.total ? `还差 ${D.left} 件，它就睁眼` : '做完一件，多画一层毛'}</text>` };
+    }
     return null;
   }
   function lockStrip(id) {
@@ -426,6 +637,8 @@
     requestAnimationFrame(step);
   }
   document.addEventListener('click', e => { const g = e.target.closest?.('#pro-head .ph-tape'); if (g) playTape(g); });
+  /** 乐's finale: play the day's notes in the order they were done, at the pace the strip scrolls by. */
+  const playTune = ids => { if (!soundOK()) return; ids.forEach((id, i) => boxNote(NOTES[pitchOf(id)], .45 + i * .71)); };
 
   /** Tapping a character cell (昼) or a star (夜) shows which task it is: its row scrolls into view and glows. */
   document.addEventListener('click', e => {
@@ -491,5 +704,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { mount, unmount, head, arrive, lockStrip, drop, PIGMENTS, MOTIFS, motifOf, pitchOf, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
+  window.SuiSuiSkins = { furImage, furCanvas, furStrokes, furFace, furCount, furOutlineDraw, furTotal: () => FUR.list.length, roomImg, roomReady, ROOM_ORDER, mount, unmount, head, arrive, lockStrip, playTune, drop, PIGMENTS, MOTIFS, motifOf, pitchOf, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();

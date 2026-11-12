@@ -243,7 +243,9 @@
   try { SYSTEM_WALLPAPER = !!ANDROID && !!ANDROID.hasSystemWallpaper(); } catch { SYSTEM_WALLPAPER = false; }
   // Until the user picks one from the library, the Android app uses the phone's own wallpaper.
   if (SYSTEM_WALLPAPER && !state.settings.wallpaperPicked) state.settings.wallpaper = 'system';
-  const useSystemWallpaper = () => SYSTEM_WALLPAPER && state.settings.wallpaper === 'system';
+  // Pro: while a Pro theme is on, its own wallpaper can stand in for the chosen one (window.SuiSuiPro.wallpaper()).
+  const proPaper = () => { try { return window.SuiSuiPro?.wallpaper?.() || null; } catch { return null; } };
+  const useSystemWallpaper = () => SYSTEM_WALLPAPER && state.settings.wallpaper === 'system' && !proPaper();
   let LOCK_MODE = false;
   try { LOCK_MODE = !!ANDROID && (ANDROID.isLockMode() || new URLSearchParams(location.search).get('mode') === 'lock'); } catch { LOCK_MODE = false; }
 
@@ -364,7 +366,7 @@
     const s = state.settings;
     // Settings home: a live preview of the lock card on the wallpaper, then one line per section with its current value.
     $('sum-look').textContent = `${UI_STYLES[s.uiStyle]} · ${themeName()}`;
-    const photo = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).src;
+    const photo = proPaper()?.src || (s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).src);
     const img = $('tile-look-photo');
     if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;
     const card = $('home-card'), mini = $('mini-card');
@@ -768,7 +770,7 @@
     ramps[accent].forEach((c, i) => root.setProperty(`--a-${RAMP_STEPS[i]}`, c));
     document.documentElement.dataset.palette = accent;
     root.setProperty('--accent-soft', dark ? colors[3] : colors[1]);
-    const paper = s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper);
+    const paper = proPaper() || (s.wallpaper === 'custom' && s.photo ? { src: s.photo, pos: '50% 50%' } : wallpaperOf(s.wallpaper));
     // 玻璃 lays the (blurred) wallpaper under the whole app; with the phone's own wallpaper the page lets it show through.
     glassWall(paper.src);
     document.documentElement.classList.toggle('glass-hole', s.uiStyle === 'glass' && !LOCK_MODE && useSystemWallpaper());
@@ -851,7 +853,7 @@
     $('card-transparency-value').textContent = `${s.cardTransparency}%`;
     $('card-text').value = s.cardText;
     document.querySelectorAll('[data-card-text]').forEach(b => { b.classList.toggle('active', b.dataset.cardText === s.cardText); b.setAttribute('aria-pressed', String(b.dataset.cardText === s.cardText)); });
-    const paper = s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).thumb;
+    const paper = proPaper()?.thumb || (s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).thumb);
     document.querySelectorAll('.mat-photo').forEach(img => { if (paper) { if (img.getAttribute('src') !== paper) img.src = paper; img.hidden = false; } else img.hidden = true; img.classList.toggle('monochrome', s.wallpaper === 'mono'); });
     document.querySelectorAll('[data-material]').forEach(b => { b.classList.toggle('active', b.dataset.material === s.cardMaterial); b.setAttribute('aria-pressed', String(b.dataset.material === s.cardMaterial)); });
     document.querySelectorAll('[data-card-color]').forEach(b => { b.classList.toggle('active', b.dataset.cardColor.toLowerCase() === s.cardColor.toLowerCase()); b.setAttribute('aria-pressed', String(b.dataset.cardColor.toLowerCase() === s.cardColor.toLowerCase())); });

@@ -27,12 +27,16 @@
       shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#7d8496', mode: 'screen', font: SANS, display: SANS },
     bloom: { name: '晕', full: '晕 · 彩墨', line: '每做完一件，滴一滴颜色，慢慢晕开', base: 'paper', material: 'bloom', effect: 'shards', sound: 'drip', chip: '#fbfbfa', accent: '#2b2b2e', soft: '#2b2b2e12', on: '#f4f5f4',
       shards: ['#3b5a87', '#b8475a', '#d9a43a', '#3f8aa6', '#2b2b2e'], bg: '#f2f3f2', ink: '#2b2b2e', muted: '#7a7c80', mode: 'multiply', font: SANS, display: SONG },
+    room: { name: '屋', full: '屋 · 线描', line: '每做完一件，房间里添一件家具', base: 'paper', material: 'room', effect: 'shards', sound: 'wood', chip: '#efe7c9', accent: '#2c3a20', soft: '#2c3a2012', on: '#efe7c9',
+      shards: ['#f1d55a', '#79a84f', '#c99a52', '#d9673a', '#efe7c9'], bg: '#e6eed2', ink: '#2c3a20', muted: '#6b7a58', mode: 'source-over', font: SANS, display: SANS },
+    fluff: { name: '毛', full: '毛 · 团', line: '做完一件多画一层毛，全做完它睁眼', base: 'paper', material: 'fluff', effect: 'shards', sound: 'soft', chip: '#f8f7f4', accent: '#141416', soft: '#14141610', on: '#f8f7f4',
+      shards: ['#141416', '#3a3a3e', '#6b6b70', '#f8f7f4'], bg: '#f8f7f4', ink: '#141416', muted: '#77777b', mode: 'source-over', font: SANS, display: SONG },
     tape: { name: '乐', full: '乐 · 纸带', line: '每做完一件打一个音孔，做完弹给你听', base: 'night', material: 'tape', effect: 'shards', sound: 'punch', chip: '#f3ecdc', accent: '#f3ecdc', soft: '#f3ecdc1a', on: '#12302a',
       shards: ['#f3ecdc', '#e6dcc4', '#cdbf9f', '#ffffff'], bg: '#12302a', ink: '#f3ecdc', muted: '#9fb5ad', mode: 'source-over', font: SANS, display: SANS },
     riso: { name: '印', full: '印 · 孔版', line: '每做完一件，印上一张小插画', base: 'paper', material: 'riso', effect: 'shards', sound: 'press', chip: '#fbfaf6', accent: '#2f5fb3', soft: '#2f5fb314', on: '#f6f4ef',
       shards: ['#ff4fa3', '#2f5fb3', '#8a4fb0', '#f6f4ef'], bg: '#f6f4ef', ink: '#1f2a44', muted: '#6b7184', mode: 'multiply', font: SANS, display: SANS }
   };
-  const ORDER = ['dawn', 'day', 'night', 'bloom', 'tape', 'riso'];
+  const ORDER = ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff'];
   /** 跟随时间: 5–10 晨, 10–18 昼, 18–5 夜. */
   const byTime = (d = new Date()) => { const h = d.getHours(); return h >= 5 && h < 10 ? 'dawn' : h >= 10 && h < 18 ? 'day' : 'night'; };
   const BRAND = { shards: ['#d9d6ff', '#c9f0e6', '#ffe0d2', '#f5f5f7'] };
@@ -46,7 +50,7 @@
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
   const status = () => info().owned ? '已解锁' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
-  const savedTheme = () => S().proTheme === 'dusk' ? 'night' : S().proTheme;
+  const savedTheme = () => ['dusk', 'tape'].includes(S().proTheme) ? 'night' : S().proTheme;
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
   function persist() { API.save(); }
@@ -78,7 +82,7 @@
      In this preview nothing is charged; the 「模拟结果」 row picks what the store or the code server answers. */
   let payStep = 'start', payNote = '', payOutcome = 'ok';
   const OUTCOMES = { ios: [['ok', '成功'], ['cancel', '取消'], ['fail', '失败'], ['ask', '家长同意']], code: [['ok', '成功'], ['used', '已被用过'], ['offline', '没网']] };
-  const INCLUDES = [['palette', '6 套主题', '每套一种看今天的方式，所有界面都换'], ['lock-keyhole', '锁屏也换', '安卓锁屏卡片跟着主题'], ['sparkles', '完成动效与音效', '碎片飞进画面，每套自己的声音'], ['archive', '碎片罐与每周画', '一周做完的事，存成一幅画'], ['calendar-clock', '倒数日', '考试、生日，写在头部']];
+  const INCLUDES = [['palette', '7 套主题', '每套一种看今天的方式，所有界面都换'], ['lock-keyhole', '锁屏也换', '安卓锁屏卡片跟着主题'], ['sparkles', '完成动效与音效', '碎片飞进画面，每套自己的声音'], ['archive', '碎片罐与每周画', '一周做完的事，存成一幅画'], ['calendar-clock', '倒数日', '考试、生日，写在头部']];
   function openPay(step = 'start') {
     let el = $('pro-pay');
     if (!el) { el = document.createElement('div'); el.id = 'pro-pay'; el.className = 'pro-pay'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'pro-pay-title'); document.body.append(el);
@@ -94,7 +98,7 @@
     const head = `<header class="pro-pay-head"><h2 id="pro-pay-title">${payStep === 'done' ? 'Pro 已解锁' : '碎碎清单 Pro'}</h2>${working ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
     let body = '';
     if (payStep === 'done') {
-      body = `<div class="pro-pay-done"><span class="pro-pay-badge">${icon('badge-check')}</span><p>谢谢你支持碎碎清单。六套主题、锁屏、动效、碎片罐都已经可以用了。</p>
+      body = `<div class="pro-pay-done"><span class="pro-pay-badge">${icon('badge-check')}</span><p>谢谢你支持碎碎清单。七套主题、锁屏、动效、碎片罐都已经可以用了。</p>
         <div class="pro-pay-themes">${ORDER.map(id => `<button type="button" data-pay-theme="${id}" aria-label="用「${THEMES[id].full}」">${themeMock(id)}<small>${THEMES[id].full}</small></button>`).join('')}</div>
         <button type="button" class="pro-pay-main" id="pro-pay-finish">先挑一个主题</button></div>`;
     } else if (working) {
@@ -224,12 +228,12 @@
       requestAnimationFrame(tick); setTimeout(resolve, resolveAt);
     });
   }
-  const LIGHT = ['dawn', 'day', 'bloom', 'riso'];
+  const LIGHT = ['dawn', 'day', 'bloom', 'riso', 'room', 'fluff'];
   const dark = () => !LIGHT.includes(activeTheme());
   const FX = {
     /** 碎裂, in the theme's material: glass flies apart, paper scraps flutter down, gold leaf falls, light drifts up. */
     shards(src, s) {
-      const L = look(), mat = { bloom: 'paper', tape: 'paper', riso: 'paper' }[L.material] || L.material || 'glass', cols = Math.max(4, Math.round(s.w / 24)), rows = 2, cw = s.w / cols, ch = s.h / rows, pieces = [];
+      const L = look(), mat = { bloom: 'paper', tape: 'paper', riso: 'paper', room: 'paper', fluff: 'paper' }[L.material] || L.material || 'glass', cols = Math.max(4, Math.round(s.w / 24)), rows = 2, cw = s.w / cols, ch = s.h / rows, pieces = [];
       for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) for (let t = 0; t < 2; t++) {
         const x0 = s.left + x * cw, y0 = s.top + y * ch, pts = t ? [[x0 + cw, y0], [x0 + cw, y0 + ch], [x0, y0 + ch]] : [[x0, y0], [x0 + cw, y0], [x0, y0 + ch]];
         const cx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, cy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3, r = rng(x * 31 + y * 7 + t * 3 + 1), spread = x / Math.max(1, cols - 1) - .5;
@@ -529,6 +533,36 @@
       return canvas;
     }
 
+    if (mat === 'room') { /* ---- 屋: seven little rooms, one a day, furnished by what got done ---- */
+      ctx.fillStyle = '#e6eed2'; ctx.fillRect(0, 0, W, H);
+      { const r = rng(9); for (let i = 0; i < W * H / 900; i++) { ctx.fillStyle = `rgba(44,58,32,${.02 + r() * .04})`; ctx.fillRect(r() * W, r() * H, sc(1.2), sc(1.2)); } }
+      caption(`700 ${sc(72)}px ${SANS}`, `第 ${isoWeek(start)} 周的七间房`, range, '#2c3a20', '#5d6b4c');
+      const cw = (W - 2 * Pd) / 4, rw = cw * 1.3, rh = rw * 224 / 200;
+      byDay.forEach((list, d) => {
+        const row = d < 4 ? 0 : 1, col = row ? d - 4 + .5 : d, x = Pd + col * cw + (cw - rw) / 2, y = sc(240) + row * (rh + sc(96));
+        const n = Math.min(list.length, 14), img = SK.roomImg({ done: n, total: Math.max(n, 1), lit: n > 0 });
+        if (img.complete && img.naturalWidth) ctx.drawImage(img, x, y, rw, rh);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#5d6b4c'; ctx.font = `400 ${sc(24)}px ${SANS}`; ctx.fillText(`周${'一二三四五六日'[d]}`, x + rw / 2, y + rh + sc(14));
+        ctx.fillStyle = '#2c3a20'; ctx.font = `700 ${sc(30)}px ${SANS}`; ctx.fillText(list.length ? `${list.length} 件` : '空着', x + rw / 2, y + rh + sc(52)); ctx.textAlign = 'left';
+      });
+      footer(`700 ${sc(44)}px ${SANS}`, '#2c3a20', '#5d6b4c');
+      return canvas;
+    }
+    if (mat === 'fluff') { /* ---- 毛: seven cats, one a day; the more done, the fluffier; a full day opens its eyes ---- */
+      ctx.fillStyle = '#f8f7f4'; ctx.fillRect(0, 0, W, H);
+      caption(`400 ${sc(76)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#141416', '#77777b');
+      const most = Math.max(4, ...byDay.map(l => l.length)), cw = (W - 2 * Pd) / 4, s = cw * 1.2 / 180;
+      byDay.forEach((list, d) => {
+        const row = d < 4 ? 0 : 1, col = row ? d - 4 + .5 : d, x = Pd + col * cw + (cw - 180 * s) / 2, y = sc(260) + row * (172 * s + sc(150));
+        const p = list.length / most, c = SK.furCanvas(Math.min(1, p), list.length >= most);
+        ctx.drawImage(c, x, y, 180 * s, 172 * s);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#77777b'; ctx.font = `400 ${sc(24)}px ${SONG}`; ctx.fillText(`周${'一二三四五六日'[d]}`, x + 90 * s, y + 172 * s + sc(30));
+        ctx.fillStyle = '#141416'; ctx.font = `400 ${sc(34)}px ${SONG}`; ctx.fillText(list.length ? `${list.length} 层` : '一个圈', x + 90 * s, y + 172 * s + sc(74)); ctx.textAlign = 'left';
+      });
+      footer(`400 ${sc(48)}px ${SONG}`, '#141416', '#77777b');
+      return canvas;
+    }
+
     /* ---- 夜 (and the free preview): a star map, one constellation per day ---- */
     ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
     { const r = rng(17); for (let i = 0; i < 300; i++) { const s = r() < .05 ? 2 : .5 + r(); ctx.fillStyle = `rgba(225,232,255,${.08 + r() * .4})`; ctx.beginPath(); ctx.arc(r() * W, r() * H, sc(s), 0, 7); ctx.fill(); } }
@@ -561,7 +595,9 @@
   const fontsDone = new Set();
   function artFonts(L, entries) {
     const mat = L.material, faces = mat === 'paper' ? ['400 40px "Noto Serif SC"'] : mat === 'bloom' ? ['400 40px "Noto Serif SC"'] : [];
-    const text = `${window.SuiSuiSkins?.phraseChars || ''}第周件事一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
+    const text = `${window.SuiSuiSkins?.phraseChars || ''}第周件事层圈间房空着一二三四五六七八九十日月起至专注小时分钟写得最多朱圈是过的这页还空着完成就下个字碎清单IVX0123456789`;
+    if (mat === 'room') { const SK = window.SuiSuiSkins, imgs = Array.from({ length: 15 }, (_, n) => SK.roomImg({ done: n, total: Math.max(n, 1), lit: n > 0 })), waiting = imgs.some(i => !i.complete || !i.naturalWidth); return waiting ? SK.roomReady(imgs).then(() => true) : Promise.resolve(false); }
+    if (mat === 'fluff') faces.push('400 40px "Noto Serif SC"');
     const key = faces.join() + text; if (!faces.length || !document.fonts?.load || fontsDone.has(key)) return Promise.resolve(false);
     return Promise.all(faces.map(f => document.fonts.load(f, text))).then(() => { fontsDone.add(key); return true; }, () => false);
   }
@@ -573,6 +609,24 @@
   }
 
   /* ---------- Applying a theme to the app ---------- */
+  /** The theme's own lock-screen wallpaper (scripts/make-pro-wallpapers.py) while a theme is on, unless 主题壁纸 is
+      off. app.js asks for it wherever it shows the wallpaper (lock view, previews, the glass background). */
+  const wallpaper = () => { const id = activeTheme(); return id && S().proWall !== false ? { src: `assets/wallpapers/pro-${id}.jpg`, thumb: `assets/wallpapers/pro-${id}-thumb.jpg`, pos: '50% 50%' } : null; };
+  let wallShown = null;
+  function syncWall() {
+    const w = wallpaper(), html = document.documentElement;
+    if (w) html.dataset.proWall = activeTheme(); else delete html.dataset.proWall;
+    const key = w ? w.src : '';
+    // app.js may have drawn the wallpaper before Pro loaded, so the first call redraws too when a theme wallpaper is due
+    if (key !== (wallShown ?? '')) { wallShown = key; API.applySettings(); } else wallShown = key;
+  }
+  /** Save the theme's wallpaper as an image, to set as the phone's own lock screen. */
+  function saveWallpaper(id = activeTheme() || ORDER[0]) {
+    const img = new Image();
+    img.onload = () => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); API.saveImage(c, `碎碎清单-${THEMES[id].full.replace(' · ', '')}-壁纸.jpg`); };
+    img.onerror = () => API.showToast('壁纸没能读取，请再试一次');
+    img.src = `assets/wallpapers/pro-${id}.jpg`;
+  }
   function applyTheme() {
     const html = document.documentElement, id = activeTheme(), t = THEMES[id];
     if (API.lockMode) {
@@ -580,11 +634,13 @@
       const lock = t && S().proLock !== false ? id : '';
       if (lock) html.dataset.proLock = lock; else delete html.dataset.proLock;
       window.SuiSuiSkins.lockStrip(lock);
+      syncWall();
       return;
     }
     if (!t) {
       delete html.dataset.proPreview;
       if (html.dataset.proTheme) { delete html.dataset.proTheme; window.SuiSuiSkins.unmount(); API.applySettings(); }
+      syncWall();
       return;
     }
     html.dataset.proTheme = id; html.dataset.style = t.base; html.dataset.palette = 'pro';
@@ -594,6 +650,7 @@
     r.setProperty('--pro-font', t.font);
     if (id === 'day') r.setProperty('--app-font', t.font);
     window.SuiSuiSkins.mount(id);
+    syncWall();
   }
   function setTheme(id) {
     if (!isPro()) { startTry(id === 'auto' ? byTime() : id); return; }
@@ -665,6 +722,14 @@
     const pro = isPro(), cur = tryOn || (pro ? savedTheme() || '' : '');
     f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
     f.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proThemePick)));
+    // the theme's wallpaper: use it on the lock screen, or save it to set as the phone's own wallpaper
+    const wid = activeTheme();
+    if (pro && wid) {
+      f.insertAdjacentHTML('beforeend', `<div class="pro-wall-row"><img src="assets/wallpapers/pro-${wid}-thumb.jpg" alt="" aria-hidden="true"><span><b>「${THEMES[wid].full}」专属壁纸</b><small>锁屏和预览都用它；存到相册，也能设成手机壁纸</small></span>
+        <label class="pro-wall-switch"><input type="checkbox" class="switch" id="pro-wall-inline" ${S().proWall !== false ? 'checked' : ''} aria-label="锁屏用主题壁纸"></label><button type="button" class="secondary-button" id="pro-wall-save">保存到相册</button></div>`);
+      $('pro-wall-inline').addEventListener('change', e => { S().proWall = e.target.checked; persist(); applyTheme(); });
+      $('pro-wall-save').addEventListener('click', () => saveWallpaper(wid));
+    }
     const e = $('pro-effects-inline');
     if (e) {
       const curE = S().proEffect || 'auto';
@@ -702,7 +767,7 @@
       </section>
 
       <section class="pro-part" data-pro-section="themes">
-        <h2>六套主题</h2>
+        <h2>七套主题</h2>
         <p class="pro-lead">六种看今天的方式：清晨的杯子一点点满起来，稿纸上的一句话一个字一个字写完，夜里每件事是一颗星；一滴滴颜色在水里晕开，八音盒纸带上打满音孔，一张孔版小海报慢慢印好。每套都换掉所有界面，连锁屏也一起换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
         <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，夜 18 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
       </section>
@@ -728,6 +793,7 @@
         <h2>Pro 设置</h2>
         <label class="pro-switch"><span><b>完成音效</b><small>跟着主题换声音</small></span><input type="checkbox" class="switch" id="pro-sound" ${soundOn() ? 'checked' : ''}></label>
         <label class="pro-switch"><span><b>锁屏也用主题</b><small>安卓锁屏上的卡片跟着换</small></span><input type="checkbox" class="switch" id="pro-lock" ${S().proLock !== false ? 'checked' : ''}></label>
+        <label class="pro-switch"><span><b>锁屏用主题壁纸</b><small>每套主题有自己的壁纸，换主题时一起换</small></span><input type="checkbox" class="switch" id="pro-wall" ${S().proWall !== false ? 'checked' : ''}></label>
         <h3 class="pro-sub">倒数日</h3>
         <div class="pro-cd-list" id="pro-cd-list"></div>
         <form class="pro-cd-add" id="pro-cd-add"><input id="pro-cd-title" maxlength="12" placeholder="比如：考试" aria-label="倒数日名称" required><input type="date" id="pro-cd-date" aria-label="日期" required><button type="submit" class="primary-button">添加</button></form>
@@ -757,6 +823,7 @@
     $('pro-restore')?.addEventListener('click', () => { openPay(); $('pro-pay-restore')?.click(); });
     $('pro-reset').addEventListener('click', resetLocal);
     $('pro-lock')?.addEventListener('change', e => { S().proLock = e.target.checked; persist(); applyTheme(); });
+    $('pro-wall')?.addEventListener('change', e => { S().proWall = e.target.checked; persist(); applyTheme(); });
     $('pro-sound')?.addEventListener('change', e => { S().proSound = e.target.checked; persist(); if (e.target.checked) playSound(themeSound()); });
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
     renderCountdownList();
@@ -943,6 +1010,15 @@
     } else if (theme === 'riso') {
       const dots = Array.from({ length: 10 }, (_, i) => { const r = rng(i * 17 + 3); return { d: i * 22, dx: (r() - .5) * 110, s: 2.4 + r() * 3, lag: r() * 40, c: i % 2 ? 'rgba(255,79,163,.85)' : 'rgba(47,95,179,.85)' }; });
       draw = (ctx, ms) => { ctx.globalCompositeOperation = 'multiply'; dots.forEach(b => { const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag); ctx.fillStyle = b.c; ctx.beginPath(); ctx.arc(p.x, p.y, b.s, 0, 7); ctx.fill(); }); ctx.globalCompositeOperation = 'source-over'; };
+    } else if (theme === 'room') { // a little box tumbles into the room
+      draw = (ctx, ms) => { const t = ms / dur; if (t >= 1) return; const p = path(t), a = t * Math.PI * 1.5, s = 7;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a * .3); ctx.lineJoin = 'round'; ctx.lineWidth = 1.1; ctx.strokeStyle = '#2c3a20';
+        [[[0, -s], [s * .87, -s / 2], [0, 0], [-s * .87, -s / 2], '#f1d55a'], [[-s * .87, -s / 2], [0, 0], [0, s], [-s * .87, s / 2], '#c99a52'], [[0, 0], [s * .87, -s / 2], [s * .87, s / 2], [0, s], '#a87a3a']].forEach(f => { ctx.beginPath(); f.slice(0, 4).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = f[4]; ctx.fill(); ctx.stroke(); });
+        ctx.restore(); };
+    } else if (theme === 'fluff') { // a few loose hairs drift over
+      const hairs = Array.from({ length: 9 }, (_, i) => { const r = rng(i * 13 + 5); return { d: i * 18, dx: (r() - .5) * 70, lag: r() * 30, a: r() * 6, l: 6 + r() * 7 }; });
+      draw = (ctx, ms) => hairs.forEach(h => { const t = (ms - h.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, h.dx, h.lag), a = h.a + t * 4;
+        ctx.strokeStyle = 'rgba(20,20,22,.85)'; ctx.lineWidth = .9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.quadraticCurveTo(p.x + Math.cos(a + .6) * h.l * .6, p.y + Math.sin(a + .6) * h.l * .6, p.x + Math.cos(a) * h.l, p.y + Math.sin(a) * h.l); ctx.stroke(); });
     } else {
       draw = (ctx, ms) => {
         const t = ms / dur; if (t >= 1) return;
@@ -951,8 +1027,8 @@
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
       };
     }
-    const span = theme === 'dawn' ? dur + 6 * 34 :  theme === 'riso' ? dur + 10 * 22 : dur + 140;
-    return overlay(span, draw, ['dawn', 'riso'].includes(theme) ? dur + 60 : dur);
+    const span = theme === 'dawn' ? dur + 6 * 34 : theme === 'riso' ? dur + 10 * 22 : theme === 'fluff' ? dur + 9 * 18 : dur + 140;
+    return overlay(span, draw, ['dawn', 'riso', 'fluff'].includes(theme) ? dur + 60 : dur);
   }
 
   /* ---------- 倒数日 ---------- */
@@ -984,6 +1060,110 @@
   }
 
   /* ---------- 清空时刻 ---------- */
+  /* ---------- 清空时刻: each theme ends the day its own way (canvas, about 3.5 s, then holds still) ---------- */
+  const easeOutBack = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+  const FINALES = {
+    dawn(ctx, W, H, ms) { // the glass fills to the brim and spills over
+      const gw = 150, gh = 230, x = W / 2 - gw / 2, y = H - gh - 40, fill = .55 + .5 * easeOut(clamp(ms / 1500)), level = y + gh * (1 - Math.min(1, fill));
+      const glass = () => { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 10, y + gh - 18); ctx.quadraticCurveTo(x + 12, y + gh, x + 30, y + gh); ctx.lineTo(x + gw - 30, y + gh); ctx.quadraticCurveTo(x + gw - 12, y + gh, x + gw - 10, y + gh - 18); ctx.lineTo(x + gw, y); };
+      ctx.save(); glass(); ctx.closePath(); ctx.clip();
+      const g = ctx.createLinearGradient(x, 0, x + gw, 0); g.addColorStop(0, '#a99fff'); g.addColorStop(.5, '#86dcc6'); g.addColorStop(1, '#ffb99b');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 10, H); for (let k = 0; k <= gw + 20; k += 6) ctx.lineTo(x - 10 + k, level + Math.sin(k / 18 + ms / 260) * 4); ctx.lineTo(x + gw + 10, H); ctx.fill();
+      for (let i = 0; i < 14; i++) { const r = rng(i + 3), by = y + gh - ((ms / 14 * (1 + r()) + r() * gh) % gh); if (by > level) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(x + 20 + r() * (gw - 40), by, 1.5 + r() * 2.5, 0, 7); ctx.fill(); } }
+      ctx.restore();
+      glass(); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.strokeStyle = 'rgba(27,29,36,.18)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(x + 18, y + 20, 5, gh - 70);
+      if (fill >= 1) for (let i = 0; i < 6; i++) { const r = rng(i + 40), t = clamp((ms - 1500 - i * 220) / 1400); if (t <= 0) continue; const side = i % 2 ? x + gw + 2 : x - 2, dy = easeIn(t) * (gh + 30);
+        ctx.fillStyle = ['#a99fff', '#86dcc6', '#ffb99b'][i % 3]; ctx.globalAlpha = 1 - t * .6; ctx.beginPath(); ctx.ellipse(side + (i % 2 ? 1 : -1) * (2 + r() * 6) * t, y + dy, 3, 4.5, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    },
+    day(ctx, W, H, ms, items) { // the line is written out, then the seal comes down
+      const P = window.SuiSuiSkins.phrase(items.length === 6 ? 6 : Math.max(1, items.length), items.length === 6 ? '' : API.dayKey()), chars = Array.from(P.text), n = chars.length;
+      const cell = Math.min(44, (W - 60) / Math.min(7, n)), per = Math.min(7, n), rows = Math.ceil(n / per), x0 = W / 2 - per * cell / 2, y0 = 70;
+      chars.forEach((ch, i) => { const cx = x0 + (i % per) * cell, cy = y0 + Math.floor(i / per) * cell, t = clamp((ms - i * 140) / 300);
+        ctx.strokeStyle = 'rgba(180,58,44,.45)'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cell, cell);
+        ctx.globalAlpha = .3 + .7 * t; ctx.fillStyle = t < 1 ? '#b43a2c' : '#1d1a16'; ctx.font = `400 ${cell * .62}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText(ch, cx + cell / 2, cy + cell * .72); ctx.globalAlpha = 1; });
+      const t = clamp((ms - n * 140 - 300) / 420), s = 96, sx = W / 2 + per * cell / 2 - s * .4, sy = y0 + rows * cell + 30;
+      if (t > 0) { const k = 1.7 - .7 * easeIn(t); ctx.save(); ctx.translate(sx, sy + s / 2); ctx.rotate(-.08); ctx.scale(k, k); ctx.globalAlpha = Math.min(1, t * 2);
+        ctx.fillStyle = '#b43a2c'; ctx.beginPath(); ctx.roundRect(-s / 2, -s / 2, s, s, 8); ctx.fill(); ctx.strokeStyle = '#f5f2ec'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-s / 2 + 8, -s / 2 + 8, s - 16, s - 16, 4); ctx.stroke();
+        ctx.fillStyle = '#f5f2ec'; ctx.font = `700 ${s * .52}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText('毕', 0, s * .18);
+        ctx.globalCompositeOperation = 'destination-out'; const r = rng(3); for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(0,0,0,${.4 + r() * .5})`; ctx.fillRect((r() - .5) * s, (r() - .5) * s, 1 + r() * 3, 1 + r() * 2); } ctx.restore(); }
+      ctx.textAlign = 'left';
+    },
+    night(ctx, W, H, ms, items) { // the stars light up in the order things were done, join up, and one star shoots past
+      const pts = items.map(e => { const r = rng(hash(`cel:${e.id}`)); return { x: 40 + r() * (W - 80), y: 40 + r() * (H - 90) }; });
+      const bg = rng(9); for (let i = 0; i < 70; i++) { ctx.fillStyle = `rgba(223,230,255,${.1 + bg() * .3})`; ctx.beginPath(); ctx.arc(bg() * W, bg() * H, .4 + bg() * .8, 0, 7); ctx.fill(); }
+      const per = 2200 / Math.max(1, pts.length);
+      ctx.strokeStyle = 'rgba(223,230,255,.5)'; ctx.lineWidth = 1;
+      pts.forEach((p, i) => { if (!i) return; const t = clamp((ms - i * per) / per); if (t <= 0) return; const a = pts[i - 1]; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x + (p.x - a.x) * t, a.y + (p.y - a.y) * t); ctx.stroke(); });
+      const pulse = ms > 2400 ? .5 + .5 * Math.sin((ms - 2400) / 300) : 0;
+      pts.forEach((p, i) => { const t = clamp((ms - i * per) / 300); if (t <= 0) return; const s = 7 * easeOutBack(t) * (1 + pulse * .15), g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, s * 3);
+        g.addColorStop(0, 'rgba(201,214,255,.7)'); g.addColorStop(1, 'rgba(159,180,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, s * 3, 0, 7); ctx.fill();
+        ctx.fillStyle = '#f6f8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - s); ctx.quadraticCurveTo(p.x + s * .12, p.y - s * .12, p.x + s, p.y); ctx.quadraticCurveTo(p.x + s * .12, p.y + s * .12, p.x, p.y + s); ctx.quadraticCurveTo(p.x - s * .12, p.y + s * .12, p.x - s, p.y); ctx.quadraticCurveTo(p.x - s * .12, p.y - s * .12, p.x, p.y - s); ctx.fill(); });
+      const st = clamp((ms - 2600) / 900); if (st > 0 && st < 1) { const sx = W * (1.1 - st * 1.3), sy = 30 + st * 120, gr = ctx.createLinearGradient(sx, sy, sx + 90, sy - 40); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); ctx.strokeStyle = gr; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 90, sy - 40); ctx.stroke(); }
+    },
+    bloom(ctx, W, H, ms, items) { // each colour drops in and spreads, then the signature seal
+      const SK = window.SuiSuiSkins;
+      ctx.globalCompositeOperation = 'multiply';
+      items.forEach((e, i) => { const b = SK.drop(e.id, 20, 10, W - 40, H - 60, 34, 70, i), t = clamp((ms - i * 260) / 1600); if (t <= 0) return; const R = b.R * (.15 + .85 * easeOut(t));
+        for (let k = 0; k < 3; k++) { const r = rng(hash(e.id) + k), xx = b.x + (r() - .5) * R * .2, yy = b.y + (r() - .5) * R * .2, g = ctx.createRadialGradient(xx, yy, 0, xx, yy, R * (.9 + r() * .2));
+          g.addColorStop(0, hex(b.c, .1)); g.addColorStop(.7, hex(b.c, .12)); g.addColorStop(.93, hex(b.c, .22)); g.addColorStop(1, hex(b.c, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(xx, yy, R * 1.1, 0, 7); ctx.fill(); } });
+      ctx.globalCompositeOperation = 'source-over';
+      const t = clamp((ms - items.length * 260 - 1400) / 400); if (t > 0) { const s = 46; ctx.save(); ctx.globalAlpha = t; ctx.translate(W - 60, H - 46); ctx.rotate(-.06); ctx.fillStyle = '#b8475a'; ctx.fillRect(-s / 2, -s / 2, s, s); ctx.fillStyle = '#f7f8f7'; ctx.font = `700 ${s * .38}px ${SONG}`; ctx.textAlign = 'center'; ctx.fillText('碎碎', 0, s * .14); ctx.restore(); ctx.textAlign = 'left'; }
+    },
+    tape(ctx, W, H, ms, items) { // the strip runs past the playhead; every hole sends a note up
+      const SK = window.SuiSuiSkins, sh = 120, sy = H - sh - 50, gap = 64, scroll = ms * .09, px = W * .35;
+      ctx.fillStyle = '#f3ecdc'; ctx.fillRect(0, sy, W, sh);
+      for (let r = 0; r < 7; r++) { ctx.fillStyle = `rgba(18,48,42,${r % 2 ? .07 : .13})`; ctx.fillRect(0, sy + 18 + r * 14, W, 1); }
+      for (let x = (-scroll % 14 + 14) % 14; x < W; x += 14) { ctx.fillStyle = 'rgba(18,48,42,.5)'; ctx.beginPath(); ctx.arc(x, sy + 6, 1.5, 0, 7); ctx.arc(x, sy + sh - 6, 1.5, 0, 7); ctx.fill(); }
+      items.forEach((e, i) => { const x = px + 40 + i * gap - scroll, p = SK.pitchOf(e.id), y = sy + 18 + p * 14 * 1.0; if (x < -10 || x > W + 10) return; ctx.fillStyle = '#0b1f1b'; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill();
+        const passed = (px - x) / 260; if (passed > 0 && passed < 1) { ctx.globalAlpha = 1 - passed; ctx.fillStyle = '#f3ecdc'; ctx.beginPath(); ctx.ellipse(x - 4, sy - 20 - passed * 120, 5, 4, -.4, 0, 7); ctx.fill(); ctx.fillRect(x, sy - 46 - passed * 120, 1.6, 26); ctx.globalAlpha = 1; } });
+      ctx.fillStyle = '#e2725b'; ctx.fillRect(px - 1, sy - 6, 2, sh + 12);
+    },
+    riso(ctx, W, H, ms, items) { // the poster comes out of the press: blue pass, then pink settles into register
+      const SK = window.SuiSuiSkins, pw = Math.min(260, W - 60), ph = 300, x0 = W / 2 - pw / 2, out = easeOut(clamp(ms / 1200)), y0 = -ph + (ph + 20) * out;
+      ctx.fillStyle = '#1f2a44'; ctx.fillRect(x0 - 20, 6, pw + 40, 10);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 16, W, H); ctx.clip();
+      ctx.fillStyle = '#fbfaf6'; ctx.shadowColor = 'rgba(31,42,68,.25)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6; ctx.fillRect(x0, y0, pw, ph); ctx.shadowColor = 'transparent';
+      const cols = 3, s = (pw - 40) / cols, reg = 4 * (1 - clamp((ms - 1400) / 900));
+      ctx.globalCompositeOperation = 'multiply';
+      items.slice(0, 9).forEach((e, i) => { const m = SK.MOTIFS[SK.motifOf(e)], x = x0 + 20 + (i % cols) * s, y = y0 + 22 + Math.floor(i / cols) * s, k = (s - 10) / 40, line = /M20 4v6|M4 10l16|M8 32L26/.test(m.p);
+        ctx.save(); ctx.translate(x + 5, y + 5); ctx.scale(k, k);
+        if (/M20 4v6/.test(m.b)) { ctx.strokeStyle = '#2f5fb3'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke(new Path2D(m.b)); } else { ctx.fillStyle = 'rgba(47,95,179,.92)'; ctx.fill(new Path2D(m.b)); }
+        if (ms > 900) { ctx.globalAlpha = clamp((ms - 900) / 400); ctx.translate(1.8 + reg, -1.3 - reg * .6); if (line) { ctx.strokeStyle = '#ff4fa3'; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.stroke(new Path2D(m.p)); } else { ctx.fillStyle = 'rgba(255,79,163,.85)'; ctx.fill(new Path2D(m.p)); } }
+        ctx.restore(); });
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#2f5fb3'; ctx.font = `800 13px ${SANS}`; ctx.fillText(`${new Date().getMonth() + 1}.${new Date().getDate()}`, x0 + 16, y0 + ph - 16); ctx.textAlign = 'right'; ctx.fillStyle = '#ff4fa3'; ctx.fillText(`${items.length} 张`, x0 + pw - 16, y0 + ph - 16); ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  };
+
+  Object.assign(FINALES, {
+    room(ctx, W, H, ms, items) { // the empty room, then each thing drops in, then the lamp comes on
+      const SK = window.SuiSuiSkins, n = Math.min(items.length, SK.ROOM_ORDER.length), s = Math.min(1.5, (H - 30) / 224), w = 200 * s, h = 224 * s, x = (W - w) / 2, y = (H - h) / 2 - 6;
+      const shell = SK.roomImg({ only: 'shell' }); if (!shell.complete) return;
+      const keys = SK.ROOM_ORDER.slice(0, n); if (!keys.includes('lamp')) keys.push('lamp');
+      const gap = Math.min(220, 2200 / keys.length), at = k => 500 + keys.indexOf(k) * gap, lightAt = 500 + keys.length * gap + 300;
+      const t0 = easeOut(clamp(ms / 500)); ctx.globalAlpha = t0; ctx.drawImage(shell, x, y + (1 - t0) * 20, w, h); ctx.globalAlpha = 1;
+      ['rug', 'window', 'picture', 'clock', 'shelf', 'desk', 'mug', 'lamp', 'chair', 'bed', 'cushion', 'books', 'plant', 'shoes'].forEach(k => { if (!keys.includes(k)) return;
+        const img = SK.roomImg({ only: k, done: 1, total: 2 }); if (!img.complete) return;
+        const t = clamp((ms - at(k)) / 420); if (t <= 0) return; ctx.globalAlpha = clamp(t * 3); ctx.drawImage(img, x, y - (1 - easeOutBack(t)) * 26, w, h); ctx.globalAlpha = 1; });
+      const on = clamp((ms - lightAt) / 500);
+      if (on > 0) { const lit = SK.roomImg({ only: 'lamp', done: 1, total: 1, lit: true }); if (lit.complete) { ctx.globalAlpha = on; ctx.drawImage(lit, x, y, w, h); ctx.globalAlpha = 1; }
+        const lx = x + 153 * s, ly = y + 98 * s, g = ctx.createRadialGradient(lx, ly, 0, lx, ly, w * .7); g.addColorStop(0, `rgba(255,226,140,${.4 * on})`); g.addColorStop(1, 'rgba(255,226,140,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+    },
+    fluff(ctx, W, H, ms, items) { // the cat is drawn stroke by stroke, then blinks awake
+      const SK = window.SuiSuiSkins, s = Math.min(1.7, (H - 40) / 172), w = 180 * s, x = (W - w) / 2, y = 8;
+      const total = SK.furTotal(), p = easeInOut(clamp((ms - 200) / 2600)), n = Math.round(total * p);
+      if (!this._fur || this._fur.W !== W) { const c = document.createElement('canvas'), k = s * Math.min(devicePixelRatio || 1, 2); c.width = 180 * k; c.height = 172 * k; const cx = c.getContext('2d'); cx.scale(k, k); this._fur = { c, cx, n: 0, W }; }
+      const F = this._fur; if (n < F.n) { F.cx.clearRect(0, 0, 180, 172); F.n = 0; }
+      if (n > F.n) { SK.furStrokes(F.cx, F.n, n); F.n = n; }
+      ctx.save(); ctx.translate(x, y); ctx.scale(s, s); SK.furOutlineDraw(ctx, .42 * (1 - p)); ctx.restore();
+      ctx.drawImage(F.c, x, y, w, 172 * s);
+      const t = ms - 3000, open = t <= 0 ? 0 : t < 260 ? t / 260 : t < 900 ? 1 : t < 1000 ? 1 - (t - 900) / 100 : t < 1120 ? (t - 1000) / 120 : 1;
+      ctx.save(); ctx.translate(x, y); ctx.scale(s, s); SK.furFace(ctx, p, open); ctx.restore();
+    }
+  });
+
   function celebrate() {
     if (!isPro() || API.lockMode) return;
     const key = API.dayKey(); if (S().proCelebrated === key) return;
@@ -992,7 +1172,8 @@
     box.style.setProperty('--cel-bg', L.bg); box.style.setProperty('--cel-ink', L.ink); box.style.setProperty('--cel-muted', L.muted);
     const th = activeTheme(), focusText = focus ? `，专注 ${focus} 分钟` : '';
     const words = { dawn: ['杯子满了。', `今天 ${today.length} 件${focusText}，一滴不剩。`, '收好了'], day: ['今日事，今日毕。', `${today.length} 件${focusText}，这一页写完了。`, '收笔'], night: ['今天的星座，连好了。', `${today.length} 颗星${focusText}，晚安。`, '晚安'],
-      bloom: ['晕好了。', `${today.length} 滴颜色${focusText}，今天这幅画干了。`, '落款'], tape: ['曲子打好了。', `${today.length} 个音${focusText}，八音盒弹给你听。`, '好听'], riso: ['印完了。', `${today.length} 张小画${focusText}，今天这张海报印好了。`, '收藏'] }[th] || ['今天的事，全部完成。', `${today.length} 件${focusText}，都收进碎片罐了。`, '收好了'];
+      bloom: ['晕好了。', `${today.length} 滴颜色${focusText}，今天这幅画干了。`, '落款'], tape: ['曲子打好了。', `${today.length} 个音${focusText}，八音盒弹给你听。`, '好听'], riso: ['印完了。', `${today.length} 张小画${focusText}，今天这张海报印好了。`, '收藏'],
+      room: ['房间布置好了。', `${today.length} 件家具${focusText}，开灯，住进来吧。`, '开灯'], fluff: ['它醒了。', `${today.length} 层毛${focusText}，今天画完了。`, '摸摸它'] }[th] || ['今天的事，全部完成。', `${today.length} 件${focusText}，都收进碎片罐了。`, '收好了'];
     box.className = `pro-celebrate${th ? ` pro-cel-${th}` : ''}`;
     box.innerHTML = `<canvas id="pro-cel-canvas" aria-hidden="true"></canvas><div class="pro-cel-text"><h2>${words[0]}</h2><p>${words[1]}</p><button type="button" id="pro-cel-close">${words[2]}</button></div>`;
     box.hidden = false;
@@ -1000,6 +1181,15 @@
     box.addEventListener('click', e => { if (e.target === box) closeCelebrate(); });
     playSound(themeSound()); setTimeout(() => playSound(themeSound()), 260);
     const c = $('pro-cel-canvas'), W = Math.min(innerWidth, 520), H = 360, ctx = canvasFor(c, W, H), t0 = performance.now(), still = reduce();
+    const finale = FINALES[th];
+    if (th === 'room') { const SK = window.SuiSuiSkins; [SK.roomImg({ only: 'shell' }), SK.roomImg({ only: 'lamp', done: 1, total: 1, lit: true }), ...SK.ROOM_ORDER.map(k => SK.roomImg({ only: k, done: 1, total: 2 }))]; }
+    if (th === 'fluff') FINALES.fluff._fur = null;
+    if (finale) {
+      if (th === 'tape') window.SuiSuiSkins.playTune?.(today.map(e => e.id));
+      const frame = now => { const ms = still ? 9000 : now - t0; ctx.clearRect(0, 0, W, H); finale(ctx, W, H, ms, today); if (!box.hidden && !still && ms < 5200) requestAnimationFrame(frame); };
+      requestAnimationFrame(frame);
+      return;
+    }
     const rain = Array.from({ length: 36 }, (_, i) => { const r = rng(i * 7 + 1); return { x: W / 2 + (r() - .5) * 120, d: r() * 900, rot: r() * 6, c: L.shards[i % L.shards.length] }; });
     const frame = now => {
       const ms = now - t0; ctx.clearRect(0, 0, W, H);
@@ -1019,7 +1209,7 @@
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, openPay, closePay, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   mount();
   applyTheme(); refreshAll();
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });

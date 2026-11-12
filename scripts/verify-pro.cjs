@@ -37,7 +37,7 @@ let browser;
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '¥28');
     await page.locator('[data-settings-page=look]').click();
-    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 7, '外观 shows 跟随时间 and the six Pro themes');
+    assert.equal(await page.locator('[data-pro-theme-pick]').count(), 8, '外观 shows 跟随时间 and the seven Pro themes');
     assert.equal(await page.locator('[data-pro-theme-pick=day] .pro-lock-badge').count(), 1, '… locked');
     await page.locator('#settings-back').click();
     await page.locator('#pro-banner').click();
@@ -90,20 +90,20 @@ let browser;
     await page.waitForTimeout(1200);
     assert.equal((await saved(page)).pro.owned, true, 'The code unlocks Pro and is remembered');
     assert.equal((await saved(page)).pro.via, 'code');
-    assert.equal(await page.locator('.pro-pay-themes button').count(), 6, 'Unlocked: pick one of the six themes');
+    assert.equal(await page.locator('.pro-pay-themes button').count(), 7, 'Unlocked: pick one of the seven themes');
     await page.locator('#pro-pay-finish').click();
     await page.locator('#pro-close').click();
     await page.locator('.nav-button[data-view=settings]').click();
     assert.equal(await page.locator('#pro-banner-state').textContent(), '已解锁');
     await page.locator('[data-settings-page=look]').click();
-    await page.locator('[data-pro-theme-pick=tape]').click();
-    assert.equal(await html(page, 'proTheme'), 'tape'); assert.equal(await html(page, 'style'), 'night', '乐 sits on 夜光');
-    assert.equal(await html(page, 'proSkin'), 'tape', 'The theme brings its own background and header');
+    await page.locator('[data-pro-theme-pick=room]').click();
+    assert.equal(await html(page, 'proTheme'), 'room'); assert.equal(await html(page, 'style'), 'paper', '屋 sits on 纸墨');
+    assert.equal(await html(page, 'proSkin'), 'room', 'The theme brings its own background and header');
     assert.equal(await page.locator('#pro-head').count(), 1);
-    assert.equal((await saved(page)).proTheme, 'tape');
+    assert.equal((await saved(page)).proTheme, 'room');
     await page.locator('[data-pro-effect-pick=gold]').click();
     assert.equal((await saved(page)).proEffect, 'gold');
-    await page.screenshot({ path: path.join(review, 'pro-look-tape-390.png') });
+    await page.screenshot({ path: path.join(review, 'pro-look-room-390.png') });
     // A free style takes the Pro theme off
     await page.locator('[data-ui-style=paper]').click();
     await page.waitForTimeout(50);
@@ -121,8 +121,8 @@ let browser;
     await page.locator('#pro-close').click();
     assert.match(await page.locator('#pro-head').textContent(), /12天期末考试/, 'Countdown in the theme header');
     // Each theme draws today its own way
-    const marks = { dawn: '.ph-wave', day: 'rect', night: 'circle', bloom: 'text', tape: '.ph-tape', riso: 'rect' };
-    for (const id of ['dawn', 'day', 'night', 'bloom', 'tape', 'riso']) {
+    const marks = { dawn: '.ph-wave', day: 'rect', night: 'circle', bloom: 'text', riso: 'rect', room: 'path', fluff: 'image' };
+    for (const id of ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff']) {
       await page.evaluate(t => { window.suisui.pro.state.settings.proTheme = t; window.suisui.pro.applySettings(); window.suisui.pro.render(); }, id);
       assert.equal(await html(page, 'proSkin'), id);
       assert.ok(await page.locator(`#pro-head.pro-head-${id} svg.ph-art ${marks[id]}`).count() > 0, `${id} draws its own header`);
@@ -151,8 +151,8 @@ let browser;
     assert.match(await page.locator('.pro-jar-big p').textContent(), /3 件今天完成/);
     const art = await page.evaluate(() => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5)); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] !== d[0] || d[i + 1] !== d[1]) n++; return { w: c.width, h: c.height, varied: n }; });
     assert.equal(art.w, 1080); assert.equal(art.h, 1350); assert.ok(art.varied > 500, 'Weekly art has content');
-    const arts = await page.evaluate(() => ['dawn', 'day', 'night', 'bloom', 'tape', 'riso'].map(id => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5), window.SuiSuiPro.THEMES[id], 270); return c.toDataURL().length + ':' + c.toDataURL().slice(-200); }));
-    assert.equal(new Set(arts).size, 6, 'Six themes, six different weekly pictures');
+    const arts = await page.evaluate(() => ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff'].map(id => { const c = window.SuiSuiPro.drawArt(window.suisui.pro.state.log, new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 864e5), window.SuiSuiPro.THEMES[id], 270); return c.toDataURL().length + ':' + c.toDataURL().slice(-200); }));
+    assert.equal(new Set(arts).size, 7, 'Seven themes, seven different weekly pictures');
     await page.screenshot({ path: path.join(review, 'pro-jar-390.png') });
     await page.locator('#pro-jar-close').click();
     // Reset (local preview only)
@@ -227,6 +227,34 @@ let browser;
   {
     const { context, page } = await open({ pro: { owned: true }, proTheme: 'dusk' });
     assert.equal(await html(page, 'proTheme'), 'night', 'A saved 暮 falls back to 夜');
+    await context.close();
+  }
+
+  /* 乐 · 纸带 was replaced too: a saved 'tape' shows 夜 */
+  {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: 'tape' });
+    assert.equal(await html(page, 'proTheme'), 'night', 'A saved 乐 falls back to 夜');
+    await context.close();
+  }
+
+  /* 屋 and 毛: the picture grows with the day, lock strip, the end-of-day moment, the jar's lock badge hides */
+  for (const th of ['room', 'fluff']) {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: th });
+    assert.equal(await page.locator('#pro-jar-lock').isHidden(), true, `${th}: owner sees no lock badge on the jar`);
+    const before = await page.locator('#pro-head svg.ph-art').innerHTML();
+    await page.locator('.task-row[data-task-id=a] .check-task').click(); await page.waitForTimeout(2600);
+    assert.notEqual(await page.locator('#pro-head svg.ph-art').innerHTML(), before, `${th}: finishing a task changes the picture`);
+    if (th === 'room') assert.match(await page.locator('#pro-head').textContent(), /布置了 1 件/);
+    else assert.match(await page.locator('#pro-head').textContent(), /毛长了 33%/);
+    await page.locator('.task-row[data-task-id=b] .check-task').click(); await page.waitForTimeout(1300);
+    await page.locator('.task-row[data-task-id=c] .check-task').click(); await page.waitForTimeout(4600);
+    assert.equal(await page.locator(`#pro-celebrate.pro-cel-${th}`).isVisible(), true, `${th}: its own end-of-day moment`);
+    const ink = await page.evaluate(() => { const c = document.getElementById('pro-cel-canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4 * 13) if (d[i] > 40) n++; return n; });
+    assert.ok(ink > 800, `${th}: the end-of-day picture is drawn`);
+    await page.screenshot({ path: path.join(review, `pro-celebrate-${th}-390.png`) });
+    await page.locator('#pro-cel-close').click();
+    const strip = await page.evaluate(t => { window.SuiSuiSkins.lockStrip(t); return document.getElementById('pro-lock-strip')?.textContent || ''; }, th);
+    assert.match(strip, th === 'room' ? /房间布置好了/ : /它醒了/, `${th}: lock strip says the day is done`);
     await context.close();
   }
 

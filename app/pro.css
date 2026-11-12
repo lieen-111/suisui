@@ -775,3 +775,136 @@ html[data-motion=off] .ph-bloom{animation:none!important}
 .pro-pay-sim button[aria-pressed=true]{background:#111114;color:#fff;box-shadow:none}
 body.pro-paying{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.pro-pay,.pro-pay-card{animation:none}.pro-spin{animation-duration:2s}}
+
+/* ================= Theme wallpapers ================= */
+.pro-wall-row{display:grid;grid-template-columns:44px 1fr auto;grid-template-areas:"img text switch" "img save save";align-items:center;gap:6px 12px;margin-top:14px;padding-top:14px;border-top:.5px solid var(--line,#0000001a)}
+.pro-wall-row img{grid-area:img;width:44px;height:95px;object-fit:cover;border-radius:9px;box-shadow:0 0 0 .5px #0003,0 6px 14px -8px #0006}
+.pro-wall-row span{grid-area:text;display:grid;gap:2px}
+.pro-wall-row b{font-size:14px;font-weight:600}
+.pro-wall-row small{font-size:12px;line-height:1.45;color:var(--muted,#777)}
+.pro-wall-switch{grid-area:switch}
+.pro-wall-row .secondary-button{grid-area:save;justify-self:start;padding:6px 12px;font-size:13px}
+/* light wallpapers: the lock screen's own text turns dark so the clock stays readable */
+html[data-pro-wall=dawn]{--pro-wall-ink:#1b1d24}
+html[data-pro-wall=day]{--pro-wall-ink:#1d1a16}
+html[data-pro-wall=bloom]{--pro-wall-ink:#2b2b2e}
+html[data-pro-wall=riso]{--pro-wall-ink:#2f5fb3}
+html:is([data-pro-wall=dawn],[data-pro-wall=day],[data-pro-wall=bloom],[data-pro-wall=riso]) :is(.lock-clock,#lock-date,#lock-time,.activity-heading,.activity-footer,.lock-exit,.hero-clock,.mini-heading,.mini-footer,.preview-footer){color:var(--pro-wall-ink)!important;text-shadow:none!important}
+html:is([data-pro-wall=dawn],[data-pro-wall=day],[data-pro-wall=bloom],[data-pro-wall=riso]) :is(.activity-heading,.activity-footer,.lock-exit) *{color:var(--pro-wall-ink)!important}
+html:is([data-pro-wall=dawn],[data-pro-wall=day],[data-pro-wall=bloom],[data-pro-wall=riso]) .lock-exit-bar{background:var(--pro-wall-ink)!important;opacity:.5}
+html[data-pro-wall=riso] #lock-time{text-shadow:4px 3px 0 #ff4fa3!important}
+html[data-pro-wall] .wallpaper-shade{opacity:0!important}
+
+/* ================= 屋 · 线描 and 毛 · 团: headers ================= */
+.pro-head-room .pro-head-jar{top:4px;right:auto;left:30%}
+.pro-head-fluff .pro-head-jar{top:10px;bottom:auto;right:auto;left:31%}
+.ph-place{animation:ph-place .7s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes ph-place{from{transform:translateY(-22px);opacity:0}}
+.ph-ink-in{animation:ph-fade 1.6s ease-out both}
+html[data-motion=off] :is(.ph-place,.ph-ink-in){animation:none!important}
+@media (prefers-reduced-motion:reduce){:is(.ph-place,.ph-ink-in){animation:none!important}}
+
+/* ================= 屋 · 线描: clear line, flat fills, every block has a little depth below it ================= */
+html[data-pro-skin=room]{--ink:#2c3a20;--muted:#6b7a58;--line:#2c3a2024;--hair:#2c3a201c;--surface:#dfe8c6;--chip-bg:#fbf8ee;--chip-ink:#2c3a20;--card:#fbf8ee;--group-bg-2:#e6eed2;--page:#e6eed2;--tile-bg:#fbf8ee;--tile-line:#2c3a2033;--tile-ink:#2c3a20;--tile-sub:#6b7a58;--pro-flash:#d9673a}
+html[data-pro-skin=room] body{background:#e6eed2!important}
+html[data-pro-skin=room] .app-header{background:#e6eed2eb!important;border:0!important}
+html[data-pro-skin=room] .filter-tabs button{background:#fbf8ee!important;border:1.3px solid #2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important;color:#2c3a20!important;font-weight:600;border-radius:9px!important}
+html[data-pro-skin=room] .filter-tabs button.active{background:#f1d55a!important;color:#2c3a20!important}
+html[data-pro-skin=room] .filter-tabs button span{color:inherit!important;opacity:.6}
+html[data-pro-skin=room] :is(#task-list,#later-list,#completed-list){background:#fbf8ee!important;border:1.3px solid #2c3a20!important;border-radius:12px!important;box-shadow:0 4px 0 #2c3a20!important;padding:0 4px!important}
+html[data-pro-skin=room] .task-row{border:0!important;border-bottom:1px solid #2c3a201f!important;border-radius:0!important;background:none!important;min-height:56px}
+html[data-pro-skin=room] .task-row:last-child{border-bottom:0!important}
+html[data-pro-skin=room] .task-title{color:#2c3a20;font-weight:500}
+html[data-pro-skin=room] .meta-repeat{color:#d9673a!important}
+html[data-pro-skin=room] .done-text{color:#8a957a!important;text-decoration-color:#d9673a!important;opacity:1!important}
+html[data-pro-skin=room] .task-row .check-circle{width:20px;height:20px;border-radius:5px!important;background:#fffdf3!important;box-shadow:inset 0 0 0 1.4px #2c3a20,0 2.5px 0 #2c3a20!important}
+html[data-pro-skin=room] .task-row .check-task:hover .check-circle{background:#f1d55a80!important}
+html[data-pro-skin=room] .done-row:before{width:14px;height:14px;border-radius:4px;background:#f1d55a;box-shadow:inset 0 0 0 1.3px #2c3a20,0 2px 0 #2c3a20}
+html[data-pro-skin=room] .nav-add{width:62px!important;height:62px!important;border-radius:0!important;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2060%2060%22%3E%3Cg%20stroke%3D%22%232c3a20%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M30%206l23%2012v25L30%2055%207%2043V18z%22%20fill%3D%22%23c99a52%22%2F%3E%3Cpath%20d%3D%22M30%2031l23-13v25L30%2055z%22%20fill%3D%22%23a87a3a%22%2F%3E%3Cpath%20d%3D%22M30%206l23%2012-23%2013L7%2018z%22%20fill%3D%22%23f1d55a%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M9%2045l21%2011%2021-11%22%20fill%3D%22none%22%20stroke%3D%22%232c3a20%22%20stroke-opacity%3D%22.25%22%20stroke-width%3D%221%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat!important;box-shadow:none!important;color:#2c3a20!important;filter:drop-shadow(0 10px 12px #2c3a2040)}
+html[data-pro-skin=room] .nav-add svg{color:#2c3a20!important;stroke-width:3.2;width:20px!important;height:20px!important;transform:translateY(-10px)}
+html[data-pro-skin=room] :is(.toast,.gesture-tips){background:#fbf8ee!important;color:#2c3a20!important;border:1.3px solid #2c3a20!important;border-radius:10px!important;box-shadow:0 4px 0 #2c3a20!important}
+html[data-pro-skin=room] .toast button{color:#d9673a!important;font-weight:700}
+html[data-pro-skin=room] .completed-section summary{color:#2c3a20!important;font-weight:700}
+html[data-pro-skin=room] .completed-tools{color:#6b7a58!important}
+html[data-pro-skin=room] :is(.completed-tools,.editor-footer) .text-button{color:#2c3a20!important;background:none!important;font-weight:600}
+html[data-pro-skin=room] .timer-pill{background:#fbf8ee!important;border:1.3px solid #2c3a20!important;color:#2c3a20!important;box-shadow:0 2px 0 #2c3a20!important}
+html[data-pro-skin=room] .timer-pill.is-on{background:#f1d55a!important}
+html[data-pro-skin=room] :is(body.adding .add-form,.sheet){background:#fbf8ee!important;border:0!important;box-shadow:inset 0 1.5px 0 #2c3a20,0 -20px 40px -24px #2c3a2066!important}
+html[data-pro-skin=room] .chip{background:#fbf8ee!important;border:1.3px solid #2c3a2066!important;color:#2c3a20!important;box-shadow:none!important}
+html[data-pro-skin=room] .chip.active{background:#f1d55a!important;border-color:#2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
+html[data-pro-skin=room] .chip.is-default{background:#fbf8ee!important;box-shadow:none!important;border-color:#2c3a2066!important}
+html[data-pro-skin=room] .add-submit{background:#79a84f!important;color:#fbf8ee!important;border:1.3px solid #2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
+html[data-pro-skin=room] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbf8ee!important;border:1.3px solid #2c3a20!important;border-radius:12px!important;box-shadow:0 4px 0 #2c3a20!important}
+html[data-pro-skin=room] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#2c3a20!important;font-weight:800!important}
+html[data-pro-skin=room] .review-stats>div:first-child{background:#f1d55a!important}
+html[data-pro-skin=room] .switch:checked{background:#79a84f!important}
+html[data-pro-skin=room] .secondary-button{background:#fbf8ee!important;color:#2c3a20!important;border:1.3px solid #2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
+html[data-pro-skin=room] :is(.pill-segment button.active,.pill-segment button[aria-pressed=true],.look-tabs button[aria-selected=true]){background:#f1d55a!important;color:#2c3a20!important;box-shadow:inset 0 0 0 1.3px #2c3a20!important}
+html[data-pro-skin=room] .row-ico{background:#f1d55a!important;box-shadow:inset 0 0 0 1.3px #2c3a20!important;color:#2c3a20!important}
+html[data-pro-skin=room] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#79a84f!important;color:#fbf8ee!important;border:1.3px solid #2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
+html[data-pro-lock=room] .lock-group,html[data-pro-preview=room] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#fbf8eef5!important;color:#2c3a20!important;border:1.3px solid #2c3a20!important;border-radius:12px!important;box-shadow:0 4px 0 #2c3a20!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html[data-pro-lock=room] .lock-group *{color:#2c3a20!important}
+html[data-pro-lock=room] .lock-group-head b{font-weight:800}
+html[data-pro-lock=room] .lock-group-count{background:#f1d55a!important;box-shadow:inset 0 0 0 1.2px #2c3a20}
+html[data-pro-lock=room] .lock-task .check-circle,html[data-pro-preview=room] .mini-row .check-circle,html[data-pro-preview=room] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:4px!important;background:#fffdf3!important;box-shadow:inset 0 0 0 1.3px #2c3a20,0 2px 0 #2c3a20!important}
+html[data-pro-lock=room] .lock-task.is-done .check-circle,html[data-pro-preview=room] .mini-row.is-done .check-circle{background:#f1d55a!important}
+html[data-pro-preview=room] .settings-home-hero .hero-card *{color:#2c3a20!important}
+html[data-pro-lock=room] #pro-lock-strip{filter:drop-shadow(0 4px 0 #2c3a20)}
+html[data-pro-lock=room] #pro-lock-strip svg>rect:first-child{stroke:#2c3a20;stroke-width:1.3px}
+.pro-cel-room h2{font-weight:800;color:#2c3a20!important}
+.pro-cel-room #pro-cel-close{background:#f1d55a!important;color:#2c3a20!important;border:1.3px solid #2c3a20!important;box-shadow:0 3px 0 #2c3a20!important}
+
+/* ================= 毛 · 团: fine pen on off-white, hairlines, a black fuzzball for a button ================= */
+html[data-pro-skin=fluff]{--ink:#141416;--muted:#77777b;--line:#1414161c;--hair:#14141614;--surface:#efeee9;--chip-bg:#fbfaf7;--chip-ink:#141416;--card:#fbfaf7;--group-bg-2:#efeee9;--page:#f8f7f4;--tile-bg:#fbfaf7;--tile-line:#1414161f;--tile-ink:#141416;--tile-sub:#77777b;--pro-flash:#141416}
+html[data-pro-skin=fluff] body{background:#f8f7f4!important}
+html[data-pro-skin=fluff] .app-header{background:#f8f7f4eb!important;border:0!important}
+html[data-pro-skin=fluff] :is(.task-title,.filter-tabs button,.settings-page legend,.settings-top h1,.review-top h1,.completed-section summary,.sheet h2){font-family:"Noto Serif SC","Songti SC",serif!important}
+html[data-pro-skin=fluff] .filter-tabs button{background:none!important;border:0!important;box-shadow:none!important;color:#77777b!important;font-weight:400}
+html[data-pro-skin=fluff] .filter-tabs button.active{color:#141416!important;background:none!important;box-shadow:inset 0 -1px 0 #141416!important;border-radius:0!important}
+html[data-pro-skin=fluff] .filter-tabs button span{color:inherit!important;opacity:.55}
+html[data-pro-skin=fluff] :is(#task-list,#later-list,#completed-list){background:none!important;box-shadow:none!important;padding:0!important}
+html[data-pro-skin=fluff] .task-row{border:0!important;border-bottom:.8px solid #14141624!important;border-radius:0!important;background:none!important;min-height:58px}
+html[data-pro-skin=fluff] .task-title{color:#141416;font-weight:400}
+html[data-pro-skin=fluff] .done-text{color:#9a9a9e!important;text-decoration-color:#141416!important;text-decoration-thickness:.8px!important;opacity:1!important}
+html[data-pro-skin=fluff] .task-row .check-circle{width:20px;height:20px;border-radius:50%!important;background:none!important;box-shadow:none!important;outline:1px dashed #14141699;outline-offset:-1px}
+html[data-pro-skin=fluff] .task-row .check-task:hover .check-circle{background:repeating-conic-gradient(#141416 0 3deg,transparent 3deg 9deg)!important;-webkit-mask:radial-gradient(circle,#000 55%,transparent 72%);mask:radial-gradient(circle,#000 55%,transparent 72%)}
+html[data-pro-skin=fluff] .done-row:before{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle,#141416 0 46%,transparent 47%),repeating-conic-gradient(#141416 0 4deg,transparent 4deg 10deg);-webkit-mask:radial-gradient(circle,#000 58%,transparent 72%);mask:radial-gradient(circle,#000 58%,transparent 72%)}
+html[data-pro-skin=fluff] .nav-add{width:58px!important;height:58px!important;border-radius:50%!important;background:#141416!important;color:#f8f7f4!important;box-shadow:0 14px 24px -12px #14141680!important;overflow:visible!important}
+html[data-pro-skin=fluff] .nav-add:before{content:"";position:absolute;inset:-7px;border-radius:50%;background:repeating-conic-gradient(from 3deg,#141416 0 2.2deg,transparent 2.2deg 5.5deg);-webkit-mask:radial-gradient(circle,transparent 60%,#000 62%,#000 72%,transparent 100%);mask:radial-gradient(circle,transparent 60%,#000 62%,#000 72%,transparent 100%);pointer-events:none}
+html[data-pro-skin=fluff] .nav-add:after{content:"";position:absolute;left:4px;right:4px;top:-9px;height:18px;background:#141416;clip-path:polygon(4% 100%,14% 0,36% 72%,64% 72%,86% 0,96% 100%);pointer-events:none}
+html[data-pro-skin=fluff] .nav-add svg{color:#f8f7f4!important;stroke-width:2.2;position:relative;z-index:1}
+html[data-pro-skin=fluff] :is(.toast,.gesture-tips){background:#fbfaf7!important;color:#141416!important;border:.8px solid #141416!important;border-radius:18px!important;box-shadow:0 14px 28px -18px #14141666!important}
+html[data-pro-skin=fluff] .toast button{color:#141416!important;text-decoration:underline;text-underline-offset:3px}
+html[data-pro-skin=fluff] .completed-tools{color:#77777b!important}
+html[data-pro-skin=fluff] :is(.completed-tools,.editor-footer) .text-button{color:#141416!important;background:none!important}
+html[data-pro-skin=fluff] .timer-pill{background:none!important;border:.8px solid #141416!important;color:#141416!important;box-shadow:none!important}
+html[data-pro-skin=fluff] .timer-pill.is-on{background:#141416!important;color:#f8f7f4!important}
+html[data-pro-skin=fluff] :is(body.adding .add-form,.sheet){background:#fbfaf7!important;border:0!important;box-shadow:inset 0 .8px 0 #141416,0 -20px 40px -24px #14141640!important}
+html[data-pro-skin=fluff] .chip{background:none!important;border:.8px solid #1414164d!important;color:#141416!important;box-shadow:none!important}
+html[data-pro-skin=fluff] .chip.active{background:#141416!important;border-color:#141416!important;color:#f8f7f4!important}
+html[data-pro-skin=fluff] .chip.is-default{background:none!important;color:#141416!important;border-color:#1414164d!important}
+html[data-pro-skin=fluff] .add-submit{background:#141416!important;color:#f8f7f4!important;box-shadow:none!important}
+html[data-pro-skin=fluff] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf7!important;border:.8px solid #14141633!important;border-radius:18px!important;box-shadow:none!important}
+html[data-pro-skin=fluff] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#141416!important;font-weight:400!important}
+html[data-pro-skin=fluff] .review-stats>div:first-child{background:#141416!important}
+html[data-pro-skin=fluff] .review-stats>div:first-child *{color:#f8f7f4!important}
+html[data-pro-skin=fluff] .switch:checked{background:#141416!important}
+html[data-pro-skin=fluff] .secondary-button{background:none!important;color:#141416!important;border:.8px solid #141416!important;box-shadow:none!important}
+html[data-pro-skin=fluff] :is(.pill-segment button.active,.pill-segment button[aria-pressed=true],.look-tabs button[aria-selected=true]){background:#141416!important;color:#f8f7f4!important;box-shadow:none!important}
+html[data-pro-skin=fluff] .row-ico{background:none!important;box-shadow:inset 0 0 0 .8px #141416!important;color:#141416!important}
+html[data-pro-skin=fluff] :is(#edit-sheet .dialog-heading .primary-button,#review-export){background:#141416!important;color:#f8f7f4!important;box-shadow:none!important}
+html[data-pro-lock=fluff] #lock-time{font-family:"Noto Serif SC","Songti SC",serif!important;font-weight:400!important}
+html[data-pro-lock=fluff] .lock-group,html[data-pro-preview=fluff] :is(.settings-home-hero .hero-card:not(.grouped),.mini-card,.mini-group){background:#fbfaf7f2!important;color:#141416!important;border:.8px solid #14141640!important;border-radius:20px!important;box-shadow:0 18px 36px -24px #14141666!important}
+html[data-pro-lock=fluff] .lock-group *{color:#141416!important}
+html[data-pro-lock=fluff] .lock-group-count{background:#14141610!important}
+html[data-pro-lock=fluff] .lock-task .check-circle,html[data-pro-preview=fluff] .mini-row .check-circle,html[data-pro-preview=fluff] .settings-home-hero .hero-card #home-card-rows>span:before{border:0!important;border-radius:50%!important;background:none!important;box-shadow:none!important;outline:1px dashed #141416a6;outline-offset:-1px}
+html[data-pro-lock=fluff] .lock-task.is-done .check-circle,html[data-pro-preview=fluff] .mini-row.is-done .check-circle{outline:0;background:radial-gradient(circle,#141416 0 46%,transparent 47%),repeating-conic-gradient(#141416 0 4deg,transparent 4deg 10deg)!important;-webkit-mask:radial-gradient(circle,#000 58%,transparent 72%);mask:radial-gradient(circle,#000 58%,transparent 72%)}
+html[data-pro-preview=fluff] .settings-home-hero .hero-card *{color:#141416!important}
+html[data-pro-lock=fluff] #pro-lock-strip{filter:drop-shadow(0 14px 20px #14141626)}
+.pro-cel-fluff h2{font-family:"Noto Serif SC","Songti SC",serif;font-weight:400}
+.pro-cel-fluff #pro-cel-close{background:#141416!important;color:#f8f7f4!important}
+html[data-pro-wall=room]{--pro-wall-ink:#2c3a20}
+html[data-pro-wall=fluff]{--pro-wall-ink:#141416}
+html:is([data-pro-wall=room],[data-pro-wall=fluff]) :is(.lock-clock,#lock-date,#lock-time,.activity-heading,.activity-footer,.lock-exit,.hero-clock,.mini-heading,.mini-footer,.preview-footer){color:var(--pro-wall-ink)!important;text-shadow:none!important}
+html:is([data-pro-wall=room],[data-pro-wall=fluff]) :is(.activity-heading,.activity-footer,.lock-exit) *{color:var(--pro-wall-ink)!important}
+html:is([data-pro-wall=room],[data-pro-wall=fluff]) .lock-exit-bar{background:var(--pro-wall-ink)!important;opacity:.5}
