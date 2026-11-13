@@ -251,6 +251,24 @@ let browser;
     await context.close();
   }
 
+  /* Test builds (app/pro-config.js freeForTesters): everything works without paying; checkout is still there and simulated */
+  {
+    const context = await browser.newContext({ demo: false, proFree: true, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+    await page.goto(url, { waitUntil: 'networkidle' });
+    assert.equal(await page.evaluate(() => window.SuiSuiPro.isPro()), true, 'Test build: Pro is on for everyone');
+    assert.equal(await page.locator('#pro-jar-lock').isHidden(), true, 'Test build: no lock on the jar');
+    await page.evaluate(() => window.SuiSuiPro.open());
+    assert.match(await page.locator('.pro-free-note').textContent(), /不会扣钱/);
+    assert.equal(await page.locator('#pro-trial').count(), 0, 'Test build: no trial button');
+    await page.locator('#pro-buy').click();
+    assert.equal(await page.locator('.pro-pay-card').isVisible(), true, 'Test build: the checkout can still be tried');
+    await page.evaluate(() => window.SuiSuiPro.closePay());
+    await page.locator('[data-pro-theme=fluff]').first().click();
+    assert.equal(await html(page, 'proTheme'), 'fluff', 'Test build: themes apply straight away, no try-on timer');
+    await context.close();
+  }
+
   /* 乐 · 纸带 was replaced too: a saved 'tape' shows 夜 */
   {
     const { context, page } = await open({ pro: { owned: true }, proTheme: 'tape' });

@@ -1,11 +1,13 @@
 # Builds the Android app (android/) on a GitHub-hosted Linux machine and publishes the APK as a release.
 # Phone download link (always the newest build):
 #   https://github.com/lieen-111/suisui/releases/latest/download/suisui.apk
+# Builds from the premium branch (Pro test, everything free) go to a separate pre-release so that link is untouched:
+#   https://github.com/lieen-111/suisui/releases/download/android-pro-test/suisui.apk
 name: Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, premium]
     paths: ["android/**", "app/**", ".github/workflows/android-apk.yml"]
   workflow_dispatch:
 
@@ -57,11 +59,27 @@ jobs:
           name: suisui-android
           path: suisui.apk
 
+      - name: Publish Pro test build (premium branch)
+        if: github.ref_name == 'premium'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-pro-test
+          name: 碎碎清单 Pro 测试版 · 安卓（构建 ${{ github.run_number }}）
+          body: |
+            Pro 测试版：七套主题、碎片罐、完成动效全部免费可用；付款页面只是演示，不会扣钱。
+            用安卓手机浏览器打开下面的 suisui.apk 下载安装。会覆盖手机上的碎碎清单，待办数据保留。
+            签名：${{ env.SIGNING == 'private' && '正式密钥' || '测试密钥（仅供试用）' }}。构建 ${{ github.run_number }}，未在真机验证。
+          files: suisui.apk
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+
       - name: Publish release
+        if: github.ref_name != 'premium'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}
-          name: 碎碎清单 安卓版 1.13.0（构建 ${{ github.run_number }}）
+          name: 碎碎清单 安卓版（构建 ${{ github.run_number }}）
           body: |
             用安卓手机浏览器打开下面的 suisui.apk 下载安装。
             首次安装需要允许“安装未知应用”。覆盖安装会保留待办数据。

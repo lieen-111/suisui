@@ -46,9 +46,11 @@
 
   /* ---------- Entitlement (simulated purchase in this build) ---------- */
   const info = () => { const p = S().pro; return p && typeof p === 'object' ? p : (S().pro = { owned: false, trialEnds: 0, trialUsed: false }); };
-  const isPro = () => !!info().owned || (info().trialEnds || 0) > Date.now();
+  /** Test builds (app/pro-config.js): all of Pro is free; payment pages stay visible and only simulate. */
+  const FREE = !!(window.SUISUI_PRO_CONFIG || {}).freeForTesters;
+  const isPro = () => FREE || !!info().owned || (info().trialEnds || 0) > Date.now();
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
-  const status = () => info().owned ? '已解锁' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
+  const status = () => info().owned ? '已解锁' : FREE ? '测试版 · 全部免费' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
   const savedTheme = () => ['dusk', 'tape'].includes(S().proTheme) ? 'night' : S().proTheme;
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
@@ -810,8 +812,9 @@
       <footer class="pro-buy" data-pay="${payPlatform()}">
         ${owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
           : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}，一次买断，永久使用</span></div>
-             <div class="pro-actions">${info().trialUsed ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `购买兑换码 · ${PRICE}`}</button></div>`}
-        <p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>本地预览：付款是模拟的</span><button type="button" id="pro-reset">重置</button></p>
+             ${FREE ? '<p class="pro-free-note">测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。</p>' : ''}
+             <div class="pro-actions">${info().trialUsed || FREE ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `购买兑换码 · ${PRICE}`}</button></div>`}
+        <p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>${FREE ? '测试版：付款是模拟的' : '本地预览：付款是模拟的'}</span><button type="button" id="pro-reset">重置</button></p>
         <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>
       </footer>`;
     API.icons(s);
@@ -1215,12 +1218,12 @@
   /* ---------- Wiring ---------- */
   function refreshAll() {
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
-    const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : `试用 ${trialLeft()} 天`) : PRICE;
+    const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : FREE ? '免费测试' : `试用 ${trialLeft()} 天`) : PRICE;
     const sub = document.querySelector('#pro-banner .pro-banner-text small'); if (sub) sub.textContent = isPro() && themeLabel() ? `正在用「${themeLabel()}」` : isPro() ? '主题、碎片罐、动效都已打开' : '主题、碎片罐、完成动效';
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, themeLabel, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { effect, isPro, themeLabel, freeForTesters: FREE, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   // listen first: refreshAll() can make app.js re-apply its settings, and the theme has to win again afterwards
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
   mount();

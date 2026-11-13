@@ -10,7 +10,7 @@ name: iOS sideload IPA
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, premium]
     paths: ["ios/**", "app/**", ".github/workflows/ios-sideload-ipa.yml"]
 
 permissions:
@@ -72,13 +72,15 @@ jobs:
       - name: Copy IPA for the phone download link
         run: cp "$GITHUB_WORKSPACE"/SuiSui-*.ipa "$GITHUB_WORKSPACE/suisui.ipa"
 
-      - name: Publish to the ios-latest release
+      - name: Publish to the ios-latest release (or ios-pro-test from the premium branch)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ios-latest
-          name: 碎碎清单 iPhone 安装包（自签用）
+          tag_name: ${{ github.ref_name == 'premium' && 'ios-pro-test' || 'ios-latest' }}
+          name: ${{ github.ref_name == 'premium' && '碎碎清单 Pro 测试版 · iPhone 安装包（自签用）' || '碎碎清单 iPhone 安装包（自签用）' }}
+          prerelease: ${{ github.ref_name == 'premium' }}
           body: |
             用 SideStore / Sideloadly 和免费 Apple ID 安装。步骤见仓库 ios/免费装到自己手机.md，或网站上的 iphone.html。
+            ${{ github.ref_name == 'premium' && 'Pro 测试版：全部功能免费，付款页面只是演示，不会扣钱。' || '' }}
             构建 ${{ github.run_number }}，未在真机验证。
           files: suisui.ipa
           make_latest: false

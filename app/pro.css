@@ -934,3 +934,4 @@ html[data-pro-preview]:not([data-pro-preview=night]) .hero-tag{background:#16161
 html[data-pro-preview]:not([data-pro-preview=night]) .hero-tag *{color:#fff!important}
 html[data-pro-skin]:not([data-pro-skin=room]):not([data-pro-skin=fluff]) .settings-home{--tile-sub:var(--muted)}
 html[data-pro-skin=fluff] .filter-tabs button{min-height:36px}
+.pro-free-note{margin:0 0 10px;padding:9px 12px;border-radius:12px;background:#ffffff14;font-size:12.5px;line-height:1.5;color:#e9e9ee}

@@ -59,6 +59,8 @@
     '碎成玻璃 · 玻璃轻响': 'Breaks into glass · a glassy tink', '碎成纸屑 · 纸页一声': 'Tears into paper · a page turn', '化成光点 · 夜里一声轻响': 'Turns into starlight · a soft night chime',
     '化成一滴颜色 · 水滴声': 'Becomes a drop of colour · a water drip', '印成一张小画 · 印机咔哒': 'Prints a little picture · a press clack', '变成一件家具 · 木头轻敲': 'Becomes furniture · a wooden knock', '多长一层毛 · 软软一声': 'Grows a layer of fur · a soft puff',
     '件今天完成': 'done today', '件今天完成，第一片还在路上': 'done today, the first shard is on its way', '已解锁 Pro，谢谢你。': 'Pro is unlocked. Thank you.',
+    '测试版 · 全部免费': 'Test build · all free', '免费测试': 'Free test', '测试版：付款是模拟的': 'Test build: payment is simulated',
+    '测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. Buying below is only a demo; nothing is charged.',
     // wallpaper
     '锁屏和预览都用它；存到相册，也能设成手机壁纸': 'Used on the lock screen and previews; save it to set as your phone wallpaper', '保存到相册': 'Save to Photos', '壁纸没能读取，请再试一次': "Couldn't load the wallpaper — try again",
     // jar & weekly

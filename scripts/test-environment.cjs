@@ -10,9 +10,11 @@ const chromium = {
     const browser = await realChromium.launch(options);
     const newContext = browser.newContext.bind(browser);
     browser.newContext = async (opts = {}) => {
-      const { demo = true, lookTabs = false, ...rest } = opts;
+      const { demo = true, lookTabs = false, proFree = false, ...rest } = opts;
       const ctx = await newContext(rest);
       if (demo) await ctx.addInitScript(demoScript);
+      // app/pro-config.js makes test builds free; the checks expect the paid behaviour unless they ask for { proFree: true }.
+      await ctx.addInitScript(free => { window.SUISUI_PRO_CONFIG = { freeForTesters: free }; }, proFree);
       // 1.16 外观 has App / 锁屏卡片 tabs. Older checks reach controls on both halves directly, so they see both
       // at once; pass { lookTabs: true } to test the tabs themselves (verify-v19 does).
       if (!lookTabs) await ctx.addInitScript(() => { window.SUISUI_LOOK_ALL = true; });
