@@ -240,6 +240,17 @@ let browser;
     await context.close();
   }
 
+  /* Reduced motion: the room's end-of-day picture is still drawn (it waits for its pictures) */
+  {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: 'room', motion: false });
+    for (const id of ['a', 'b', 'c']) { await page.locator(`.task-row[data-task-id=${id}] .check-task`).click(); await page.waitForTimeout(500); }
+    await page.waitForTimeout(2500);
+    assert.equal(await page.locator('#pro-celebrate.pro-cel-room').isVisible(), true);
+    const ink = await page.evaluate(() => { const c = document.getElementById('pro-cel-canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4 * 13) if (d[i] > 40) n++; return n; });
+    assert.ok(ink > 800, 'Motion off: the furnished room is drawn at once');
+    await context.close();
+  }
+
   /* 乐 · 纸带 was replaced too: a saved 'tape' shows 夜 */
   {
     const { context, page } = await open({ pro: { owned: true }, proTheme: 'tape' });

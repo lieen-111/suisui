@@ -1190,12 +1190,14 @@
     playSound(themeSound()); setTimeout(() => playSound(themeSound()), 260);
     const c = $('pro-cel-canvas'), W = Math.min(innerWidth, 520), H = 360, ctx = canvasFor(c, W, H), t0 = performance.now(), still = reduce();
     const finale = FINALES[th];
-    if (th === 'room') { const SK = window.SuiSuiSkins; [SK.roomImg({ only: 'shell' }), SK.roomImg({ only: 'lamp', done: 1, total: 1, lit: true }), ...SK.ROOM_ORDER.map(k => SK.roomImg({ only: k, done: 1, total: 2 }))]; }
+    // the room is drawn from pictures: wait until they are decoded, or a still (reduced-motion) frame would be empty
+    const ready = th === 'room' ? (SK => SK.roomReady([SK.roomImg({ only: 'shell' }), SK.roomImg({ only: 'lamp', done: 1, total: 1, lit: true }), ...SK.ROOM_ORDER.map(k => SK.roomImg({ only: k, done: 1, total: 2 }))]))(window.SuiSuiSkins) : Promise.resolve();
     if (th === 'fluff') FINALES.fluff._fur = null;
     if (finale) {
       if (th === 'tape') window.SuiSuiSkins.playTune?.(today.map(e => e.id));
-      const frame = now => { const ms = still ? 9000 : now - t0; ctx.clearRect(0, 0, W, H); finale(ctx, W, H, ms, today); if (!box.hidden && !still && ms < 5200) requestAnimationFrame(frame); };
-      requestAnimationFrame(frame);
+      let start = t0;
+      const frame = now => { const ms = still ? 9000 : now - start; ctx.clearRect(0, 0, W, H); finale(ctx, W, H, ms, today); if (!box.hidden && !still && ms < 5200) requestAnimationFrame(frame); };
+      ready.then(() => { start = performance.now(); requestAnimationFrame(frame); });
       return;
     }
     const rain = Array.from({ length: 36 }, (_, i) => { const r = rng(i * 7 + 1); return { x: W / 2 + (r() - .5) * 120, d: r() * 900, rot: r() * 6, c: L.shards[i % L.shards.length] }; });

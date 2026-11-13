@@ -474,12 +474,16 @@
     const k = 2, c = document.createElement('canvas'); c.width = w * k; c.height = h * k; const ctx = c.getContext('2d'); ctx.scale(k, k);
     const { list, cx, cy } = FUR, n = furCount(p);
     // the pencil sketch shows through until the fur covers it
-    furOutlineDraw(ctx, .42 * (1 - p * .9));
+    furOutlineDraw(ctx, .6 * (1 - p * .9));
+    if (p <= 0) { // the pencil sketch still has a face: two closed eyes
+      ctx.strokeStyle = 'rgba(40,40,44,.55)'; ctx.lineWidth = .8; ctx.lineCap = 'round';
+      [cx - 21, cx + 21].forEach(ex => { ctx.beginPath(); ctx.arc(ex, cy - 9.5, 6.4, .22 * Math.PI, .78 * Math.PI); ctx.stroke(); });
+    }
     furStrokes(ctx, 0, n); furFace(ctx, p, open ? 1 : 0);
     furCanvases.set(key, c); return c;
   }
-  const furCount = p => Math.round(FUR.list.length * (.03 + .97 * Math.pow(p, .85)));
-  const furOutlineDraw = (ctx, a) => { ctx.strokeStyle = `rgba(40,40,44,${a})`; ctx.lineWidth = .7; ctx.setLineDash([3, 2.2]); furOutline(ctx); ctx.stroke(); ctx.setLineDash([]); };
+  const furCount = p => p <= 0 ? 0 : Math.round(FUR.list.length * (.06 + .94 * Math.pow(p, .85)));
+  const furOutlineDraw = (ctx, a) => { ctx.strokeStyle = `rgba(40,40,44,${a})`; ctx.lineWidth = .85; ctx.setLineDash([3, 2.2]); furOutline(ctx); ctx.stroke(); ctx.setLineDash([]); };
   function fluffArt(D, A) {
     const W = 340, H = 172, p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left, p0 = A && D.total ? A.from / D.total : p;
     const img = (q, o, cls = '') => `<image class="${cls}" href="${furImage(q, o)}" x="${W - 186}" y="-2" width="180" height="172"/>`;

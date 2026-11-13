@@ -1,7 +1,7 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-11-12-pro-preview-12';
+const VERSION = '2026-11-13-pro-preview-13';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
@@ -39,8 +39,8 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
   url.search = '';
   url.hash = '';
-  // Cute fonts: cached the first time they are used, so they also work offline afterwards.
-  if (/\/vendor\/fonts\/|\/fonts-cute\.css$/.test(url.pathname)) {
+  // Cute fonts and the Pro theme wallpapers: cached the first time they are used, so they also work offline afterwards.
+  if (/\/vendor\/fonts\/|\/fonts-cute\.css$|\/assets\/wallpapers\/pro-/.test(url.pathname)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
       const hit = await cache.match(url.href); if (hit) return hit;
