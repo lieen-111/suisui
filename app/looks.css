@@ -358,12 +358,12 @@ html[data-motion=on] body.adding #fab-add svg{rotate:45deg}
 @media(prefers-reduced-motion:reduce){html *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ================= 1.15 settings home: preview + tiles + short list ================= */
-.settings-home{display:block;--tile-bg:#fff;--tile-line:#0000000d;--tile-ico:#f2f2f4;--tile-ink:#1d1d1f;--tile-sub:#8a8a8e;--tile-r:24px}
+.settings-home{display:block;--tile-bg:#fff;--tile-line:#0000000d;--tile-ico:#f2f2f4;--tile-ink:#1d1d1f;--tile-sub:#6e6e73;--tile-r:24px}
 @media(prefers-color-scheme:dark){.settings-home{--tile-bg:#1c1c1e;--tile-line:#ffffff10;--tile-ico:#2c2c2e;--tile-ink:#f5f5f7;--tile-sub:#8e8e93}}
 html[data-style=glass] .settings-home{--tile-bg:var(--glass);--tile-line:var(--glass-line);--tile-ico:color-mix(in srgb,var(--tile-ink) 7%,transparent)}
-html[data-style=paper] .settings-home{--tile-bg:#fbfaf7;--tile-line:#e7e4dc;--tile-ico:#efece4;--tile-ink:#1d1c1a;--tile-sub:#8c877c;--tile-r:10px}
+html[data-style=paper] .settings-home{--tile-bg:#fbfaf7;--tile-line:#e7e4dc;--tile-ico:#efece4;--tile-ink:#1d1c1a;--tile-sub:#716c62;--tile-r:10px}
 @media(prefers-color-scheme:dark){html[data-style=paper] .settings-home{--tile-bg:#1b1a17;--tile-line:#2a2824;--tile-ico:#26241f;--tile-ink:#f2efe8;--tile-sub:#8f897c}}
-html[data-style=night] .settings-home{--tile-bg:#141416;--tile-line:#222225;--tile-ico:#1e1e21;--tile-ink:#f5f5f7;--tile-sub:#7c7c82}
+html[data-style=night] .settings-home{--tile-bg:#141416;--tile-line:#222225;--tile-ico:#1e1e21;--tile-ink:#f5f5f7;--tile-sub:#8e8e93}
 
 /* Preview: a little lock screen — clock on top, the cards under it, a tag at the bottom. */
 .settings-home .settings-home-hero{height:312px;border-radius:calc(var(--tile-r) + 4px);margin:2px 0 12px;box-shadow:0 22px 44px -26px #000a,0 0 0 1px var(--tile-line)}

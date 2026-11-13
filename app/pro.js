@@ -20,21 +20,21 @@
      (暮 · 金 was removed in v8; a saved 'dusk' shows 夜.) */
   const THEMES = {
     dawn: { name: '晨', full: '晨 · 玻璃', line: '一只量杯，做完一件，满一点', base: 'glass', material: 'glass', effect: 'shards', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
-      shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#6b7080', mode: 'multiply', font: SANS, display: SANS },
+      shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#5c6170', mode: 'multiply', font: SANS, display: SANS },
     day: { name: '昼', full: '昼 · 纸', line: '稿纸一格一个字，做完画个红圈', base: 'paper', material: 'paper', effect: 'shards', sound: 'paper', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
-      shards: ['#fbf8f1', '#e9e2d4', '#d9d0bf', '#1d1a16', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#8a8279', mode: 'source-over', font: SONG, display: SONG },
+      shards: ['#fbf8f1', '#e9e2d4', '#d9d0bf', '#1d1a16', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#6b645b', mode: 'source-over', font: SONG, display: SONG },
     night: { name: '夜', full: '夜 · 光', line: '每件事一颗星，做完连成星座', base: 'night', material: 'light', effect: 'shards', sound: 'night', accent: '#dfe6ff', soft: '#dfe6ff1a', on: '#07080d',
-      shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#7d8496', mode: 'screen', font: SANS, display: SANS },
+      shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#959cb0', mode: 'screen', font: SANS, display: SANS },
     bloom: { name: '晕', full: '晕 · 彩墨', line: '每做完一件，滴一滴颜色，慢慢晕开', base: 'paper', material: 'bloom', effect: 'shards', sound: 'drip', chip: '#fbfbfa', accent: '#2b2b2e', soft: '#2b2b2e12', on: '#f4f5f4',
-      shards: ['#3b5a87', '#b8475a', '#d9a43a', '#3f8aa6', '#2b2b2e'], bg: '#f2f3f2', ink: '#2b2b2e', muted: '#7a7c80', mode: 'multiply', font: SANS, display: SONG },
+      shards: ['#3b5a87', '#b8475a', '#d9a43a', '#3f8aa6', '#2b2b2e'], bg: '#f2f3f2', ink: '#2b2b2e', muted: '#636569', mode: 'multiply', font: SANS, display: SONG },
     room: { name: '屋', full: '屋 · 线描', line: '每做完一件，房间里添一件家具', base: 'paper', material: 'room', effect: 'shards', sound: 'wood', chip: '#efe7c9', accent: '#2c3a20', soft: '#2c3a2012', on: '#efe7c9',
-      shards: ['#f1d55a', '#79a84f', '#c99a52', '#d9673a', '#efe7c9'], bg: '#e6eed2', ink: '#2c3a20', muted: '#6b7a58', mode: 'source-over', font: SANS, display: SANS },
+      shards: ['#f1d55a', '#79a84f', '#c99a52', '#d9673a', '#efe7c9'], bg: '#e6eed2', ink: '#2c3a20', muted: '#57653f', mode: 'source-over', font: SANS, display: SANS },
     fluff: { name: '毛', full: '毛 · 团', line: '做完一件多画一层毛，全做完它睁眼', base: 'paper', material: 'fluff', effect: 'shards', sound: 'soft', chip: '#f8f7f4', accent: '#141416', soft: '#14141610', on: '#f8f7f4',
-      shards: ['#141416', '#3a3a3e', '#6b6b70', '#f8f7f4'], bg: '#f8f7f4', ink: '#141416', muted: '#77777b', mode: 'source-over', font: SANS, display: SONG },
+      shards: ['#141416', '#3a3a3e', '#6b6b70', '#f8f7f4'], bg: '#f8f7f4', ink: '#141416', muted: '#626266', mode: 'source-over', font: SANS, display: SONG },
     tape: { name: '乐', full: '乐 · 纸带', line: '每做完一件打一个音孔，做完弹给你听', base: 'night', material: 'tape', effect: 'shards', sound: 'punch', chip: '#f3ecdc', accent: '#f3ecdc', soft: '#f3ecdc1a', on: '#12302a',
       shards: ['#f3ecdc', '#e6dcc4', '#cdbf9f', '#ffffff'], bg: '#12302a', ink: '#f3ecdc', muted: '#9fb5ad', mode: 'source-over', font: SANS, display: SANS },
     riso: { name: '印', full: '印 · 孔版', line: '每做完一件，印上一张小插画', base: 'paper', material: 'riso', effect: 'shards', sound: 'press', chip: '#fbfaf6', accent: '#2f5fb3', soft: '#2f5fb314', on: '#f6f4ef',
-      shards: ['#ff4fa3', '#2f5fb3', '#8a4fb0', '#f6f4ef'], bg: '#f6f4ef', ink: '#1f2a44', muted: '#6b7184', mode: 'multiply', font: SANS, display: SANS }
+      shards: ['#ff4fa3', '#2f5fb3', '#8a4fb0', '#f6f4ef'], bg: '#f6f4ef', ink: '#1f2a44', muted: '#5d6377', mode: 'multiply', font: SANS, display: SANS }
   };
   const ORDER = ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff'];
   /** 跟随时间: 5–10 晨, 10–18 昼, 18–5 夜. */
@@ -53,6 +53,8 @@
   const savedTheme = () => ['dusk', 'tape'].includes(S().proTheme) ? 'night' : S().proTheme;
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
+  /** What finishing a task does in each theme, and how it sounds (Pro page theme cards). */
+  const FX_LINE = { dawn: '碎成玻璃 · 玻璃轻响', day: '碎成纸屑 · 纸页一声', night: '化成光点 · 夜里一声轻响', bloom: '化成一滴颜色 · 水滴声', riso: '印成一张小画 · 印机咔哒', room: '变成一件家具 · 木头轻敲', fluff: '多长一层毛 · 软软一声' };
   /** The Pro theme in use, for summaries elsewhere ('' when none). */
   const themeLabel = () => { const id = activeTheme(); if (!id) return ''; return !tryOn && savedTheme() === 'auto' ? `跟随时间 · ${THEMES[id].name}` : THEMES[id].full; };
   function persist() { API.save(); }
@@ -481,7 +483,7 @@
     if (mat === 'bloom') { /* ---- 晕: the week as one wash, a band of water per day, each drop a colour ---- */
       const g0 = ctx.createLinearGradient(0, 0, 0, H); g0.addColorStop(0, '#f6f7f6'); g0.addColorStop(1, '#ebedec'); ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
       { const r = rng(51); for (let i = 0; i < W * H / 50; i++) { ctx.fillStyle = `rgba(40,50,60,${.04 * r()})`; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); } }
-      caption(`400 ${sc(80)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#2b2b2e', '#7a7c80');
+      caption(`400 ${sc(80)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#2b2b2e', '#636569');
       const top = sc(270), band = sc(108), bx = Pd, bw = W - 2 * Pd;
       ctx.globalCompositeOperation = 'multiply';
       byDay.forEach((list, d) => list.forEach(e => {
@@ -494,9 +496,9 @@
         }
       }));
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#7a7c80'; ctx.font = `400 ${sc(22)}px ${SONG}`; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, W - Pd - sc(56), top + d * band + band / 2 + sc(8)));
+      ctx.fillStyle = '#636569'; ctx.font = `400 ${sc(22)}px ${SONG}`; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, W - Pd - sc(56), top + d * band + band / 2 + sc(8)));
       ctx.fillStyle = '#2b2b2e'; ctx.font = `400 ${sc(40)}px ${SONG}`; ctx.fillText(entries.length ? `${CN(entries.length)}滴颜色` : '一盆清水', Pd, H - Pd - sc(70));
-      ctx.fillStyle = '#7a7c80'; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? [st.focusText, `周${st.busiest}最浓。专注越久，晕得越大`].filter(Boolean).join('，') : '做完一件事，就滴下第一滴', Pd, H - Pd - sc(24));
+      ctx.fillStyle = '#636569'; ctx.font = `400 ${sc(26)}px ${SONG}`; ctx.fillText(entries.length ? [st.focusText, `周${st.busiest}最浓。专注越久，晕得越大`].filter(Boolean).join('，') : '做完一件事，就滴下第一滴', Pd, H - Pd - sc(24));
       return canvas;
     }
     if (mat === 'tape') { /* ---- 乐: seven strips, one a day; each hole a note at the hour it was done ---- */
@@ -533,9 +535,9 @@
       }));
       ctx.globalCompositeOperation = 'source-over';
       { const r = rng(5); for (let i = 0; i < W * H / 70; i++) { ctx.fillStyle = 'rgba(246,244,239,.9)'; ctx.fillRect(r() * W, r() * H, sc(1 + r() * 1.5), sc(1 + r())); } }
-      ctx.font = `400 ${sc(22)}px ${SANS}`; ctx.fillStyle = '#6b7184'; ctx.textAlign = 'center'; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, Pd + d * colW + colW / 2, sc(388))); ctx.textAlign = 'left';
+      ctx.font = `400 ${sc(22)}px ${SANS}`; ctx.fillStyle = '#5d6377'; ctx.textAlign = 'center'; '一二三四五六日'.split('').forEach((t, d) => ctx.fillText(`周${t}`, Pd + d * colW + colW / 2, sc(388))); ctx.textAlign = 'left';
       ctx.fillStyle = '#2f5fb3'; ctx.font = `600 ${sc(24)}px ${SANS}`; ctx.fillText(range, Pd, sc(70));
-      footer(`800 ${sc(44)}px ${SANS}`, '#2f5fb3', '#6b7184');
+      footer(`800 ${sc(44)}px ${SANS}`, '#2f5fb3', '#5d6377');
       return canvas;
     }
 
@@ -556,16 +558,16 @@
     }
     if (mat === 'fluff') { /* ---- 毛: seven cats, one a day; the more done, the fluffier; a full day opens its eyes ---- */
       ctx.fillStyle = '#f8f7f4'; ctx.fillRect(0, 0, W, H);
-      caption(`400 ${sc(76)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#141416', '#77777b');
+      caption(`400 ${sc(76)}px ${SONG}`, `第 ${isoWeek(start)} 周`, range, '#141416', '#626266');
       const most = Math.max(4, ...byDay.map(l => l.length)), cw = (W - 2 * Pd) / 4, s = cw * 1.2 / 180;
       byDay.forEach((list, d) => {
         const row = d < 4 ? 0 : 1, col = row ? d - 4 + .5 : d, x = Pd + col * cw + (cw - 180 * s) / 2, y = sc(260) + row * (172 * s + sc(150));
         const p = list.length / most, c = SK.furCanvas(Math.min(1, p), list.length >= most);
         ctx.drawImage(c, x, y, 180 * s, 172 * s);
-        ctx.textAlign = 'center'; ctx.fillStyle = '#77777b'; ctx.font = `400 ${sc(24)}px ${SONG}`; ctx.fillText(`周${'一二三四五六日'[d]}`, x + 90 * s, y + 172 * s + sc(30));
+        ctx.textAlign = 'center'; ctx.fillStyle = '#626266'; ctx.font = `400 ${sc(24)}px ${SONG}`; ctx.fillText(`周${'一二三四五六日'[d]}`, x + 90 * s, y + 172 * s + sc(30));
         ctx.fillStyle = '#141416'; ctx.font = `400 ${sc(34)}px ${SONG}`; ctx.fillText(list.length ? `${list.length} 层` : '一个圈', x + 90 * s, y + 172 * s + sc(74)); ctx.textAlign = 'left';
       });
-      footer(`400 ${sc(48)}px ${SONG}`, '#141416', '#77777b');
+      footer(`400 ${sc(48)}px ${SONG}`, '#141416', '#626266');
       return canvas;
     }
 
@@ -775,7 +777,7 @@
       <section class="pro-part" data-pro-section="themes">
         <h2>七套主题</h2>
         <p class="pro-lead">七种看今天的方式：清晨的杯子一点点满起来，稿纸上的一句话一个字一个字写完，夜里每件事是一颗星；一滴滴颜色在水里晕开，一张孔版小海报慢慢印好，一间小屋一件件摆满家具，一只毛团小猫一层层长出毛。每套都换掉所有界面，连锁屏和壁纸也一起换。${pro ? '' : '每套都可以先试穿 90 秒。'}</p>
-        <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，夜 18 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : `碎成${{ glass: '玻璃', paper: '纸屑', gold: '金箔', light: '光点' }[t.material]} · ${{ glass: '玻璃轻响', paper: '纸页一声', chime: '铜铃余音', night: '夜里一声轻响' }[t.sound]}`}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
+        <div class="pro-themes">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id; return `<article class="pro-theme${on ? ' active' : ''}" data-theme-card="${id}">${themeMock(id)}<h3>${id === 'auto' ? '跟随时间' : t.full}</h3><p>${id === 'auto' ? '晨 5 点，昼 10 点，夜 18 点' : t.line}</p><small>${id === 'auto' ? `现在是${THEMES[byTime()].full}` : FX_LINE[id] || ''}</small><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></article>`; }).join('')}
       </section>
 
       <section class="pro-part" data-pro-section="jar">

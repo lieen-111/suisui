@@ -169,9 +169,9 @@
     }));
     let v = '';
     Array.from(`${cn(D.d.getMonth() + 1)}月${cn(D.d.getDate())}日`).forEach((ch, i) => { v += `<text x="324" y="${22 + i * 22}" text-anchor="middle" font-family='${SONG}' font-size="19" fill="#1d1a16">${ch}</text>`; });
-    Array.from(`星期${WEEK[D.d.getDay()]}${D.lunar ? `　${D.lunar}` : ''}`).slice(0, 8).forEach((ch, i) => { v += `<text x="300" y="${21 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#8a8279">${esc(ch)}</text>`; });
-    const hint = `<text x="1" y="${gridH + 27}" font-family='${SONG}' font-size="11.5" fill="#8a8279" fill-opacity=".85" letter-spacing="1">${!D.total ? '加一件事，就多一个字' : D.total <= 14 ? '做完一件，写下一个字' : '做得越多，写下的字越多'}</text>`;
-    const foot = D.total ? `<tspan fill="#8a8279">做完 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#8a8279"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#8a8279">今天的稿纸还空着</tspan>';
+    Array.from(`星期${WEEK[D.d.getDay()]}${D.lunar ? `　${D.lunar}` : ''}`).slice(0, 8).forEach((ch, i) => { v += `<text x="300" y="${21 + i * 16}" text-anchor="middle" font-family='${SONG}' font-size="12" fill="#6b645b">${esc(ch)}</text>`; });
+    const hint = `<text x="1" y="${gridH + 27}" font-family='${SONG}' font-size="11.5" fill="#6b645b" fill-opacity=".85" letter-spacing="1">${!D.total ? '加一件事，就多一个字' : D.total <= 14 ? '做完一件，写下一个字' : '做得越多，写下的字越多'}</text>`;
+    const foot = D.total ? `<tspan fill="#6b645b">做完 </tspan><tspan fill="${CINNABAR}">${cn(D.done)}</tspan><tspan fill="#6b645b"> / ${cn(D.total)}</tspan>${D.left ? '' : `<tspan fill="${CINNABAR}">　今日毕</tspan>`}` : '<tspan fill="#6b645b">今天的稿纸还空着</tspan>';
     return { H, land, svg: `${g}${v}${hint}<text x="1" y="${H - 14}" font-family='${SONG}' font-size="14" letter-spacing="1.5">${foot}</text>` };
   }
 
@@ -194,7 +194,7 @@
       : `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="1.7" fill="#dfe6ff" fill-opacity=".55"/><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="5" fill="none" stroke="#dfe6ff" stroke-opacity=".17" stroke-width=".7"/>`).join('');
     const taps = Object.entries(pts).map(([id, p]) => `<circle class="ph-tap" data-task="${esc(id)}" cx="${p.x}" cy="${p.y}" r="14" fill="transparent"/>`).join('');
     return { H, pts, land: { x: 230, y: 70 }, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#a9bcff" stop-opacity=".6"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
-      <text x="2" y="26" font-family="${SANS_UI}" font-size="12" fill="#7d8496" letter-spacing=".3">${dateLine(D)}</text>
+      <text x="2" y="26" font-family="${SANS_UI}" font-size="12" fill="#959cb0" letter-spacing=".3">${dateLine(D)}</text>
       <text class="${A ? 'ph-pop' : ''}" x="0" y="98" font-family="${SANS_UI}" fill="#eef1fa"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
       <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>${taps}` };
   }
@@ -221,7 +221,7 @@
     return { H, pts, land, svg: `<defs>${bloomDefs('')}</defs>
       <g filter="url(#pb-wet)">${basin}${blooms}</g>${waiting}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="70" font-family='${SONG}' fill="#2b2b2e"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
-      <text x="2" y="96" font-family='${SONG}' font-size="12.5" fill="#7a7c80" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
+      <text x="2" y="96" font-family='${SONG}' font-size="12.5" fill="#636569" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
       <text x="2" y="${H - 22}" font-family='${SONG}' font-size="13" fill="#2b2b2e" fill-opacity=".8" letter-spacing="1">${state}</text>` };
   }
 
@@ -486,7 +486,7 @@
     const state = D.total ? (D.left ? `毛长了 ${Math.round(p * 100)}%，还差 ${D.left} 件` : '画好了，它醒了') : '还是一个铅笔圈';
     return { H, land: { x: W - 96, y: 92 }, svg: `${A ? img(p0, false) : ''}${img(p, open, A ? 'ph-ink-in' : '')}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="66" font-family='${SONG}' fill="#141416"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
-      <text x="2" y="92" font-family='${SONG}' font-size="12.5" fill="#77777b" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
+      <text x="2" y="92" font-family='${SONG}' font-size="12.5" fill="#626266" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>
       <text x="2" y="${H - 16}" font-family='${SONG}' font-size="13" fill="#141416" fill-opacity=".8" letter-spacing="1">${state}</text>` };
   }
 
@@ -602,7 +602,7 @@
     if (id === 'fluff') { // the cat, small, beside one line
       const p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left;
       return { H: 84, svg: `<rect x="0" y="0" width="340" height="84" rx="14" fill="#f8f7f4" fill-opacity=".95"/><image href="${furImage(p, open)}" x="10" y="-1" width="90" height="86"/>
-        <text x="116" y="38" font-family='${SONG}' font-size="15" fill="#141416">${open ? '它醒了' : D.total ? `毛长了 ${Math.round(p * 100)}%` : '还是一个铅笔圈'}</text><text x="116" y="58" font-family='${SONG}' font-size="12" fill="#77777b" letter-spacing=".5">${open ? '今天的都做完了' : D.total ? `还差 ${D.left} 件，它就睁眼` : '做完一件，多画一层毛'}</text>` };
+        <text x="116" y="38" font-family='${SONG}' font-size="15" fill="#141416">${open ? '它醒了' : D.total ? `毛长了 ${Math.round(p * 100)}%` : '还是一个铅笔圈'}</text><text x="116" y="58" font-family='${SONG}' font-size="12" fill="#626266" letter-spacing=".5">${open ? '今天的都做完了' : D.total ? `还差 ${D.left} 件，它就睁眼` : '做完一件，多画一层毛'}</text>` };
     }
     return null;
   }

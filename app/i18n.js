@@ -201,5 +201,5 @@
       observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
     }
   }
-  window.SuiSuiI18n = { setLang, t: tr, get lang() { return lang; }, dictionary: D };
+  window.SuiSuiI18n = { setLang, t: tr, get lang() { return lang; }, dictionary: D, rules: R };
 })();

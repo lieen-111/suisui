@@ -288,9 +288,9 @@ def riso():
 
     def halftone(level):
         return np.clip((level * .58 - dot) * 9, 0, 1)
-    sun = np.clip((300 - np.sqrt((XX - W * .7) ** 2 + (YY - H * .17) ** 2)) / 3, 0, 1)
+    sun = np.clip((250 - np.sqrt((XX - W * .72) ** 2 + (YY - H * .8) ** 2)) / 3, 0, 1)   # setting behind the hills, clear of the clock
     img = multiply(img, pink, halftone(sun * .95) * .95)
-    blob = np.clip((150 - np.sqrt((XX - W * .2) ** 2 + (YY - H * .72) ** 2)) / 3, 0, 1)
+    blob = np.clip((120 - np.sqrt((XX - W * .1) ** 2 + (YY - H * .035) ** 2)) / 3, 0, 1)
     img = multiply(img, pink, halftone(blob * .8) * .9)
     # blue pass: hills along the bottom and a small moon, printed 6px off register
     off = 6
@@ -298,7 +298,7 @@ def riso():
     for base, amp, freq, ph in ((.84, 70, 2.2, .3), (.9, 50, 3.4, 1.7)):
         yline = H * base + amp * np.sin(XX / W * np.pi * freq + ph)
         hills = np.maximum(hills, np.clip((YY - yline + off) / 2, 0, 1))
-    moon = np.clip((95 - np.sqrt((XX - W * .26 - off) ** 2 + (YY - H * .1) ** 2)) / 2, 0, 1)
+    moon = np.clip((70 - np.sqrt((XX - W * .88 - off) ** 2 + (YY - H * .045) ** 2)) / 2, 0, 1)
     img = multiply(img, blue, np.clip(hills + moon, 0, 1) * .92)
     stripes = ((np.floor((XX + YY * .5) / 26) % 2) == 0) & (np.abs(YY - H * .63) < 26)
     img = multiply(img, blue, stripes.astype(np.float32) * .85)
@@ -316,6 +316,9 @@ def riso():
 
 
 if __name__ == '__main__':
+    import sys
+    only = sys.argv[1:]
     for name, fn in (('dawn', dawn), ('day', day), ('night', night), ('bloom', bloom), ('riso', riso)):
+        if only and name not in only: continue
         save(fn(), f'pro-{name}')
         print('made pro-' + name)
