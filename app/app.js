@@ -365,7 +365,7 @@
   function renderSettingsSummary() {
     const s = state.settings;
     // Settings home: a live preview of the lock card on the wallpaper, then one line per section with its current value.
-    $('sum-look').textContent = `${UI_STYLES[s.uiStyle]} · ${themeName()}`;
+    $('sum-look').textContent = (() => { try { return window.SuiSuiPro?.themeLabel?.() || ''; } catch { return ''; } })() || `${UI_STYLES[s.uiStyle]} · ${themeName()}`;
     const photo = proPaper()?.src || (s.wallpaper === 'custom' && s.photo ? s.photo : s.wallpaper === 'system' ? '' : wallpaperOf(s.wallpaper).src);
     const img = $('tile-look-photo');
     if (photo) { if (img.getAttribute('src') !== photo) img.src = photo; img.hidden = false; img.classList.toggle('monochrome', s.wallpaper === 'mono'); } else img.hidden = true;

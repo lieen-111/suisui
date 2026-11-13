@@ -53,6 +53,8 @@
   const savedTheme = () => ['dusk', 'tape'].includes(S().proTheme) ? 'night' : S().proTheme;
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
+  /** The Pro theme in use, for summaries elsewhere ('' when none). */
+  const themeLabel = () => { const id = activeTheme(); if (!id) return ''; return !tryOn && savedTheme() === 'auto' ? `跟随时间 · ${THEMES[id].name}` : THEMES[id].full; };
   function persist() { API.save(); }
   function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); }
   function startTrial() { const p = info(); if (p.trialUsed) return; p.trialUsed = true; p.trialEnds = Date.now() + TRIAL_DAYS * 864e5; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast(`已开始 ${TRIAL_DAYS} 天免费试用，Pro 全部可用`); }
@@ -690,7 +692,7 @@
     const hero = $('home-hero');
     if (hero) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'pro-banner'; b.id = 'pro-banner';
-      b.innerHTML = `<canvas id="pro-banner-jar" aria-hidden="true"></canvas><span class="pro-banner-text"><b>碎碎清单 Pro</b><small>主题、碎片罐、完成动效，都在这里</small></span><span class="pro-banner-state" id="pro-banner-state"></span>`;
+      b.innerHTML = `<canvas id="pro-banner-jar" aria-hidden="true"></canvas><span class="pro-banner-text"><b>碎碎清单 Pro</b><small>主题、碎片罐、完成动效</small></span><span class="pro-banner-state" id="pro-banner-state"></span>`;
       hero.after(b); b.addEventListener('click', () => openSheet());
     }
     // Today: the jar next to the progress ring
@@ -1210,13 +1212,15 @@
   function refreshAll() {
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
     const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : `试用 ${trialLeft()} 天`) : PRICE;
+    const sub = document.querySelector('#pro-banner .pro-banner-text small'); if (sub) sub.textContent = isPro() && themeLabel() ? `正在用「${themeLabel()}」` : isPro() ? '主题、碎片罐、动效都已打开' : '主题、碎片罐、完成动效';
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { effect, isPro, themeLabel, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  // listen first: refreshAll() can make app.js re-apply its settings, and the theme has to win again afterwards
+  window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
   mount();
   applyTheme(); refreshAll();
-  window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
   window.addEventListener('suisui:render', () => { if (API.lockMode) { window.SuiSuiSkins.lockStrip(document.documentElement.dataset.proLock || ''); return; } window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
   window.addEventListener('suisui:completing', () => { if (isPro() || tryOn) playSound(themeSound()); });
   window.addEventListener('suisui:done', e => {

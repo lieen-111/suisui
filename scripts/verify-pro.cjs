@@ -231,6 +231,15 @@ let browser;
     await context.close();
   }
 
+  /* Cold start with a saved theme: the theme's base style wins over the free style, and keeps winning after a settings change */
+  for (const [th, base] of [['night', 'night'], ['room', 'paper'], ['dawn', 'glass']]) {
+    const { context, page } = await open({ pro: { owned: true }, proTheme: th, uiStyle: 'glass' });
+    assert.equal(await html(page, 'style'), base, `${th}: opens on its own base style (${base})`);
+    await page.evaluate(() => { window.suisui.pro.state.settings.motion = !window.suisui.pro.state.settings.motion; window.suisui.pro.applySettings(); });
+    assert.equal(await html(page, 'style'), base, `${th}: still ${base} after another setting changes`);
+    await context.close();
+  }
+
   /* 乐 · 纸带 was replaced too: a saved 'tape' shows 夜 */
   {
     const { context, page } = await open({ pro: { owned: true }, proTheme: 'tape' });
