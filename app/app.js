@@ -380,8 +380,9 @@
     ['--card-bg', '--card-ink', '--card-blur', '--card-check', '--card-on-check'].forEach(k => card.style.setProperty(k, mini.style.getPropertyValue(k) || $('activity').style.getPropertyValue(k)));
     const open = pending();
     $('home-card-count').textContent = $('activity-count').textContent;
-    card.classList.toggle('grouped', groupedLock() && cardTasks().length > 0);
-    $('home-card-rows').outerHTML = groupedLock() && cardTasks().length ? `<span id="home-card-rows">${miniGroups(cardTasks())}<div class="hero-foot">${esc($('remaining-label').textContent)}</div></span>` : `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
+    // 1.18: the settings strip is a small glance — plain rows, also when the lock screen groups them (the 外观 preview shows the groups)
+    card.classList.remove('grouped');
+    $('home-card-rows').outerHTML = `<span id="home-card-rows">${s.lockPrivacy ? `<span>${open.length ? `今天还有 ${open.length} 件待办` : '今天的事都完成了'}</span>` : (open.length ? open.slice(0, 3).map(t => `<span>${esc(t.title)}</span>`).join('') : '<span>今天，留一点空白。</span>')}</span>`;
     const on = IOS_APP ? !!iosStatus().live : ANDROID ? (s.lockScreen || s.lockNotify) : s.lockNotify;
     $('tile-lock-state').textContent = s.lockPrivacy ? '隐藏内容' : on ? '已开启' : '未开启';
     $('tile-lock').classList.toggle('is-on', !!on);

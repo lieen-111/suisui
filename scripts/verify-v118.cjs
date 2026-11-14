@@ -186,6 +186,30 @@ let browser;
     await context.close();
   }
 
+  /* Settings system: the corner titles use the plain face at fixed weights in every theme; choosing a tile never moves or resizes it */
+  for (const th of ['', 'night', 'day', 'fluff']) {
+    const { context, page } = await open(th ? { proTheme: th } : {}, { proFree: true, lookTabs: true });
+    await page.locator('.nav-button[data-view=settings]').click();
+    const top = await page.evaluate(() => { const h = getComputedStyle(document.querySelector('#settings-title')), d = getComputedStyle(document.querySelector('.settings-top .nav-button[data-view=tasks]')); return [h.fontWeight, h.fontFamily.split(',')[0], d.fontWeight]; });
+    assert.equal(top[0], '700', `${th || 'glass'}: 设置 is bold, not a thin display face`);
+    assert.match(top[1], /Geist/);
+    assert.equal(top[2], '600');
+    await page.locator('[data-settings-page=look]').first().click(); await page.waitForTimeout(500);
+    const tiles = page.locator('.font-chip');
+    await tiles.nth(1).scrollIntoViewIfNeeded();
+    const before = await tiles.evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }));
+    await tiles.nth(1).click(); await page.waitForTimeout(80);
+    const during = await tiles.evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }));
+    assert.deepEqual(during, before, `${th || 'glass'}: choosing a font moves nothing`);
+    await page.waitForTimeout(300);
+    const badge = await tiles.nth(1).evaluate(e => getComputedStyle(e, '::before').opacity);
+    assert.equal(badge, '1', 'The chosen tile shows its check');
+    const outline = await tiles.nth(1).evaluate(e => getComputedStyle(e).outlineStyle + getComputedStyle(e).borderStyle);
+    assert.match(outline, /none/, 'No border pops out around the chosen tile');
+    await tiles.nth(0).click();
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
   console.log('PASS: yearly review (12 months, previous year, back to week), time on a task is silent by default, 响铃提醒 per task (add/edit, only those remind), no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();

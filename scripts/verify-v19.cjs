@@ -151,11 +151,9 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await page.clock.install({ time: new Date(`${day}T09:00:00`) });
     await page.goto(url, { waitUntil: 'networkidle' });
     await page.locator('.nav-button[data-view=settings]').click();
-    assert.deepEqual(await page.locator('#home-card .mini-group').evaluateAll(g => g.map(e => e.dataset.miniGroup)), ['work', 'life'], 'Settings home preview = lock screen groups');
-    assert.match(await page.locator('#home-card .hero-foot').textContent(), /剩余 2 项/);
-    await page.waitForTimeout(600);
-    const box = await page.evaluate(() => [document.querySelector('#home-card .hero-foot').getBoundingClientRect().bottom, document.getElementById('home-hero').getBoundingClientRect().bottom]);
-    assert.ok(box[0] <= box[1], 'The remaining line fits inside the settings preview');
+    // 1.18: the settings strip is a glance — plain rows, never an empty grouped card (it was blank on Android)
+    assert.equal(await page.locator('#home-card .mini-group').count(), 0);
+    assert.ok(await page.locator('#home-card-rows > span:visible').count() >= 1, 'Settings home preview shows to-dos on Android too');
     await page.screenshot({ path: path.join(review, 'v114-settings-home-android-390.png') });
     await page.locator('[data-settings-page=look]').click();
     assert.equal(await page.locator('#mini-card.grouped .mini-group').count(), 2, 'Live preview = lock screen groups');

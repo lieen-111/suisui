@@ -44,7 +44,6 @@
     'trash-2': k([{ rotate: '0deg' }, { rotate: '-14deg' }, { rotate: '12deg' }, { rotate: '-7deg' }, { rotate: '0deg' }], 480, out, '50% 15%'),
     bell: k([{ rotate: '0deg' }, { rotate: '18deg' }, { rotate: '-14deg' }, { rotate: '9deg' }, { rotate: '-4deg' }, { rotate: '0deg' }], 640, out, '50% 8%'),
     'bell-ring': k([{ rotate: '0deg' }, { rotate: '18deg' }, { rotate: '-14deg' }, { rotate: '9deg' }, { rotate: '0deg' }], 600, out, '50% 8%'),
-    clock: k([{ rotate: '0deg' }, { rotate: '-20deg' }, { rotate: '14deg' }, { rotate: '0deg' }], 480, out),
     'alarm-clock': k([{ rotate: '0deg' }, { rotate: '12deg' }, { rotate: '-12deg' }, { rotate: '8deg' }, { rotate: '0deg' }], 520),
     repeat: k([{ rotate: '0deg' }, { rotate: '180deg' }], 560, spring),
     'repeat-2': k([{ rotate: '0deg' }, { rotate: '180deg' }], 560, spring),
@@ -115,6 +114,7 @@
     if (!on()) return;
     const input = e.target;
     if (!(input instanceof HTMLInputElement) || !['radio', 'checkbox'].includes(input.type)) return;
+    if (input.closest('#settings-panel')) return; // settings choices stay in place: the check mark shows the choice
     const box = input.closest('label') || input.parentElement;
     box?.animate?.([{ scale: 1 }, { scale: .94 }, { scale: 1.03 }, { scale: 1 }], { duration: 380, easing: out });
   }, true);
@@ -123,7 +123,7 @@
     if (!on()) return;
     for (const m of list) {
       const el = m.target;
-      if (!(el instanceof HTMLElement) || el.closest('.task-row, .lock-group, #activity-list')) continue;
+      if (!(el instanceof HTMLElement) || el.closest('.task-row, .lock-group, #activity-list, #settings-panel')) continue;
       const nowOn = m.attributeName === 'aria-pressed' ? el.getAttribute('aria-pressed') === 'true' : el.classList.contains('active');
       const wasOn = m.attributeName === 'aria-pressed' ? m.oldValue === 'true' : /(^|\s)active(\s|$)/.test(m.oldValue || '');
       if (nowOn && !wasOn && el.offsetParent) el.animate([{ scale: .92 }, { scale: 1.05 }, { scale: 1 }], { duration: 360, easing: out });
