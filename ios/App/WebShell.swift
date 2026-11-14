@@ -87,7 +87,7 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
         view.scrollView.backgroundColor = .systemBackground
         view.scrollView.contentInsetAdjustmentBehavior = .never
         view.scrollView.bounces = false
-        view.allowsBackForwardNavigationGestures = true
+        view.allowsBackForwardNavigationGestures = false // no page history here; app.js has its own edge swipe back
         view.navigationDelegate = self
         view.uiDelegate = self
         view.isInspectable = true
@@ -124,6 +124,7 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
             exportBackup: (json, name) => post('exportBackup', { json, name }),
             liveActivity: on => post('liveActivity', !!on),
             requestNotifications: () => post('requestNotifications', true),
+            openSettings: () => post('openSettings', true),
             _set(json) { data = json; },
             _status(s) { this.status = s; }
           };
@@ -161,8 +162,7 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
         case "liveActivity":
             liveWanted = arg as? Bool ?? false
             Task {
-                if liveWanted { try? await LiveActivityController.start(TodoRepository.read()) } else { await LiveActivityController.end() }
-                await refreshStatus()
+                if liveWanted { await syncLiveActivity(TodoRepository.read()) } else { await LiveActivityController.end(); await refreshStatus() }
             }
         case "requestNotifications":
             Task {
@@ -171,6 +171,8 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
                 } else { await Reminders.requestIfNeeded() }
                 await refreshStatus()
             }
+        case "openSettings":
+            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
         case "ready":
             Task { await refreshStatus() }
         default: break
@@ -182,7 +184,7 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
         guard result.accepted else { pushData(force: true); return }
         lastPushed = json
         TodoRepository.reloadWidgets()
-        if let doc = result.doc { Task { await LiveActivityController.update(doc) } }
+        if let doc = result.doc { Task { await syncLiveActivity(doc) } }
         if Reminders.schedule() { Task { await Reminders.requestIfNeeded(); await refreshStatus() } }
     }
 
@@ -213,14 +215,18 @@ final class WebShell: NSObject, ObservableObject, WKScriptMessageHandler, WKNavi
         pushData()
         Reminders.schedule()
         TodoRepository.reloadWidgets()
-        Task {
-            if liveWanted, LiveActivityController.isAvailable, !LiveActivityController.isRunning, !TodoLogic.pending(doc.tasks).isEmpty {
-                try? await LiveActivityController.start(doc)
-            } else {
-                await LiveActivityController.update(doc)
-            }
-            await refreshStatus()
+        Task { await syncLiveActivity(doc) }
+    }
+
+    /// Starts the Live Activity when it is wanted and there is something to do (adding the first task of the day
+    /// starts it straight away), otherwise just updates the one that is showing.
+    private func syncLiveActivity(_ doc: TodoDocument) async {
+        if liveWanted, LiveActivityController.isAvailable, !LiveActivityController.isRunning, !TodoLogic.pending(doc.tasks).isEmpty {
+            try? await LiveActivityController.start(doc)
+        } else {
+            await LiveActivityController.update(doc)
         }
+        await refreshStatus()
     }
 
     // MARK: Files and images

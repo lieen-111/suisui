@@ -262,6 +262,7 @@
                 <label class="setting-row static"><span>到点提醒与计时通知</span></label>
                 <p class="setting-note" id="ios-notify-status"></p>
                 <button class="secondary-button inline" id="ios-notify-button" hidden><i data-lucide="bell-ring"></i>允许通知</button>
+                <button class="secondary-button inline" id="open-ios-setup"><i data-lucide="lock"></i>锁屏设置步骤</button>
               </div>
               <div class="android-only" id="android-lock-settings" hidden>
                 <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
@@ -398,6 +399,17 @@
       <li id="setup-brand"><span class="setup-mark manual"></span><div><strong>锁屏显示、后台弹出界面、省电无限制</strong><p id="setup-brand-copy">小米、红米、OPPO、vivo、荣耀等手机还需要在应用权限里手动打开这几项，否则锁屏可能不出现或被系统关掉。</p></div><button class="secondary-button" data-setup="brand">打开权限页</button></li>
     </ol>
     <div class="dialog-actions"><button class="primary-button" id="finish-android-setup">完成</button></div>
+  </dialog>
+  <dialog id="ios-setup" class="sheet" aria-labelledby="ios-setup-title">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <div class="dialog-heading"><h2 id="ios-setup-title">让待办出现在锁屏</h2><button class="icon-button" id="close-ios-setup" aria-label="关闭"><i data-lucide="x"></i></button></div>
+    <p>iPhone 的锁屏上有两种碎碎清单：一直在的小组件，和有待办时出现的大卡片。亮屏后点圆圈就能完成。</p>
+    <ol class="setup-steps">
+      <li id="ios-setup-notify"><span class="setup-mark"></span><div><strong>通知</strong><p>到点提醒、计时结束会通知你，通知里能直接点“完成”。</p></div><button class="secondary-button" data-ios-setup="notify">允许</button></li>
+      <li id="ios-setup-live"><span class="setup-mark"></span><div><strong>锁屏大卡片（实时活动）</strong><p id="ios-setup-live-copy">有待办时，锁屏和灵动岛上显示今天的清单。</p></div><button class="secondary-button" data-ios-setup="live">打开</button></li>
+      <li id="ios-setup-widget"><span class="setup-mark manual"></span><div><strong>锁屏小组件</strong><p>回到锁屏，长按屏幕 → 自定 → 锁定屏幕 → 点时间下面的小组件区 → 碎碎清单，选长条那一款。</p></div></li>
+    </ol>
+    <div class="dialog-actions"><button class="primary-button" id="finish-ios-setup">好了</button></div>
   </dialog>
   <dialog id="import-dialog" class="sheet" aria-labelledby="import-title">
     <span class="sheet-grip" aria-hidden="true"></span>

@@ -1278,3 +1278,12 @@ body.lock-mode .nav-add,body.lock-mode .header-actions{display:none!important}
   html[data-palette=ink] .add-input-line .add-submit svg{color:#1d1d1f}
   html[data-palette=ink] .chip.active,html[data-palette=ink] .filter-tabs button.active,html[data-palette=ink] .tool.open{background:#f2f2f4!important;color:#1d1d1f!important}
   html[data-palette=ink] .chip.active .dot,html[data-palette=ink] .filter-tabs button.active .dot{box-shadow:0 0 0 1.5px #1d1d1f66}}
+
+/* iPhone app (WKWebView, full screen under the status bar): pages without the home header start below the status bar.
+   The bridge adds .ios-shell before the page draws; the PWA keeps its own rules above. */
+@media(max-width:760px){
+  html.ios-shell .settings-top{padding-top:calc(10px + env(safe-area-inset-top));min-height:calc(58px + env(safe-area-inset-top))}
+  html.ios-shell .review-panel{padding-top:env(safe-area-inset-top)}
+  html.ios-shell .settings-preview{top:0}
+  html.ios-shell .settings-top>:is(.settings-back,.nav-button[data-view=tasks]){top:calc(50% + env(safe-area-inset-top) / 2)}
+}

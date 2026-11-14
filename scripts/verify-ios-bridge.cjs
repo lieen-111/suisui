@@ -73,6 +73,24 @@ let browser;
   assert.equal(timer.id, 'a'); assert.equal(timer.title, '读书'); assert(timer.endsAt > Date.now());
   await page.locator('#focus-stop').click();
 
+  // First launch: once the native side reports what is allowed, the lock-screen setup sheet opens by itself, once.
+  await page.evaluate(() => { SuiSuiIOS._status({ live: false, liveAllowed: true, liveWanted: false, notifications: 'default' }); suisuiIOSStatus(); });
+  await page.waitForTimeout(700);
+  assert.equal(await page.locator('#ios-setup').isVisible(), true, 'First launch asks for the lock-screen setup');
+  assert.equal(await page.locator('#ios-setup-notify').evaluate(e => e.classList.contains('done')), false);
+  await page.locator('#ios-setup [data-ios-setup=notify]').click();
+  await page.locator('#ios-setup [data-ios-setup=live]').click();
+  assert.equal((await posts('requestNotifications')).length, 1, 'Setup asks for notifications');
+  assert.deepEqual((await posts('liveActivity')).map(p => p.a), [true], 'Setup turns the Live Activity on');
+  await page.evaluate(() => { SuiSuiIOS._status({ live: true, liveAllowed: true, liveWanted: true, notifications: 'granted' }); suisuiIOSStatus(); });
+  assert.equal(await page.locator('#ios-setup-notify').evaluate(e => e.classList.contains('done')), true, 'Granted notifications tick off');
+  assert.equal(await page.locator('#ios-setup-live').evaluate(e => e.classList.contains('done')), true);
+  await page.locator('#finish-ios-setup').click();
+  assert.equal(await page.locator('#ios-setup').isVisible(), false);
+  assert.equal((await lastSaved()).settings.iosSetupSeen, true, 'Asked only once');
+  assert((await posts('haptic')).length > 0, 'Haptics through the bridge');
+  await page.evaluate(() => window.__posts.splice(0)); // the checks below count from here
+
   // iPhone lock settings: Live Activity and notifications instead of the web notification switch.
   await page.locator('.nav-button[data-view=settings]').click();
   await page.locator('[data-settings-page=lock]').click();
@@ -98,9 +116,32 @@ let browser;
   assert.equal(JSON.parse(exp.json).app, 'suisui');
   assert.equal(await page.locator('#settings-install').isVisible(), false);
 
-  // Haptics go native.
-  assert((await posts('haptic')).length > 0, 'Haptics through the bridge');
+  // Under the status bar: with a 59px safe area the settings bar starts below it (class set before the page draws).
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('ios-shell')), true);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 59, bottom: 34, left: 0, right: 0 } });
+  await page.evaluate(() => window.suisuiBack()); await page.evaluate(() => { while (document.body.dataset.view !== 'tasks') window.suisuiBack(); });
+  await page.locator('.nav-button[data-view=settings]').click();
+  await page.locator('[data-settings-page=lock]').click();
+  const bar = await page.locator('.settings-top').evaluate(e => ({ pad: parseFloat(getComputedStyle(e).paddingTop), back: e.querySelector('.settings-back').getBoundingClientRect().top, title: e.querySelector('h1').getBoundingClientRect() }));
+  assert(bar.pad >= 59, `Settings bar clears the status bar (${bar.pad}px)`);
+  assert(bar.back >= 59, 'Back button is below the status bar');
+
+  // Edge swipe from the left goes back: lock page → settings home → list.
+  const swipe = async () => {
+    const t = (type, x) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: 420 }] });
+    await t('touchStart', 6); for (const x of [30, 70, 120, 170, 220]) { await t('touchMove', x); await page.waitForTimeout(16); } await t('touchEnd'); await page.waitForTimeout(450);
+  };
+  await swipe();
+  assert.equal(await page.evaluate(() => document.body.dataset.settingsPage), 'index', 'Edge swipe: back to settings home');
+  await swipe();
+  assert.equal(await page.evaluate(() => document.body.dataset.view), 'tasks', 'Edge swipe: back to the list');
+  await swipe();
+  assert.equal(await page.evaluate(() => document.body.dataset.view), 'tasks', 'Edge swipe on the list does nothing');
+  await page.evaluate(() => window.SuiSuiPro?.open());
+  if (await page.locator('#pro-sheet').isVisible()) { await swipe(); assert.equal(await page.locator('#pro-sheet').isVisible(), false, 'Edge swipe closes the Pro page'); }
+
   assert.deepEqual(errors, []);
-  console.log('PASS: iOS bridge — boots from the stored file, saves with revision, stale save refused, Lock Screen tick flows back, timer, Live Activity + notification settings, native export, haptics.');
+  console.log('PASS: iOS bridge — boots from the stored file, saves with revision, stale save refused, Lock Screen tick flows back, first-launch lock-screen setup, timer, Live Activity + notification settings, native export, haptics, status-bar safe area, edge swipe back.');
   await browser.close();
 })().catch(async error => { console.error(error); await browser?.close(); process.exit(1); });

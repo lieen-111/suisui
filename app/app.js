@@ -186,7 +186,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['palette2', 'motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
+    ['palette2', 'motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'iosSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -209,6 +209,8 @@
   const ANDROID = window.SuiSuiAndroid || null;
   // iPhone app shell (ios/): the same page in a WKWebView with the same bridge, plus native widgets and Live Activity.
   const IOS_APP = window.SuiSuiIOS || null;
+  // the iPhone app's web view runs under the status bar: styles.css pads the pages that have no home header
+  if (IOS_APP) document.documentElement.classList.add('ios-shell');
   const NATIVE = ANDROID || IOS_APP;
   let lastNativeRaw = '';
   function readNative() { try { return NATIVE ? NATIVE.load() || '' : ''; } catch { return ''; } }
@@ -571,6 +573,50 @@
     if (document.body.dataset.view === 'review') { setView('tasks'); return true; }
     return false;
   };
+  // iPhone: no system back gesture inside the app, so a swipe from the left edge goes back like the Android back button.
+  // The page being left follows the finger; letting go past about a third of the screen goes back.
+  (function edgeSwipeBack() {
+    const iphone = IOS_APP || (/iPhone|iPad|iPod/.test(navigator.userAgent) && (matchMedia('(display-mode: standalone)').matches || navigator.standalone === true)) || window.SUISUI_EDGE_SWIPE;
+    if (!iphone) return;
+    const layer = () => {
+      const pro = ['pro-pay', 'pro-celebrate', 'pro-jar-sheet', 'pro-sheet'].map(id => document.getElementById(id)).find(el => el && !el.hidden);
+      if (pro) return { el: pro.id === 'pro-pay' ? pro.querySelector('.pro-pay-card') : pro };
+      const dialog = document.querySelector('dialog[open]'); if (dialog) return { el: dialog };
+      if (document.body.classList.contains('adding') || document.body.classList.contains('searching')) return { el: null };
+      const view = document.body.dataset.view;
+      if (view === 'settings') return { el: document.querySelector('.settings-panel') };
+      if (view === 'review') return { el: document.getElementById('review-panel') };
+      return null;
+    };
+    let start = null;
+    const reset = el => { if (!el) return; el.style.transition = ''; el.style.transform = ''; el.style.boxShadow = ''; };
+    addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      if (e.touches.length !== 1 || t.clientX > 22) return;
+      const l = layer(); if (!l) return;
+      start = { x: t.clientX, y: t.clientY, dx: 0, el: l.el, decided: false };
+    }, { passive: true });
+    addEventListener('touchmove', e => {
+      if (!start) return;
+      const t = e.touches[0], dx = t.clientX - start.x, dy = t.clientY - start.y;
+      if (!start.decided) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; if (Math.abs(dy) > Math.abs(dx)) { start = null; return; } start.decided = true; }
+      start.dx = Math.max(0, dx);
+      if (start.el) { start.el.style.transition = 'none'; start.el.style.transform = `translateX(${start.dx}px)`; start.el.style.boxShadow = '-12px 0 28px -16px rgba(0,0,0,.35)'; }
+    }, { passive: true });
+    const end = () => {
+      if (!start) return;
+      const s = start; start = null;
+      const go = s.decided && s.dx > Math.min(120, innerWidth * .3);
+      if (!s.el) { if (go) window.suisuiBack?.(); return; }
+      if (go) {
+        s.el.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1)'; s.el.style.transform = `translateX(${innerWidth}px)`;
+        setTimeout(() => { window.suisuiBack?.(); requestAnimationFrame(() => reset(s.el)); }, 190);
+        try { navigator.vibrate?.(8); } catch {}
+      } else { s.el.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; s.el.style.transform = ''; setTimeout(() => reset(s.el), 240); }
+    };
+    addEventListener('touchend', end, { passive: true });
+    addEventListener('touchcancel', end, { passive: true });
+  })();
   function showToast(message, undo = null, label = '撤销', ms = 0) {
     clearTimeout(toastTimer);
     undoAction = undo;
@@ -981,7 +1027,26 @@
     $('ios-notify-button').hidden = n === 'granted';
     $('ios-notify-button').lastChild.textContent = n === 'denied' ? '去系统设置打开通知' : '允许通知';
   }
-  window.suisuiIOSStatus = () => { if (typeof render === 'function') { renderNotifySetting(); renderSettingsSummary(); } };
+  /** First run on iPhone: the permissions and the two lock-screen pieces, each ticked off as it is done. */
+  function renderIOSSetup() {
+    if (!IOS_APP) return;
+    const st = iosStatus(), notify = st.notifications === 'granted', liveOff = st.liveAllowed === false, live = !liveOff && !!st.liveWanted;
+    $('ios-setup-notify').classList.toggle('done', notify);
+    $('ios-setup-notify').querySelector('button').hidden = notify;
+    $('ios-setup-notify').querySelector('button').textContent = st.notifications === 'denied' ? '去设置' : '允许';
+    $('ios-setup-live').classList.toggle('done', live);
+    $('ios-setup-live').querySelector('button').hidden = live;
+    $('ios-setup-live').querySelector('button').textContent = liveOff ? '去设置' : '打开';
+    $('ios-setup-live-copy').textContent = liveOff ? '实时活动在系统里被关掉了：点“去设置”，打开“实时活动”后回来。' : '有待办时，锁屏和灵动岛上显示今天的清单；全部做完会自动收起。';
+  }
+  function openIOSSetup() { renderIOSSetup(); if (!$('ios-setup').open) $('ios-setup').showModal(); icons($('ios-setup')); }
+  let iosSetupAsked = false;
+  window.suisuiIOSStatus = () => {
+    if (typeof render === 'function') { renderNotifySetting(); renderSettingsSummary(); }
+    renderIOSSetup();
+    // first launch: ask once, after the native side has said what is allowed
+    if (IOS_APP && !state.settings.iosSetupSeen && !iosSetupAsked && !document.querySelector('dialog[open]')) { iosSetupAsked = true; setTimeout(openIOSSetup, 400); }
+  };
   function androidPermissions() {
     try { return JSON.parse(ANDROID.permissions()); } catch { return { notifications: false, overlay: false, lockScreenRunning: false, brand: '' }; }
   }
@@ -2087,7 +2152,18 @@
       showToast(on ? '已在锁屏显示今天的待办' : '已从锁屏移除');
     });
     $('ios-notify-button').addEventListener('click', () => { try { IOS_APP.requestNotifications(); } catch { /* ignore */ } });
-  }
+    $('open-ios-setup').addEventListener('click', openIOSSetup);
+    $('close-ios-setup').addEventListener('click', () => { state.settings.iosSetupSeen = true; save(); $('ios-setup').close(); });
+    $('finish-ios-setup').addEventListener('click', () => { state.settings.iosSetupSeen = true; save(); $('ios-setup').close(); showToast(pending().length ? '好了，锁上手机看看' : '好了，加一件待办后锁上手机看看'); });
+    $('ios-setup').addEventListener('click', event => {
+      const step = event.target.closest('[data-ios-setup]')?.dataset.iosSetup; if (!step) return;
+      const st = iosStatus();
+      try {
+        if (step === 'notify') IOS_APP.requestNotifications();
+        if (step === 'live') { if (st.liveAllowed === false) IOS_APP.openSettings?.(); else IOS_APP.liveActivity(true); }
+      } catch { /* ignore */ }
+    });
+  } else document.getElementById('open-ios-setup')?.remove();
   if (ANDROID) {
     $('lockscreen-toggle').addEventListener('change', () => {
       state.settings.lockScreen = $('lockscreen-toggle').checked; save(); renderAndroidLock();
@@ -2116,8 +2192,8 @@
     updateLockNotification(true); showToast(pending().length ? '已刷新锁屏通知，锁屏即可看到' : '全部完成，没有需要提醒的事项');
   });
   $('reset-settings').addEventListener('click', () => {
-    const { autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, tipsSeen } = state.settings;
-    state.settings = { ...defaults, autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, tipsSeen }; save(); applySettings(); showToast('已恢复默认外观');
+    const { autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, iosSetupSeen, tipsSeen } = state.settings;
+    state.settings = { ...defaults, autoArchive, lockNotify, lockScreen, lockPrivacy, installDismissed, androidSetupSeen, iosSetupSeen, tipsSeen }; save(); applySettings(); showToast('已恢复默认外观');
   });
   $('wallpaper-file').addEventListener('change', event => {
     const file = event.target.files[0];

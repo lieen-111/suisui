@@ -61,6 +61,14 @@
     '件今天完成': 'done today', '件今天完成，第一片还在路上': 'done today, the first shard is on its way', '已解锁 Pro，谢谢你。': 'Pro is unlocked. Thank you.',
     '测试版 · 全部免费': 'Test build · all free', '免费测试': 'Free test', '测试版：付款是模拟的': 'Test build: payment is simulated',
     '测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. Buying below is only a demo; nothing is charged.',
+    // iPhone first-run setup (base app, kept here with the other additions)
+    '让待办出现在锁屏': 'Put your to-dos on the Lock Screen', 'iPhone 的锁屏上有两种碎碎清单：一直在的小组件，和有待办时出现的大卡片。亮屏后点圆圈就能完成。': 'There are two ways on the iPhone Lock Screen: a widget that is always there, and a large card that appears when you have to-dos. Tap a circle to finish.',
+    '到点提醒、计时结束会通知你，通知里能直接点“完成”。': 'Reminders and timers notify you; tap “Done” right in the notification.', '允许': 'Allow', '打开': 'Turn on', '去设置': 'Open Settings', '好了': 'Done',
+    '锁屏大卡片（实时活动）': 'Lock Screen card (Live Activity)', '有待办时，锁屏和灵动岛上显示今天的清单。': "When you have to-dos, today's list shows on the Lock Screen and Dynamic Island.",
+    '有待办时，锁屏和灵动岛上显示今天的清单；全部做完会自动收起。': "When you have to-dos, today's list shows on the Lock Screen and Dynamic Island; it goes away when all are done.",
+    '实时活动在系统里被关掉了：点“去设置”，打开“实时活动”后回来。': 'Live Activities are off in Settings: tap “Open Settings”, turn on Live Activities, then come back.',
+    '锁屏小组件': 'Lock Screen widget', '回到锁屏，长按屏幕 → 自定 → 锁定屏幕 → 点时间下面的小组件区 → 碎碎清单，选长条那一款。': 'On the Lock Screen, touch and hold → Customize → Lock Screen → tap the widget area under the time → SuiSui, and pick the wide one.',
+    '锁屏设置步骤': 'Lock Screen setup', '好了，锁上手机看看': 'Done — lock your phone to see it', '好了，加一件待办后锁上手机看看': 'Done — add a to-do, then lock your phone to see it',
     // wallpaper
     '锁屏和预览都用它；存到相册，也能设成手机壁纸': 'Used on the lock screen and previews; save it to set as your phone wallpaper', '保存到相册': 'Save to Photos', '壁纸没能读取，请再试一次': "Couldn't load the wallpaper — try again",
     // jar & weekly

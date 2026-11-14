@@ -1224,6 +1224,16 @@
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
   window.SuiSuiPro = { effect, isPro, themeLabel, freeForTesters: FREE, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  // Back (Android back button, iPhone edge swipe): close the Pro layers first, top-most first
+  const baseBack = window.suisuiBack;
+  window.suisuiBack = () => {
+    const open = id => $(id) && !$(id).hidden;
+    if (open('pro-pay')) { if (payStep !== 'working') closePay(); return true; }
+    if (open('pro-celebrate')) { closeCelebrate(); return true; }
+    if (open('pro-jar-sheet')) { closeJar(); return true; }
+    if (open('pro-sheet')) { closeSheet(); return true; }
+    return baseBack ? baseBack() : false;
+  };
   // listen first: refreshAll() can make app.js re-apply its settings, and the theme has to win again afterwards
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
   mount();
