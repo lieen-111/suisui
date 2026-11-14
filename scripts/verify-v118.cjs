@@ -130,6 +130,20 @@ let browser;
     await context.close();
   }
 
+  /* Test build: the checkout is one quiet row that scrolls with the page, not a sticky block; light Pro wallpapers get a light veil */
+  {
+    const { context, page } = await open({ proTheme: 'room' }, { proFree: true });
+    await page.locator('.nav-button[data-view=settings]').click();
+    const veil = await page.locator('#home-hero').evaluate(e => getComputedStyle(e, '::after').backgroundImage);
+    assert.match(veil, /251, 250, 246/, 'Room: the clock sits on a light veil (dark ink stays readable)');
+    await page.evaluate(() => window.SuiSuiPro.open());
+    assert.equal(await page.locator('.pro-free-bar').isVisible(), true);
+    assert.equal(await page.locator('.pro-buy').evaluate(e => getComputedStyle(e).position), 'static', 'Not sticky in the test build');
+    await page.locator('#pro-buy').click();
+    assert.equal(await page.locator('.pro-pay-card').isVisible(), true, 'The demo checkout still opens');
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
   console.log('PASS: yearly review (12 months, previous year, back to week), 到点响铃 off by default and saved, no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();

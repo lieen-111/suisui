@@ -257,7 +257,7 @@ let browser;
     assert.equal(await page.locator('#review-panel').isVisible(), true);
     assert.equal(await page.locator('#rs-count').textContent(), '4', 'This week (Mon–Sun) has four');
     assert.equal(await page.locator('#rs-focus').textContent(), '1.7', '100 minutes');
-    assert.equal(await page.locator('#rs-days').textContent(), '3');
+    assert.match(await page.locator('#rs-days').textContent(), /^3\/\d+$/, '1.18: active days over elapsed days');
     assert.equal(await page.locator('.review-chart .bar').count(), 7);
     assert.equal(await page.locator('.rt-row').count(), 4);
     assert.equal(await page.locator('.rt-title', { hasText: '写选题 <b>' }).count(), 1, 'Titles are escaped');

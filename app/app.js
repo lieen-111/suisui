@@ -313,7 +313,10 @@
   function enter(el, cls) {
     if (!el || !state.settings.motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     el.classList.remove('view-enter', 'page-enter', 'page-back'); void el.offsetWidth; el.classList.add(cls);
-    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+    // Children animate inside the page (rows cascade); only the page's own animation ends the entrance, with a timer as backstop.
+    const token = el._enter = {};
+    const done = e => { if (e && e.target !== el) return; el.removeEventListener('animationend', done); if (el._enter === token) el.classList.remove(cls); };
+    el.addEventListener('animationend', done); setTimeout(done, 1100);
   }
   // Large title collapses into the top bar once it scrolls away (phones).
   window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 72); }, { passive: true });
@@ -1404,7 +1407,7 @@
     $('rs-count').textContent = String(d.entries.length);
     const f = focusText(d.minutes);
     $('rs-focus').textContent = f.value; $('rs-focus-unit').textContent = f.unit;
-    $('rs-days').textContent = `${d.activeDays}`; $('rs-days-unit').textContent = `/ ${d.elapsed} 天有完成`;
+    $('rs-days').innerHTML = `${Number(d.activeDays)}<small>/${Number(d.elapsed)}</small>`; $('rs-days-unit').textContent = '天有完成';
     const max = Math.max(1, ...d.buckets.map(x => x.items.length));
     const month = review.period === 'month', year = review.period === 'year';
     $('review-chart').classList.toggle('is-month', month);

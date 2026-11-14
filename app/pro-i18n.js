@@ -61,6 +61,7 @@
     '件今天完成': 'done today', '件今天完成，第一片还在路上': 'done today, the first shard is on its way', '已解锁 Pro，谢谢你。': 'Pro is unlocked. Thank you.',
     '测试版 · 全部免费': 'Test build · all free', '免费测试': 'Free test', '测试版：付款是模拟的': 'Test build: payment is simulated',
     '测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. Buying below is only a demo; nothing is charged.',
+    '测试版 · 全部已解锁': 'Test build · everything unlocked', '看付款页': 'See checkout', '测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. The checkout is only a demo; nothing is charged.',
     // iPhone first-run setup (base app, kept here with the other additions)
     '让待办出现在锁屏': 'Put your to-dos on the Lock Screen', 'iPhone 的锁屏上有两种碎碎清单：一直在的小组件，和有待办时出现的大卡片。亮屏后点圆圈就能完成。': 'There are two ways on the iPhone Lock Screen: a widget that is always there, and a large card that appears when you have to-dos. Tap a circle to finish.',
     '到点提醒、计时结束会通知你，通知里能直接点“完成”。': 'Reminders and timers notify you; tap “Done” right in the notification.', '允许': 'Allow', '打开': 'Turn on', '去设置': 'Open Settings', '好了': 'Done',
@@ -100,6 +101,7 @@
     [/^(\d+)月(\d+)日[ 　·]+星期([日一二三四五六])$/, (_, m, d, w) => `${WEEK[w]}, ${day(m, d)}`],
     [/^试用中 · 剩 (\d+) 天$/, (_, n) => `Trial · ${n} days left`], [/^试用 (\d+) 天$/, (_, n) => `Trial · ${n} days`],
     [/^免费试用 (\d+) 天$/, (_, n) => `Try free for ${n} days`],
+    [/^正式版 (¥[\d.]+)（原价 (¥[\d.]+)），一次买断$/, (_, p, l) => `Full version ${p} (was ${l}), one-time purchase`],
     [/^已开始 (\d+) 天免费试用，Pro 全部可用$/, (_, n) => `Your ${n}-day free trial has started — all of Pro is on`],
     [/^跟随时间 · (.)$/, (_, a) => `Follow the time · ${NAME[a] || a}`], [/^现在是(.+)$/, (_, a) => `Now ${NAME[a] || full(a)}`],
     [/^正在用「(.+)」$/, (_, a) => `Using ${full(a).replace(/^跟随时间 · (.)$/, (x, y) => `Follow the time · ${NAME[y]}`)}`],

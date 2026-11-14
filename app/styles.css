@@ -1303,3 +1303,4 @@ html[data-style=paper] .fx-glint:before,html[data-pro-skin=day] .fx-glint:before
 @keyframes fx-glint{to{transform:translateX(300%) skewX(-12deg)}}
 @keyframes fx-spark{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:.9}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.2)}}
 .shard{filter:none}
+.review-stats b small{font-size:.5em;font-weight:600;opacity:.55;margin-left:1px;letter-spacing:0}

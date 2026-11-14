@@ -808,8 +808,10 @@
         <form class="pro-cd-add" id="pro-cd-add"><input id="pro-cd-title" maxlength="12" placeholder="比如：考试" aria-label="倒数日名称" required><input type="date" id="pro-cd-date" aria-label="日期" required><button type="submit" class="primary-button">添加</button></form>
       </section>` : ''}
 
-      <footer class="pro-buy" data-pay="${payPlatform()}">
-        ${owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
+      <footer class="pro-buy${FREE && !owned ? ' is-free' : ''}" data-pay="${payPlatform()}">
+        ${FREE && !owned ? `<div class="pro-free-bar">${icon('badge-check')}<div><b>测试版 · 全部已解锁</b><small>正式版 ${PRICE}，一次买断</small></div><button type="button" class="pro-free-demo" id="pro-buy">看付款页</button></div>
+             <p class="pro-free-note">测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。</p>`
+          : owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
           : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}，一次买断，永久使用</span></div>
              ${FREE ? '<p class="pro-free-note">测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。</p>' : ''}
              <div class="pro-actions">${info().trialUsed || FREE ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `购买兑换码 · ${PRICE}`}</button></div>`}

@@ -527,3 +527,18 @@ html[data-style=glass] .settings-home .settings-tiles{-webkit-backdrop-filter:bl
 html[data-motion=on] .settings-home .settings-tiles>button.is-pressed{scale:1;background:color-mix(in srgb,var(--tile-ink) 5%,transparent)!important}
 /* Pro wallpapers keep their picture at the bottom: show that part in the short strip */
 html[data-pro-wall] .settings-home .settings-home-hero img{object-position:center 88%}
+/* light Pro wallpapers use dark clock ink: give it a light veil instead of the dark one */
+html:is([data-pro-wall=dawn],[data-pro-wall=day],[data-pro-wall=bloom],[data-pro-wall=riso],[data-pro-wall=room],[data-pro-wall=fluff]) .settings-home .settings-home-hero:after{background:linear-gradient(90deg,#fbfaf6f2,#fbfaf6c7 40%,#fbfaf600 68%)}
+/* 1.18 motion: one curve for moving between pages (fast start, long soft landing), rows cascade inside their list */
+.page-enter{animation:page-enter .44s cubic-bezier(.32,.72,0,1)}
+.page-back{animation:page-back .4s cubic-bezier(.32,.72,0,1)}
+.view-enter{animation:view-enter .4s cubic-bezier(.32,.72,0,1)}
+@keyframes page-enter{from{opacity:0;transform:translateX(40px)}60%{opacity:1}}
+@keyframes page-back{from{opacity:0;transform:translateX(-28px)}60%{opacity:1}}
+@keyframes view-enter{from{opacity:0;transform:translateY(14px) scale(.985)}}
+html[data-motion=on] :is(.view-enter,.page-back) .settings-home .settings-tiles{animation:tile-in .5s cubic-bezier(.32,.72,0,1) both;animation-delay:50ms}
+html[data-motion=on] :is(.view-enter,.page-back) .settings-home .settings-tiles>button{animation:row-in .42s cubic-bezier(.32,.72,0,1) both;animation-delay:calc(var(--i,0) * 32ms + 90ms)}
+html[data-motion=on] :is(.view-enter,.page-back) .settings-home .settings-pro-row,html[data-motion=on] :is(.view-enter,.page-back) .settings-home .pro-banner{animation:row-in .45s cubic-bezier(.32,.72,0,1) both;animation-delay:30ms}
+/* bottom sheets glide up and settle (no bounce that opens a gap under them); dim fades with them */
+@media(max-width:760px){html[data-motion=on] dialog.sheet[open]{animation:sheet-up .5s cubic-bezier(.32,.72,0,1)}html[data-motion=on] dialog.sheet[open]::backdrop{animation:fade-in .4s ease both}}
+html[data-motion=on] dialog[open]:not(.sheet){animation:sheet-in .42s cubic-bezier(.32,1.12,.6,1)}
