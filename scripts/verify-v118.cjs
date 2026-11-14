@@ -144,6 +144,24 @@ let browser;
     await context.close();
   }
 
+  /* Every Pro theme: the piece lands with a ring in the theme's ink, the check uses the theme colour, the day's end hides the undo toast */
+  for (const th of ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff']) {
+    const { context, page } = await open({ proTheme: th }, { proFree: true });
+    await page.locator('.task-row[data-task-id=a] .check-task').click();
+    await page.clock.runFor(120);
+    const fill = await page.locator('.fx-check').first().evaluate(e => getComputedStyle(e).backgroundImage + getComputedStyle(e).backgroundColor);
+    assert.doesNotMatch(fill, /rgb\(29, 29, 31\)$/, `${th}: the check is drawn in the theme's colour`);
+    let landed = 0;
+    for (let k = 0; k < 20 && !landed; k++) { await page.clock.runFor(60); landed = await page.locator('.pro-land').count(); }
+    assert.ok(landed, `${th}: the piece lands in the header with a ring`);
+    await page.clock.runFor(1500);
+    await page.locator('.task-row[data-task-id=b] .check-task').click(); await page.clock.runFor(1500);
+    await page.locator('.task-row[data-task-id=c] .check-task').click(); await page.clock.runFor(2000);
+    assert.equal(await page.locator('#pro-celebrate').isVisible(), true, `${th}: end-of-day moment`);
+    assert.equal(await page.locator('#toast').evaluate(e => getComputedStyle(e).opacity), '0', `${th}: the undo toast steps aside`);
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
   console.log('PASS: yearly review (12 months, previous year, back to week), 到点响铃 off by default and saved, no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();

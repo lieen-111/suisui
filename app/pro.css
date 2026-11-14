@@ -948,3 +948,29 @@ html[data-pro-skin=fluff] .filter-tabs button{min-height:36px}
 /* the Pro page is always dark: switches whose theme colour is near-black (毛, the ink palette) turn light there so "on" reads as on */
 html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked{background:#f5f5f7!important;box-shadow:none!important}
 html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked:before,html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked:after{background:#0b0b0c!important}
+/* 1.18: the piece lands with one thin ring; the end-of-day words come in after the picture starts */
+.pro-land{position:fixed;z-index:95;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1.5px var(--land);animation:pro-land .46s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes pro-land{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+.pro-celebrate:not([hidden]){animation:pro-fade .28s ease both}
+html[data-motion=on] .pro-celebrate:not([hidden]) .pro-cel-text>*{animation:pro-cel-in .5s cubic-bezier(.32,.72,0,1) both}
+html[data-motion=on] .pro-celebrate:not([hidden]) .pro-cel-text h2{animation-delay:.35s}
+html[data-motion=on] .pro-celebrate:not([hidden]) .pro-cel-text p{animation-delay:.45s}
+html[data-motion=on] .pro-celebrate:not([hidden]) .pro-cel-text button{animation-delay:.55s}
+@keyframes pro-cel-in{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){.pro-land{display:none}}
+/* the undo toast should not float over the end-of-day picture */
+body:has(#pro-celebrate:not([hidden])) .toast{opacity:0;pointer-events:none}
+/* 1.18 finishing moment in each theme's own ink (check fill, tick, ring and sparks) */
+html[data-pro-skin=dawn]{--fx-fill:linear-gradient(140deg,#a99fff,#86dcc6 60%,#ffb99b);--fx-tick:#fff;--fx-ring:#86dcc6}
+html[data-pro-skin=day]{--fx-fill:#b43a2c;--fx-tick:#f5f2ec;--fx-ring:#b43a2c}
+html[data-pro-skin=night]{--fx-fill:#eef1fa;--fx-tick:#07080d;--fx-ring:#c9d6ff}
+html[data-pro-skin=bloom]{--fx-fill:#3b5a87;--fx-tick:#f8f9f8;--fx-ring:#7d97be}
+html[data-pro-skin=riso]{--fx-fill:#2f5fb3;--fx-tick:#fbfaf6;--fx-ring:#ff4fa3}
+html[data-pro-skin=room]{--fx-fill:#f1d55a;--fx-tick:#2c3a20;--fx-ring:#2c3a20}
+html[data-pro-skin=fluff]{--fx-fill:#141416;--fx-tick:#f8f7f4;--fx-ring:#141416}
+html[data-pro-skin] .fx-check{background:var(--fx-fill)}
+html[data-pro-skin=room] .fx-check{box-shadow:inset 0 0 0 1.3px #2c3a20}
+html[data-pro-skin] .fx-check svg{stroke:var(--fx-tick)}
+html[data-pro-skin] .fx-ring{box-shadow:0 0 0 1.5px var(--fx-ring)}
+html[data-pro-skin] .fx-spark{background:var(--fx-ring)}
+html[data-pro-skin=night] .fx-spark{box-shadow:0 0 6px #9fb4ff}

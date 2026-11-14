@@ -230,7 +230,7 @@
     for (let y = 0; y < h; y += step) for (let xx = 0; xx < w; xx += step) if (data[(y * w + xx) * 4 + 3] > 110) pts.push({ x: r.left - 4 + xx, y: r.top - 4 + y });
     return { pts, image: c, left: r.left - 4, top: r.top - 4, w, h, color: cs.color, rect: r };
   }
-  function overlay(duration, draw, resolveAt = 380) {
+  function overlay(duration, draw, resolveAt = 280) {
     return new Promise(resolve => {
       const c = document.createElement('canvas'); c.className = 'pro-fx';
       const ctx = canvasFor(c, innerWidth, innerHeight); document.body.append(c);
@@ -254,7 +254,7 @@
           : { vx: spread * (150 + r() * 90), vy: (y - .5) * 50 - 40 - r() * 50, g: 130, spin: (r() - .5) * 5, sway: 0 };
         pieces.push({ pts, cx, cy, ...v, d: Math.abs(spread) * 60 + r() * 40, c: L.shards[(x + y + t) % L.shards.length] });
       }
-      const dur = mat === 'paper' || mat === 'gold' ? 950 : 720; // 精致利落: short and quiet
+      const dur = mat === 'paper' || mat === 'gold' ? 820 : 680; // 精致利落: short and quiet
       return overlay(dur, (ctx, ms) => {
         for (const p of pieces) {
           const tt = Math.max(0, (ms - p.d) / 1000), life = clamp((ms - p.d) / (dur - p.d)), a = 1 - life * life;
@@ -999,12 +999,12 @@
   /** The task's pieces fly from its row into the theme's picture of today, and land at `to`.
       晨: droplets fall into the glass. 昼: a drop of red ink arcs to the character's cell. 晕: a drop of ink falls into the water. 乐: a paper dot to its column. 印: pink and blue ink dots. 夜: a spark with a tail flies up to its star. Resolves when they land. */
   function flyToHead(rect, to, theme) {
-    const from = { x: rect.left + Math.min(rect.width * .3, 120), y: rect.top + rect.height / 2 }, dur = theme === 'night' ? 640 : 600;
-    const lift = Math.min(150, Math.max(70, Math.abs(from.y - to.y) * .35));
+    const from = { x: rect.left + Math.min(rect.width * .3, 120), y: rect.top + rect.height / 2 }, dur = theme === 'night' ? 520 : 480; // 精致利落: a quick, low arc
+    const lift = Math.min(110, Math.max(50, Math.abs(from.y - to.y) * .28));
     const path = (t, dx = 0, lag = 0) => { const e = easeInOut(clamp(t)), x = from.x + dx * (1 - e) + (to.x - from.x) * e, y = from.y + (to.y - from.y) * e - Math.sin(clamp(t) * Math.PI) * (lift + lag); return { x, y }; };
     let draw;
     if (theme === 'dawn') {
-      const drops = Array.from({ length: 6 }, (_, i) => { const r = rng(i * 7 + 3); return { d: i * 34, dx: (r() - .5) * 90, s: 2.6 + r() * 2.8, lag: r() * 30, c: ['#a99fff', '#86dcc6', '#ffb99b'][i % 3] }; });
+      const drops = Array.from({ length: 5 }, (_, i) => { const r = rng(i * 7 + 3); return { d: i * 26, dx: (r() - .5) * 90, s: 2.6 + r() * 2.8, lag: r() * 30, c: ['#a99fff', '#86dcc6', '#ffb99b'][i % 3] }; });
       draw = (ctx, ms) => drops.forEach(b => {
         const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag);
         const g = ctx.createRadialGradient(p.x - b.s * .35, p.y - b.s * .4, 0, p.x, p.y, b.s); g.addColorStop(0, '#fff'); g.addColorStop(.45, b.c); g.addColorStop(1, hex(b.c, .55));
@@ -1019,7 +1019,7 @@
     } else if (theme === 'tape') {
       draw = (ctx, ms) => { for (let k = 10; k >= 0; k--) { const t = (ms - k * 10) / dur; if (t <= 0 || t >= 1) continue; const p = path(t); ctx.fillStyle = `rgba(243,236,220,${(1 - k / 11) * .9})`; ctx.beginPath(); ctx.arc(p.x, p.y, 4.6 * (1 - k / 14), 0, 7); ctx.fill(); } };
     } else if (theme === 'riso') {
-      const dots = Array.from({ length: 10 }, (_, i) => { const r = rng(i * 17 + 3); return { d: i * 22, dx: (r() - .5) * 110, s: 2.4 + r() * 3, lag: r() * 40, c: i % 2 ? 'rgba(255,79,163,.85)' : 'rgba(47,95,179,.85)' }; });
+      const dots = Array.from({ length: 8 }, (_, i) => { const r = rng(i * 17 + 3); return { d: i * 18, dx: (r() - .5) * 110, s: 2.4 + r() * 3, lag: r() * 40, c: i % 2 ? 'rgba(255,79,163,.85)' : 'rgba(47,95,179,.85)' }; });
       draw = (ctx, ms) => { ctx.globalCompositeOperation = 'multiply'; dots.forEach(b => { const t = (ms - b.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, b.dx, b.lag); ctx.fillStyle = b.c; ctx.beginPath(); ctx.arc(p.x, p.y, b.s, 0, 7); ctx.fill(); }); ctx.globalCompositeOperation = 'source-over'; };
     } else if (theme === 'room') { // a little box tumbles into the room
       draw = (ctx, ms) => { const t = ms / dur; if (t >= 1) return; const p = path(t), a = t * Math.PI * 1.5, s = 7;
@@ -1027,7 +1027,7 @@
         [[[0, -s], [s * .87, -s / 2], [0, 0], [-s * .87, -s / 2], '#f1d55a'], [[-s * .87, -s / 2], [0, 0], [0, s], [-s * .87, s / 2], '#c99a52'], [[0, 0], [s * .87, -s / 2], [s * .87, s / 2], [0, s], '#a87a3a']].forEach(f => { ctx.beginPath(); f.slice(0, 4).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = f[4]; ctx.fill(); ctx.stroke(); });
         ctx.restore(); };
     } else if (theme === 'fluff') { // a few loose hairs drift over
-      const hairs = Array.from({ length: 9 }, (_, i) => { const r = rng(i * 13 + 5); return { d: i * 18, dx: (r() - .5) * 70, lag: r() * 30, a: r() * 6, l: 6 + r() * 7 }; });
+      const hairs = Array.from({ length: 7 }, (_, i) => { const r = rng(i * 13 + 5); return { d: i * 15, dx: (r() - .5) * 70, lag: r() * 30, a: r() * 6, l: 6 + r() * 7 }; });
       draw = (ctx, ms) => hairs.forEach(h => { const t = (ms - h.d) / dur; if (t <= 0 || t >= 1) return; const p = path(t, h.dx, h.lag), a = h.a + t * 4;
         ctx.strokeStyle = 'rgba(20,20,22,.85)'; ctx.lineWidth = .9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.quadraticCurveTo(p.x + Math.cos(a + .6) * h.l * .6, p.y + Math.sin(a + .6) * h.l * .6, p.x + Math.cos(a) * h.l, p.y + Math.sin(a) * h.l); ctx.stroke(); });
     } else {
@@ -1038,8 +1038,10 @@
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
       };
     }
-    const span = theme === 'dawn' ? dur + 6 * 34 : theme === 'riso' ? dur + 10 * 22 : theme === 'fluff' ? dur + 9 * 18 : dur + 140;
-    return overlay(span, draw, ['dawn', 'riso', 'fluff'].includes(theme) ? dur + 60 : dur);
+    const span = theme === 'dawn' ? dur + 5 * 26 : theme === 'riso' ? dur + 8 * 18 : theme === 'fluff' ? dur + 7 * 15 : dur + 100;
+    const landAt = ['dawn', 'riso', 'fluff'].includes(theme) ? dur + 40 : dur;
+    setTimeout(() => land(to, theme), landAt - 30);
+    return overlay(span, draw, landAt);
   }
 
   /* ---------- 倒数日 ---------- */
@@ -1073,6 +1075,15 @@
   /* ---------- 清空时刻 ---------- */
   /* ---------- 清空时刻: each theme ends the day its own way (canvas, about 3.5 s, then holds still) ---------- */
   const easeOutBack = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+  const CEL_SPEED = 1.7;
+  /** Where the piece lands in the header picture: one thin ring in the theme's ink opens and fades (about 0.4 s). */
+  const LAND_INK = { dawn: '#86dcc6', day: '#b43a2c', night: '#c9d6ff', bloom: '#3b5a87', riso: '#ff4fa3', room: '#2c3a20', fluff: '#141416' };
+  function land(to, theme) {
+    if (!to || reduce()) return;
+    const d = document.createElement('div'); d.className = 'pro-land';
+    Object.assign(d.style, { left: `${to.x}px`, top: `${to.y}px`, '--land': LAND_INK[theme] || '#ffffff' });
+    document.body.append(d); setTimeout(() => d.remove(), 520);
+  }
   const FINALES = {
     dawn(ctx, W, H, ms) { // the glass fills to the brim and spills over
       const gw = 150, gh = 230, x = W / 2 - gw / 2, y = H - gh - 40, fill = .55 + .5 * easeOut(clamp(ms / 1500)), level = y + gh * (1 - Math.min(1, fill));
@@ -1199,16 +1210,17 @@
     if (finale) {
       if (th === 'tape') window.SuiSuiSkins.playTune?.(today.map(e => e.id));
       let start = t0;
-      const frame = now => { const ms = still ? 9000 : now - start; ctx.clearRect(0, 0, W, H); finale(ctx, W, H, ms, today); if (!box.hidden && !still && ms < 5200) requestAnimationFrame(frame); };
+      // 1.18: the same picture, played about 1.7× faster (done in ~2 s instead of ~3.5 s), so the moment lands and gets out of the way
+      const frame = now => { const ms = still ? 9000 : (now - start) * CEL_SPEED; ctx.clearRect(0, 0, W, H); finale(ctx, W, H, ms, today); if (!box.hidden && !still && ms < 5200) requestAnimationFrame(frame); };
       ready.then(() => { start = performance.now(); requestAnimationFrame(frame); });
       return;
     }
-    const rain = Array.from({ length: 36 }, (_, i) => { const r = rng(i * 7 + 1); return { x: W / 2 + (r() - .5) * 120, d: r() * 900, rot: r() * 6, c: L.shards[i % L.shards.length] }; });
+    const rain = Array.from({ length: 24 }, (_, i) => { const r = rng(i * 7 + 1); return { x: W / 2 + (r() - .5) * 120, d: r() * 520, rot: r() * 6, c: L.shards[i % L.shards.length] }; });
     const frame = now => {
       const ms = now - t0; ctx.clearRect(0, 0, W, H);
       drawJar(ctx, W / 2 - 80, 110, 160, 230, today, { per: 6, sz: 20, ms: still ? 0 : ms });
-      if (!still) for (const r of rain) { const t = clamp((ms - r.d) / 900); if (t <= 0 || t >= 1) continue; const y = -20 + easeIn(t) * 270; ctx.save(); ctx.translate(r.x, y); ctx.rotate(r.rot + t * 6); ctx.globalAlpha = 1 - t * .2; ctx.fillStyle = r.c; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 4); ctx.lineTo(-4, 4); ctx.closePath(); ctx.fill(); ctx.restore(); }
-      if (!box.hidden && !still && ms < 4000) requestAnimationFrame(frame);
+      if (!still) for (const r of rain) { const t = clamp((ms - r.d) / 620); if (t <= 0 || t >= 1) continue; const y = -20 + easeIn(t) * 270; ctx.save(); ctx.translate(r.x, y); ctx.rotate(r.rot + t * 6); ctx.globalAlpha = 1 - t * .2; ctx.fillStyle = r.c; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 4); ctx.lineTo(-4, 4); ctx.closePath(); ctx.fill(); ctx.restore(); }
+      if (!box.hidden && !still && ms < 2600) requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   }
@@ -1247,7 +1259,7 @@
       if (to) flyToHead(rect, to, theme).then(() => { skin.arrive(id); drawMiniJar(true); });
       else { skin.arrive(id); drawMiniJar(true); }
     } else if (rect) flyToJar(rect); else drawMiniJar(true);
-    if (allDone) setTimeout(celebrate, 900);
+    if (allDone) setTimeout(celebrate, 760);
   });
   // A trial that ends while the app is open: the free look comes back.
   setInterval(() => { const was = document.documentElement.dataset.proTheme || ''; if (was !== activeTheme()) { applyTheme(); API.render(); refreshAll(); } }, 60000);
