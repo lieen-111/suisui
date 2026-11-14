@@ -112,7 +112,7 @@ struct AppSettings: Codable, Equatable {
     var liveActivityOnOpen: Bool = true
     /// Interface language chosen in the page ("zh" or "en"); native text follows it.
     var lang: String = "zh"
-    /// Reminders and finished timers ring with the ringtone; off (default) = silent notifications.
+    /// 1.18.0 early builds: one switch for all reminders. Kept so those files still decode; each task now has its own `ring`.
     var remindRing: Bool = false
 
     var english: Bool { lang == "en" }

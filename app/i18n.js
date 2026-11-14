@@ -11,7 +11,7 @@
     '默认用手机自己的壁纸，也可以单独换一张。': 'Uses your phone wallpaper by default; you can pick another.', '网页读不到手机壁纸，这里只影响预览。': "A web page can't read your phone wallpaper; this only changes the preview.",
     '还没有备份过': 'Never backed up', '今天已备份': 'Backed up today', '待办只存在这台设备上，不会上传。换手机前先导出备份。': 'Your to-dos stay on this device only. Export a backup before switching phones.',
     '待办只存在这台手机上，建议备份一份': 'Your to-dos live only on this phone — make a backup', '备份': 'Back up', '新建分组': 'New group', '名称': 'Name', '分组名称': 'Group name', '图标': 'Icon', '颜色': 'Color', '删除分组': 'Delete group',
-    '到点响铃': 'Ring at reminder time', '关（默认）：到点只弹出静音通知。开：用手机铃声响铃，直到你点开通知或点“完成”。': 'Off (default): a silent notification at the set time. On: your phone rings until you open the notification or tap Done.',
+    '到点响铃': 'Rings on time', '时间': 'Time', '不设': 'None', '到点': 'On time', '只显示时间': 'Just show the time', '响铃提醒': 'Ring', '到点响铃在每条待办里单独选：加待办或编辑时，选好时间后点「响铃提醒」。默认只在待办上显示时间，不出声。': 'Ringing is chosen per to-do: when adding or editing, pick a time, then tap “Ring”. By default the time is only shown on the to-do, silently.', '关（默认）：到点只弹出静音通知。开：用手机铃声响铃，直到你点开通知或点“完成”。': 'Off (default): a silent notification at the set time. On: your phone rings until you open the notification or tap Done.',
     '到点会用手机铃声响铃': 'Reminders will ring with your ringtone', '到点会用系统提示音提醒': 'Reminders will play the system sound', '到点只弹出静音通知': 'Reminders will arrive silently', '每年': 'Yearly', '每月完成': 'Done per month', '今年': 'This year', '去年': 'Last year',
     // brand & navigation
     '碎碎清单': 'SuiSui', '碎碎清单首页': 'SuiSui home', '主导航': 'Main navigation', '清单': 'List', '设置': 'Settings', '回顾': 'Review', '关于': 'About', '关于碎碎清单': 'About SuiSui',

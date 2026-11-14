@@ -16,7 +16,8 @@ import androidx.core.app.NotificationManagerCompat
 import java.util.Calendar
 
 /**
- * "到点提醒": every task with a time (HH:MM) rings on the days it is due — from the stored data, so it
+ * "到点响铃": a task with a time (HH:MM) only shows that time, unless the user chose 响铃 for it (`ring: true`);
+ * those ring with the phone's ringtone on the days they are due — from the stored data, so it
  * works with the app closed. Re-planned on every save, on resume, after a reboot and at midnight
  * (all of which go through LockCard.update). Covers today and tomorrow.
  */
@@ -25,11 +26,8 @@ object Reminders {
     private const val QUIET = "alert_quiet"
     private const val RING = "alert_ring"
 
-    /** settings.remindRing: off (default) = a silent heads-up notification; on = the phone's ringtone, repeating until opened. */
-    fun ringing(ctx: Context): Boolean = TodoStore.state(ctx)?.optJSONObject("settings")?.optBoolean("remindRing", false) ?: false
-
-    /** The channel for reminders and the end of a timer. Channels cannot change their sound, so there are two. */
-    fun alertChannel(ctx: Context): String {
+    /** The channel for a ringing task (ringtone) or the end of a timer (silent). Channels cannot change their sound, so there are two. */
+    fun alertChannel(ctx: Context, ring: Boolean): String {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         runCatching { nm.deleteNotificationChannel("reminders"); nm.deleteNotificationChannel("timer_done") } // the old ones with the default sound
         if (nm.getNotificationChannel(QUIET) == null) nm.createNotificationChannel(
@@ -45,12 +43,12 @@ object Reminders {
                 enableVibration(true); vibrationPattern = longArrayOf(0, 500, 400, 500)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             })
-        return if (ringing(ctx)) RING else QUIET
+        return if (ring) RING else QUIET
     }
 
     /** Ringing reminders repeat their sound (like a call) until the notification is opened, finished or dismissed. */
-    fun finish(ctx: Context, builder: NotificationCompat.Builder): android.app.Notification =
-        builder.build().apply { if (ringing(ctx)) flags = flags or android.app.Notification.FLAG_INSISTENT }
+    fun finish(builder: NotificationCompat.Builder, ring: Boolean): android.app.Notification =
+        builder.build().apply { if (ring) flags = flags or android.app.Notification.FLAG_INSISTENT }
 
     private fun intent(ctx: Context) = Intent(ctx, ReminderReceiver::class.java)
 
@@ -68,6 +66,7 @@ object Reminders {
                 val t = tasks!!.optJSONObject(i) ?: continue
                 val time = t.optString("time", "")
                 if (!Regex("^([01]\\d|2[0-3]):[0-5]\\d$").matches(time)) continue
+                if (!t.optBoolean("ring", false)) continue // 只标时间: no alarm
                 val repeating = t.optString("repeat", "none") != "none"
                 if (t.optBoolean("done") && (offset == 0 || !repeating)) continue
                 if (!TodoStore.dueToday(t, day)) continue
@@ -102,14 +101,14 @@ object Reminders {
         val tasks = s.optJSONArray("tasks") ?: return
         val open = (0 until tasks.length()).mapNotNull { tasks.optJSONObject(it) }.any { it.optString("id") == id && !it.optBoolean("done") }
         if (!open || !LockCard.notificationsAllowed(ctx)) return
-        val channel = alertChannel(ctx)
+        val channel = alertChannel(ctx, true)
         val notifId = 2000 + (id.hashCode() and 0xFFFF)
         val done = PendingIntent.getBroadcast(
             ctx, notifId, Intent(ctx, CompleteReceiver::class.java).setAction(LockCard.ACTION_COMPLETE).putExtra("id", id).putExtra("notification", notifId),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val open2 = PendingIntent.getActivity(ctx, notifId, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        NotificationManagerCompat.from(ctx).notify(notifId, finish(ctx, NotificationCompat.Builder(ctx, channel)
+        NotificationManagerCompat.from(ctx).notify(notifId, finish(NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(R.drawable.ic_stat_check)
             .setContentTitle(title)
             .setContentText(Lang.t(ctx, "$time 到了", "It's $time"))
@@ -118,7 +117,7 @@ object Reminders {
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)))
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC), true))
     }
 }
 

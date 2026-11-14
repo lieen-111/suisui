@@ -44,6 +44,7 @@
     'trash-2': k([{ rotate: '0deg' }, { rotate: '-14deg' }, { rotate: '12deg' }, { rotate: '-7deg' }, { rotate: '0deg' }], 480, out, '50% 15%'),
     bell: k([{ rotate: '0deg' }, { rotate: '18deg' }, { rotate: '-14deg' }, { rotate: '9deg' }, { rotate: '-4deg' }, { rotate: '0deg' }], 640, out, '50% 8%'),
     'bell-ring': k([{ rotate: '0deg' }, { rotate: '18deg' }, { rotate: '-14deg' }, { rotate: '9deg' }, { rotate: '0deg' }], 600, out, '50% 8%'),
+    clock: k([{ rotate: '0deg' }, { rotate: '-20deg' }, { rotate: '14deg' }, { rotate: '0deg' }], 480, out),
     'alarm-clock': k([{ rotate: '0deg' }, { rotate: '12deg' }, { rotate: '-12deg' }, { rotate: '8deg' }, { rotate: '0deg' }], 520),
     repeat: k([{ rotate: '0deg' }, { rotate: '180deg' }], 560, spring),
     'repeat-2': k([{ rotate: '0deg' }, { rotate: '180deg' }], 560, spring),

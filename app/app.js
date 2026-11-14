@@ -126,6 +126,8 @@
       focusMs: Number.isFinite(t.focusMs) && t.focusMs > 0 ? Math.min(t.focusMs, 864e5) : 0,
       // Reminder time on the day the task is due (HH:MM), a note, and a small checklist.
       time: typeof t.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t.time) ? t.time : '',
+      // 1.18: a time is only shown on the task unless the user picked 响铃 for it.
+      ring: !!t.ring && typeof t.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t.time),
       note: typeof t.note === 'string' ? t.note.slice(0, 2000) : '',
       subtasks: (Array.isArray(t.subtasks) ? t.subtasks : []).filter(s => s && typeof s.title === 'string' && s.title.trim()).slice(0, 30)
         .map((s, i) => ({ id: typeof s.id === 'string' && s.id ? s.id.slice(0, 40) : `s${i}`, title: s.title.trim().slice(0, 120), done: !!s.done })),
@@ -404,6 +406,9 @@
     const customTime = addManual.customTime || !presetTime;
     document.querySelectorAll('[data-add-time]').forEach(b => { const on = b.dataset.addTime === 'custom' ? customTime : !customTime && b.dataset.addTime === time; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     $('task-time-custom').hidden = !customTime;
+    const ring = $('task-ring').value === '1';
+    $('add-ring-row').hidden = !time;
+    document.querySelectorAll('[data-add-ring]').forEach(b => { const on = (b.dataset.addRing === '1') === ring; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     if (customTime && time && document.activeElement !== $('task-time-custom')) $('task-time-custom').value = time;
     syncPickers();
     renderAddToolbar();
@@ -424,7 +429,7 @@
     const day = repeat === 'weekly' ? (task?.repeat === 'weekly' && Number.isInteger(task.repeatDay) ? task.repeatDay : weekday(date || today)) : null;
     const put = (name, text, on) => { const el = $(`fv-${name}`); el.textContent = text; el.classList.toggle('is-set', !!on); };
     put('when', repeat === 'daily' || repeat === 'weekdays' ? '按重复出现' : !date || date === today ? '今天' : date === addDays(today, 1) ? '明天' : dateLabel(date), !!date && date !== today);
-    put('time', time || '不提醒', !!time);
+    put('time', time ? `${time}${form.elements.ring.value === '1' ? ' · 响铃' : ''}` : '不设', !!time);
     put('repeat', repeatText(repeat, day) || '不重复', repeat !== 'none');
     put('duration', durLabel(minutes) || '不计时', minutes > 0);
     $('fv-group').innerHTML = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
@@ -445,7 +450,7 @@
   }
   // In the add sheet the untouched choices stay light; only what you changed turns dark, so a glance shows what you set.
   function markAddDefaults() {
-    const defaults = { addWhen: 'today', addTime: '', addRepeat: 'none', addDuration: '0', addGroup: state.groups[0]?.id };
+    const defaults = { addWhen: 'today', addTime: '', addRepeat: 'none', addDuration: '0', addGroup: state.groups[0]?.id, addRing: '0' };
     document.querySelectorAll('#add-form .chip').forEach(b => {
       const key = Object.keys(defaults).find(k => k in b.dataset);
       b.classList.toggle('is-default', !!key && b.dataset[key] === defaults[key]);
@@ -519,8 +524,10 @@
       wrap.querySelector('.pick-label').textContent = text;
       wrap.classList.toggle('active', on);
     });
-    const noTime = !$('edit-time').value;
+    const noTime = !$('edit-time').value, eRing = $('edit-ring').value === '1';
     document.querySelectorAll('[data-edit-time]').forEach(b => { b.classList.toggle('active', noTime); b.setAttribute('aria-pressed', String(noTime)); });
+    $('edit-ring-chips').hidden = noTime;
+    document.querySelectorAll('[data-edit-ring]').forEach(b => { const on = (b.dataset.editRing === '1') === eRing; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
     renderEditSummary();
   }
 
@@ -547,6 +554,7 @@
     $('edit-delete').dataset.id = id;
     form.elements.duration.value = String(task.duration || 0);
     $('edit-time').value = task.time || '';
+    $('edit-ring').value = task.ring ? '1' : '0';
     $('edit-note').value = task.note || '';
     renderSubtasks(task);
     customDuration.edit = false; $('edit-duration-custom').value = '';
@@ -635,7 +643,7 @@
     let flags = '';
     if (t.repeat !== 'none') flags += `<span class="meta-flag meta-repeat">${icon('repeat')}${repeatLabel(t)}</span>`;
     if (t.repeat === 'none' && t.date && t.date !== today) flags += `<span class="meta-flag${t.date < today ? ' overdue' : ''}">${icon('calendar')}${t.date < today ? '已过期 · ' : ''}${dateLabel(t.date)}</span>`;
-    if (t.time) flags += `<span class="meta-flag meta-time">${icon('alarm-clock')}${t.time}</span>`;
+    if (t.time) flags += `<span class="meta-flag meta-time${t.ring ? ' is-ring' : ''}" title="${t.ring ? '到点响铃' : '只显示时间'}">${icon(t.ring ? 'bell-ring' : 'clock')}${t.time}</span>`;
     if (t.subtasks?.length) flags += `<span class="meta-flag">${icon('list-checks')}${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>`;
     if (t.note) flags += `<span class="meta-flag" title="有备注">${icon('sticky-note')}</span>`;
     return flags;
@@ -854,7 +862,6 @@
     $('intensity-value').textContent = ['轻柔', '适中', '强烈'][s.intensity - 1];
     $('intensity').disabled = !s.motion;
     $('archive-toggle').checked = !!s.autoArchive;
-    $('ring-toggle').checked = !!s.remindRing;
     $('privacy-toggle').checked = !!s.lockPrivacy;
     renderNotifySetting();
     applyCardAppearance();
@@ -1644,7 +1651,7 @@
     const bits = [];
     if (p.repeat) bits.push(p.repeat === 'weekly' ? `每周${WEEK[p.repeatDay].slice(1)}` : repeats[p.repeat]);
     if (p.date) bits.push(dateLabel(p.date));
-    if (p.time) bits.push(`${p.time} 提醒`);
+    if (p.time) bits.push(p.time);
     if (p.duration) bits.push(durationText(p.duration));
     if (p.group) bits.push(groupOf(p.group).name);
     $('parse-hint').hidden = !bits.length;
@@ -1661,6 +1668,7 @@
   function checkReminders() {
     const now = Date.now();
     for (const t of pending()) {
+      if (!t.ring) continue; // 只显示时间: nothing happens at that time
       const at = reminderAt(t); const key = `${t.id}@${at}`;
       if (!at || now < at || now - at > 120000 || fired.has(key)) continue;
       fired.add(key);
@@ -1671,8 +1679,7 @@
         if (button) complete(t.id, button); else if (!t.done) { markDone(t); save(); render(); }
       }, '完成', 60000);
       if (!NATIVE && document.visibilityState === 'hidden' && notifySupported() && Notification.permission === 'granted') {
-        const ring = !!state.settings.remindRing;
-        navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', silent: !ring, requireInteraction: ring, data: { url: './' } })).catch(() => {});
+        navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', silent: false, requireInteraction: true, data: { url: './' } })).catch(() => {});
       }
     }
   }
@@ -1974,6 +1981,8 @@
       if (addManual.customTime) { try { $('task-time-custom').showPicker(); } catch { $('task-time-custom').focus(); } }
     }
     if (b.dataset.editTime !== undefined) { $('edit-time').value = ''; syncPickers(); }
+    if (b.dataset.addRing !== undefined) { $('task-ring').value = b.dataset.addRing; renderAddChips(); }
+    if (b.dataset.editRing !== undefined) { $('edit-ring').value = b.dataset.editRing; syncPickers(); }
     if (b.dataset.addDuration) {
       customDuration.add = b.dataset.addDuration === 'custom';
       $('task-duration').value = customDuration.add ? String(readCustom($('task-duration-custom')) || 0) : b.dataset.addDuration;
@@ -2057,7 +2066,7 @@
     const date = chosenDate();
     if (date === null) { $('form-error').textContent = '请选择一个日期。'; return; }
     const repeat = repeats[$('task-repeat').value] ? $('task-repeat').value : 'none';
-    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, time: $('task-time').value, repeat, repeatDay: quickRepeatDay ?? weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
+    const task = normalizeTask({ id: newId(), title, group: addGroupId, duration: Number($('task-duration').value) || 0, time: $('task-time').value, ring: $('task-ring').value === '1', repeat, repeatDay: quickRepeatDay ?? weekday(date || dayKey()), date: repeat === 'none' ? date : '', createdAt: Date.now() });
     state.tasks.push(task);
     if (filter !== 'all' && filter !== task.group) filter = 'all';
     $('task-input').value = ''; $('form-error').textContent = '';
@@ -2065,7 +2074,7 @@
     $('task-when').value = 'today'; $('task-repeat').value = 'none'; $('task-date').value = '';
     $('task-duration').value = '0'; $('task-duration-custom').value = ''; customDuration.add = false;
     Object.assign(addManual, { when: 'today', date: '', repeat: 'none', duration: 0, custom: false, time: '', customTime: false }); quickRepeatDay = null; quickOff = false;
-    $('task-time').value = ''; $('task-time-custom').value = '';
+    $('task-time').value = ''; $('task-time-custom').value = ''; $('task-ring').value = '0';
     $('parse-hint').hidden = true; addPanel = '';
     save(); render(); $('task-input').focus();
     const added = document.querySelector(`.task-row[data-task-id="${CSS.escape(task.id)}"]`);
@@ -2083,6 +2092,7 @@
     task.title = title.slice(0, 120);
     task.pinned = data.get('pinned') === 'on';
     task.time = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(data.get('time'))) ? String(data.get('time')) : '';
+    task.ring = !!task.time && data.get('ring') === '1';
     task.note = String(data.get('note') || '').slice(0, 2000);
     const duration = Math.round(Number(data.get('duration')) || 0);
     task.duration = duration > 0 && duration <= 600 ? duration : 0;
@@ -2185,10 +2195,6 @@
 
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
   // Reminders are silent by default; this rings with the phone's ringtone (the native apps re-plan on save)
-  $('ring-toggle').addEventListener('change', () => {
-    state.settings.remindRing = $('ring-toggle').checked; save();
-    showToast(state.settings.remindRing ? (NATIVE ? '到点会用手机铃声响铃' : '到点会用系统提示音提醒') : '到点只弹出静音通知');
-  });
   $('privacy-toggle').addEventListener('change', () => { state.settings.lockPrivacy = $('privacy-toggle').checked; lastNotified = ''; save(); renderPreview(); icons(); showToast(state.settings.lockPrivacy ? '锁屏上只显示数量，解锁后才能看到内容' : '锁屏上会显示待办内容'); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));
   if (IOS_APP) {

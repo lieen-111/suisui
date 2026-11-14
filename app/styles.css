@@ -1304,3 +1304,8 @@ html[data-style=paper] .fx-glint:before,html[data-pro-skin=day] .fx-glint:before
 @keyframes fx-spark{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:.9}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.2)}}
 .shard{filter:none}
 .review-stats b small{font-size:.5em;font-weight:600;opacity:.55;margin-left:1px;letter-spacing:0}
+/* 1.18: a time only shown (clock) vs a ringing reminder (bell, in the accent) */
+.meta-time.is-ring{color:var(--accent-ink,var(--accent))}
+.ring-chips{display:contents}
+.ring-chips[hidden]{display:none}
+#edit-ring-chips .chip:first-child{margin-left:6px}

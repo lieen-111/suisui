@@ -59,7 +59,7 @@ let browser;
     const pill = page.locator('.task-row[data-task-id=b] .timer-pill');
     assert.equal(await bg(pill), 'rgba(0, 0, 0, 0)', 'Idle timer pill has no fill');
     await page.locator('#fab-add').click();
-    assert.equal(await page.locator('#add-form .chip.active.is-default').count(), 5, 'All five rows start on their light default');
+    assert.equal(await page.locator('#add-form .chip.active.is-default:visible').count(), 5, 'All five rows start on their light default');
     await page.locator('[data-add-repeat=daily]').click();
     assert.equal(await page.locator('[data-add-repeat=daily]').evaluate(e => e.classList.contains('is-default')), false);
     assert.notEqual(await bg(page.locator('[data-add-repeat=daily]')), await bg(page.locator('[data-add-time=""]')), 'The changed choice looks different from the defaults');

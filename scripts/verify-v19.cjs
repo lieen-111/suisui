@@ -65,7 +65,7 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await page.screenshot({ path: path.join(review, 'v19-paper-390.png') });
     // Add sheet: every row visible with its label, no toolbar.
     await page.locator('#fab-add').click();
-    assert.equal(await page.locator('.add-row').count(), 5);
+    assert.equal(await page.locator('.add-row:visible').count(), 5, '1.18: the 到点 row appears only after a time is picked');
     assert.equal(await page.locator('[data-add-duration="30"]').isVisible(), true, 'Options are visible without opening anything');
     assert.equal(await page.locator('#add-toolbar').count(), 0);
     await page.locator('#add-backdrop').click({ position: { x: 20, y: 20 } });
@@ -87,7 +87,7 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.equal(await page.locator('#task-input').getAttribute('placeholder'), 'What to do? e.g. meeting tomorrow 3pm');
     await page.locator('#task-input').fill('Call mom every fri 8pm 30 min');
     await page.waitForTimeout(200);
-    assert.match(await page.locator('#parse-hint').textContent(), /Recognized: Every Fri · remind 20:00 · 30 min/);
+    assert.match(await page.locator('#parse-hint').textContent(), /Recognized: Every Fri · 20:00 · 30 min/);
     await page.locator('#add-form button[type=submit]').click();
     const t = await page.evaluate(k => JSON.parse(localStorage.getItem(k)).tasks.find(x => x.title === 'Call mom'), STORE);
     assert.ok(t, 'English quick-add keeps only the title');

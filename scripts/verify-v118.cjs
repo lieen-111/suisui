@@ -62,31 +62,55 @@ let browser;
     await context.close();
   }
 
-  /* 到点响铃: off by default; on turns into a ringing, persistent notification on the web */
+  /* Time on a task: pick a time (shown on the task, silent by default); 响铃提醒 is a separate choice per task */
   {
     const { context, page } = await open();
-    await page.evaluate(() => {
-      window.__notes = [];
-      window.Notification = class { constructor(title, o) { window.__notes.push({ title, ...o }); } static get permission() { return 'granted'; } static requestPermission() { return Promise.resolve('granted'); } };
-    });
-    await page.locator('.nav-button[data-view=settings]').click();
-    await page.locator('[data-settings-page=lock]').click();
-    assert.equal(await page.locator('#ring-toggle').isChecked(), false, 'Default: no ringing');
-    assert.match(await page.locator('#ring-note').textContent(), /静音通知/);
-    assert.equal((await saved(page)).remindRing, false);
-    await page.locator('label[for=ring-toggle]').click();
-    assert.equal((await saved(page)).remindRing, true, 'The choice is saved');
-    assert.match(await page.locator('#toast-message').textContent(), /提示音|铃声/);
-    await page.locator('label[for=ring-toggle]').click();
-    assert.equal((await saved(page)).remindRing, false);
-    assert.match(await page.locator('#toast-message').textContent(), /静音通知/);
-    await context.close();
-  }
+    const tasksNow = () => page.evaluate(k => JSON.parse(localStorage.getItem(k)).tasks, STORE);
+    await page.locator('#fab-add').click();
+    assert.equal(await page.locator('#add-ring-row').isHidden(), true, 'No ring choice until a time is picked');
+    await page.locator('#task-input').fill('交周报');
+    await page.locator('[data-add-time="18:00"]').click();
+    assert.equal(await page.locator('#add-ring-row').isVisible(), true, 'Picking a time shows 只显示时间 / 响铃提醒');
+    assert.equal(await page.locator('[data-add-ring="0"]').getAttribute('aria-pressed'), 'true', 'Default: only show the time');
+    await page.locator('#add-form').evaluate(f => f.requestSubmit());
+    let t = (await tasksNow()).find(x => x.title === '交周报');
+    assert.equal(t.time, '18:00'); assert.equal(t.ring, false, 'Saved without ringing');
+    const row = page.locator('.task-row', { hasText: '交周报' });
+    assert.match(await row.locator('.meta-time').textContent(), /18:00/, 'The time shows on the task');
+    assert.equal(await row.locator('.meta-time.is-ring').count(), 0);
 
-  /* Android bridge sees the setting in the stored JSON (native picks the ringing channel from it) */
-  {
-    const { context, page } = await open({ remindRing: true });
-    assert.equal((await saved(page)).remindRing, true, 'remindRing survives a reload');
+    if (await page.locator('#fab-add').isVisible()) await page.locator('#fab-add').click(); // the sheet may stay open for the next one
+    await page.locator('#task-input').fill('吃药');
+    await page.locator('[data-add-time="21:00"]').click();
+    await page.locator('[data-add-ring="1"]').click();
+    await page.locator('#add-form').evaluate(f => f.requestSubmit());
+    t = (await tasksNow()).find(x => x.title === '吃药');
+    assert.equal(t.ring, true, '响铃提醒 is saved on that task');
+    assert.equal(await page.locator('#add-ring-row').isHidden(), true, 'The next new task starts without a time or ring');
+    await page.evaluate(() => window.suisuiBack());
+    assert.equal(await page.locator('.task-row', { hasText: '吃药' }).locator('.meta-time.is-ring').count(), 1, 'Ringing tasks show a bell');
+
+    // Editing: turn ringing off again, then clear the time
+    await page.locator('.task-row', { hasText: '吃药' }).locator('.task-title').click();
+    await page.locator('[data-edit-panel=time]').click();
+    assert.match(await page.locator('#fv-time').textContent(), /21:00 · 响铃/);
+    await page.locator('[data-edit-ring="0"]').click();
+    await page.locator('#edit-form').evaluate(f => f.requestSubmit());
+    assert.equal((await tasksNow()).find(x => x.title === '吃药').ring, false, 'Edit turns ringing off');
+
+    // At the time: only ringing tasks remind
+    await page.evaluate(() => { window.__notes = []; });
+    await page.locator('.task-row', { hasText: '交周报' }).locator('.task-title').click();
+    await page.locator('[data-edit-panel=time]').click();
+    await page.locator('[data-edit-ring="1"]').click();
+    await page.locator('#edit-form').evaluate(f => f.requestSubmit());
+    await page.clock.fastForward('08:01:00');
+    await page.clock.runFor(20000);
+    assert.match(await page.locator('#toast-message').textContent(), /18:00 交周报/, 'A ringing task reminds at its time');
+    await page.clock.fastForward('03:00:00');
+    await page.clock.runFor(20000);
+    assert.doesNotMatch(await page.locator('#toast-message').textContent(), /吃药/, 'A time-only task stays quiet');
+    assert.equal(await page.locator('#ring-toggle').count(), 0, 'No global ring switch any more');
     await context.close();
   }
 
@@ -163,6 +187,6 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
-  console.log('PASS: yearly review (12 months, previous year, back to week), 到点响铃 off by default and saved, no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
+  console.log('PASS: yearly review (12 months, previous year, back to week), time on a task is silent by default, 响铃提醒 per task (add/edit, only those remind), no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

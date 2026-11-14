@@ -185,6 +185,10 @@ let browser;
     assert.equal(tasks.find(t => t.title === '开会').time, '15:00');
     assert.deepEqual([tasks.find(t => t.title === '晨跑').time, tasks.find(t => t.title === '晨跑').date], ['09:30', '2026-11-05']);
     assert.match(await page.locator('.task-row', { hasText: '开会' }).locator('.meta-time').textContent(), /15:00/);
+    // 1.18: a time only shows on the task; choose 响铃提醒 for it to remind.
+    await page.locator('.task-row', { hasText: '开会' }).locator('.task-title').click();
+    await page.locator('[data-edit-panel=time]').click(); await page.locator('[data-edit-ring="1"]').click();
+    await page.locator('#edit-form').evaluate(f => f.requestSubmit());
     // In-app reminder at 15:00 with a 完成 button.
     for (let i = 0; i < 40 && !/开会/.test(await page.locator('#toast-message').textContent()); i++) await page.clock.runFor(5000);
     assert.match(await page.locator('#toast-message').textContent(), /15:00 开会/);

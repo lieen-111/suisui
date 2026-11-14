@@ -83,7 +83,7 @@ object TaskTimer {
         nm.cancel(RUNNING_ID)
         if (!LockCard.notificationsAllowed(ctx)) return
         channels(ctx)
-        nm.notify(DONE_ID, Reminders.finish(ctx, NotificationCompat.Builder(ctx, Reminders.alertChannel(ctx))
+        nm.notify(DONE_ID, Reminders.finish(NotificationCompat.Builder(ctx, Reminders.alertChannel(ctx, false))
             .setSmallIcon(R.drawable.ic_stat_check)
             .setContentTitle(Lang.t(ctx, "时间到", "Time's up"))
             .setContentText(if (title.isBlank()) Lang.t(ctx, "计时结束了", "The timer finished") else Lang.t(ctx, "「$title」的时间到了，点开标记完成", "Time's up for “$title” — tap to mark it done"))
@@ -91,7 +91,7 @@ object TaskTimer {
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)))
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC), false))
     }
 
     /** Pictures/碎碎清单 via MediaStore (no permission needed on Android 10+); app pictures folder before that. */
