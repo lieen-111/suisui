@@ -947,4 +947,4 @@ html[data-pro-skin=fluff] .filter-tabs button{min-height:36px}
 .pro-buy.is-free .pro-legal,.pro-buy.is-free .pro-paypreview{opacity:.8}
 /* the Pro page is always dark: switches whose theme colour is near-black (毛, the ink palette) turn light there so "on" reads as on */
 html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked{background:#f5f5f7!important;box-shadow:none!important}
-html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked:is(:after,:before){background:#0b0b0c!important}
+html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked:before,html:is([data-pro-skin=fluff],:not([data-pro-skin])) .pro-sheet .switch:checked:after{background:#0b0b0c!important}
