@@ -60,7 +60,7 @@
           <div class="section-top today-top">
             <div class="today-hero" aria-hidden="true"><b class="hero-day" id="hero-day"></b><span class="hero-count" id="hero-count"></span><span class="hero-week"><strong id="hero-week"></strong><span id="hero-sub"></span></span></div>
             <div><h1>今天</h1><p id="progress-copy" class="secondary"></p></div>
-            <div class="today-side" id="today-side"><button class="icon-button search-entry" id="open-search" aria-label="搜索"><i data-lucide="search"></i></button><button class="review-entry" id="open-review" aria-label="周 / 月回顾"><i data-lucide="chart-column"></i>回顾</button>
+            <div class="today-side" id="today-side"><button class="icon-button search-entry" id="open-search" aria-label="搜索"><i data-lucide="search"></i></button><button class="review-entry" id="open-review" aria-label="周 / 月 / 年回顾"><i data-lucide="chart-column"></i>回顾</button>
             <div class="progress-ring" id="progress-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"></circle><circle cx="18" cy="18" r="15.5" id="progress-arc"></circle></svg><span id="progress-number"></span></div></div>
           </div>
           <div class="today-meter" id="today-meter" aria-hidden="true"></div>
@@ -108,7 +108,7 @@
 
         <section class="review-panel" id="review-panel" hidden aria-label="回顾">
           <div class="review-top"><button class="settings-back review-back" id="review-back" aria-label="返回清单"><i data-lucide="chevron-left"></i><span>清单</span></button><h1>回顾</h1></div>
-          <div class="pill-segment review-period" role="group" aria-label="周期"><button data-period="week">每周</button><button data-period="month">每月</button></div>
+          <div class="pill-segment review-period" role="group" aria-label="周期"><button data-period="week">每周</button><button data-period="month">每月</button><button data-period="year">每年</button></div>
           <div class="review-nav"><button class="icon-button" data-shift="-1" aria-label="上一段"><i data-lucide="chevron-left"></i></button><div><strong id="review-range"></strong><small id="review-range-sub"></small></div><button class="icon-button" data-shift="1" id="review-next" aria-label="下一段"><i data-lucide="chevron-right"></i></button></div>
           <div class="chip-row review-groups" id="review-groups" role="group" aria-label="分组"></div>
           <div class="review-stats"><div><b id="rs-count">0</b><span>件完成</span></div><div><b id="rs-focus">0</b><span id="rs-focus-unit">分钟专注</span></div><div><b id="rs-days">0</b><span id="rs-days-unit">天有完成</span></div></div>
@@ -139,14 +139,14 @@
                 <span class="hero-tag"><i data-lucide="sparkles"></i>锁屏预览</span>
               </button>
               <div class="settings-tiles">
-                <button data-settings-page="look" style="--i:0"><span class="row-ico"><i data-lucide="palette"></i></span><i data-lucide="arrow-up-right" class="tile-arrow"></i><span class="row-label">外观</span><span class="row-value" id="sum-look"></span></button>
-                <button data-settings-page="lock" id="tile-lock" style="--i:1"><span class="row-ico"><i data-lucide="lock-keyhole"></i></span><i data-lucide="arrow-up-right" class="tile-arrow"></i><span class="row-label">锁屏</span><span class="row-value"><i class="state-dot"></i><span id="tile-lock-state"></span></span></button>
-                <button data-settings-page="list" style="--i:2"><span class="row-ico"><i data-lucide="layers"></i></span><i data-lucide="arrow-up-right" class="tile-arrow"></i><span class="row-label">分组</span><span class="row-value" id="sum-list"></span></button>
-                <button data-settings-page="language" style="--i:3"><span class="row-ico"><i data-lucide="languages"></i></span><i data-lucide="arrow-up-right" class="tile-arrow"></i><span class="row-label">语言 · Language</span><span class="row-value" id="sum-lang"></span></button>
+                <button data-settings-page="look" style="--i:0"><span class="row-ico"><i data-lucide="palette"></i></span><span class="row-label">外观</span><span class="row-value" id="sum-look"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="lock" id="tile-lock" style="--i:1"><span class="row-ico"><i data-lucide="lock-keyhole"></i></span><span class="row-label">锁屏</span><span class="row-value"><i class="state-dot"></i><span id="tile-lock-state"></span></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="list" style="--i:2"><span class="row-ico"><i data-lucide="layers"></i></span><span class="row-label">分组</span><span class="row-value" id="sum-list"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="language" style="--i:3"><span class="row-ico"><i data-lucide="languages"></i></span><span class="row-label">语言 · Language</span><span class="row-value" id="sum-lang"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
               </div>
               <div class="settings-list" style="--i:4">
                 <button data-settings-page="data"><span class="row-ico"><i data-lucide="shield-check"></i></span><span class="row-label">数据</span><span class="row-value">仅本机</span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于</span><span class="row-value" id="sum-about">1.17.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于</span><span class="row-value" id="sum-about">1.18.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
               </div>
             </nav>
             <div class="settings-page" data-page="language" hidden>
@@ -255,6 +255,8 @@
               <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新锁屏通知</button>
               <label class="setting-row" for="privacy-toggle"><span>锁屏隐藏待办内容</span><input type="checkbox" id="privacy-toggle" class="switch"></label>
               <p class="setting-note">开启后，锁屏上只显示“还有几件”，内容要解锁后才能看到和勾选。别人拿到你的手机时更安心。</p>
+              <label class="setting-row" for="ring-toggle"><span>到点响铃</span><input type="checkbox" id="ring-toggle" class="switch"></label>
+              <p class="setting-note" id="ring-note">关（默认）：到点只弹出静音通知。开：用手机铃声响铃，直到你点开通知或点“完成”。</p>
               <div id="ios-lock-settings" hidden>
                 <label class="setting-row" for="live-toggle"><span>在锁屏显示今天的待办（实时活动）</span><input type="checkbox" id="live-toggle" class="switch"></label>
                 <p class="setting-note" id="live-status" role="status"></p>
@@ -365,7 +367,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.17.0</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.18.0</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -374,7 +376,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.17.0 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.18.0 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

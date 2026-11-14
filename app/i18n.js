@@ -11,10 +11,12 @@
     '默认用手机自己的壁纸，也可以单独换一张。': 'Uses your phone wallpaper by default; you can pick another.', '网页读不到手机壁纸，这里只影响预览。': "A web page can't read your phone wallpaper; this only changes the preview.",
     '还没有备份过': 'Never backed up', '今天已备份': 'Backed up today', '待办只存在这台设备上，不会上传。换手机前先导出备份。': 'Your to-dos stay on this device only. Export a backup before switching phones.',
     '待办只存在这台手机上，建议备份一份': 'Your to-dos live only on this phone — make a backup', '备份': 'Back up', '新建分组': 'New group', '名称': 'Name', '分组名称': 'Group name', '图标': 'Icon', '颜色': 'Color', '删除分组': 'Delete group',
+    '到点响铃': 'Ring at reminder time', '关（默认）：到点只弹出静音通知。开：用手机铃声响铃，直到你点开通知或点“完成”。': 'Off (default): a silent notification at the set time. On: your phone rings until you open the notification or tap Done.',
+    '到点会用手机铃声响铃': 'Reminders will ring with your ringtone', '到点会用系统提示音提醒': 'Reminders will play the system sound', '到点只弹出静音通知': 'Reminders will arrive silently', '每年': 'Yearly', '每月完成': 'Done per month', '今年': 'This year', '去年': 'Last year',
     // brand & navigation
     '碎碎清单': 'SuiSui', '碎碎清单首页': 'SuiSui home', '主导航': 'Main navigation', '清单': 'List', '设置': 'Settings', '回顾': 'Review', '关于': 'About', '关于碎碎清单': 'About SuiSui',
     '搜索': 'Search', '搜索待办': 'Search to-dos', '搜索待办、备注、子任务、历史': 'Search to-dos, notes, subtasks, history', '取消': 'Cancel', '完成': 'Done', '关闭': 'Close', '编辑': 'Edit', '删除': 'Delete', '撤销': 'Undo', '添加': 'Add', '分享': 'Share', '保存图片': 'Save image', '知道了': 'Got it', '知道了，不再显示': "Got it, don't show again",
-    '周 / 月回顾': 'Weekly / monthly review', '返回清单': 'Back to list', '返回设置': 'Back to settings', '设置分类': 'Settings sections',
+    '周 / 月 / 年回顾': 'Weekly / monthly / yearly review', '返回清单': 'Back to list', '返回设置': 'Back to settings', '设置分类': 'Settings sections',
     '有新版本，点此更新': 'New version — tap to update', '更新应用': 'Update app',
     // today & list
     '今天': 'Today', '明天': 'Tomorrow', '以后': 'Later', '已完成': 'Done', '历史': 'History', '全部': 'All', '重复': 'Repeat', '全部待办': 'All to-dos', '筛选分组': 'Filter groups',

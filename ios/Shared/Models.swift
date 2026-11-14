@@ -112,6 +112,8 @@ struct AppSettings: Codable, Equatable {
     var liveActivityOnOpen: Bool = true
     /// Interface language chosen in the page ("zh" or "en"); native text follows it.
     var lang: String = "zh"
+    /// Reminders and finished timers ring with the ringtone; off (default) = silent notifications.
+    var remindRing: Bool = false
 
     var english: Bool { lang == "en" }
     var rows: Int { density == "compact" ? 4 : 3 }
@@ -133,6 +135,7 @@ struct AppSettings: Codable, Equatable {
         lockPrivacy = (try? c.decodeIfPresent(Bool.self, forKey: .lockPrivacy)) ?? d.lockPrivacy
         liveActivityOnOpen = (try? c.decodeIfPresent(Bool.self, forKey: .liveActivityOnOpen)) ?? d.liveActivityOnOpen
         lang = (try? c.decodeIfPresent(String.self, forKey: .lang)).flatMap { ["zh", "en"].contains($0) ? $0 : nil } ?? d.lang
+        remindRing = (try? c.decodeIfPresent(Bool.self, forKey: .remindRing)) ?? d.remindRing
     }
 }
 

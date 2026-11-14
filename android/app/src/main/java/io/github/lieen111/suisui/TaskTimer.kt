@@ -24,7 +24,6 @@ import java.io.File
  */
 object TaskTimer {
     private const val RUNNING_CHANNEL = "timer_running"
-    private const val DONE_CHANNEL = "timer_done"
     const val RUNNING_ID = 1003
     const val DONE_ID = 1004
 
@@ -33,10 +32,6 @@ object TaskTimer {
         if (nm.getNotificationChannel(RUNNING_CHANNEL) == null) nm.createNotificationChannel(
             NotificationChannel(RUNNING_CHANNEL, Lang.t(ctx, "计时中", "Timer"), NotificationManager.IMPORTANCE_LOW).apply {
                 description = Lang.t(ctx, "正在倒计时的任务", "The task being timed"); setShowBadge(false); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-            })
-        if (nm.getNotificationChannel(DONE_CHANNEL) == null) nm.createNotificationChannel(
-            NotificationChannel(DONE_CHANNEL, Lang.t(ctx, "计时结束", "Timer finished"), NotificationManager.IMPORTANCE_HIGH).apply {
-                description = Lang.t(ctx, "任务时长到了", "Time is up"); enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             })
     }
 
@@ -88,7 +83,7 @@ object TaskTimer {
         nm.cancel(RUNNING_ID)
         if (!LockCard.notificationsAllowed(ctx)) return
         channels(ctx)
-        nm.notify(DONE_ID, NotificationCompat.Builder(ctx, DONE_CHANNEL)
+        nm.notify(DONE_ID, Reminders.finish(ctx, NotificationCompat.Builder(ctx, Reminders.alertChannel(ctx))
             .setSmallIcon(R.drawable.ic_stat_check)
             .setContentTitle(Lang.t(ctx, "时间到", "Time's up"))
             .setContentText(if (title.isBlank()) Lang.t(ctx, "计时结束了", "The timer finished") else Lang.t(ctx, "「$title」的时间到了，点开标记完成", "Time's up for “$title” — tap to mark it done"))
@@ -96,9 +91,7 @@ object TaskTimer {
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build())
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)))
     }
 
     /** Pictures/碎碎清单 via MediaStore (no permission needed on Android 10+); app pictures folder before that. */

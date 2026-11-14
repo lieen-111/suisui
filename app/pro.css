@@ -6,12 +6,13 @@ body.pro-open{overflow:hidden}
 body.pro-open .nav-add,body.pro-open .pro-tryon{display:none!important}
 
 /* ---------- Entry points ---------- */
-.pro-banner{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:14px;width:100%;margin:12px 0 0;padding:12px 16px 12px 12px;border-radius:var(--tile-r,22px);text-align:left;color:var(--pro-frost);
+.pro-banner{display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:11px;width:100%;min-height:52px;margin:0 0 12px;padding:8px 10px 8px 14px;border-radius:16px;text-align:left;color:var(--pro-frost);
   background:radial-gradient(120% 160% at 0% 0%,#2a2a30 0%,transparent 60%),var(--pro-night);box-shadow:inset 0 0 0 1px #ffffff14,0 14px 30px -18px #070b1f99}
-.pro-banner canvas{width:44px;height:56px}
-.pro-banner-text b{display:block;font-size:16px;font-weight:650;letter-spacing:-.2px}
-.pro-banner-text small{display:block;margin-top:3px;font-size:12.5px;color:var(--pro-muted)}
-.pro-banner-state{font:600 13px/1 Geist,sans-serif;padding:7px 11px;border-radius:99px;background:#ffffff14;color:#f5f5f7;white-space:nowrap}
+.pro-banner canvas{width:24px;height:30px}
+.pro-banner-text{min-width:0;display:flex;align-items:baseline;gap:8px}
+.pro-banner-text b{flex:none;font-size:15px;font-weight:650;letter-spacing:-.2px}
+.pro-banner-text small{min-width:0;font-size:12.5px;color:var(--pro-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pro-banner-state{font:600 12px/1 Geist,sans-serif;padding:6px 10px;border-radius:99px;background:#ffffff14;color:#f5f5f7;white-space:nowrap}
 .pro-jar-button{position:relative;width:40px;height:46px;display:grid;place-items:center;border-radius:12px;flex:none}
 .pro-jar-button canvas{width:30px;height:38px}
 #tasks-panel .today-top{position:relative}
@@ -419,10 +420,10 @@ html[data-motion=off] .pro-flash,html[data-motion=off] .nav-add:before,html[data
 
 
 /* ================= Settings, review, dialogs: the same cards, buttons and switches in each theme's material ================= */
-html[data-pro-skin] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*,#edit-sheet .edit-group,.quick-menu .quick-list,.backup-head){transition:none}
+html[data-pro-skin] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>*,#edit-sheet .edit-group,.quick-menu .quick-list,.backup-head){transition:none}
 
 /* 晨: frosted glass cards, liquid switches */
-html[data-pro-skin=dawn] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#ffffff8c!important;border:0!important;border-radius:22px!important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px #ffffffd9,0 14px 30px -24px #2a2f5a73!important;-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7)}
+html[data-pro-skin=dawn] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#ffffff8c!important;border:0!important;border-radius:22px!important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px #ffffffd9,0 14px 30px -24px #2a2f5a73!important;-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7)}
 html[data-pro-skin=dawn] .review-stats>div:first-child{background:linear-gradient(140deg,#a99fffcc,#86dcc6cc 60%,#ffb99bcc)!important;color:#1b1d24!important}
 html[data-pro-skin=dawn] .review-stats>div:first-child *{color:#1b1d24!important}
 html[data-pro-skin=dawn] .switch:checked{background:linear-gradient(140deg,#a99fff,#86dcc6 60%,#ffb99b)!important}
@@ -432,7 +433,7 @@ html[data-pro-skin=dawn] .row-ico{background:linear-gradient(140deg,#ffffff,#fff
 
 /* 昼: letter paper — Song type, red legend over a red rule, square corners, cinnabar switches */
 html[data-pro-skin=day] :is(.settings-top h1,.settings-top h2,.settings-page legend,.setting-row,.settings-tiles .row-label,.settings-list .row-label,.review-top h1,.review-card h2,.review-card h3,.review-stats b,.review-nav strong,.backup-head b,.secondary-button,.dialog-heading h2,#about-dialog h2,#about-dialog h3){font-family:var(--pro-song)!important;letter-spacing:.05em}
-html[data-pro-skin=day] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*){background:#faf8f3!important;border:.5px solid #1d1a1626!important;border-radius:3px!important;box-shadow:0 10px 24px -22px #3b2b1a66!important}
+html[data-pro-skin=day] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>*){background:#faf8f3!important;border:.5px solid #1d1a1626!important;border-radius:3px!important;box-shadow:0 10px 24px -22px #3b2b1a66!important}
 html[data-pro-skin=day] .settings-page legend{color:#b43a2c!important;font-size:13px;padding-bottom:6px;border-bottom:.5px solid #b43a2c59;width:100%}
 html[data-pro-skin=day] .review-stats>div:first-child{background:#b43a2c!important;border-color:#b43a2c!important}
 html[data-pro-skin=day] .review-stats>div:first-child *{color:#f5f2ec!important}
@@ -443,11 +444,11 @@ html[data-pro-skin=day] .pill-segment{background:none!important;border-bottom:.5
 html[data-pro-skin=day] .pill-segment button{font-family:var(--pro-song);letter-spacing:.1em;background:none!important;box-shadow:none!important;color:#6b645b!important;border-radius:0!important}
 html[data-pro-skin=day] .pill-segment button:is(.active,[aria-pressed=true]){color:#1d1a16!important;box-shadow:inset 0 -2px 0 #b43a2c!important}
 html[data-pro-skin=day] .row-ico{background:none!important;box-shadow:inset 0 0 0 .8px #b43a2c80!important;border-radius:2px!important;color:#b43a2c!important}
-html[data-pro-skin=day] .settings-tiles button .row-label{font-size:17px}
+html[data-pro-skin=day] .settings-tiles .row-label{font-size:17px}
 
 
 /* 夜: deep glass — soft blue glow, white switches that shine */
-html[data-pro-skin=night] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#0d1019b3!important;border:.5px solid #dfe6ff1f!important;border-radius:18px!important;box-shadow:inset 0 1px 0 #dfe6ff0f!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html[data-pro-skin=night] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>*,.pill-segment){background:#0d1019b3!important;border:.5px solid #dfe6ff1f!important;border-radius:18px!important;box-shadow:inset 0 1px 0 #dfe6ff0f!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 html[data-pro-skin=night] :is(.settings-top h1,.review-top h1){font-weight:300!important;letter-spacing:.04em}
 html[data-pro-skin=night] .settings-page legend{color:#9fb4ff!important}
 html[data-pro-skin=night] .review-stats>div:first-child{background:#eef1fa!important;box-shadow:0 0 30px #9fb4ff40!important}
@@ -594,7 +595,7 @@ html[data-pro-skin=tape] :is(body.adding .add-form,.sheet){background:#163a33f7!
 html[data-pro-skin=tape] .chip{background:none!important;border:1px dashed #f3ecdc4d!important;color:#cfdcd6!important;box-shadow:none!important}
 html[data-pro-skin=tape] .chip.active{background:#f3ecdc!important;border:1px solid #f3ecdc!important;color:#12302a!important}
 html[data-pro-skin=tape] .add-submit{background:#f3ecdc!important;color:#12302a!important}
-html[data-pro-skin=tape] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#173a33cc!important;border:.5px solid #f3ecdc1f!important;border-radius:14px!important;box-shadow:none!important}
+html[data-pro-skin=tape] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#173a33cc!important;border:.5px solid #f3ecdc1f!important;border-radius:14px!important;box-shadow:none!important}
 html[data-pro-skin=tape] .settings-page legend{color:#e6dcc4!important}
 html[data-pro-skin=tape] .review-stats>div:first-child{background:#f3ecdc!important}
 html[data-pro-skin=tape] .review-stats>div:first-child *{color:#12302a!important}
@@ -633,7 +634,7 @@ html[data-pro-skin=riso] :is(body.adding .add-form,.sheet){background:#fbfaf6!im
 html[data-pro-skin=riso] .chip{background:none!important;border:1.2px solid #2f5fb359!important;color:#2f5fb3!important;box-shadow:none!important}
 html[data-pro-skin=riso] .chip.active{background:#2f5fb3!important;border-color:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
 html[data-pro-skin=riso] .add-submit{background:#2f5fb3!important;color:#fbfaf6!important;box-shadow:2px 2px 0 #ff4fa3!important}
-html[data-pro-skin=riso] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf6!important;border:1.2px solid #2f5fb340!important;border-radius:10px!important;box-shadow:3px 3px 0 #ff4fa333!important}
+html[data-pro-skin=riso] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf6!important;border:1.2px solid #2f5fb340!important;border-radius:10px!important;box-shadow:3px 3px 0 #ff4fa333!important}
 html[data-pro-skin=riso] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#2f5fb3!important;font-weight:800!important}
 html[data-pro-skin=riso] .review-stats>div:first-child{background:#2f5fb3!important;box-shadow:3px 3px 0 #ff4fa3!important}
 html[data-pro-skin=riso] .review-stats>div:first-child *{color:#fbfaf6!important}
@@ -695,7 +696,7 @@ html[data-pro-skin=bloom] :is(body.adding .add-form,.sheet){background:#f8f9f8f7
 html[data-pro-skin=bloom] .chip{background:none!important;border:.7px solid #2b2b2e40!important;color:#4a4c50!important;box-shadow:none!important}
 html[data-pro-skin=bloom] .chip.active{background:#2b2b2e!important;border-color:#2b2b2e!important;color:#f7f8f7!important}
 html[data-pro-skin=bloom] .add-submit{background:#2b2b2e!important;color:#f7f8f7!important}
-html[data-pro-skin=bloom] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#f8f9f8!important;border:.5px solid #2b2b2e1a!important;border-radius:16px!important;box-shadow:0 10px 24px -20px #2b2b2e66!important}
+html[data-pro-skin=bloom] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#f8f9f8!important;border:.5px solid #2b2b2e1a!important;border-radius:16px!important;box-shadow:0 10px 24px -20px #2b2b2e66!important}
 html[data-pro-skin=bloom] .settings-page legend{color:#3b5a87!important}
 html[data-pro-skin=bloom] .review-stats>div:first-child{background:radial-gradient(circle at 35% 30%,#7d97be,#3b5a87)!important}
 html[data-pro-skin=bloom] .review-stats>div:first-child *{color:#f8f9f8!important}
@@ -843,7 +844,7 @@ html[data-pro-skin=room] .chip{background:#fbf8ee!important;border:1.3px solid #
 html[data-pro-skin=room] .chip.active{background:#f1d55a!important;border-color:#2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
 html[data-pro-skin=room] .chip.is-default{background:#fbf8ee!important;box-shadow:none!important;border-color:#2c3a2066!important}
 html[data-pro-skin=room] .add-submit{background:#79a84f!important;color:#fbf8ee!important;border:1.3px solid #2c3a20!important;box-shadow:0 2.5px 0 #2c3a20!important}
-html[data-pro-skin=room] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbf8ee!important;border:1.3px solid #2c3a20!important;border-radius:12px!important;box-shadow:0 4px 0 #2c3a20!important}
+html[data-pro-skin=room] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbf8ee!important;border:1.3px solid #2c3a20!important;border-radius:12px!important;box-shadow:0 4px 0 #2c3a20!important}
 html[data-pro-skin=room] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#2c3a20!important;font-weight:800!important}
 html[data-pro-skin=room] .review-stats>div:first-child{background:#f1d55a!important}
 html[data-pro-skin=room] .review-stats>div:first-child *{color:#2c3a20!important}
@@ -894,7 +895,7 @@ html[data-pro-skin=fluff] .chip{background:none!important;border:.8px solid #141
 html[data-pro-skin=fluff] .chip.active{background:#141416!important;border-color:#141416!important;color:#f8f7f4!important}
 html[data-pro-skin=fluff] .chip.is-default{background:none!important;color:#141416!important;border-color:#1414164d!important}
 html[data-pro-skin=fluff] .add-submit{background:#141416!important;color:#f8f7f4!important;box-shadow:none!important}
-html[data-pro-skin=fluff] :is(.settings-page fieldset,.settings-tiles button,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf7!important;border:.8px solid #14141633!important;border-radius:18px!important;box-shadow:none!important}
+html[data-pro-skin=fluff] :is(.settings-page fieldset,.settings-tiles,.settings-list,.review-card,.review-stats>div,.pill-segment,.look-tabs){background:#fbfaf7!important;border:.8px solid #14141633!important;border-radius:18px!important;box-shadow:none!important}
 html[data-pro-skin=fluff] :is(.settings-page legend,.settings-top h1,.review-top h1){color:#141416!important;font-weight:400!important}
 html[data-pro-skin=fluff] .review-stats>div:first-child{background:#141416!important}
 html[data-pro-skin=fluff] .review-stats>div:first-child *{color:#f8f7f4!important}

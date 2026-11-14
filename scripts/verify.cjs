@@ -20,7 +20,8 @@ let browser;
   assert(await page.locator('#wallpaper').evaluate(img => img.complete && img.naturalWidth > 0));
   await page.locator('.lock-task').first().click();
   await page.waitForTimeout(150);
-  assert(await page.locator('.shard').count() >= 30, 'Task must visibly fragment');
+  // 1.18: fewer, finer slivers (at least 9 × 2) instead of 30 large pieces.
+  assert(await page.locator('.shard').count() >= 18, 'Task must visibly fragment');
   await page.screenshot({ path: path.join(review, 'fragmentation.png') });
   await page.waitForTimeout(1100);
   assert.equal(await page.locator('.task-row').count(), 5);

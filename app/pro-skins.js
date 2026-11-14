@@ -621,7 +621,7 @@
 
   /* ---------- 乐's music box: a few sine partials with a quick attack and a long ring ---------- */
   let actx = null;
-  const soundOK = () => API.state.settings.proSound !== false && !document.hidden;
+  const soundOK = () => false; // finishing is silent in every theme
   function boxNote(f, when = 0) {
     try {
       const c = actx || (actx = new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume();

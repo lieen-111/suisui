@@ -1287,3 +1287,19 @@ body.lock-mode .nav-add,body.lock-mode .header-actions{display:none!important}
   html.ios-shell .settings-preview{top:0}
   html.ios-shell .settings-top>:is(.settings-back,.nav-button[data-view=tasks]){top:calc(50% + env(safe-area-inset-top) / 2)}
 }
+
+/* ================= 1.18 finishing: one crisp moment in every theme (check spring, ring, glint, a few sparks) ================= */
+.fx-check,.fx-ring,.fx-glint,.fx-spark{position:fixed;pointer-events:none}
+.fx-check{border-radius:50%;background:var(--accent-fill,var(--accent,#1d1d1f));display:grid;place-items:center;animation:fx-check .46s cubic-bezier(.3,1.6,.5,1) both}
+.fx-check svg{width:72%;height:72%;fill:none;stroke:var(--on-accent,#fff);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;animation:fx-tick .26s .05s cubic-bezier(.4,0,.2,1) forwards}
+.fx-ring{border-radius:50%;box-shadow:0 0 0 1.5px var(--accent,#1d1d1f);animation:fx-ring .48s cubic-bezier(.2,.7,.2,1) forwards}
+.fx-glint{overflow:hidden;border-radius:12px}
+.fx-glint:before{content:"";position:absolute;top:-20%;bottom:-20%;left:0;width:38%;background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--accent,#888) 16%,transparent) 40%,#ffffff8c 50%,color-mix(in srgb,var(--accent,#888) 16%,transparent) 60%,transparent);transform:translateX(-120%) skewX(-12deg);animation:fx-glint .42s .04s cubic-bezier(.4,0,.2,1) forwards;mix-blend-mode:plus-lighter}
+html[data-style=paper] .fx-glint:before,html[data-pro-skin=day] .fx-glint:before,html[data-pro-skin=bloom] .fx-glint:before,html[data-pro-skin=riso] .fx-glint:before,html[data-pro-skin=room] .fx-glint:before,html[data-pro-skin=fluff] .fx-glint:before{mix-blend-mode:normal;background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--accent,#888) 14%,transparent) 50%,transparent)}
+.fx-spark{width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--accent,#1d1d1f);opacity:0;animation:fx-spark .42s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes fx-check{0%{transform:scale(.4);opacity:0}45%{transform:scale(1.14);opacity:1}70%{transform:scale(.97)}100%{transform:scale(1);opacity:0}}
+@keyframes fx-tick{to{stroke-dashoffset:0}}
+@keyframes fx-ring{0%{transform:scale(.9);opacity:.55}100%{transform:scale(2.3);opacity:0}}
+@keyframes fx-glint{to{transform:translateX(300%) skewX(-12deg)}}
+@keyframes fx-spark{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:.9}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.2)}}
+.shard{filter:none}

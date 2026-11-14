@@ -69,6 +69,10 @@
     '实时活动在系统里被关掉了：点“去设置”，打开“实时活动”后回来。': 'Live Activities are off in Settings: tap “Open Settings”, turn on Live Activities, then come back.',
     '锁屏小组件': 'Lock Screen widget', '回到锁屏，长按屏幕 → 自定 → 锁定屏幕 → 点时间下面的小组件区 → 碎碎清单，选长条那一款。': 'On the Lock Screen, touch and hold → Customize → Lock Screen → tap the widget area under the time → SuiSui, and pick the wide one.',
     '锁屏设置步骤': 'Lock Screen setup', '好了，锁上手机看看': 'Done — lock your phone to see it', '好了，加一件待办后锁上手机看看': 'Done — add a to-do, then lock your phone to see it',
+    '每年': 'Yearly', '今年': 'This year', '去年': 'Last year', '每年回顾': 'Yearly review', '今年回顾': 'This year', '去年回顾': 'Last year', '每月完成': 'Done per month',
+    '碎片飞进画面，每套各有一种': 'Shards fly into the picture, one kind per theme', '点圆圈试试。六种完成动效，安静、利落。': 'Tap the circle. Six finish effects, quiet and crisp.',
+    '碎成玻璃，落进量杯': 'Breaks into glass that falls into the glass', '碎成纸屑，写下一个字': 'Tears into paper and writes a character', '化成光点，连成星座': 'Turns into starlight and joins the constellation',
+    '化成一滴颜色': 'Becomes a drop of colour', '印成一张小画': 'Prints a little picture', '变成一件家具': 'Becomes a piece of furniture', '多长一层毛': 'Grows a layer of fur',
     // wallpaper
     '锁屏和预览都用它；存到相册，也能设成手机壁纸': 'Used on the lock screen and previews; save it to set as your phone wallpaper', '保存到相册': 'Save to Photos', '壁纸没能读取，请再试一次': "Couldn't load the wallpaper — try again",
     // jar & weekly
@@ -111,6 +115,7 @@
     [/^今天亮了 (\d+) 颗星$/, (_, a) => `${a} stars lit today`], [/^做完 (\d+) 件$/, (_, a) => `${a} done`], [/^还差 (\d+) 件$/, (_, a) => `${a} to go`],
     [/^第 (\d+) 周的七间房$/, (_, a) => `Week ${a}: seven rooms`], [/^第 (\d+) 周$/, (_, a) => `Week ${a}`], [/^(\d+) 层$/, (_, a) => `${a} layers`],
     [/^周([一二三四五六日])$/, (_, a) => WEEK[a]],
+    [/^(\d+) 年前$/, (_, a) => `${a} years ago`], [/^(\d{4})年$/, (_, a) => a], [/^(\d{1,2})月$/, (_, a) => MON[+a - 1] || a],
     [/^(\d+) 件家具(.*)，开灯，住进来吧。$/, (_, a, f) => `${a} pieces${tf(f)} — lights on, move in.`], [/^(\d+) 层毛(.*)，今天画完了。$/, (_, a, f) => `${a} layers of fur${tf(f)} — finished for today.`],
     [/^今天 (\d+) 件(.*)，一滴不剩。$/, (_, a, f) => `${a} today${tf(f)}, to the last drop.`], [/^(\d+) 件事(.*)，这一页写完了。$/, (_, a, f) => `${a} tasks${tf(f)} — the page is written.`],
     [/^(\d+) 颗星(.*)，晚安。$/, (_, a, f) => `${a} stars${tf(f)}. Good night.`], [/^(\d+) 滴颜色(.*)，今天这幅画干了。$/, (_, a, f) => `${a} drops${tf(f)} — today's picture has dried.`],

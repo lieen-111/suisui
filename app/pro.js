@@ -56,7 +56,7 @@
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
   const look = () => THEMES[activeTheme()] || PLAIN;
   /** What finishing a task does in each theme, and how it sounds (Pro page theme cards). */
-  const FX_LINE = { dawn: '碎成玻璃 · 玻璃轻响', day: '碎成纸屑 · 纸页一声', night: '化成光点 · 夜里一声轻响', bloom: '化成一滴颜色 · 水滴声', riso: '印成一张小画 · 印机咔哒', room: '变成一件家具 · 木头轻敲', fluff: '多长一层毛 · 软软一声' };
+  const FX_LINE = { dawn: '碎成玻璃，落进量杯', day: '碎成纸屑，写下一个字', night: '化成光点，连成星座', bloom: '化成一滴颜色', riso: '印成一张小画', room: '变成一件家具', fluff: '多长一层毛' };
   /** The Pro theme in use, for summaries elsewhere ('' when none). */
   const themeLabel = () => { const id = activeTheme(); if (!id) return ''; return !tryOn && savedTheme() === 'auto' ? `跟随时间 · ${THEMES[id].name}` : THEMES[id].full; };
   function persist() { API.save(); }
@@ -88,7 +88,7 @@
      In this preview nothing is charged; the 「模拟结果」 row picks what the store or the code server answers. */
   let payStep = 'start', payNote = '', payOutcome = 'ok';
   const OUTCOMES = { ios: [['ok', '成功'], ['cancel', '取消'], ['fail', '失败'], ['ask', '家长同意']], code: [['ok', '成功'], ['used', '已被用过'], ['offline', '没网']] };
-  const INCLUDES = [['palette', '7 套主题', '每套一种看今天的方式，所有界面都换'], ['lock-keyhole', '锁屏也换', '安卓锁屏卡片跟着主题'], ['sparkles', '完成动效与音效', '碎片飞进画面，每套自己的声音'], ['archive', '碎片罐与每周画', '一周做完的事，存成一幅画'], ['calendar-clock', '倒数日', '考试、生日，写在头部']];
+  const INCLUDES = [['palette', '7 套主题', '每套一种看今天的方式，所有界面都换'], ['lock-keyhole', '锁屏也换', '安卓锁屏卡片跟着主题'], ['sparkles', '完成动效', '碎片飞进画面，每套各有一种'], ['archive', '碎片罐与每周画', '一周做完的事，存成一幅画'], ['calendar-clock', '倒数日', '考试、生日，写在头部']];
   function openPay(step = 'start') {
     let el = $('pro-pay');
     if (!el) { el = document.createElement('div'); el.id = 'pro-pay'; el.className = 'pro-pay'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'pro-pay-title'); document.body.append(el);
@@ -202,7 +202,8 @@
     press: c => { tone(c, { f: 130, f2: 70, d: .14, g: .14, type: 'triangle' }); hiss(c, { t: .01, d: .06, g: .1, hp: 600, lp: 3000 }); hiss(c, { t: .1, d: .08, g: .05, hp: 2000 }); },
     chime: c => { tone(c, { f: 660, d: 1.3, g: .075 }); tone(c, { f: 990, t: .02, d: 1.1, g: .045 }); tone(c, { f: 1485, t: .04, d: .8, g: .02 }); }
   };
-  const soundOn = () => S().proSound !== false;
+  // No sound on finishing a task, in any theme (the user asked for quiet effects); the tones stay unused.
+  const soundOn = () => false;
   function playSound(id) { if (!soundOn()) return; const c = audio(); if (!c) return; try { (SOUNDS[id] || SOUNDS.soft)(c); } catch { /* optional */ } }
   const themeSound = () => THEMES[activeTheme()]?.sound || 'soft';
 
@@ -229,7 +230,7 @@
     for (let y = 0; y < h; y += step) for (let xx = 0; xx < w; xx += step) if (data[(y * w + xx) * 4 + 3] > 110) pts.push({ x: r.left - 4 + xx, y: r.top - 4 + y });
     return { pts, image: c, left: r.left - 4, top: r.top - 4, w, h, color: cs.color, rect: r };
   }
-  function overlay(duration, draw, resolveAt = 540) {
+  function overlay(duration, draw, resolveAt = 380) {
     return new Promise(resolve => {
       const c = document.createElement('canvas'); c.className = 'pro-fx';
       const ctx = canvasFor(c, innerWidth, innerHeight); document.body.append(c);
@@ -253,7 +254,7 @@
           : { vx: spread * (150 + r() * 90), vy: (y - .5) * 50 - 40 - r() * 50, g: 130, spin: (r() - .5) * 5, sway: 0 };
         pieces.push({ pts, cx, cy, ...v, d: Math.abs(spread) * 60 + r() * 40, c: L.shards[(x + y + t) % L.shards.length] });
       }
-      const dur = mat === 'paper' || mat === 'gold' ? 1450 : 1050;
+      const dur = mat === 'paper' || mat === 'gold' ? 950 : 720; // 精致利落: short and quiet
       return overlay(dur, (ctx, ms) => {
         for (const p of pieces) {
           const tt = Math.max(0, (ms - p.d) / 1000), life = clamp((ms - p.d) / (dur - p.d)), a = 1 - life * life;
@@ -273,13 +274,13 @@
       });
     },
     stardust(src, s) {
-      const L = look(), parts = s.pts.slice(0, 900).map((p, i) => { const r = rng(i * 977 + 13); return { ...p, vx: (r() - .35) * 46, vy: -(28 + r() * 90), size: 1 + r() * 1.8, c: L.shards[i % L.shards.length], ph: r() * 6, d: (p.x - s.left) / s.w * 260 }; });
-      return overlay(1200, (ctx, ms) => {
-        const sweep = s.left + (ms / 260) * s.w;
+      const L = look(), parts = s.pts.slice(0, 450).map((p, i) => { const r = rng(i * 977 + 13); return { ...p, vx: (r() - .35) * 46, vy: -(28 + r() * 90), size: 1 + r() * 1.8, c: L.shards[i % L.shards.length], ph: r() * 6, d: (p.x - s.left) / s.w * 260 }; });
+      return overlay(820, (ctx, ms) => {
+        const sweep = s.left + (ms / 200) * s.w;
         ctx.save(); ctx.beginPath(); ctx.rect(sweep, s.top, s.w + 40, s.h); ctx.clip(); ctx.drawImage(s.image, s.left, s.top); ctx.restore();
         ctx.globalCompositeOperation = dark() ? 'lighter' : 'source-over';
         for (const p of parts) {
-          const t = clamp((ms - p.d) / 900); if (t <= 0) continue;
+          const t = clamp((ms - p.d) / 600); if (t <= 0) continue;
           const e = easeOut(t), a = (1 - t) * (.6 + .4 * Math.sin(p.ph + ms / 60));
           ctx.fillStyle = hex(p.c, clamp(a)); ctx.beginPath(); ctx.arc(p.x + p.vx * e, p.y + p.vy * e, p.size * (1 + .6 * (1 - t)), 0, 7); ctx.fill();
         }
@@ -287,10 +288,10 @@
       });
     },
     dots(src, s) {
-      const parts = s.pts.map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: (p.x - s.left) / s.w * 300 + r() * 120, vy: -(8 + r() * 26), vx: (r() - .5) * 16, red: false }; });
-      return overlay(1100, (ctx, ms) => {
+      const parts = s.pts.map((p, i) => { const r = rng(i * 31 + 7); return { ...p, d: (p.x - s.left) / s.w * 200 + r() * 80, vy: -(8 + r() * 26), vx: (r() - .5) * 16, red: false }; });
+      return overlay(720, (ctx, ms) => {
         for (const p of parts) {
-          const t = clamp((ms - p.d) / 520), sc = t <= 0 ? 1 : 1 - easeOut(t);
+          const t = clamp((ms - p.d) / 400), sc = t <= 0 ? 1 : 1 - easeOut(t);
           if (sc <= .02) continue; ctx.fillStyle = p.red ? '#d71921' : s.color;
           ctx.beginPath(); ctx.arc(p.x + p.vx * easeOut(t), p.y + p.vy * easeOut(t), 1.7 * sc + (t > 0 ? .4 : 0), 0, 7); ctx.fill();
         }
@@ -298,10 +299,10 @@
     },
     gold(src, s) {
       const parts = s.pts.filter((_, i) => i % 3 === 0).map((p, i) => { const r = rng(i * 13 + 5); return { ...p, d: r() * 260, sway: 8 + r() * 18, ph: r() * 6, sz: 2 + r() * 3.5, spin: (r() - .5) * 8, fall: 60 + r() * 90, c: ['#c8a66a', '#e8d3a4', '#f4e8cc', '#9c7f47'][i % 4] }; });
-      return overlay(1500, (ctx, ms) => {
-        ctx.globalAlpha = clamp(1 - ms / 380); ctx.drawImage(s.image, s.left, s.top); ctx.globalAlpha = 1;
+      return overlay(950, (ctx, ms) => {
+        ctx.globalAlpha = clamp(1 - ms / 260); ctx.drawImage(s.image, s.left, s.top); ctx.globalAlpha = 1;
         for (const p of parts) {
-          const t = clamp((ms - p.d) / 1150); if (t <= 0 || t >= 1) continue;
+          const t = clamp((ms - p.d) / 740); if (t <= 0 || t >= 1) continue;
           const x = p.x + Math.sin(p.ph + t * 5) * p.sway * t, y = p.y + p.fall * t * t + t * 10, a = t < .15 ? t / .15 : 1 - (t - .15) / .85;
           ctx.save(); ctx.translate(x, y); ctx.rotate(p.spin * t); ctx.scale(1, Math.abs(Math.cos(p.ph + t * 7)) * .8 + .2); ctx.globalAlpha = a; ctx.fillStyle = p.c; ctx.fillRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz * .7); ctx.restore();
         }
@@ -312,18 +313,18 @@
       const r = rng(hash(src.textContent || 'x')), blots = Array.from({ length: 7 }, (_, i) => ({ x: s.left + s.w * (.08 + i / 7.4) + (r() - .5) * 10, y: s.top + s.h / 2 + (r() - .5) * s.h * .4, R: 14 + r() * 20, d: i * 40 }));
       const dots = Array.from({ length: 14 }, () => ({ x: s.left + r() * s.w, y: s.top + s.h / 2 + (r() - .5) * s.h * 1.8, R: 1 + r() * 2.6, d: 120 + r() * 200 }));
       const seal = { x: Math.min(innerWidth - 46, s.rect.right + 18), y: s.top + s.h / 2 };
-      return overlay(1300, (ctx, ms) => {
-        const fade = clamp(1 - (ms - 800) / 500);
-        ctx.globalAlpha = clamp(1 - (ms - 150) / 450) ; ctx.drawImage(s.image, s.left, s.top); ctx.globalAlpha = 1;
+      return overlay(880, (ctx, ms) => {
+        const fade = clamp(1 - (ms - 520) / 360);
+        ctx.globalAlpha = clamp(1 - (ms - 80) / 320) ; ctx.drawImage(s.image, s.left, s.top); ctx.globalAlpha = 1;
         ctx.filter = 'blur(2.5px)';
         for (const b of [...blots, ...dots]) {
-          const t = clamp((ms - b.d) / 520); if (t <= 0) continue;
+          const t = clamp((ms - b.d) / 380); if (t <= 0) continue;
           const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.R * easeOut(t) + .1);
           g.addColorStop(0, `rgba(29,26,22,${.62 * fade})`); g.addColorStop(.7, `rgba(29,26,22,${.38 * fade})`); g.addColorStop(1, 'rgba(29,26,22,0)');
           ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.R * easeOut(t) + .1, 0, 7); ctx.fill();
         }
         ctx.filter = 'none';
-        const st = clamp((ms - 300) / 220); if (st > 0) {
+        const st = clamp((ms - 200) / 180); if (st > 0) {
           const k = 1.5 - .5 * easeOut(st); ctx.save(); ctx.translate(seal.x, seal.y); ctx.scale(k, k); ctx.globalAlpha = clamp(st * 1.4) * fade;
           ctx.fillStyle = '#b43a2c'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, 7); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
         }
@@ -335,11 +336,11 @@
       const at = t => { const u = 1 - t; return { x: u * u * u * P.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * end.x, y: u * u * u * P.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * end.y }; };
       const parts = s.pts.filter((_, i) => i % 2 === 0).map((p, i) => ({ ...p, d: rng(i + 9)() * 120 }));
       const L = look(), stroke = L === PLAIN ? '#7fb2ff' : L.accent;
-      return overlay(1350, (ctx, ms) => {
+      return overlay(950, (ctx, ms) => {
         ctx.fillStyle = s.color;
-        for (const p of parts) { const t = easeIn(clamp((ms - p.d) / 300)); if (t >= 1) continue; ctx.globalAlpha = 1 - t * .6; ctx.fillRect(p.x + (P.x - p.x) * t, p.y + (P.y - p.y) * t, 1.6, 1.6); }
+        for (const p of parts) { const t = easeIn(clamp((ms - p.d) / 220)); if (t >= 1) continue; ctx.globalAlpha = 1 - t * .6; ctx.fillRect(p.x + (P.x - p.x) * t, p.y + (P.y - p.y) * t, 1.6, 1.6); }
         ctx.globalAlpha = 1;
-        const ft = clamp((ms - 330) / 950); if (ft <= 0) return;
+        const ft = clamp((ms - 220) / 700); if (ft <= 0) return;
         const e = easeIn(ft) * .85 + ft * .15, pos = at(e), nxt = at(Math.min(1, e + .02)), ang = Math.atan2(nxt.y - pos.y, nxt.x - pos.x);
         ctx.setLineDash([3, 6]); ctx.strokeStyle = hex(stroke.length === 7 ? stroke : '#7fb2ff', .35); ctx.lineWidth = 1.2; ctx.beginPath();
         for (let k = 0; k <= 24; k++) { const q = at(e * k / 24); k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); ctx.setLineDash([]);
@@ -770,7 +771,7 @@
 
       <section class="pro-part" data-pro-section="effects">
         <h2>完成的那一下</h2>
-        <p class="pro-lead">点圆圈试试。六种完成动效，每一种都配了声音。</p>
+        <p class="pro-lead">点圆圈试试。六种完成动效，安静、利落。</p>
         <div class="pro-demo-row"><button type="button" class="pro-demo-check" id="pro-demo-check" aria-label="试一下完成动效"><span class="check-circle"></span></button><span class="pro-demo-title" id="pro-demo-title">把锁屏待办的想法做出来</span></div>
         <div class="pro-effect-grid">${Object.keys(EFFECTS).filter(id => id !== 'auto').map(id => `<button type="button" class="pro-effect${(pro ? curE === id : id === (demoPick || 'shards')) ? ' active' : ''}" data-pro-effect="${id}"><b>${EFFECTS[id]}</b><small>${EFFECT_LINE[id]}</small></button>`).join('')}
         ${pro ? `<button type="button" class="pro-effect${curE === 'auto' ? ' active' : ''}" data-pro-effect="auto"><b>跟随主题</b><small>每个主题用自己的动效</small></button>` : ''}</div>
@@ -794,14 +795,12 @@
         <ul class="pro-more">
           <li>${icon('calendar-clock')}<span><b>倒数日</b>考试、生日、出发的日子，挂在清单和锁屏上</span></li>
           <li>${icon('party-popper')}<span><b>清空时刻</b>当天全部做完，有一段专门的庆祝</span></li>
-          <li>${icon('volume-2')}<span><b>主题音效</b>每个主题一套完成的声音</span></li>
           <li>${icon('gift')}<span><b>以后的新主题</b>一次买断，之后上线的主题都免费</span></li>
         </ul>
       </section>
 
       ${pro ? `<section class="pro-part" data-pro-section="settings">
         <h2>Pro 设置</h2>
-        <label class="pro-switch"><span><b>完成音效</b><small>跟着主题换声音</small></span><input type="checkbox" class="switch" id="pro-sound" ${soundOn() ? 'checked' : ''}></label>
         <label class="pro-switch"><span><b>锁屏也用主题</b><small>安卓锁屏上的卡片跟着换</small></span><input type="checkbox" class="switch" id="pro-lock" ${S().proLock !== false ? 'checked' : ''}></label>
         <label class="pro-switch"><span><b>锁屏用主题壁纸</b><small>每套主题有自己的壁纸，换主题时一起换</small></span><input type="checkbox" class="switch" id="pro-wall" ${S().proWall !== false ? 'checked' : ''}></label>
         <h3 class="pro-sub">倒数日</h3>
@@ -835,7 +834,6 @@
     $('pro-reset').addEventListener('click', resetLocal);
     $('pro-lock')?.addEventListener('change', e => { S().proLock = e.target.checked; persist(); applyTheme(); });
     $('pro-wall')?.addEventListener('change', e => { S().proWall = e.target.checked; persist(); applyTheme(); });
-    $('pro-sound')?.addEventListener('change', e => { S().proSound = e.target.checked; persist(); if (e.target.checked) playSound(themeSound()); });
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
     renderCountdownList();
     // Demo jar + art
@@ -1220,7 +1218,7 @@
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
     const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : FREE ? '免费测试' : `试用 ${trialLeft()} 天`) : PRICE;
     const sub = document.querySelector('#pro-banner .pro-banner-text small'); if (sub) sub.textContent = isPro() && themeLabel() ? `正在用「${themeLabel()}」` : isPro() ? '主题、碎片罐、动效都已打开' : '主题、碎片罐、完成动效';
-    const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 44, 56); drawJarWith(BRAND, ctx, 4, 2, 36, 52, demoEntries(startOfDay(), 6), 0); }
+    const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 24, 30); drawJarWith(BRAND, ctx, 2, 1, 20, 28, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
   window.SuiSuiPro = { effect, isPro, themeLabel, freeForTesters: FREE, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };

@@ -186,7 +186,7 @@
     if (typeof s.cardColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.cardColor)) s.cardColor = defaults.cardColor;
     if (!['auto', 'light', 'dark'].includes(s.cardText)) s.cardText = 'auto';
     s.cardTransparency = Math.min(90, Math.max(0, Number(s.cardTransparency) || 0));
-    ['palette2', 'motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'iosSetupSeen', 'tipsSeen', 'wallpaperPicked'].forEach(k => { s[k] = !!s[k]; });
+    ['palette2', 'motion', 'autoArchive', 'lockNotify', 'lockScreen', 'lockPrivacy', 'installDismissed', 'androidSetupSeen', 'iosSetupSeen', 'tipsSeen', 'wallpaperPicked', 'remindRing'].forEach(k => { s[k] = !!s[k]; });
     return s;
   }
   function applySaved(saved) {
@@ -851,6 +851,7 @@
     $('intensity-value').textContent = ['轻柔', '适中', '强烈'][s.intensity - 1];
     $('intensity').disabled = !s.motion;
     $('archive-toggle').checked = !!s.autoArchive;
+    $('ring-toggle').checked = !!s.remindRing;
     $('privacy-toggle').checked = !!s.lockPrivacy;
     renderNotifySetting();
     applyCardAppearance();
@@ -1198,41 +1199,63 @@
     $('install-howto').hidden = !!installPrompt;
   }
 
+  /** The moment of finishing, the same in every theme: the check fills with a small spring, a thin ring
+   *  goes out from it, and a glint runs along the row. Quiet and quick (about 0.45 s), no sound. */
+  function finishAccent(source, rect) {
+    const layer = $('fragments'), check = source.querySelector('.check-circle');
+    const c = check ? check.getBoundingClientRect() : { left: rect.left + 18, top: rect.top + rect.height / 2 - 11, width: 22, height: 22 };
+    const cx = c.left + c.width / 2, cy = c.top + c.height / 2, size = Math.max(18, c.width);
+    const mark = document.createElement('div'); mark.className = 'fx-check';
+    Object.assign(mark.style, { left: `${cx - size / 2}px`, top: `${cy - size / 2}px`, width: `${size}px`, height: `${size}px` });
+    mark.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 12.5l3.6 3.6 7.4-8"/></svg>';
+    const ring = document.createElement('div'); ring.className = 'fx-ring';
+    Object.assign(ring.style, { left: `${cx - size / 2}px`, top: `${cy - size / 2}px`, width: `${size}px`, height: `${size}px` });
+    const glint = document.createElement('div'); glint.className = 'fx-glint';
+    Object.assign(glint.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+    const sparks = Array.from({ length: 6 }, (_, i) => {
+      const d = document.createElement('i'); d.className = 'fx-spark';
+      const a = (-70 + i * 28 + Math.random() * 10) * Math.PI / 180, r = size * (1.05 + Math.random() * .45);
+      Object.assign(d.style, { left: `${cx}px`, top: `${cy}px`, '--sx': `${Math.cos(a) * r}px`, '--sy': `${Math.sin(a) * r}px`, animationDelay: `${40 + i * 12}ms` });
+      return d;
+    });
+    layer.append(glint, ring, mark, ...sparks);
+    setTimeout(() => [glint, ring, mark, ...sparks].forEach(n => n.remove()), 720);
+  }
   async function shatter(source) {
     if (!state.settings.motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rect = source.getBoundingClientRect(), isLock = source.classList.contains('lock-task');
     const textNode = source.querySelector(isLock ? 'span:last-child' : '.task-title');
     const textRect = textNode.getBoundingClientRect(), style = getComputedStyle(textNode);
-    // Pro: a chosen completion effect (星尘 / 墨染 / 纸飞机 / 燃尽 / 像素) replaces the default shatter.
+    finishAccent(source, rect);
+    // Pro: a chosen completion effect replaces the default text shards.
     const custom = window.SuiSuiPro?.effect?.(source, textNode, rect);
     if (custom) { source.style.visibility = 'hidden'; await custom; return; }
-    const layer = $('fragments'), pieces = [], cols = (navigator.hardwareConcurrency || 8) <= 4 ? 7 : 10, rows = 3;
-    const strength = [.7, 1, 1.5][state.settings.intensity - 1];
-    const cw = rect.width / cols, ch = rect.height / rows;
-    // Each triangle carries the corresponding text slice, so the task itself breaks apart.
+    // The text itself breaks into fine slivers that drift a little up and right, in the glint's order.
+    const layer = $('fragments'), slow = (navigator.hardwareConcurrency || 8) <= 4;
+    const cols = Math.max(9, Math.min(slow ? 12 : 20, Math.round(textRect.width / 12))), rows = 2;
+    const strength = [.7, 1, 1.35][state.settings.intensity - 1];
+    const box = { left: Math.min(rect.left + 44, textRect.left - 2), top: textRect.top - 2, width: textRect.width + 4, height: textRect.height + 4 };
+    const cw = box.width / cols, ch = box.height / rows;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        for (let tri = 0; tri < 2; tri++) {
-          const p = document.createElement('div');
-          p.className = 'shard';
-          Object.assign(p.style, { left: `${rect.left + x * cw}px`, top: `${rect.top + y * ch}px`, width: `${cw + .5}px`, height: `${ch + .5}px`, clipPath: tri ? 'polygon(100% 0,100% 100%,0 100%)' : 'polygon(0 0,100% 0,0 100%)' });
-          const fill = document.createElement('div');
-          fill.className = 'shard-surface';
-          fill.style.background = isLock ? 'rgba(159,225,180,.38)' : 'rgba(19,118,91,.18)';
-          const text = document.createElement('span');
-          text.className = 'shard-text';
-          text.textContent = textNode.textContent;
-          Object.assign(text.style, { left: `${textRect.left - rect.left - x * cw}px`, top: `${textRect.top - rect.top - y * ch}px`, width: `${textRect.width}px`, font: style.font, lineHeight: style.lineHeight, color: style.color, whiteSpace: isLock ? 'nowrap' : 'normal', overflowWrap: 'anywhere' });
-          p.append(fill, text); layer.append(p); pieces.push(p);
-          const dx = (x / (cols - 1) - .5) * (130 + Math.random() * 95) * strength;
-          const dy = ((y - 1) * 44 - 35 - Math.random() * 45) * strength;
-          window.anime.animate(p, { x: [0, dx], y: [0, dy], rotate: [0, (Math.random() - .5) * 140], scale: [1, .3], duration: 780 + Math.random() * 180, delay: Math.abs(x - (cols - 1) / 2) * 11, ease: 'outExpo' });
-          window.anime.animate(p, { opacity: [1, 0], delay: 140, duration: 700, ease: 'inQuad', onComplete: () => p.remove() });
-        }
+        const p = document.createElement('div');
+        p.className = 'shard';
+        const skew = (Math.random() - .5) * 30;
+        Object.assign(p.style, { left: `${box.left + x * cw}px`, top: `${box.top + y * ch}px`, width: `${cw + .6}px`, height: `${ch + .6}px`, clipPath: `polygon(${18 + skew}% 0,100% 0,${82 + skew}% 100%,0 100%)` });
+        const text = document.createElement('span');
+        text.className = 'shard-text';
+        text.textContent = textNode.textContent;
+        Object.assign(text.style, { left: `${textRect.left - box.left - x * cw}px`, top: `${textRect.top - box.top - y * ch}px`, width: `${textRect.width}px`, font: style.font, lineHeight: style.lineHeight, color: style.color, whiteSpace: isLock ? 'nowrap' : 'normal', overflowWrap: 'anywhere' });
+        p.append(text); layer.append(p);
+        const t = x / (cols - 1), r = Math.random();
+        const dx = (14 + t * 46 + r * 26) * strength, dy = (-(10 + r * 26) - (rows - 1 - y) * 8) * strength;
+        const delay = 50 + t * 150 + r * 30;
+        window.anime.animate(p, { x: [0, dx], y: [0, dy], rotate: [0, (r - .5) * 50], scale: [1, .55 + r * .2], duration: 460, delay, ease: 'outQuart' });
+        window.anime.animate(p, { opacity: [1, 0], delay: delay + 80, duration: 300, ease: 'inQuad', onComplete: () => p.remove() });
       }
     }
     source.style.visibility = 'hidden';
-    await new Promise(resolve => setTimeout(resolve, 520));
+    await new Promise(resolve => setTimeout(resolve, 360));
   }
   /** Finish a task: completion time, focus time from its timer, one line in the review log. */
   function markDone(task) {
@@ -1336,6 +1359,9 @@
     if (review.period === 'week') {
       start = new Date(today); start.setDate(today.getDate() - (today.getDay() + 6) % 7 + review.offset * 7);
       end = new Date(start); end.setDate(start.getDate() + 7);
+    } else if (review.period === 'year') {
+      start = new Date(today.getFullYear() + review.offset, 0, 1);
+      end = new Date(today.getFullYear() + review.offset + 1, 0, 1);
     } else {
       start = new Date(today.getFullYear(), today.getMonth() + review.offset, 1);
       end = new Date(today.getFullYear(), today.getMonth() + review.offset + 1, 1);
@@ -1353,10 +1379,18 @@
     const mix = state.groups.map(g => ({ group: g, count: inRange.filter(e => groupOf(e.group).id === g.id).length })).filter(m => m.count);
     const md = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric' });
     const last = new Date(end); last.setDate(last.getDate() - 1);
-    const title = review.period === 'week' ? `${md.format(start)} – ${md.format(last)}` : (LOC() === 'en-US' ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(start) : `${start.getFullYear()}年${start.getMonth() + 1}月`);
-    const relative = review.period === 'week' ? ['本周', '上周'][-review.offset] || `${-review.offset} 周前` : ['本月', '上个月'][-review.offset] || `${-review.offset} 个月前`;
+    const title = review.period === 'week' ? `${md.format(start)} – ${md.format(last)}`
+      : review.period === 'year' ? (LOC() === 'en-US' ? String(start.getFullYear()) : `${start.getFullYear()}年`)
+      : (LOC() === 'en-US' ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(start) : `${start.getFullYear()}年${start.getMonth() + 1}月`);
+    const relative = review.period === 'week' ? ['本周', '上周'][-review.offset] || `${-review.offset} 周前`
+      : review.period === 'year' ? ['今年', '去年'][-review.offset] || `${-review.offset} 年前`
+      : ['本月', '上个月'][-review.offset] || `${-review.offset} 个月前`;
+    // the chart: one bar a day, or one a month for a year
+    const buckets = review.period === 'year'
+      ? Array.from({ length: 12 }, (_, m) => ({ date: new Date(start.getFullYear(), m, 1), month: m, key: `m${m}`, items: entries.filter(e => new Date(e.at).getMonth() === m), now: start.getFullYear() === new Date().getFullYear() && m === new Date().getMonth() }))
+      : perDay.map(x => ({ ...x, now: x.key === dayKey() }));
     const elapsed = Math.max(1, Math.min(days.length, Math.ceil((Math.min(Date.now(), end.getTime()) - start.getTime()) / 864e5)));
-    return { start, end, last, days, perDay, entries, minutes, mix, title, relative, activeDays: perDay.filter(d => d.items.length).length, elapsed, groupName: review.group === 'all' ? '全部' : groupOf(review.group).name };
+    return { start, end, last, days, perDay, buckets, entries, minutes, mix, title, relative, activeDays: perDay.filter(d => d.items.length).length, elapsed, groupName: review.group === 'all' ? '全部' : groupOf(review.group).name };
   }
   const focusText = min => min >= 60 ? { value: (min / 60).toFixed(min % 60 ? 1 : 0), unit: '小时专注' } : { value: String(min), unit: '分钟专注' };
   function renderReview() {
@@ -1371,10 +1405,12 @@
     const f = focusText(d.minutes);
     $('rs-focus').textContent = f.value; $('rs-focus-unit').textContent = f.unit;
     $('rs-days').textContent = `${d.activeDays}`; $('rs-days-unit').textContent = `/ ${d.elapsed} 天有完成`;
-    const max = Math.max(1, ...d.perDay.map(x => x.items.length));
-    const month = review.period === 'month';
+    const max = Math.max(1, ...d.buckets.map(x => x.items.length));
+    const month = review.period === 'month', year = review.period === 'year';
     $('review-chart').classList.toggle('is-month', month);
-    $('review-chart').innerHTML = d.perDay.map(x => { const n = x.items.length, day = x.date.getDate(); const label = month ? ([1, 5, 10, 15, 20, 25, 30].includes(day) ? day : '') : WEEK_SHORT[x.date.getDay()]; return `<div class="bar${n === max && n ? ' is-top' : ''}${x.key === dayKey() ? ' is-today' : ''}" title="${new Intl.DateTimeFormat(LOC(), { month: LOC() === 'en-US' ? 'short' : 'long', day: 'numeric' }).format(x.date)} · ${n} 件"><span class="bar-val">${n || ''}</span><i style="--h:${n / max}"></i><span class="bar-label">${label}</span></div>`; }).join('');
+    $('review-chart').classList.toggle('is-year', year);
+    $('review-chart').previousElementSibling.textContent = year ? '每月完成' : '每天完成';
+    $('review-chart').innerHTML = d.buckets.map(x => { const n = x.items.length, day = x.date.getDate(); const label = year ? `${x.month + 1}` : month ? ([1, 5, 10, 15, 20, 25, 30].includes(day) ? day : '') : WEEK_SHORT[x.date.getDay()]; const tip = year ? `${x.month + 1}月` : new Intl.DateTimeFormat(LOC(), { month: LOC() === 'en-US' ? 'short' : 'long', day: 'numeric' }).format(x.date); return `<div class="bar${n === max && n ? ' is-top' : ''}${x.now ? ' is-today' : ''}" title="${tip} · ${n} 件"><span class="bar-val">${n || ''}</span><i style="--h:${n / max}"></i><span class="bar-label">${label}</span></div>`; }).join('');
     const mixTotal = d.mix.reduce((s, m) => s + m.count, 0);
     $('review-mix-card').hidden = !mixTotal;
     $('review-mix').innerHTML = d.mix.map(m => `<i style="flex:${m.count};background:${m.group.color}"></i>`).join('');
@@ -1415,8 +1451,9 @@
     const logo = await loadImage('icons/icon-192.png');
     if (logo) { ctx.save(); roundRect(ctx, P, 74, 72, 72, 18); ctx.clip(); ctx.drawImage(logo, P, 74, 72, 72); ctx.restore(); }
     ctx.fillStyle = '#ffffffcc'; ctx.font = font(600, 28); ctx.fillText('碎碎清单', P + 92, 122);
-    ctx.fillStyle = R['300']; ctx.font = font(700, 24); ctx.fillText((review.period === 'week' ? 'WEEKLY  REVIEW' : 'MONTHLY  REVIEW').split('').join(String.fromCharCode(8202)), P, 232);
-    ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText((review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset] ? `${(review.period === 'week' ? ['本周', '上周'] : ['本月', '上月'])[-review.offset]}回顾` : review.period === 'week' ? '每周回顾' : '每月回顾', P, 336);
+    const P_WORD = { week: ['WEEKLY  REVIEW', ['本周', '上周'], '每周回顾'], month: ['MONTHLY  REVIEW', ['本月', '上月'], '每月回顾'], year: ['YEARLY  REVIEW', ['今年', '去年'], '每年回顾'] }[review.period];
+    ctx.fillStyle = R['300']; ctx.font = font(700, 24); ctx.fillText(P_WORD[0].split('').join(String.fromCharCode(8202)), P, 232);
+    ctx.fillStyle = '#fff'; ctx.font = font(800, 92); ctx.fillText(P_WORD[1][-review.offset] ? `${P_WORD[1][-review.offset]}回顾` : P_WORD[2], P, 336);
     ctx.fillStyle = '#ffffffb3'; ctx.font = font(500, 34); ctx.fillText(`${d.title}${d.groupName !== '全部' ? ` · ${d.groupName}` : ''}`, P, 396);
     const f = focusText(d.minutes);
     [[String(d.entries.length), '件完成'], [f.value, f.unit], [`${d.activeDays}/${d.elapsed}`, '天有完成']].forEach(([v, u], i) => {
@@ -1428,14 +1465,14 @@
     let y = 680;
     const card = (h) => { ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#00000014'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; roundRect(ctx, 40, y, W - 80, h, 40); ctx.fill(); ctx.shadowColor = 'transparent'; };
     card(380);
-    ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText('每天完成', P + 8, y + 70);
-    const max = Math.max(1, ...d.perDay.map(x => x.items.length));
-    const n = d.perDay.length, cx0 = P + 8, cw = W - 2 * (P + 8), slot = cw / n, bw = Math.min(64, slot * .62), base = y + 300;
-    d.perDay.forEach((x, i) => {
+    ctx.fillStyle = '#1c1c1e'; ctx.font = font(700, 34); ctx.fillText(review.period === 'year' ? '每月完成' : '每天完成', P + 8, y + 70);
+    const max = Math.max(1, ...d.buckets.map(x => x.items.length));
+    const n = d.buckets.length, cx0 = P + 8, cw = W - 2 * (P + 8), slot = cw / n, bw = Math.min(64, slot * .62), base = y + 300;
+    d.buckets.forEach((x, i) => {
       const c = x.items.length, h = c ? Math.max(10, (c / max) * 170) : 6, bx = cx0 + i * slot + (slot - bw) / 2;
       ctx.fillStyle = c === max && c ? accent : (c ? R['200'] : '#ececef'); roundRect(ctx, bx, base - h, bw, h, Math.min(16, bw / 2)); ctx.fill();
-      if (c && (n <= 7 || c === max)) { ctx.fillStyle = '#3a3a3c'; ctx.font = font(700, n <= 7 ? 28 : 22); ctx.textAlign = 'center'; ctx.fillText(String(c), bx + bw / 2, base - h - 14); ctx.textAlign = 'left'; }
-      const day = x.date.getDate(); const lab = n <= 7 ? `周${WEEK_SHORT[x.date.getDay()]}` : ([1, 5, 10, 15, 20, 25, 30].includes(day) ? String(day) : '');
+      if (c && (n <= 12 || c === max)) { ctx.fillStyle = '#3a3a3c'; ctx.font = font(700, n <= 12 ? 28 : 22); ctx.textAlign = 'center'; ctx.fillText(String(c), bx + bw / 2, base - h - 14); ctx.textAlign = 'left'; }
+      const day = x.date.getDate(); const lab = review.period === 'year' ? `${x.month + 1}月` : n <= 7 ? `周${WEEK_SHORT[x.date.getDay()]}` : ([1, 5, 10, 15, 20, 25, 30].includes(day) ? String(day) : '');
       if (lab) { ctx.fillStyle = '#8e8e93'; ctx.font = font(500, 24); ctx.textAlign = 'center'; ctx.fillText(lab, bx + bw / 2, base + 44); ctx.textAlign = 'left'; }
     });
     y += 420;
@@ -1631,7 +1668,8 @@
         if (button) complete(t.id, button); else if (!t.done) { markDone(t); save(); render(); }
       }, '完成', 60000);
       if (!NATIVE && document.visibilityState === 'hidden' && notifySupported() && Notification.permission === 'granted') {
-        navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', data: { url: './' } })).catch(() => {});
+        const ring = !!state.settings.remindRing;
+        navigator.serviceWorker.ready.then(r => r.showNotification(`⏰ ${t.time} ${t.title}`, { tag: `remind-${t.id}`, icon: 'icons/icon-192.png', silent: !ring, requireInteraction: ring, data: { url: './' } })).catch(() => {});
       }
     }
   }
@@ -2143,6 +2181,11 @@
   $('card-transparency').addEventListener('input', () => { state.settings.cardTransparency = Number($('card-transparency').value); applyCardAppearance(); save(); });
 
   $('archive-toggle').addEventListener('change', () => { state.settings.autoArchive = $('archive-toggle').checked; save(); });
+  // Reminders are silent by default; this rings with the phone's ringtone (the native apps re-plan on save)
+  $('ring-toggle').addEventListener('change', () => {
+    state.settings.remindRing = $('ring-toggle').checked; save();
+    showToast(state.settings.remindRing ? (NATIVE ? '到点会用手机铃声响铃' : '到点会用系统提示音提醒') : '到点只弹出静音通知');
+  });
   $('privacy-toggle').addEventListener('change', () => { state.settings.lockPrivacy = $('privacy-toggle').checked; lastNotified = ''; save(); renderPreview(); icons(); showToast(state.settings.lockPrivacy ? '锁屏上只显示数量，解锁后才能看到内容' : '锁屏上会显示待办内容'); });
   $('notify-toggle').addEventListener('change', () => enableLockNotify($('notify-toggle').checked));
   if (IOS_APP) {
@@ -2261,7 +2304,8 @@
       ? `${new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }).format(date)}${lunar(date) ? ` · ${lunar(date)}` : ''}`
       : new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'long' }).format(date);
     $('lock-time').textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    $('hero-lock-date').textContent = $('lock-date').textContent; $('hero-lock-time').textContent = $('lock-time').textContent;
+    // the settings strip is short: date and weekday only (the lock screen itself also shows the lunar date)
+    $('hero-lock-date').textContent = $('lock-date').textContent.split(' · ')[0]; $('hero-lock-time').textContent = $('lock-time').textContent;
     if (rollover()) render();
   }
   // Lock mode (Android LockActivity): only the designed lock screen, over the system lock screen.

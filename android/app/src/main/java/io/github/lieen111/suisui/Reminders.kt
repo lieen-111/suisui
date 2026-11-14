@@ -8,6 +8,8 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -19,8 +21,36 @@ import java.util.Calendar
  * (all of which go through LockCard.update). Covers today and tomorrow.
  */
 object Reminders {
-    private const val CHANNEL = "reminders"
     private const val PREFS = "reminders"
+    private const val QUIET = "alert_quiet"
+    private const val RING = "alert_ring"
+
+    /** settings.remindRing: off (default) = a silent heads-up notification; on = the phone's ringtone, repeating until opened. */
+    fun ringing(ctx: Context): Boolean = TodoStore.state(ctx)?.optJSONObject("settings")?.optBoolean("remindRing", false) ?: false
+
+    /** The channel for reminders and the end of a timer. Channels cannot change their sound, so there are two. */
+    fun alertChannel(ctx: Context): String {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        runCatching { nm.deleteNotificationChannel("reminders"); nm.deleteNotificationChannel("timer_done") } // the old ones with the default sound
+        if (nm.getNotificationChannel(QUIET) == null) nm.createNotificationChannel(
+            NotificationChannel(QUIET, Lang.t(ctx, "到点提醒（静音）", "Reminders (silent)"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = Lang.t(ctx, "到点只弹出通知，不出声", "Pops up on time, no sound"); setSound(null, null); enableVibration(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            })
+        if (nm.getNotificationChannel(RING) == null) nm.createNotificationChannel(
+            NotificationChannel(RING, Lang.t(ctx, "到点响铃", "Reminders (ringtone)"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = Lang.t(ctx, "用手机铃声响铃，直到点开", "Rings with your ringtone until opened")
+                val tone = RingtoneManager.getActualDefaultRingtoneUri(ctx, RingtoneManager.TYPE_RINGTONE) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                setSound(tone, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                enableVibration(true); vibrationPattern = longArrayOf(0, 500, 400, 500)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            })
+        return if (ringing(ctx)) RING else QUIET
+    }
+
+    /** Ringing reminders repeat their sound (like a call) until the notification is opened, finished or dismissed. */
+    fun finish(ctx: Context, builder: NotificationCompat.Builder): android.app.Notification =
+        builder.build().apply { if (ringing(ctx)) flags = flags or android.app.Notification.FLAG_INSISTENT }
 
     private fun intent(ctx: Context) = Intent(ctx, ReminderReceiver::class.java)
 
@@ -72,18 +102,14 @@ object Reminders {
         val tasks = s.optJSONArray("tasks") ?: return
         val open = (0 until tasks.length()).mapNotNull { tasks.optJSONObject(it) }.any { it.optString("id") == id && !it.optBoolean("done") }
         if (!open || !LockCard.notificationsAllowed(ctx)) return
-        val nm = ctx.getSystemService(NotificationManager::class.java)
-        if (nm.getNotificationChannel(CHANNEL) == null) nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, Lang.t(ctx, "到点提醒", "Reminders"), NotificationManager.IMPORTANCE_HIGH).apply {
-                description = Lang.t(ctx, "设了时间的待办到点提醒", "To-dos with a time ring on time"); enableVibration(true); lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-            })
+        val channel = alertChannel(ctx)
         val notifId = 2000 + (id.hashCode() and 0xFFFF)
         val done = PendingIntent.getBroadcast(
             ctx, notifId, Intent(ctx, CompleteReceiver::class.java).setAction(LockCard.ACTION_COMPLETE).putExtra("id", id).putExtra("notification", notifId),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val open2 = PendingIntent.getActivity(ctx, notifId, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        NotificationManagerCompat.from(ctx).notify(notifId, NotificationCompat.Builder(ctx, CHANNEL)
+        NotificationManagerCompat.from(ctx).notify(notifId, finish(ctx, NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(R.drawable.ic_stat_check)
             .setContentTitle(title)
             .setContentText(Lang.t(ctx, "$time 到了", "It's $time"))
@@ -92,9 +118,7 @@ object Reminders {
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build())
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)))
     }
 }
 

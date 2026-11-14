@@ -57,7 +57,7 @@ enum Reminders {
                 let content = UNMutableNotificationContent()
                 content.title = "⏰ \(time) \(task.title)"
                 content.body = L.t(doc.settings.english, "到点了。点“完成”直接勾掉。", "It's time. Tap “Done” to tick it off.")
-                content.sound = .default
+                content.sound = sound(ring: doc.settings.remindRing)
                 content.categoryIdentifier = reminderCategory
                 content.userInfo = ["id": task.id]
                 requests.append(UNNotificationRequest(identifier: "\(prefix)\(task.id)@\(DayKey.today(day, calendar: calendar))",
@@ -74,6 +74,9 @@ enum Reminders {
         return !times.isEmpty
     }
 
+    /// Silent by default (the banner still shows); with "到点响铃" the phone's ringtone plays.
+    static func sound(ring: Bool) -> UNNotificationSound? { ring ? .defaultRingtone : nil }
+
     /// The page's focus timer: `{"id","title","endsAt"}` while counting down, "" when stopped or paused.
     static func setTimer(json: String) {
         let center = UNUserNotificationCenter.current()
@@ -84,7 +87,7 @@ enum Reminders {
         let english = TodoRepository.read().settings.english
         content.title = L.t(english, "时间到：", "Time's up: ") + ((t["title"] as? String) ?? L.t(english, "专注", "Focus"))
         content.body = L.t(english, "这一段专注结束了。做完了就点“完成”。", "This focus session is over. Tap “Done” if you finished.")
-        content.sound = .default
+        content.sound = sound(ring: TodoRepository.read().settings.remindRing)
         content.categoryIdentifier = timerCategory
         content.userInfo = ["id": (t["id"] as? String) ?? ""]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: (endsAt - Date.nowMillis) / 1000, repeats: false)
