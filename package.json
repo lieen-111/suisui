@@ -21,6 +21,7 @@
     "test:v19": "node scripts/verify-v19.cjs",
     "test:v116": "node scripts/verify-v116.cjs",
     "test:v118": "node scripts/verify-v118.cjs",
+    "test:layout": "node scripts/verify-layout.cjs",
     "build:night": "python3 scripts/build-night-css.py",
     "test:pro": "node scripts/verify-pro.cjs"
   },

@@ -141,14 +141,14 @@
                 <span class="hero-tag"><i data-lucide="sparkles"></i>锁屏预览</span>
               </button>
               <div class="settings-tiles">
-                <button data-settings-page="look" style="--i:0"><span class="row-ico"><i data-lucide="palette"></i></span><span class="row-label">外观</span><span class="row-value" id="sum-look"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button data-settings-page="lock" id="tile-lock" style="--i:1"><span class="row-ico"><i data-lucide="lock-keyhole"></i></span><span class="row-label">锁屏</span><span class="row-value"><i class="state-dot"></i><span id="tile-lock-state"></span></span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button data-settings-page="list" style="--i:2"><span class="row-ico"><i data-lucide="layers"></i></span><span class="row-label">分组</span><span class="row-value" id="sum-list"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button data-settings-page="language" style="--i:3"><span class="row-ico"><i data-lucide="languages"></i></span><span class="row-label">语言 · Language</span><span class="row-value" id="sum-lang"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="look" style="--i:0"><span class="row-ico"><i data-lucide="palette"></i></span><span class="row-label">外观<small class="row-sub">主题、字体、完成动效</small></span><span class="row-value" id="sum-look"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="lock" id="tile-lock" style="--i:1"><span class="row-ico"><i data-lucide="lock-keyhole"></i></span><span class="row-label">锁屏<small class="row-sub">待办放到锁屏上、隐私</small></span><span class="row-value"><i class="state-dot"></i><span id="tile-lock-state"></span></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="list" style="--i:2"><span class="row-ico"><i data-lucide="layers"></i></span><span class="row-label">分组<small class="row-sub">工作、生活…和每天整理</small></span><span class="row-value" id="sum-list"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="language" style="--i:3"><span class="row-ico"><i data-lucide="languages"></i></span><span class="row-label">语言 · Language<small class="row-sub">简体中文 / English</small></span><span class="row-value" id="sum-lang"></span><i data-lucide="chevron-right" class="row-chev"></i></button>
               </div>
               <div class="settings-list" style="--i:4">
-                <button data-settings-page="data"><span class="row-ico"><i data-lucide="shield-check"></i></span><span class="row-label">数据</span><span class="row-value">仅本机</span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于</span><span class="row-value" id="sum-about">1.18.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button data-settings-page="data"><span class="row-ico"><i data-lucide="shield-check"></i></span><span class="row-label">数据<small class="row-sub">备份、导入，换手机用</small></span><span class="row-value">仅本机</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于<small class="row-sub">版本、隐私政策、反馈</small></span><span class="row-value" id="sum-about">1.18.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
               </div>
             </nav>
             <div class="settings-page" data-page="language" hidden>
@@ -164,14 +164,14 @@
             <div class="look-tabs" role="tablist" aria-label="外观分类"><button role="tab" data-look-tab="app" aria-selected="true">App 界面</button><button role="tab" data-look-tab="card" aria-selected="false">锁屏卡片</button><span class="look-tabs-pill" aria-hidden="true"></span></div>
             <div class="look-section" data-look="app">
             <h2 class="look-group" id="look-app-title">App 界面</h2>
-            <fieldset class="ui-styles"><legend>界面风格</legend>
+            <fieldset class="ui-styles"><legend>界面风格</legend><p class="section-hint">整个 App 的底色和质感。用了 Pro 主题时，以主题为准。</p>
               <div class="style-presets" role="group" aria-label="界面风格">
                 <button class="style-chip" data-ui-style="glass"><span class="style-demo glass" aria-hidden="true"><i></i><i></i><i></i></span><strong>玻璃</strong><small>壁纸铺底，通透</small></button>
                 <button class="style-chip" data-ui-style="paper"><span class="style-demo paper" aria-hidden="true"><b>04</b><i></i><i></i></span><strong>纸墨</strong><small>米白纸，大号日期</small></button>
                 <button class="style-chip" data-ui-style="night"><span class="style-demo night" aria-hidden="true"><b>4/8</b><i></i><i></i></span><strong>夜光</strong><small>深色，荧光色</small></button>
               </div>
             </fieldset>
-            <fieldset class="accent-settings"><legend>配色</legend>
+            <fieldset class="accent-settings"><legend>配色</legend><p class="section-hint">按钮、勾选圈和高亮用的颜色。</p>
               <div class="swatches" role="radiogroup" aria-label="App 配色">
                 <label class="swatch ink" title="墨黑"><input type="radio" name="accent" value="ink" aria-label="墨黑"><i data-lucide="check"></i><span>墨黑</span></label>
                 <label class="swatch orange" title="暖橙"><input type="radio" name="accent" value="orange" aria-label="暖橙"><i data-lucide="check"></i><span>暖橙</span></label>
@@ -203,7 +203,7 @@
             </div>
             <div class="look-section" data-look="card">
             <h2 class="look-group" id="look-card-title">锁屏卡片</h2>
-            <fieldset class="card-styles"><legend>卡片样式</legend>
+            <fieldset class="card-styles"><legend>卡片样式</legend><p class="section-hint">锁屏上那张待办卡片的底色。</p>
               <div class="theme-presets" role="group" aria-label="锁屏卡片样式">
                 <button class="theme-chip" data-theme-preset="ink" style="--chip:#1c1c1e"><span></span>墨黑</button>
                 <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
@@ -212,7 +212,7 @@
                 <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
               </div>
             </fieldset>
-            <fieldset><legend>锁屏显示条数</legend><div class="segmented" role="group" aria-label="锁屏清单密度">
+            <fieldset><legend>锁屏显示条数</legend><p class="section-hint">卡片里一眼看到几条，其余的上下滑动。</p><div class="segmented" role="group" aria-label="锁屏清单密度">
               <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
             </div></fieldset>
             <fieldset id="wallpaper-fieldset"><legend id="wallpaper-legend">预览壁纸</legend><p class="setting-note" id="wallpaper-note"></p>
@@ -251,27 +251,29 @@
             </div>
             </div>
             <div class="settings-page" data-page="lock" hidden>
-            <fieldset><legend>锁屏提醒</legend>
-              <label class="setting-row" id="notify-row" for="notify-toggle"><span>离开应用时，把待办放到锁屏通知</span><input type="checkbox" id="notify-toggle" class="switch"></label>
+            <fieldset id="android-lock-settings" hidden><legend>锁屏上显示待办</legend>
+              <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示待办（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
+              <p class="setting-note" id="lockscreen-status"></p>
+              <p class="setting-note lock-stats" id="lock-stats" hidden></p>
+              <button class="secondary-button inline" id="open-android-setup"><i data-lucide="shield-check"></i>检查锁屏权限</button>
+            </fieldset>
+            <fieldset id="ios-lock-settings" hidden><legend>锁屏上显示待办</legend>
+              <label class="setting-row" for="live-toggle"><span>实时活动（锁屏和灵动岛）</span><input type="checkbox" id="live-toggle" class="switch"></label>
+              <p class="setting-note" id="live-status" role="status"></p>
+              <p class="setting-note">也可以加锁屏小组件：长按锁屏 → 自定 → 锁定屏幕 → 添加小组件 → 碎碎清单。</p>
+              <button class="secondary-button inline" id="open-ios-setup"><i data-lucide="lock"></i>一步步设置锁屏</button>
+              <label class="setting-row static"><span>通知（响铃提醒、计时结束）</span></label>
+              <p class="setting-note" id="ios-notify-status"></p>
+              <button class="secondary-button inline" id="ios-notify-button" hidden><i data-lucide="bell-ring"></i>允许通知</button>
+            </fieldset>
+            <fieldset id="notify-section"><legend>通知栏</legend>
+              <label class="setting-row" id="notify-row" for="notify-toggle"><span>离开应用时，把待办放到通知栏</span><input type="checkbox" id="notify-toggle" class="switch"></label>
               <p class="setting-note" id="notify-status" role="status"></p>
-              <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新锁屏通知</button>
+              <button class="secondary-button inline" id="notify-test" hidden><i data-lucide="bell-ring"></i>立即刷新通知</button>
+            </fieldset>
+            <fieldset><legend>隐私</legend>
               <label class="setting-row" for="privacy-toggle"><span>锁屏隐藏待办内容</span><input type="checkbox" id="privacy-toggle" class="switch"></label>
-              <p class="setting-note">开启后，锁屏上只显示“还有几件”，内容要解锁后才能看到和勾选。别人拿到你的手机时更安心。</p>
-              <div id="ios-lock-settings" hidden>
-                <label class="setting-row" for="live-toggle"><span>在锁屏显示今天的待办（实时活动）</span><input type="checkbox" id="live-toggle" class="switch"></label>
-                <p class="setting-note" id="live-status" role="status"></p>
-                <p class="setting-note">还可以把小组件放到锁屏：长按锁屏 → 自定 → 锁定屏幕 → 添加小组件 → 碎碎清单。点圆圈直接完成，不用解锁进应用。</p>
-                <label class="setting-row static"><span>到点提醒与计时通知</span></label>
-                <p class="setting-note" id="ios-notify-status"></p>
-                <button class="secondary-button inline" id="ios-notify-button" hidden><i data-lucide="bell-ring"></i>允许通知</button>
-                <button class="secondary-button inline" id="open-ios-setup"><i data-lucide="lock"></i>锁屏设置步骤</button>
-              </div>
-              <div class="android-only" id="android-lock-settings" hidden>
-                <label class="setting-row" for="lockscreen-toggle"><span>亮屏直接显示碎碎清单锁屏（推荐）</span><input type="checkbox" id="lockscreen-toggle" class="switch"></label>
-                <p class="setting-note" id="lockscreen-status"></p>
-                <p class="setting-note lock-stats" id="lock-stats" hidden></p>
-                <button class="secondary-button inline" id="open-android-setup"><i data-lucide="shield-check"></i>检查锁屏权限</button>
-              </div>
+              <p class="setting-note">打开后锁屏只显示“还有几件”，解锁后才看得到内容、才能勾选。</p>
             </fieldset>
             </div>
             <div class="settings-page" data-page="list" hidden>

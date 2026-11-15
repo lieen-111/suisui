@@ -210,6 +210,28 @@ let browser;
     await context.close();
   }
 
+  /* Choosing a finishing effect plays it on a sample row first; every settings row says what is inside */
+  {
+    const { context, page } = await open({ proTheme: 'night' }, { proFree: true, lookTabs: true });
+    await page.locator('.nav-button[data-view=settings]').click();
+    const subs = await page.locator('.settings-home .row-sub').allTextContents();
+    assert.equal(subs.length, 6, 'Each settings row has a one-line description');
+    assert.ok(subs.every(t => t.trim().length > 3));
+    await page.locator('[data-settings-page=look]').first().click(); await page.waitForTimeout(400);
+    await page.locator('#fx-stage').scrollIntoViewIfNeeded();
+    await page.locator('[data-pro-effect-pick=ink]').click();
+    await page.waitForTimeout(60);
+    assert.equal(await page.locator('#fx-sample').evaluate(e => e.classList.contains('is-done')), true, 'The sample row is ticked');
+    assert.ok(await page.locator('body > canvas').count() >= 1, 'The effect plays on the sample row');
+    assert.equal(await page.evaluate(() => window.suisui.pro.state.settings.proEffect), 'ink');
+    await page.waitForTimeout(1600);
+    assert.equal(await page.locator('#fx-sample-text').evaluate(e => e.style.visibility), '', 'The sample comes back for the next try');
+    await page.locator('#fx-replay').click(); await page.waitForTimeout(60);
+    assert.equal(await page.locator('#fx-sample').evaluate(e => e.classList.contains('is-done')), true, '再看一次 plays it again');
+    assert.ok(await page.locator('#settings-panel .section-hint').count() >= 4, 'Look sections explain themselves');
+    await context.close();
+  }
+
   assert.deepEqual(errors, []);
   console.log('PASS: yearly review (12 months, previous year, back to week), time on a task is silent by default, 响铃提醒 per task (add/edit, only those remind), no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();

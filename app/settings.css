@@ -134,3 +134,25 @@ html:is([data-style=night],[data-pro-skin=night]) #settings-panel :is(.style-chi
 #settings-panel .pro-wall-row .secondary-button{border:0!important;box-shadow:none!important;background:var(--s-tint)!important;color:var(--s-ink)!important;border-radius:10px!important;font-size:13px!important;font-weight:600!important}
 html:not([data-pro-skin]) #settings-panel #tile-lock.is-on .row-ico{color:var(--tile-ink);background:var(--tile-ico)}
 #settings-panel [hidden]{display:none!important}
+
+/* ---------- 完成动效: a little stage that plays the chosen effect ---------- */
+#settings-panel #pro-effects-inline .ag-row{align-items:baseline}
+#settings-panel .fx-hint{font-size:12px;color:var(--s-muted)}
+#settings-panel .fx-stage{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 4px;padding:14px 14px 14px 16px;border-radius:14px;background:var(--s-tint);box-shadow:inset 0 0 0 1px var(--s-hair)}
+#settings-panel .fx-sample{display:flex;align-items:center;gap:12px;min-width:0;font-size:16px;font-weight:500;color:var(--s-ink)}
+#settings-panel .fx-sample-check{position:relative;flex:none;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.6px color-mix(in srgb,var(--s-ink) 45%,transparent);transition:background .2s ease,box-shadow .2s ease}
+#settings-panel .fx-sample-check::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 12.5l3.6 3.6 7.4-8'/%3E%3C/svg%3E") center/14px no-repeat;opacity:0;transform:scale(.5);transition:opacity .15s,transform .3s cubic-bezier(.3,1.6,.5,1)}
+#settings-panel .fx-sample.is-done .fx-sample-check{background:var(--s-ink);box-shadow:none;animation:fx-check-pop .42s cubic-bezier(.3,1.6,.5,1)}
+html:is([data-style=night],[data-pro-skin=night]) #settings-panel .fx-sample-check::after{filter:invert(1)}
+#settings-panel .fx-sample.is-done .fx-sample-check::after{opacity:1;transform:none}
+#settings-panel .fx-sample.is-back .fx-sample-text{animation:fx-back .35s ease both}
+@keyframes fx-check-pop{0%{transform:scale(.7)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes fx-back{from{opacity:0;transform:translateY(4px)}}
+#settings-panel .fx-replay{display:inline-flex;align-items:center;gap:6px;flex:none;padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--s-ink) 8%,transparent);color:var(--s-ink);font-size:13px;font-weight:600;border:0}
+#settings-panel .fx-replay svg{width:14px;height:14px}
+
+/* ---------- settings home: every row says what is inside ---------- */
+#settings-panel .settings-home :is(.settings-tiles,.settings-list)>button{min-height:62px!important}
+#settings-panel .settings-home .row-label{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}
+#settings-panel .settings-home .row-sub{font-size:12px;font-weight:400;color:var(--s-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
+#settings-panel .section-hint{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--s-muted)}

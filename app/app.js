@@ -1025,7 +1025,7 @@
   function iosStatus() { try { return IOS_APP.status || {}; } catch { return {}; } }
   function renderIOSLock() {
     const st = iosStatus();
-    $('notify-row').hidden = true; $('notify-status').hidden = true; $('notify-test').hidden = true;
+    $('notify-row').hidden = true; $('notify-status').hidden = true; $('notify-test').hidden = true; $('notify-section').hidden = true; // the iPhone app keeps to-dos on the Lock Screen through the Live Activity instead
     $('ios-lock-settings').hidden = false;
     $('live-toggle').checked = !!st.liveWanted;
     $('live-toggle').disabled = st.liveAllowed === false;

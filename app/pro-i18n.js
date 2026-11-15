@@ -61,7 +61,7 @@
     '件今天完成': 'done today', '件今天完成，第一片还在路上': 'done today, the first shard is on its way', '已解锁 Pro，谢谢你。': 'Pro is unlocked. Thank you.',
     '测试版 · 全部免费': 'Test build · all free', '免费测试': 'Free test', '测试版：付款是模拟的': 'Test build: payment is simulated',
     '测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. Buying below is only a demo; nothing is charged.',
-    '测试版 · 全部已解锁': 'Test build · everything unlocked', '看付款页': 'See checkout', '测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. The checkout is only a demo; nothing is charged.',
+    '测试版 · 全部已解锁': 'Test build · everything unlocked', '每套主题都有自己的配色、完成动效，和全部做完时的那幅画。': 'Each theme has its own colours, finishing effect and the picture you get when everything is done.', '看付款页': 'See checkout', '测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. The checkout is only a demo; nothing is charged.',
     // iPhone first-run setup (base app, kept here with the other additions)
     '让待办出现在锁屏': 'Put your to-dos on the Lock Screen', 'iPhone 的锁屏上有两种碎碎清单：一直在的小组件，和有待办时出现的大卡片。亮屏后点圆圈就能完成。': 'There are two ways on the iPhone Lock Screen: a widget that is always there, and a large card that appears when you have to-dos. Tap a circle to finish.',
     '到点提醒、计时结束会通知你，通知里能直接点“完成”。': 'Reminders and timers notify you; tap “Done” right in the notification.', '允许': 'Allow', '打开': 'Turn on', '去设置': 'Open Settings', '好了': 'Done',

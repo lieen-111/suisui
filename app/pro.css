@@ -974,3 +974,27 @@ html[data-pro-skin] .fx-check svg{stroke:var(--fx-tick)}
 html[data-pro-skin] .fx-ring{box-shadow:0 0 0 1.5px var(--fx-ring)}
 html[data-pro-skin] .fx-spark{background:var(--fx-ring)}
 html[data-pro-skin=night] .fx-spark{box-shadow:0 0 6px #9fb4ff}
+
+/* ================= 1.18 Pro showcase: one card per theme — its screen, its end-of-day picture, its effect ================= */
+.pro-showcase{gap:14px}
+.pro-tcard{flex:0 0 min(300px,78vw)!important;display:flex;flex-direction:column;padding:10px!important;border-radius:22px!important}
+.pro-tcard.active{box-shadow:inset 0 0 0 1.5px var(--pro-frost)!important}
+.pro-tcard-shots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pro-tcard.is-auto .pro-tcard-shots{grid-template-columns:1fr}
+.pro-tcard-shots figure{margin:0;min-width:0}
+.pro-tcard-shots :is(.pro-mock,.pro-thumb,canvas){display:block;width:100%!important;height:168px!important;border-radius:14px;overflow:hidden}
+.pro-tcard-shots figcaption{margin:6px 2px 0;font-size:11px;color:var(--pro-muted);letter-spacing:.02em}
+.pro-tcard-body{padding:12px 4px 0;flex:1}
+.pro-tcard-body h3{margin:0!important;font-size:17px!important;font-weight:650!important}
+.pro-tcard-body p{margin:4px 0 0!important;font-size:13px!important;line-height:1.5;color:#c3c3c9!important}
+.pro-tcard-body small{display:block;margin:8px 0 0!important}
+.pro-tcard-fx{display:flex;align-items:center;gap:9px;margin-top:12px;padding:10px 12px;border-radius:12px;background:#ffffff0d}
+.pro-tcard-fx-check{flex:none;width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1.4px #ffffff70;transition:background .2s,box-shadow .2s}
+.pro-tcard-fx.done .pro-tcard-fx-check{background:var(--pro-frost);box-shadow:none;animation:fx-check-pop .4s cubic-bezier(.3,1.6,.5,1)}
+.pro-tcard-fx-text{font-size:12.5px;color:#e6e6ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pro-tcard-actions{display:flex;gap:8px;padding:12px 4px 2px}
+.pro-tcard-actions button{margin:0!important;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px}
+.pro-tcard-actions .pro-tcard-play{background:transparent!important;box-shadow:inset 0 0 0 1px #ffffff2e}
+.pro-tcard-actions svg{width:14px;height:14px}
+.pro-tcard.active [data-pro-theme]{background:var(--pro-frost)!important;color:#0b0b0c!important}
+@keyframes fx-check-pop{0%{transform:scale(.7)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
