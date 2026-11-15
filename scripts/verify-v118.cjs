@@ -69,6 +69,7 @@ let browser;
     await page.locator('#fab-add').click();
     assert.equal(await page.locator('#add-ring-row').isHidden(), true, 'No ring choice until a time is picked');
     await page.locator('#task-input').fill('交周报');
+    await page.locator('[data-add-panel=time]').click();
     await page.locator('[data-add-time="18:00"]').click();
     assert.equal(await page.locator('#add-ring-row').isVisible(), true, 'Picking a time shows 只显示时间 / 响铃提醒');
     assert.equal(await page.locator('[data-add-ring="0"]').getAttribute('aria-pressed'), 'true', 'Default: only show the time');
@@ -81,6 +82,7 @@ let browser;
 
     if (await page.locator('#fab-add').isVisible()) await page.locator('#fab-add').click(); // the sheet may stay open for the next one
     await page.locator('#task-input').fill('吃药');
+    await page.locator('[data-add-panel=time]').click();
     await page.locator('[data-add-time="21:00"]').click();
     await page.locator('[data-add-ring="1"]').click();
     await page.locator('#add-form').evaluate(f => f.requestSubmit());
@@ -229,6 +231,37 @@ let browser;
     await page.locator('#fx-replay').click(); await page.waitForTimeout(60);
     assert.equal(await page.locator('#fx-sample').evaluate(e => e.classList.contains('is-done')), true, '再看一次 plays it again');
     assert.ok(await page.locator('#settings-panel .section-hint').count() >= 4, 'Look sections explain themselves');
+    await context.close();
+  }
+
+  /* Pro intro: tapping a theme opens a showcase of the real app in that theme (home, lock, finishing, the day's picture),
+     which never touches the saved list; theme names, icon set and the corner buttons */
+  {
+    const { context, page } = await open({}, { proFree: true });
+    const before = await page.evaluate(k => localStorage.getItem(k), STORE);
+    await page.evaluate(() => window.SuiSuiPro.open());
+    const names = await page.locator('.pro-tcard:not(.is-auto) h3').allTextContents();
+    assert.deepEqual(names, ['琉璃', '素笺', '星河', '洇色', '套色', '小筑', '绒绒'], 'The seven themes have their new names');
+    await page.locator('[data-pro-stage=night]').first().click();
+    assert.equal(await page.locator('#pro-stage').isVisible(), true);
+    assert.equal(await page.locator('.pro-stage-name b').textContent(), '星河');
+    assert.equal(await page.locator('.pro-stage-frame').count(), 4, '主页 · 锁屏 · 完成的那一下 · 全部做完');
+    const home = page.frameLocator('.pro-stage-frame[data-frame=home] iframe');
+    await home.locator('#task-list .task-row').first().waitFor();
+    assert.equal(await home.locator('html').getAttribute('data-pro-skin'), 'night', 'The frame shows the real app in 星河');
+    await page.locator('[data-stage-go="1"]').click();
+    const lock = page.frameLocator('.pro-stage-frame[data-frame=lock] iframe');
+    await lock.locator('body.lock-mode').waitFor({ timeout: 8000 });
+    assert.equal(await page.evaluate(k => localStorage.getItem(k), STORE), before, 'The showcase never writes the user\'s list');
+    await page.evaluate(() => window.suisuiBack());
+    assert.equal(await page.locator('#pro-stage').isVisible(), false, 'Back closes the showcase first');
+    await page.evaluate(() => window.suisuiBack());
+    // icons and corner buttons
+    assert.ok(await page.locator('svg.ph').count() > 5, 'Icons come from the new set');
+    await page.locator('.nav-button[data-view=settings]').click();
+    await page.locator('[data-settings-page=look]').first().click();
+    const corner = await page.evaluate(() => { const b = document.querySelector('.settings-top .settings-back'), d = document.querySelector('.settings-top .nav-button[data-view=tasks]'); const rb = b.getBoundingClientRect(), rd = d.getBoundingClientRect(); return [Math.round(rb.width), Math.round(rb.height), Math.round(rd.width), Math.round(rd.height), getComputedStyle(b.querySelector('span')).display]; });
+    assert.deepEqual(corner, [40, 40, 40, 40, 'none'], 'Back and done are 40px circles without words');
     await context.close();
   }
 

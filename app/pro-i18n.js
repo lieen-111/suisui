@@ -5,7 +5,7 @@
   'use strict';
   const I = window.SuiSuiI18n; if (!I || !I.dictionary) return;
   const NAME = { 晨: 'Dawn', 昼: 'Day', 夜: 'Night', 晕: 'Bloom', 印: 'Riso', 屋: 'Room', 毛: 'Fluff' };
-  const FULL = { '晨 · 玻璃': 'Dawn · Glass', '昼 · 纸': 'Day · Paper', '夜 · 光': 'Night · Stars', '晕 · 彩墨': 'Bloom · Ink wash', '印 · 孔版': 'Riso · Print', '屋 · 线描': 'Room · Line art', '毛 · 团': 'Fluff · Furball' };
+  const FULL = { '琉璃': 'Prism', '素笺': 'Washi', '星河': 'Nocturne', '洇色': 'Aquarelle', '套色': 'Overprint', '小筑': 'Haven', '绒绒': 'Velvet', '随光': 'Daylight' };
   const WEEK = { 日: 'Sun', 一: 'Mon', 二: 'Tue', 三: 'Wed', 四: 'Thu', 五: 'Fri', 六: 'Sat' };
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const full = s => FULL[s] || s;
@@ -61,7 +61,7 @@
     '件今天完成': 'done today', '件今天完成，第一片还在路上': 'done today, the first shard is on its way', '已解锁 Pro，谢谢你。': 'Pro is unlocked. Thank you.',
     '测试版 · 全部免费': 'Test build · all free', '免费测试': 'Free test', '测试版：付款是模拟的': 'Test build: payment is simulated',
     '测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. Buying below is only a demo; nothing is charged.',
-    '测试版 · 全部已解锁': 'Test build · everything unlocked', '每套主题都有自己的配色、完成动效，和全部做完时的那幅画。': 'Each theme has its own colours, finishing effect and the picture you get when everything is done.', '看付款页': 'See checkout', '测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. The checkout is only a demo; nothing is charged.',
+    '测试版 · 全部已解锁': 'Test build · everything unlocked', '一只玻璃杯，做完一件，倒进一层颜色': 'A glass: each thing done pours in one layer of colour', '稿纸一格写一字，做完盖一枚红印': 'Manuscript paper, one character per thing, a red seal when done', '每件事是一颗星，做完连成今天的星座': 'Every thing is a star; done ones join into today\'s constellation', '每做完一件，滴一滴颜色，开成一朵花': 'Each thing done drops a colour that opens into a flower', '每做完一件，印上一幅双色小画': 'Each thing done prints a little two-colour picture', '每做完一件，小屋里添一件家具': 'Each thing done adds a piece of furniture to the little room', '每做完一件多长一层绒毛，全做完它睁眼': 'Each thing done grows a layer of fur; all done, it opens its eyes', '随光': 'Daylight', '早上 5 点用琉璃，10 点用素笺，晚上 6 点用星河。': 'Prism from 5 am, Washi from 10, Nocturne from 6 pm.', '每套主题都有自己的配色、完成动效，和全部做完时的那幅画。': 'Each theme has its own colours, finishing effect and the picture you get when everything is done.', '看付款页': 'See checkout', '测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。': 'Test build: all of Pro is free and already on. The checkout is only a demo; nothing is charged.',
     // iPhone first-run setup (base app, kept here with the other additions)
     '让待办出现在锁屏': 'Put your to-dos on the Lock Screen', 'iPhone 的锁屏上有两种碎碎清单：一直在的小组件，和有待办时出现的大卡片。亮屏后点圆圈就能完成。': 'There are two ways on the iPhone Lock Screen: a widget that is always there, and a large card that appears when you have to-dos. Tap a circle to finish.',
     '到点提醒、计时结束会通知你，通知里能直接点“完成”。': 'Reminders and timers notify you; tap “Done” right in the notification.', '允许': 'Allow', '打开': 'Turn on', '去设置': 'Open Settings', '好了': 'Done',
@@ -103,8 +103,8 @@
     [/^免费试用 (\d+) 天$/, (_, n) => `Try free for ${n} days`],
     [/^正式版 (¥[\d.]+)（原价 (¥[\d.]+)），一次买断$/, (_, p, l) => `Full version ${p} (was ${l}), one-time purchase`],
     [/^已开始 (\d+) 天免费试用，Pro 全部可用$/, (_, n) => `Your ${n}-day free trial has started — all of Pro is on`],
-    [/^跟随时间 · (.)$/, (_, a) => `Follow the time · ${NAME[a] || a}`], [/^现在是(.+)$/, (_, a) => `Now ${NAME[a] || full(a)}`],
-    [/^正在用「(.+)」$/, (_, a) => `Using ${full(a).replace(/^跟随时间 · (.)$/, (x, y) => `Follow the time · ${NAME[y]}`)}`],
+    [/^随光 · (.+)$/, (_, a) => `Daylight · ${FULL[a] || a}`], [/^现在是(.+)$/, (_, a) => `Now ${NAME[a] || full(a)}`],
+    [/^正在用「(.+)」$/, (_, a) => `Using ${full(a).replace(/^随光 · (.+)$/, (x, y) => `Daylight · ${FULL[y] || y}`)}`],
     [/^已换上「(.+)」$/, (_, a) => `Now using ${full(a)}`], [/^正在试穿「(.+)」$/, (_, a) => `Trying on ${full(a)}`], [/^用「(.+)」$/, (_, a) => `Use ${full(a)}`],
     [/^「(.+)」专属壁纸$/, (_, a) => `${full(a)} wallpaper`], [/^已添加倒数日「(.+)」$/, (_, a) => `Countdown added: ${a}`],
     [/^还有 (\d+) 天$/, (_, n) => `${n} days to go`], [/^已过 (\d+) 天$/, (_, n) => `${n} days ago`],

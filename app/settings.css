@@ -1,3 +1,9 @@
+/* 1.18: one bundled face for the app's own words (titles, labels, buttons), the same on every phone.
+   Noto Sans CJK SC subset (vendor/fonts/suisui-sans, OFL); Latin comes from Geist. Task text keeps the phone's font. */
+@font-face{font-family:'SuiSui Sans';font-weight:500;font-display:swap;src:url(vendor/fonts/suisui-sans/noto-sans-sc-Medium.woff2) format('woff2')}
+@font-face{font-family:'SuiSui Sans';font-weight:700;font-display:swap;src:url(vendor/fonts/suisui-sans/noto-sans-sc-Bold.woff2) format('woff2')}
+:root{--ui-face:Geist,'SuiSui Sans',-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif}
+
 /* ================= 1.18 settings system =================
    The user found the settings pages messy: unclear levels, cheap-looking corner titles, tiles that grow or pop
    an outline when chosen. One quiet system for every theme:
@@ -18,14 +24,14 @@
 
 /* ---------- top bar: back · title · 完成, and the large 设置 ---------- */
 #settings-panel .settings-top :is(h1,.settings-back,.settings-back span,.nav-button[data-view=tasks]),
-#review-panel .review-top :is(h1,.review-back,.review-back span){font-family:Geist,-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","MiSans","Noto Sans CJK SC",sans-serif!important;text-shadow:none!important;font-style:normal!important}
+#review-panel .review-top :is(h1,.review-back,.review-back span){font-family:var(--ui-face)!important;text-shadow:none!important;font-style:normal!important}
 body[data-settings-page=index] #settings-panel .settings-top h1{font-size:32px!important;font-weight:700!important;letter-spacing:-.6px!important;line-height:1.15!important;color:var(--s-ink)!important}
 body:not([data-settings-page=index]) #settings-panel .settings-top h1,#review-panel .review-top h1{font-size:17px!important;font-weight:600!important;letter-spacing:0!important;color:var(--s-ink)!important}
 #settings-panel .settings-back,#settings-panel .settings-back span,#review-panel .review-back,#review-panel .review-back span{font-size:17px!important;font-weight:400!important;letter-spacing:0!important;color:var(--s-act)!important}
 #settings-panel .settings-top .nav-button[data-view=tasks]{font-size:17px!important;font-weight:600!important;letter-spacing:0!important;color:var(--s-act)!important;background:none!important;box-shadow:none!important;border:0!important}
 
 /* ---------- sections: small muted label above one card ---------- */
-#settings-panel .settings-page legend,#settings-panel .settings-page .ag-title,#settings-panel .look-group{font-family:Geist,-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:var(--s-muted)!important;text-transform:none!important;text-shadow:none!important}
+#settings-panel .settings-page legend,#settings-panel .settings-page .ag-title,#settings-panel .look-group{font-family:var(--ui-face)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:var(--s-muted)!important;text-transform:none!important;text-shadow:none!important}
 #settings-panel .settings-page fieldset{margin-top:38px}
 #settings-panel .settings-page .look-tabs+.look-section>fieldset:first-of-type,#settings-panel .settings-page .look-tabs+.look-section>.look-group+fieldset{margin-top:34px}
 /* the tabs already say which half you are in */
@@ -156,3 +162,85 @@ html:is([data-style=night],[data-pro-skin=night]) #settings-panel .fx-sample-che
 #settings-panel .settings-home .row-label{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}
 #settings-panel .settings-home .row-sub{font-size:12px;font-weight:400;color:var(--s-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
 #settings-panel .section-hint{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--s-muted)}
+
+/* ================= 1.18 icons: Phosphor, filled outlines — strokes off ================= */
+svg.ph{stroke:none!important;stroke-width:0!important}
+
+/* ================= 1.18 add sheet: type and send; one row of value pills, one option row at a time ================= */
+.add-form .add-pills{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:12px -2px 2px;padding:2px}
+.add-form .add-pills::-webkit-scrollbar{display:none}
+.add-pill{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border:0;border-radius:11px;background:color-mix(in srgb,var(--ink,#1d1d1f) 6%,transparent);color:var(--muted,#6e6e73);font:500 13.5px/1 var(--ui-face);transition:background .18s ease,color .18s ease}
+.add-pill svg{width:16px;height:16px}
+.add-pill .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.add-pill.is-set{background:var(--ink,#1d1d1f);color:#fff}
+.add-pill.open{box-shadow:inset 0 0 0 1.5px var(--ink,#1d1d1f)}
+.add-pill.is-set.open{box-shadow:inset 0 0 0 1.5px var(--ink,#1d1d1f),inset 0 0 0 3px #fff}
+html:is([data-style=night],[data-pro-skin=night]) .add-pill.is-set{background:#f2f2f4;color:#0b0b0c}
+.add-form .add-options .add-row{display:none!important}
+.add-form[data-open=when] .add-row[data-row=when],.add-form[data-open=time] .add-row[data-row=time]:not([hidden]),.add-form[data-open=repeat] .add-row[data-row=repeat],.add-form[data-open=duration] .add-row[data-row=duration],.add-form[data-open=group] .add-row[data-row=group]{display:flex!important;animation:add-row-in .32s cubic-bezier(.32,.72,0,1) both}
+.add-form .add-row .add-label{display:none}
+.add-form .add-options{margin-top:4px}
+@keyframes add-row-in{from{opacity:0;transform:translateY(-4px)}}
+
+/* ================= 1.18 home: fewer things competing — one capsule up top, text tabs, a bar to write in ================= */
+@media(max-width:760px){
+  /* search · review · settings in one glass capsule */
+  #header-actions{display:flex;align-items:center;gap:0;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--surface,#fff) 62%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 0 0 .5px color-mix(in srgb,var(--ink,#1d1d1f) 10%,transparent),0 6px 18px -10px #0003}
+  #header-actions>:is(button,a){width:38px!important;height:38px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:50%!important;background:none!important;box-shadow:none!important;border:0!important;display:grid!important;place-items:center;color:var(--ink,#1d1d1f)!important}
+  #header-actions>:is(button,a) span,#header-actions .review-entry{font-size:0!important}
+  #header-actions svg{width:20px!important;height:20px!important}
+  html:is([data-style=night],[data-pro-skin=night]) #header-actions{background:#ffffff14;box-shadow:0 0 0 .5px #ffffff22}
+  html:is([data-style=night],[data-pro-skin=night]) #header-actions>:is(button,a){color:#f2f2f4!important}
+
+  /* groups as quiet text tabs: the chosen one is ink, the rest muted, a short bar under it */
+  #filter-tabs{gap:20px!important;border:0!important;margin:2px 0 14px!important;padding:0 2px!important;overflow-x:auto;scrollbar-width:none;background:none!important;box-shadow:none!important}
+  #filter-tabs::-webkit-scrollbar{display:none}
+  #filter-tabs button{flex:none;position:relative;height:34px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--muted,#6e6e73)!important;font:500 15px/1 var(--ui-face)!important;gap:5px!important}
+  #filter-tabs button>span:last-child{font-size:11.5px!important;opacity:.7;font-weight:500!important;background:none!important;padding:0!important;color:inherit!important}
+  #filter-tabs button .dot{width:6px!important;height:6px!important}
+  #filter-tabs button.active{color:var(--ink,#1d1d1f)!important;font-weight:650!important}
+  #filter-tabs button.active::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:2px;border-radius:2px;background:currentColor}
+  #filter-tabs button svg{width:15px!important;height:15px!important}
+  html:is([data-style=night],[data-pro-skin=night]) #filter-tabs button.active{color:#f2f2f4!important}
+
+  /* the round + becomes a bar along the bottom that reads as “write here” */
+  body[data-view=tasks]:not(.adding) #fab-add#fab-add{left:16px!important;right:16px!important;width:auto!important;height:54px!important;border-radius:18px!important;display:flex!important;align-items:center;justify-content:flex-end;padding:0 7px 0 18px!important;background:color-mix(in srgb,var(--surface,#fff) 82%,transparent)!important;-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 0 0 .5px color-mix(in srgb,var(--ink,#1d1d1f) 12%,transparent),0 14px 30px -14px #0004!important;color:var(--ink,#1d1d1f)!important;transform:none}
+  body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{content:attr(data-hint);flex:1;text-align:left;font:400 15.5px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{width:40px!important;height:40px!important;padding:11px;border-radius:13px;background:var(--accent-fill,var(--accent,#1d1d1f));color:var(--on-accent,#fff)!important;box-sizing:border-box}
+  html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add{background:#ffffff14!important;box-shadow:0 0 0 .5px #ffffff26!important}
+  html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#0b0b0c}
+}
+
+/* ================= 1.18 corner buttons: no words — a glass circle with ‹ to go back, a filled circle with ✓ for 完成 ================= */
+#settings-panel .settings-top .settings-back:not([hidden]),#review-panel .review-back:not([hidden]){width:40px!important;height:40px!important;min-width:0!important;min-height:0!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center;background:color-mix(in srgb,var(--surface,#fff) 70%,transparent)!important;-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);box-shadow:0 0 0 .5px color-mix(in srgb,var(--ink,#1d1d1f) 14%,transparent),0 4px 14px -8px #0003!important;border:0!important;color:var(--ink,#1d1d1f)!important}
+#settings-panel .settings-top .settings-back span,#review-panel .review-back span{display:none!important}
+#settings-panel .settings-top .settings-back svg,#review-panel .review-back svg{width:20px!important;height:20px!important;margin:0!important}
+#settings-panel .settings-top .nav-button[data-view=tasks]{width:40px!important;height:40px!important;min-width:0!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center;font-size:0!important;color:transparent!important;background:var(--ink,#1d1d1f)!important;box-shadow:0 6px 16px -8px #0006!important}
+#settings-panel .settings-top .nav-button[data-view=tasks] :is(svg,span){display:none!important}
+#settings-panel .settings-top .nav-button[data-view=tasks]::after{content:"";width:18px;height:18px;background:#fff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z'/%3E%3C/svg%3E") center/contain no-repeat}
+html:is([data-style=night],[data-pro-skin=night]) #settings-panel .settings-top .nav-button[data-view=tasks]{background:#f2f2f4!important}
+html:is([data-style=night],[data-pro-skin=night]) #settings-panel .settings-top .nav-button[data-view=tasks]::after{background:#0b0b0c}
+html:is([data-style=night],[data-pro-skin=night]) :is(#settings-panel .settings-top .settings-back,#review-panel .review-back){background:#ffffff14!important;box-shadow:0 0 0 .5px #ffffff26!important;color:#f2f2f4!important}
+/* titles: the bundled face, calm weights */
+body[data-settings-page=index] #settings-panel .settings-top h1{font-weight:700!important;font-size:30px!important;letter-spacing:-.2px!important}
+body:not([data-settings-page=index]) #settings-panel .settings-top h1{font-weight:500!important;font-size:17px!important;letter-spacing:.06em!important}
+#tasks-panel .today-top h1,#review-panel h1{font-family:var(--ui-face)!important}
+#settings-panel .settings-page legend,#settings-panel .settings-home .row-label,#settings-panel .setting-row>span,.add-pill,#filter-tabs button{font-family:var(--ui-face)!important}
+body[data-settings-page=index] #settings-panel .settings-top .settings-back{display:none!important}
+/* the bar is the same in every theme; the theme only colours its + (themed buttons' decorations step aside) */
+@media(max-width:760px){
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add{rotate:0deg!important;border-radius:18px!important;width:auto!important;height:54px!important;overflow:visible!important}
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add::after{display:none!important}
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{-webkit-mask:none!important;mask:none!important;content:attr(data-hint)!important;position:static!important;inset:auto!important;rotate:0deg!important;width:auto!important;height:auto!important;border-radius:0!important;background:none!important;box-shadow:none!important;animation:none!important;opacity:1!important;flex:1;text-align:left;font:400 15.5px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;filter:none!important;transform:none!important}
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{opacity:1!important;margin:0!important;position:static!important;color:#fff!important;transform:none!important;translate:none!important}
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add{z-index:70!important}
+  html[data-pro-skin=dawn] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:linear-gradient(140deg,#a99fff,#86dcc6 70%,#ffb99b)}
+  html[data-pro-skin=day] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#b43a2c;border-radius:6px;color:#f5f2ec!important}
+  html[data-pro-skin=night] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#07080d!important}
+  html[data-pro-skin=bloom] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#3b5a87}
+  html[data-pro-skin=riso] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#2f5fb3;box-shadow:2px 2px 0 #ff4fa3}
+  html[data-pro-skin=room] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#2c3a20;color:#efe7c9!important}
+  html[data-pro-skin=fluff] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#141416;color:#f8f7f4!important}
+  html[data-pro-skin=night] body[data-view=tasks]:not(.adding) #fab-add#fab-add{background:#ffffff12!important;box-shadow:0 0 0 .5px #ffffff26!important}
+}
+@media(max-width:760px) and (prefers-color-scheme:dark){html[data-palette=ink]:not([data-pro-skin]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#1d1d1f!important}}

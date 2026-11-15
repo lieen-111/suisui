@@ -46,7 +46,7 @@ const review = path.resolve(__dirname, '../test-results');
 fs.mkdirSync(review, { recursive: true });
 // 1.8 sheets show options one row at a time: open the row (add toolbar or edit line) before using its chips.
 async function openPanel(page, kind, name) {
-  if (kind === 'add') return; // 1.9: the add sheet shows every row again
+  // 1.18: the add sheet shows one row of pills; each opens its own options
   const head = page.locator(`[data-${kind}-panel=${name}]`);
   if (await head.getAttribute('aria-expanded') !== 'true') await head.click();
 }

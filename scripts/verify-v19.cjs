@@ -65,8 +65,12 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     await page.screenshot({ path: path.join(review, 'v19-paper-390.png') });
     // Add sheet: every row visible with its label, no toolbar.
     await page.locator('#fab-add').click();
-    assert.equal(await page.locator('.add-row:visible').count(), 5, '1.18: the 到点 row appears only after a time is picked');
-    assert.equal(await page.locator('[data-add-duration="30"]').isVisible(), true, 'Options are visible without opening anything');
+    // 1.18: one row of value pills; options open one row at a time
+    assert.equal(await page.locator('.add-pill:visible').count(), 5, 'Five pills: date, time, repeat, group, duration');
+    assert.equal(await page.locator('.add-row:visible').count(), 0, 'No option rows until a pill is tapped');
+    await page.locator('[data-add-panel=duration]').click();
+    assert.equal(await page.locator('[data-add-duration="30"]').isVisible(), true, 'The tapped pill opens its options');
+    assert.equal(await page.locator('.add-row:visible').count(), 1, 'Only that one row');
     assert.equal(await page.locator('#add-toolbar').count(), 0);
     await page.locator('#add-backdrop').click({ position: { x: 20, y: 20 } });
     const saved = await page.evaluate(k => JSON.parse(localStorage.getItem(k)).settings, STORE);
@@ -84,7 +88,7 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     assert.match(await page.locator('.task-row[data-task-id=b] .meta-repeat').textContent(), /Daily/);
     assert.match(await page.locator('[data-filter=work]').textContent(), /Work/);
     await page.locator('#fab-add').click();
-    assert.equal(await page.locator('#task-input').getAttribute('placeholder'), 'What to do? e.g. meeting tomorrow 3pm');
+    assert.equal(await page.locator('#task-input').getAttribute('placeholder'), 'Write a to-do, e.g. tomorrow 3pm meeting');
     await page.locator('#task-input').fill('Call mom every fri 8pm 30 min');
     await page.waitForTimeout(200);
     assert.match(await page.locator('#parse-hint').textContent(), /Recognized: Every Fri · 20:00 · 30 min/);

@@ -71,9 +71,15 @@
     { id: 'seed-6', title: '读完床头的那一章', group: 'life' }
   ].map(normalizeTask);
   // First use starts empty. The sample list exists only for automated checks and demos (window.SUISUI_DEMO).
-  const DEMO = !!window.SUISUI_DEMO;
+  // Showcase (1.18): the Pro page shows the real app in a theme inside a frame (?showcase=<theme>&view=home|lock|fx).
+  // It uses the sample list and never reads or writes the user's saved data.
+  const SHOW_Q = (() => { try { return new URLSearchParams(location.search); } catch { return new URLSearchParams(''); } })();
+  const SHOWCASE = SHOW_Q.get('showcase') || '', SHOW_VIEW = SHOW_Q.get('view') || 'home';
+  if (SHOWCASE) document.documentElement.classList.add('showcase');
+  const DEMO = !!window.SUISUI_DEMO || !!SHOWCASE;
   const LOG_LIMIT = 3000;
   let state = { schema: SCHEMA, rev: 0, tasks: DEMO ? examples() : [], archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey(), log: [], timer: null };
+  if (SHOWCASE) Object.assign(state.settings, { tipsSeen: true, installDismissed: true, androidSetupSeen: true, iosSetupSeen: true, motion: true, lockScreen: true });
   let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
   const completing = new Set();
@@ -208,9 +214,9 @@
 
   // Android app shell (android/): the native side keeps a copy for the lock-screen card and may change it
   // (a "完成" tap on the lock screen). The wallpaper photo stays in localStorage only.
-  const ANDROID = window.SuiSuiAndroid || null;
+  const ANDROID = SHOWCASE ? null : window.SuiSuiAndroid || null;
   // iPhone app shell (ios/): the same page in a WKWebView with the same bridge, plus native widgets and Live Activity.
-  const IOS_APP = window.SuiSuiIOS || null;
+  const IOS_APP = SHOWCASE ? null : window.SuiSuiIOS || null;
   // the iPhone app's web view runs under the status bar: styles.css pads the pages that have no home header
   if (IOS_APP) document.documentElement.classList.add('ios-shell');
   const NATIVE = ANDROID || IOS_APP;
@@ -220,9 +226,9 @@
   let savedPhoto = null, photoOK = true, lastContent = null;
   const contentOf = () => JSON.stringify({ ...state, rev: 0, settings: { ...state.settings, photo: '' } });
   try {
-    const local = JSON.parse(localStorage.getItem(STORE) || 'null');
+    const local = SHOWCASE ? null : JSON.parse(localStorage.getItem(STORE) || 'null');
     let photo = '';
-    try { photo = localStorage.getItem(PHOTO_KEY) || local?.settings?.photo || ''; } catch { /* ignore */ }
+    try { photo = SHOWCASE ? '' : localStorage.getItem(PHOTO_KEY) || local?.settings?.photo || ''; } catch { /* ignore */ }
     const nativeRaw = readNative();
     const native = nativeRaw ? JSON.parse(nativeRaw) : null;
     let bootRecord = null;
@@ -252,12 +258,14 @@
   const useSystemWallpaper = () => SYSTEM_WALLPAPER && state.settings.wallpaper === 'system' && !proPaper();
   let LOCK_MODE = false;
   try { LOCK_MODE = !!ANDROID && (ANDROID.isLockMode() || new URLSearchParams(location.search).get('mode') === 'lock'); } catch { LOCK_MODE = false; }
+  if (SHOWCASE && SHOW_VIEW === 'lock') LOCK_MODE = true;
 
   function icon(name, attrs = '') { return `<i data-lucide="${name}" ${attrs}></i>`; }
   function icons(root = document) { window.lucide.createIcons({ root, attrs: { 'aria-hidden': 'true' } }); }
   function esc(value) { return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
   function storageCopy() { return storageOK ? (persisted ? '保存在本机 · 已开启长期保存' : '保存在本机') : '未能保存，请先导出备份'; }
   function save() {
+    if (SHOWCASE) return; // a picture of the app, nothing to keep
     state.schema = SCHEMA;
     const content = contentOf();
     if (content === lastContent && savedPhoto === state.settings.photo) { $('storage-status').textContent = storageCopy(); scheduleLockNotification(); return; }
@@ -419,8 +427,24 @@
   let addPanel = '', editPanel = '';
   const durLabel = m => m ? durationText(m) : '';
   const repeatText = (repeat, day) => repeat === 'weekly' ? `每${WEEK[Number.isInteger(day) ? day : 1]}` : repeat !== 'none' ? repeats[repeat] : '';
-  // 1.9: the add sheet shows every option row again (quicker than a toolbar); each row has its label on the left.
-  function renderAddToolbar() {}
+  // 1.18: one row of value pills; tapping a pill opens only its options (most of the time you just type and send).
+  function renderAddToolbar() {
+    const form = $('add-form'); if (!form) return;
+    const when = $('task-when').value, repeat = $('task-repeat').value, time = $('task-time').value, minutes = Number($('task-duration').value) || 0, g = groupOf(addGroupId), today = dayKey();
+    const dateless = repeat === 'daily' || repeat === 'weekdays', picked = $('task-date').value;
+    const put = (name, text, set) => { const el = $(`ap-${name}`); if (!el) return; el.textContent = text; el.parentElement.classList.toggle('is-set', !!set); };
+    put('when', dateless ? '按重复' : when === 'tomorrow' ? '明天' : when === 'pick' && picked ? (picked === today ? '今天' : picked === addDays(today, 1) ? '明天' : dateLabel(picked)) : '今天', !dateless && when !== 'today');
+    put('time', time ? `${time}${$('task-ring').value === '1' ? ' · 响铃' : ''}` : '时间', !!time);
+    put('repeat', repeatText(repeat, weekday(today)) || '重复', repeat !== 'none');
+    put('duration', durLabel(minutes) || '时长', minutes > 0);
+    const gp = $('ap-group'); if (gp) { gp.innerHTML = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`; gp.parentElement.classList.toggle('is-set', state.groups.length > 1 && g.id !== state.groups[0].id); }
+    form.dataset.open = addPanel;
+    document.querySelectorAll('[data-add-panel]').forEach(b => { const on = b.dataset.addPanel === addPanel; b.setAttribute('aria-expanded', String(on)); b.classList.toggle('open', on); });
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-add-panel]'); if (!b) return;
+    addPanel = addPanel === b.dataset.addPanel ? '' : b.dataset.addPanel; renderAddToolbar();
+  });
   // The edit sheet lists one line per setting (icon, name, value); tapping a line opens its options under it.
   function renderEditSummary() {
     const form = $('edit-form'); if (!form) return;

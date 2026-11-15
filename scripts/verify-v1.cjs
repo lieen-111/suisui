@@ -311,7 +311,10 @@ const bridgeStub = (lock) => `
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     assert.equal(bg, 'rgb(17, 18, 20)', 'Dark background (玻璃 style)');
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#f2f2f4', 'Light accent text on dark');
-    assert.equal(await page.locator('#fab-add').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(242, 242, 244)', 'Ink buttons turn light on dark');
+    // 1.18: + is the circle at the end of the bottom bar; it turns light on dark and its mark stays readable
+    const plus = await page.locator('#fab-add svg').evaluate(el => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color]);
+    assert.notEqual(plus[0], plus[1], 'The + mark contrasts with its circle');
+    assert.match(plus[0], /rgb\((2[0-9]{2}|1[6-9][0-9]), /, 'Ink buttons turn light on dark');
     await page.screenshot({ path: path.join(review, 'v12-dark-390.png') });
     await context.close();
   }

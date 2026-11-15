@@ -998,3 +998,31 @@ html[data-pro-skin=night] .fx-spark{box-shadow:0 0 6px #9fb4ff}
 .pro-tcard-actions svg{width:14px;height:14px}
 .pro-tcard.active [data-pro-theme]{background:var(--pro-frost)!important;color:#0b0b0c!important}
 @keyframes fx-check-pop{0%{transform:scale(.7)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+
+/* ================= 1.18 theme showcase: the real app in that theme, page by page ================= */
+.pro-stage{position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;background:#0b0b0d;color:#f2f2f4;padding:calc(env(safe-area-inset-top) + 10px) 0 calc(env(safe-area-inset-bottom) + 14px);animation:pro-stage-in .42s cubic-bezier(.32,.72,0,1) both;font-family:Geist,-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif}
+.pro-stage[hidden]{display:none}
+@keyframes pro-stage-in{from{opacity:0;transform:translateY(24px)}}
+.pro-stage-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:0 14px}
+.pro-stage-close{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#ffffff14;box-shadow:inset 0 0 0 .5px #ffffff26;color:#f2f2f4;border:0}
+.pro-stage-close svg{width:20px;height:20px}
+.pro-stage-name{text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pro-stage-name b{font-size:22px;font-weight:650;letter-spacing:.2em;padding-left:.2em}
+.pro-stage-name span{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#9a9aa2;padding-left:.32em}
+.pro-stage-line{margin:10px 28px 0;text-align:center;font-size:13px;line-height:1.55;color:#b8b8bf}
+.pro-stage-tabs{display:flex;justify-content:center;gap:4px;margin:16px auto 0;padding:3px;border-radius:999px;background:#ffffff0f;box-shadow:inset 0 0 0 .5px #ffffff1c}
+.pro-stage-tabs button{padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:550;color:#a8a8b0;background:none;border:0;transition:background .2s,color .2s}
+.pro-stage-tabs button[aria-selected=true]{background:#f2f2f4;color:#0b0b0d}
+.pro-stage-pager{flex:1;min-height:0;display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px calc(50% - min(31vw,150px));scrollbar-width:none;align-items:center}
+.pro-stage-pager::-webkit-scrollbar{display:none}
+.pro-stage-frame{flex:none;margin:0;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pro-stage-phone{position:relative;width:min(62vw,300px,calc((100vh - 290px) / 2.164));aspect-ratio:390/844;border-radius:30px;overflow:hidden;background:#1a1a1d;box-shadow:0 0 0 6px #1d1d20,0 0 0 7px #ffffff1a,0 30px 60px -24px #000}
+.pro-stage-phone iframe{position:absolute;left:0;top:0;width:390px;height:844px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
+.pro-stage-phone canvas{display:block;width:100%;height:100%}
+.pro-stage-frame figcaption{font-size:12px;color:#8e8e96;letter-spacing:.06em}
+.pro-stage-foot{padding:6px 24px 0}
+.pro-stage-use{width:100%;height:52px;border-radius:16px;border:0;background:#f2f2f4;color:#0b0b0d;font-size:16px;font-weight:650}
+.pro-stage-use.is-on{background:#ffffff14;color:#f2f2f4;box-shadow:inset 0 0 0 .5px #ffffff30}
+.pro-tcard-shots[data-pro-stage]{cursor:pointer}
+/* inside a showcase frame: no toasts, banners or tips — just the screen */
+html.showcase :is(#toast,.toast,#install-banner,.install-banner,#gesture-tips,.update-banner){display:none!important}

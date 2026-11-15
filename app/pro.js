@@ -19,21 +19,21 @@
      picture. Shared: things break into pieces when done, in the theme's material, and the pieces go into the jar.
      (暮 · 金 was removed in v8; a saved 'dusk' shows 夜.) */
   const THEMES = {
-    dawn: { name: '晨', full: '晨 · 玻璃', line: '一只量杯，做完一件，满一点', base: 'glass', material: 'glass', effect: 'shards', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
+    dawn: { name: '晨', full: '琉璃', en: 'Prism', line: '一只玻璃杯，做完一件，倒进一层颜色', base: 'glass', material: 'glass', effect: 'shards', sound: 'glass', accent: '#1b1d24', soft: '#1b1d240f', on: '#ffffff',
       shards: ['#9d97ff', '#7fdcc6', '#ffb79c', '#93b8ff'], bg: '#eef0f4', ink: '#1b1d24', muted: '#5c6170', mode: 'multiply', font: SANS, display: SANS },
-    day: { name: '昼', full: '昼 · 纸', line: '稿纸一格一个字，做完画个红圈', base: 'paper', material: 'paper', effect: 'shards', sound: 'paper', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
+    day: { name: '昼', full: '素笺', en: 'Washi', line: '稿纸一格写一字，做完盖一枚红印', base: 'paper', material: 'paper', effect: 'shards', sound: 'paper', accent: '#1d1a16', soft: '#1d1a160f', on: '#f5f2ec',
       shards: ['#fbf8f1', '#e9e2d4', '#d9d0bf', '#1d1a16', '#b43a2c'], bg: '#f5f2ec', ink: '#1d1a16', muted: '#6b645b', mode: 'source-over', font: SONG, display: SONG },
-    night: { name: '夜', full: '夜 · 光', line: '每件事一颗星，做完连成星座', base: 'night', material: 'light', effect: 'shards', sound: 'night', accent: '#dfe6ff', soft: '#dfe6ff1a', on: '#07080d',
+    night: { name: '夜', full: '星河', en: 'Nocturne', line: '每件事是一颗星，做完连成今天的星座', base: 'night', material: 'light', effect: 'shards', sound: 'night', accent: '#dfe6ff', soft: '#dfe6ff1a', on: '#07080d',
       shards: ['#dfe6ff', '#9fb4ff', '#ffffff', '#ffd9a0'], bg: '#07080d', ink: '#e8ecf7', muted: '#959cb0', mode: 'screen', font: SANS, display: SANS },
-    bloom: { name: '晕', full: '晕 · 彩墨', line: '每做完一件，滴一滴颜色，慢慢晕开', base: 'paper', material: 'bloom', effect: 'shards', sound: 'drip', chip: '#fbfbfa', accent: '#2b2b2e', soft: '#2b2b2e12', on: '#f4f5f4',
+    bloom: { name: '晕', full: '洇色', en: 'Aquarelle', line: '每做完一件，滴一滴颜色，开成一朵花', base: 'paper', material: 'bloom', effect: 'shards', sound: 'drip', chip: '#fbfbfa', accent: '#2b2b2e', soft: '#2b2b2e12', on: '#f4f5f4',
       shards: ['#3b5a87', '#b8475a', '#d9a43a', '#3f8aa6', '#2b2b2e'], bg: '#f2f3f2', ink: '#2b2b2e', muted: '#636569', mode: 'multiply', font: SANS, display: SONG },
-    room: { name: '屋', full: '屋 · 线描', line: '每做完一件，房间里添一件家具', base: 'paper', material: 'room', effect: 'shards', sound: 'wood', chip: '#efe7c9', accent: '#2c3a20', soft: '#2c3a2012', on: '#efe7c9',
+    room: { name: '屋', full: '小筑', en: 'Haven', line: '每做完一件，小屋里添一件家具', base: 'paper', material: 'room', effect: 'shards', sound: 'wood', chip: '#efe7c9', accent: '#2c3a20', soft: '#2c3a2012', on: '#efe7c9',
       shards: ['#f1d55a', '#79a84f', '#c99a52', '#d9673a', '#efe7c9'], bg: '#e6eed2', ink: '#2c3a20', muted: '#57653f', mode: 'source-over', font: SANS, display: SANS },
-    fluff: { name: '毛', full: '毛 · 团', line: '做完一件多画一层毛，全做完它睁眼', base: 'paper', material: 'fluff', effect: 'shards', sound: 'soft', chip: '#f8f7f4', accent: '#141416', soft: '#14141610', on: '#f8f7f4',
+    fluff: { name: '毛', full: '绒绒', en: 'Velvet', line: '每做完一件多长一层绒毛，全做完它睁眼', base: 'paper', material: 'fluff', effect: 'shards', sound: 'soft', chip: '#f8f7f4', accent: '#141416', soft: '#14141610', on: '#f8f7f4',
       shards: ['#141416', '#3a3a3e', '#6b6b70', '#f8f7f4'], bg: '#f8f7f4', ink: '#141416', muted: '#626266', mode: 'source-over', font: SANS, display: SONG },
     tape: { name: '乐', full: '乐 · 纸带', line: '每做完一件打一个音孔，做完弹给你听', base: 'night', material: 'tape', effect: 'shards', sound: 'punch', chip: '#f3ecdc', accent: '#f3ecdc', soft: '#f3ecdc1a', on: '#12302a',
       shards: ['#f3ecdc', '#e6dcc4', '#cdbf9f', '#ffffff'], bg: '#12302a', ink: '#f3ecdc', muted: '#9fb5ad', mode: 'source-over', font: SANS, display: SANS },
-    riso: { name: '印', full: '印 · 孔版', line: '每做完一件，印上一张小插画', base: 'paper', material: 'riso', effect: 'shards', sound: 'press', chip: '#fbfaf6', accent: '#2f5fb3', soft: '#2f5fb314', on: '#f6f4ef',
+    riso: { name: '印', full: '套色', en: 'Overprint', line: '每做完一件，印上一幅双色小画', base: 'paper', material: 'riso', effect: 'shards', sound: 'press', chip: '#fbfaf6', accent: '#2f5fb3', soft: '#2f5fb314', on: '#f6f4ef',
       shards: ['#ff4fa3', '#2f5fb3', '#8a4fb0', '#f6f4ef'], bg: '#f6f4ef', ink: '#1f2a44', muted: '#5d6377', mode: 'multiply', font: SANS, display: SANS }
   };
   const ORDER = ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff'];
@@ -47,7 +47,10 @@
   /* ---------- Entitlement (simulated purchase in this build) ---------- */
   const info = () => { const p = S().pro; return p && typeof p === 'object' ? p : (S().pro = { owned: false, trialEnds: 0, trialUsed: false }); };
   /** Test builds (app/pro-config.js): all of Pro is free; payment pages stay visible and only simulate. */
-  const FREE = !!(window.SUISUI_PRO_CONFIG || {}).freeForTesters;
+  // Showcase frames (the Pro page shows the real app in a theme): ?showcase=<theme>&view=home|lock|fx
+  const SHOW = (() => { try { return new URLSearchParams(location.search).get('showcase') || ''; } catch { return ''; } })();
+  const SHOW_VIEW = (() => { try { return new URLSearchParams(location.search).get('view') || 'home'; } catch { return 'home'; } })();
+  const FREE = !!(window.SUISUI_PRO_CONFIG || {}).freeForTesters || !!SHOW;
   const isPro = () => FREE || !!info().owned || (info().trialEnds || 0) > Date.now();
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
   const status = () => info().owned ? '已解锁' : FREE ? '测试版 · 全部免费' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
@@ -58,7 +61,7 @@
   /** What finishing a task does in each theme, and how it sounds (Pro page theme cards). */
   const FX_LINE = { dawn: '碎成玻璃，落进量杯', day: '碎成纸屑，写下一个字', night: '化成光点，连成星座', bloom: '化成一滴颜色', riso: '印成一张小画', room: '变成一件家具', fluff: '多长一层毛' };
   /** The Pro theme in use, for summaries elsewhere ('' when none). */
-  const themeLabel = () => { const id = activeTheme(); if (!id) return ''; return !tryOn && savedTheme() === 'auto' ? `跟随时间 · ${THEMES[id].name}` : THEMES[id].full; };
+  const themeLabel = () => { const id = activeTheme(); if (!id) return ''; return !tryOn && savedTheme() === 'auto' ? `随光 · ${THEMES[id].full}` : THEMES[id].full; };
   function persist() { API.save(); }
   function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); }
   function startTrial() { const p = info(); if (p.trialUsed) return; p.trialUsed = true; p.trialEnds = Date.now() + TRIAL_DAYS * 864e5; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast(`已开始 ${TRIAL_DAYS} 天免费试用，Pro 全部可用`); }
@@ -745,7 +748,7 @@
     if (activeTheme()) document.querySelectorAll('[data-ui-style]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
     const f = $('pro-look'); if (!f) return;
     const pro = isPro(), cur = tryOn || (pro ? savedTheme() || '' : '');
-    f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><p class="section-hint">每套主题都有自己的配色、完成动效，和全部做完时的那幅画。</p><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '跟随时间' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
+    f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><p class="section-hint">每套主题都有自己的配色、完成动效，和全部做完时的那幅画。</p><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '随光' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
     f.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proThemePick)));
     // the theme's wallpaper: use it on the lock screen, or save it to set as the phone's own wallpaper
     const wid = activeTheme();
@@ -794,12 +797,12 @@
         <h2>七套主题</h2>
         <p class="pro-lead">每套主题换掉整个 App、锁屏卡片和完成动效，全部做完时画出不同的画。左右滑动看看。</p>
         <div class="pro-themes pro-showcase" id="pro-showcase">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id;
-          if (id === 'auto') return `<article class="pro-theme pro-tcard is-auto${on ? ' active' : ''}" data-theme-card="auto"><div class="pro-tcard-shots">${themeMock('auto')}</div><div class="pro-tcard-body"><h3>跟随时间</h3><p>早上 5 点用晨，10 点用昼，晚上 6 点用夜。</p><small>现在是${THEMES[byTime()].full}</small></div><div class="pro-tcard-actions"><button type="button" data-pro-theme="auto">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`;
+          if (id === 'auto') return `<article class="pro-theme pro-tcard is-auto${on ? ' active' : ''}" data-theme-card="auto"><div class="pro-tcard-shots">${themeMock('auto')}</div><div class="pro-tcard-body"><h3>随光</h3><p>早上 5 点用琉璃，10 点用素笺，晚上 6 点用星河。</p><small>现在是${THEMES[byTime()].full}</small></div><div class="pro-tcard-actions"><button type="button" data-pro-theme="auto">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`;
           return `<article class="pro-theme pro-tcard${on ? ' active' : ''}" data-theme-card="${id}">
-            <div class="pro-tcard-shots"><figure>${themeMock(id)}<figcaption>界面</figcaption></figure><figure><canvas class="pro-tcard-fin" data-fin="${id}" aria-label="${t.full}：全部做完的画面"></canvas><figcaption>全部做完</figcaption></figure></div>
+            <div class="pro-tcard-shots" data-pro-stage="${id}" role="button" tabindex="0" aria-label="查看${t.full}的界面"><figure>${themeMock(id)}<figcaption>界面</figcaption></figure><figure><canvas class="pro-tcard-fin" data-fin="${id}" aria-label="${t.full}：全部做完的画面"></canvas><figcaption>全部做完</figcaption></figure></div>
             <div class="pro-tcard-body"><h3>${t.full}</h3><p>${t.line}</p>
               <div class="pro-tcard-fx"><span class="pro-tcard-fx-check" aria-hidden="true"></span><span class="pro-tcard-fx-text" data-fx-text="${id}">完成时：${FX_LINE[id] || EFFECTS[t.effect]}</span></div></div>
-            <div class="pro-tcard-actions"><button type="button" class="pro-tcard-play" data-pro-fx-try="${id}">${icon('play')}看动效</button><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`; }).join('')}</div>
+            <div class="pro-tcard-actions"><button type="button" class="pro-tcard-play" data-pro-stage="${id}">${icon('play')}查看界面</button><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`; }).join('')}</div>
       </section>
 
       <section class="pro-part" data-pro-section="effects">
@@ -855,7 +858,7 @@
       if (id !== 'auto') playDemo();
     }));
     s.querySelectorAll('[data-pro-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proTheme)));
-    s.querySelectorAll('[data-pro-fx-try]').forEach(b => b.addEventListener('click', () => tryCardEffect(b.dataset.proFxTry)));
+    s.querySelectorAll('[data-pro-stage]').forEach(b => b.addEventListener('click', () => openStage(b.dataset.proStage)));
     drawFinaleThumbs(s);
     $('pro-buy')?.addEventListener('click', () => openPay());
     $('pro-have-code')?.addEventListener('click', () => { openPay(); $('pro-pay-code')?.focus(); });
@@ -898,6 +901,52 @@
     text.style.visibility = 'hidden';
     Promise.resolve(run).then(() => setTimeout(() => { text.style.visibility = ''; row.classList.remove('done'); delete text.dataset.busy; text.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }, 500));
   }
+  /* ---------- Theme showcase: the real app in that theme — home, lock screen, finishing, and the day's picture ---------- */
+  const STAGE_PAGES = [['home', '主页'], ['lock', '锁屏'], ['fx', '完成的那一下'], ['finale', '全部做完']];
+  let stageRaf = 0;
+  function openStage(id) {
+    const t = THEMES[id]; if (!t) return;
+    let el = $('pro-stage');
+    if (!el) { el = document.createElement('div'); el.id = 'pro-stage'; el.className = 'pro-stage'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.append(el); }
+    const on = (isPro() ? savedTheme() : tryOn) === id;
+    el.innerHTML = `<header class="pro-stage-top"><button type="button" class="pro-stage-close" id="pro-stage-close" aria-label="返回">${icon('chevron-left')}</button>
+        <div class="pro-stage-name"><b>${t.full}</b><span>${t.en || ''}</span></div><span class="pro-stage-spacer"></span></header>
+      <p class="pro-stage-line">${t.line}</p>
+      <div class="pro-stage-tabs" role="tablist">${STAGE_PAGES.map(([k, n], i) => `<button type="button" role="tab" data-stage-go="${i}" aria-selected="${i === 0}">${n}</button>`).join('')}</div>
+      <div class="pro-stage-pager" id="pro-stage-pager">${STAGE_PAGES.map(([k, n]) => `<figure class="pro-stage-frame" data-frame="${k}"><div class="pro-stage-phone">${k === 'finale' ? `<canvas class="pro-stage-fin" aria-label="${t.full}：全部做完"></canvas>` : `<iframe title="${t.full} · ${n}" data-src="index.html?showcase=${id}&view=${k}" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>`}</div><figcaption>${n}</figcaption></figure>`).join('')}</div>
+      <footer class="pro-stage-foot"><button type="button" class="pro-stage-use${on ? ' is-on' : ''}" data-pro-theme="${id}">${on ? '正在使用' : isPro() ? `使用「${t.full}」` : '试穿这套'}</button></footer>`;
+    API.icons(el);
+    el.hidden = false; document.body.classList.add('pro-stage-open');
+    const pager = $('pro-stage-pager'), frames = [...pager.querySelectorAll('.pro-stage-frame')];
+    const load = i => { const f = frames[i]?.querySelector('iframe[data-src]'); if (f && !f.src) f.src = f.dataset.src; };
+    const fit = () => frames.forEach(fr => { const ph = fr.querySelector('.pro-stage-phone'), ifr = ph.querySelector('iframe'); if (ifr) ifr.style.transform = `scale(${ph.clientWidth / 390})`; });
+    const go = i => { pager.scrollTo({ left: frames[i].offsetLeft - (pager.clientWidth - frames[i].clientWidth) / 2, behavior: reduce() ? 'auto' : 'smooth' }); };
+    const current = () => { const mid = pager.scrollLeft + pager.clientWidth / 2; let best = 0, d = 1e9; frames.forEach((f, i) => { const c = f.offsetLeft + f.clientWidth / 2, dd = Math.abs(c - mid); if (dd < d) { d = dd; best = i; } }); return best; };
+    const mark = () => { const i = current(); el.querySelectorAll('[data-stage-go]').forEach((b, k) => b.setAttribute('aria-selected', String(k === i))); load(i); load(i + 1); };
+    pager.addEventListener('scroll', () => requestAnimationFrame(mark), { passive: true });
+    el.querySelectorAll('[data-stage-go]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.stageGo; load(i); go(i); }));
+    $('pro-stage-close').addEventListener('click', closeStage);
+    el.querySelector('.pro-stage-use').addEventListener('click', e => { setTheme(id); closeStage(); });
+    requestAnimationFrame(() => { fit(); load(0); load(1); mark(); });
+    window.addEventListener('resize', fit);
+    // the day's picture plays in a loop
+    const c = el.querySelector('.pro-stage-fin'), draw = FINALES[id];
+    cancelAnimationFrame(stageRaf);
+    if (c && draw) {
+      const items = Array.from({ length: 5 }, (_, i) => ({ id: `stage-${i}`, title: ['写周报', '买菜', '跑步', '回邮件', '整理照片'][i], group: i % 2 ? 'life' : 'work', at: Date.now() - i * 3600e3 }));
+      const k = Math.min(devicePixelRatio || 1, 2), start = performance.now();
+      const frame = now => {
+        if (el.hidden) return;
+        const w = c.clientWidth, h = c.clientHeight; if (c.width !== Math.round(w * k)) { c.width = Math.round(w * k); c.height = Math.round(h * k); }
+        const ctx = c.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = FIN_BG[id] || '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        const W = 390, H = 560, sc = Math.min(c.width / W, c.height / H), ms = reduce() ? 9000 : ((now - start) * CEL_SPEED) % 7000;
+        ctx.save(); ctx.translate((c.width - W * sc) / 2, (c.height - H * sc) / 2); ctx.scale(sc, sc); try { draw.call(FINALES, ctx, W, H, Math.min(ms, 5200), items); } catch { /* preview */ } ctx.restore();
+        stageRaf = requestAnimationFrame(frame);
+      };
+      stageRaf = requestAnimationFrame(frame);
+    }
+  }
+  function closeStage() { const el = $('pro-stage'); if (!el || el.hidden) return; el.hidden = true; document.body.classList.remove('pro-stage-open'); cancelAnimationFrame(stageRaf); el.querySelectorAll('iframe').forEach(f => f.removeAttribute('src')); }
   let demoPick = '';
   function playDemo() {
     const title = $('pro-demo-title'), check = $('pro-demo-check');
@@ -1361,6 +1410,7 @@
   const baseBack = window.suisuiBack;
   window.suisuiBack = () => {
     const open = id => $(id) && !$(id).hidden;
+    if (open('pro-stage')) { closeStage(); return true; }
     if (open('pro-pay')) { if (payStep !== 'working') closePay(); return true; }
     if (open('pro-celebrate')) { closeCelebrate(); return true; }
     if (open('pro-jar-sheet')) { closeJar(); return true; }
@@ -1369,8 +1419,18 @@
   };
   // listen first: refreshAll() can make app.js re-apply its settings, and the theme has to win again afterwards
   window.addEventListener('suisui:settings', () => { applyTheme(); renderLookInline(); });
+  if (SHOW && THEMES[SHOW]) Object.assign(S(), { proTheme: SHOW, proLock: true, proWall: true, proEffect: 'auto' });
   mount();
   applyTheme(); refreshAll();
+  // In the effect frame, the first thing gets done and comes back, over and over, so the theme's finishing can be watched
+  if (SHOW && SHOW_VIEW === 'fx') {
+    const cycle = () => {
+      const row = document.querySelector('#task-list .task-row:not(.is-done) .check-task');
+      if (row) row.click();
+      setTimeout(() => document.querySelector('#completed-list [data-action=restore]')?.click(), 1900);
+    };
+    setTimeout(cycle, 700); setInterval(cycle, 3400);
+  }
   window.addEventListener('suisui:render', () => { if (API.lockMode) { window.SuiSuiSkins.lockStrip(document.documentElement.dataset.proLock || ''); return; } window.SuiSuiSkins.head(); renderCountdowns(); drawMiniJar(false); });
   window.addEventListener('suisui:completing', () => { if (isPro() || tryOn) playSound(themeSound()); });
   window.addEventListener('suisui:done', e => {
