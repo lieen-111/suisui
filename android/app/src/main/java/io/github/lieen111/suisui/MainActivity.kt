@@ -115,6 +115,9 @@ open class WebHostActivity : ComponentActivity() {
         web.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            // The app sizes its own text (设置 → 外观 → 字号). Left alone, the WebView also scales every font by the
+            // phone's system font size while boxes keep their size, so words crowd the card edges. Pin it to 100%.
+            textZoom = 100
             allowFileAccess = false
             allowContentAccess = true
         }

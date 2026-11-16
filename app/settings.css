@@ -244,3 +244,47 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
   html[data-pro-skin=night] body[data-view=tasks]:not(.adding) #fab-add#fab-add{background:#ffffff12!important;box-shadow:0 0 0 .5px #ffffff26!important}
 }
 @media(max-width:760px) and (prefers-color-scheme:dark){html[data-palette=ink]:not([data-pro-skin]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#1d1d1f!important}}
+
+/* ===================================================================================================
+   1.18 settings, final rhythm. One set of measures for every page and theme:
+   page margin 16 · card inner 20 · section label 13 sits 10 above its card · 32 between sections ·
+   rows ≥ 58 with 16 top/bottom · a note under a row is 13/1.55 and never runs under a switch.
+   =================================================================================================== */
+@media(max-width:760px){
+  #settings-panel .settings-scroll{padding:8px 16px 40px!important}
+  #settings-panel .settings-page fieldset{margin:46px 0 0!important;padding:4px 20px!important;border-radius:22px!important}
+  #settings-panel .settings-page fieldset:first-of-type,#settings-panel .settings-page .look-tabs+.look-section>fieldset:first-of-type{margin-top:40px!important}
+  #settings-panel .settings-page legend{position:absolute!important;top:-27px!important;left:20px!important;margin:0!important;line-height:1!important}
+  /* rows */
+  #settings-panel .settings-page .setting-row{min-height:58px!important;padding:14px 0!important;gap:16px!important;align-items:center!important}
+  #settings-panel .settings-page .setting-row>span:first-child{flex:1;min-width:0;font-size:16px!important;line-height:1.4!important}
+  #settings-panel .settings-page .setting-row .switch{flex:none;margin:0!important}
+  #settings-panel .settings-page .setting-row+.setting-row,#settings-panel .settings-page .setting-note+.setting-row{border-top:1px solid var(--s-hair)}
+  #settings-panel .settings-page .setting-note{margin:-6px 0 0!important;padding:0 64px 16px 0!important;font-size:13px!important;line-height:1.6!important}
+  #settings-panel .settings-page .setting-note:empty{display:none}
+  #settings-panel .settings-page .section-hint{margin:16px 0 14px!important;font-size:13px!important;line-height:1.6!important}
+  /* buttons that live in a card: a row with an inset divider, text on the card's inner margin */
+  #settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]){width:calc(100% + 40px)!important;margin:0 -20px!important;padding:0 20px!important;min-height:56px!important;gap:12px!important;border-top:1px solid var(--s-hair)!important;font-size:16px!important}
+  /* grids get the same inner margin as rows */
+  #settings-panel :is(.style-presets,.pro-theme-row,.font-presets,.theme-presets,.segmented,.wallpaper-library){padding-top:16px!important;padding-bottom:18px!important}
+  #settings-panel .section-hint+:is(.style-presets,.pro-theme-row,.font-presets,.theme-presets,.segmented,.wallpaper-library){padding-top:2px!important}
+  /* settings home */
+  #settings-panel .settings-home :is(.settings-tiles,.settings-list){border-radius:22px!important}
+  #settings-panel .settings-home :is(.settings-tiles,.settings-list)>button{padding:12px 18px 12px 16px!important;min-height:66px!important;gap:14px!important}
+  #settings-panel .settings-home .row-label{font-size:16px!important}
+  #settings-panel .settings-home .row-sub{font-size:12.5px!important;margin-top:1px}
+  #settings-panel .settings-home .pro-banner{border-radius:20px!important;padding:10px 12px 10px 16px!important;min-height:58px!important;margin:16px 0 0!important}
+  #settings-panel .settings-home .settings-list{margin-top:24px!important}
+  #settings-panel .settings-home .settings-tiles{margin-top:16px!important}
+
+  /* the live preview on 外观 / 锁屏: a framed screen, the card inset and scaled so nothing meets an edge */
+  #settings-panel .settings-preview{height:224px!important;margin:6px 16px 0!important;padding:18px 22px!important;border-radius:26px!important;align-items:center!important;justify-content:center!important;box-shadow:0 0 0 .5px color-mix(in srgb,var(--s-ink) 14%,transparent),0 18px 36px -24px #0007!important;position:relative!important;top:auto!important}
+  #settings-panel .settings-preview .mini-card{width:100%!important;max-width:330px;height:auto!important;max-height:196px!important;border-radius:20px!important;padding:14px 16px 12px!important;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+  #settings-panel .settings-preview .mini-card.grouped{max-height:196px!important;overflow:hidden!important}
+  #settings-panel .settings-preview :is(.mini-foot,.mini-card-foot,.hero-foot){padding-left:2px!important;padding-right:2px!important}
+  #settings-panel .settings-preview .mini-wallpaper{border-radius:inherit}
+  #settings-panel .settings-preview .mini-shade{border-radius:inherit}
+}
+#settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]) svg{display:block!important;flex:none;width:19px!important;height:19px!important;opacity:.85}
+/* a tap leaves no focus ring; the keyboard still gets one */
+:is(button,a,[role=button],summary):focus:not(:focus-visible){outline:none!important}

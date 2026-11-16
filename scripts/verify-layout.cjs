@@ -55,7 +55,7 @@ const iosStub = () => {
               const r = el.getBoundingClientRect();
               // full-width rows (dividers, inline row buttons) may run to the card edge; their text must not
               const edgeRow = el.matches('.secondary-button.inline, .setting-row, .ag-switch, .slider-row, .group-row, .group-list > *, .look-tabs, .look-tabs *');
-              const inset = edgeRow ? -1 : 10;
+              const inset = edgeRow ? -1 : 14;
               if (r.left < cr.left + inset - .5 || r.right > cr.right - inset + .5) { out.push(`${name}: ${el.tagName.toLowerCase()}.${[...el.classList].join('.')} "${(el.textContent || el.value || '').trim().slice(0, 14)}" sits at ${Math.round(r.left - cr.left)}…${Math.round(cr.right - r.right)} from the card edges`); }
               if (!edgeRow && /^(P|SMALL|B|STRONG|LABEL)$/.test(el.tagName) && el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow !== 'visible' && getComputedStyle(el).textOverflow !== 'ellipsis') out.push(`${name}: clipped text "${el.textContent.trim().slice(0, 14)}"`);
             }
@@ -64,7 +64,7 @@ const iosStub = () => {
               if (!vis(row)) continue;
               const range = document.createRange(); range.selectNodeContents(row); const rects = [...range.getClientRects()].filter(r => r.width > 0);
               const left = Math.min(...rects.map(r => r.left)), right = Math.max(...rects.map(r => r.right));
-              if (left < cr.left + 10 || right > cr.right - 10) out.push(`${name}: row "${row.textContent.trim().slice(0, 14)}" content at ${Math.round(left - cr.left)}…${Math.round(cr.right - right)} from the card edges`);
+              if (left < cr.left + 14 || right > cr.right - 14) out.push(`${name}: row "${row.textContent.trim().slice(0, 14)}" content at ${Math.round(left - cr.left)}…${Math.round(cr.right - right)} from the card edges`);
             }
           }
           return [...new Set(out)];
