@@ -52,7 +52,7 @@ let browser;
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()), '#cf3d66');
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--a-950').trim()), '#2a0912', 'The accent ramp follows the palette');
   await page.locator('[data-material=glass]').click();
-  await page.locator('[data-card-color="#f5f7f3"]').click();
+  await page.locator('#card-color').evaluate(i => { i.value = '#f5f7f3'; i.dispatchEvent(new Event('input', { bubbles: true })); });
   await page.locator('#card-transparency').evaluate(el => { el.value = '46'; el.dispatchEvent(new Event('input', { bubbles: true })); });
   assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-blur')), '4px');
   assert.equal(await page.locator('#activity').evaluate(el => el.style.getPropertyValue('--card-ink')), '#1d1d1f');

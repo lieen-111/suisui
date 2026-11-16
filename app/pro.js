@@ -746,12 +746,35 @@
   function renderLookInline() {
     // a Pro theme replaces the free style, so the free style cards show nothing selected while one is on
     if (activeTheme()) document.querySelectorAll('[data-ui-style]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
-    const f = $('pro-look'); if (!f) return;
+    const f = $('pro-look'), rail = $('theme-rail'); if (!f || !rail) return;
     const pro = isPro(), cur = tryOn || (pro ? savedTheme() || '' : '');
-    f.innerHTML = `<legend>Pro 主题${pro ? '' : '<span class="pro-pill">Pro</span>'}</legend><p class="section-hint">每套主题都有自己的配色、完成动效，和全部做完时的那幅画。</p><div class="pro-theme-row">${['auto', ...ORDER].map(id => `<button type="button" class="pro-theme-chip${cur === id ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${cur === id}">${themeMock(id)}<strong>${id === 'auto' ? '随光' : THEMES[id].full}</strong><small>${id === 'auto' ? `现在是${THEMES[byTime()].name}` : pro ? (cur === id ? '使用中' : '使用') : '试穿'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`).join('')}</div>`;
-    f.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.proThemePick)));
+    // One gallery: the three free looks, then 随光 and the Pro themes, each pictured by its real home screen
+    rail.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.remove());
+    rail.insertAdjacentHTML('beforeend', ['auto', ...ORDER].map(id => {
+      const on = cur === id, name = id === 'auto' ? '随光' : THEMES[id].full;
+      return `<button type="button" class="theme-card pro-theme-chip${on ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${on}"><span class="theme-shot"><img src="assets/themes/${id}.jpg" alt="" decoding="async"></span><strong>${name}</strong><small>${on ? '使用中' : 'Pro'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`;
+    }).join(''));
+    rail.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => {
+      const id = b.dataset.proThemePick;
+      if (isPro() && S().proTheme === id) return; // the gallery picks; it never switches a theme off
+      setTheme(id);
+    }));
+    rail.querySelectorAll('[data-ui-style]').forEach(b => { b.querySelector('small').textContent = !cur && b.classList.contains('active') ? '使用中' : '免费'; });
+    const ABOUT = { glass: '手机壁纸铺在底下，半透明的玻璃质感', paper: '米白纸面，大号日期，像一本手账', night: '纯黑底，荧光色点缀，夜里看不刺眼' };
+    const about = $('theme-about');
+    if (about) {
+      const free = S().uiStyle;
+      about.innerHTML = cur === 'auto' ? `<b>随光</b>早上琉璃，白天素笺，晚上星河，跟着时间换`
+        : cur ? `<b>${THEMES[cur].full}</b>${THEMES[cur].line}` : `<b>${({ glass: '玻璃', paper: '纸墨', night: '夜光' })[free] || ''}</b>${ABOUT[free] || ''}`;
+    }
+    // keep the chosen theme in view: when the gallery first appears, and when the choice changes
+    const place = smooth => { const sel = rail.querySelector('.theme-card.active'), r = rail.getBoundingClientRect(); if (!sel || !r.width) return false;
+      const c = sel.getBoundingClientRect(); if (c.left < r.left + 30 || c.right > r.right - 30) rail.scrollBy({ left: c.left - r.left - 36, behavior: smooth ? 'smooth' : 'auto' }); return true; };
+    if (rail.dataset.placed !== (cur || 'free')) { if (place(true)) rail.dataset.placed = cur || 'free'; }
+    if (!rail._watch && window.ResizeObserver) { rail._watch = new ResizeObserver(() => { const k = rail.querySelector('.theme-card.active')?.dataset.proThemePick || 'free'; if (rail.dataset.placed !== k && place(false)) rail.dataset.placed = k; }); rail._watch.observe(rail); }
     // the theme's wallpaper: use it on the lock screen, or save it to set as the phone's own wallpaper
     const wid = activeTheme();
+    f.innerHTML = ''; f.hidden = !(pro && wid);
     if (pro && wid) {
       f.insertAdjacentHTML('beforeend', `<div class="pro-wall-row"><img src="assets/wallpapers/pro-${wid}-thumb.jpg" alt="" aria-hidden="true"><span><b>「${THEMES[wid].full}」专属壁纸</b><small>锁屏和预览都用它；存到相册，也能设成手机壁纸</small></span>
         <label class="pro-wall-switch"><input type="checkbox" class="switch" id="pro-wall-inline" ${S().proWall !== false ? 'checked' : ''} aria-label="锁屏用主题壁纸"></label><button type="button" class="secondary-button" id="pro-wall-save">保存到相册</button></div>`);

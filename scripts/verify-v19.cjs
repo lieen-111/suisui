@@ -83,7 +83,7 @@ const css = (page, name) => page.evaluate(n => getComputedStyle(document.documen
     const { context, page } = await open({ lang: 'en', uiStyle: 'glass' });
     assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
     assert.equal(await page.locator('.today-top h1').textContent(), 'Today');
-    assert.match(await page.locator('#progress-copy').textContent(), /^Wed, November 4 · 2 left, 0 done$/);
+    assert.match(await page.locator('#progress-copy').textContent(), /^Wed, November 4 · 2 for today$/);
     assert.equal(await page.locator('.task-row[data-task-id=a] .task-title').textContent(), '回复客户邮件', 'User text is never translated');
     assert.match(await page.locator('.task-row[data-task-id=b] .meta-repeat').textContent(), /Daily/);
     assert.match(await page.locator('[data-filter=work]').textContent(), /Work/);

@@ -156,7 +156,7 @@
               </div>
               <div class="settings-list" style="--i:4">
                 <button data-settings-page="data"><span class="row-ico"><i data-lucide="shield-check"></i></span><span class="row-label">数据<small class="row-sub">备份、导入，换手机用</small></span><span class="row-value">仅本机</span><i data-lucide="chevron-right" class="row-chev"></i></button>
-                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于<small class="row-sub">版本、隐私政策、反馈</small></span><span class="row-value" id="sum-about">1.18.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
+                <button id="about-row"><span class="row-ico"><i data-lucide="info"></i></span><span class="row-label">关于<small class="row-sub">版本、隐私政策、反馈</small></span><span class="row-value" id="sum-about">1.19.0</span><i data-lucide="chevron-right" class="row-chev"></i></button>
               </div>
             </nav>
             <div class="settings-page" data-page="language" hidden>
@@ -169,15 +169,16 @@
             </fieldset>
             </div>
             <div class="settings-page" data-page="look" hidden>
-            <div class="look-tabs" role="tablist" aria-label="外观分类"><button role="tab" data-look-tab="app" aria-selected="true">App 界面</button><button role="tab" data-look-tab="card" aria-selected="false">锁屏卡片</button><span class="look-tabs-pill" aria-hidden="true"></span></div>
+            <div class="look-tabs" role="tablist" aria-label="外观分类"><button role="tab" data-look-tab="app" aria-selected="true">主题</button><button role="tab" data-look-tab="card" aria-selected="false">锁屏卡片</button><span class="look-tabs-pill" aria-hidden="true"></span></div>
             <div class="look-section" data-look="app">
-            <h2 class="look-group" id="look-app-title">App 界面</h2>
-            <fieldset class="ui-styles"><legend>界面风格</legend><p class="section-hint">整个 App 的底色和质感。用了 Pro 主题时，以主题为准。</p>
-              <div class="style-presets" role="group" aria-label="界面风格">
-                <button class="style-chip" data-ui-style="glass"><span class="style-demo glass" aria-hidden="true"><b>2<em>/6</em></b><i></i><i></i></span><strong>玻璃</strong><small>壁纸铺底，通透</small></button>
-                <button class="style-chip" data-ui-style="paper"><span class="style-demo paper" aria-hidden="true"><b>2<em>/6</em></b><i></i><i></i></span><strong>纸墨</strong><small>米白纸，大号日期</small></button>
-                <button class="style-chip" data-ui-style="night"><span class="style-demo night" aria-hidden="true"><b>2<em>/6</em></b><i></i><i></i></span><strong>夜光</strong><small>深色，荧光色</small></button>
+            <h2 class="look-group" id="look-app-title">主题</h2>
+            <fieldset class="ui-styles"><legend>主题</legend>
+              <div class="theme-rail" id="theme-rail" role="group" aria-label="主题">
+                <button class="theme-card style-chip" data-ui-style="glass"><span class="theme-shot"><img src="assets/themes/ui-glass.jpg" alt="" decoding="async"></span><strong>玻璃</strong><small>免费</small></button>
+                <button class="theme-card style-chip" data-ui-style="paper"><span class="theme-shot"><img src="assets/themes/ui-paper.jpg" alt="" decoding="async"></span><strong>纸墨</strong><small>免费</small></button>
+                <button class="theme-card style-chip" data-ui-style="night"><span class="theme-shot"><img src="assets/themes/ui-night.jpg" alt="" decoding="async"></span><strong>夜光</strong><small>免费</small></button>
               </div>
+              <p class="theme-about" id="theme-about"></p>
             </fieldset>
             <fieldset class="accent-settings"><legend>配色</legend><p class="section-hint">按钮、勾选圈和高亮用的颜色。</p>
               <div class="swatches" role="radiogroup" aria-label="App 配色">
@@ -201,7 +202,7 @@
               </div>
               <label class="setting-row" for="text-size"><span>字号</span><output id="text-size-value">标准</output></label>
               <div class="text-size-row"><span class="a-small" aria-hidden="true">A</span><input type="range" id="text-size" min="0" max="3" step="1" aria-label="字号"><span class="a-large" aria-hidden="true">A</span></div>
-              <p class="setting-note">清单和锁屏一起变；可爱字体第一次显示稍慢。</p>
+              <p class="setting-note">清单和锁屏卡片一起变大或变小。</p>
             </fieldset>
             <fieldset class="motion-settings ag-plain"><legend>动效</legend>
               <label class="ag-switch" for="motion-toggle"><span><strong>开启动效</strong><small>按下回弹、图标动画、完成时文字碎开</small></span><input type="checkbox" id="motion-toggle" class="switch"></label>
@@ -211,7 +212,7 @@
             </div>
             <div class="look-section" data-look="card">
             <h2 class="look-group" id="look-card-title">锁屏卡片</h2>
-            <fieldset class="card-styles"><legend>卡片样式</legend><p class="section-hint">锁屏上那张待办卡片的底色。</p>
+            <fieldset class="card-styles"><legend>卡片</legend>
               <div class="theme-presets" role="group" aria-label="锁屏卡片样式">
                 <button class="theme-chip" data-theme-preset="ink" style="--chip:#1c1c1e"><span></span>墨黑</button>
                 <button class="theme-chip" data-theme-preset="mist" style="--chip:#f5f7f3"><span></span>雾白</button>
@@ -219,15 +220,8 @@
                 <button class="theme-chip" data-theme-preset="plum" style="--chip:#563746"><span></span>梅紫</button>
                 <button class="theme-chip" data-theme-preset="pine" style="--chip:#112b24"><span></span>松林</button>
               </div>
-            </fieldset>
-            <fieldset><legend>锁屏显示条数</legend><p class="section-hint">卡片里一眼看到几条，其余的上下滑动。</p><div class="segmented" role="group" aria-label="锁屏清单密度">
-              <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
-            </div></fieldset>
-            <fieldset id="wallpaper-fieldset"><legend id="wallpaper-legend">预览壁纸</legend><p class="setting-note" id="wallpaper-note"></p>
-              <div class="wallpaper-library" id="wallpaper-library" role="group" aria-label="壁纸库"></div>
-              <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>用自己的照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
-              <p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
-            <details class="more-appearance" id="more-appearance"><summary><i data-lucide="sliders-horizontal"></i>更多卡片设置<i data-lucide="chevron-down" class="summary-chevron"></i></summary>
+            
+              <details class="more-appearance" id="more-appearance"><summary><span class="custom-dot" id="custom-dot" aria-hidden="true"></span><span class="summary-text"><b>自己调</b><small id="custom-state">材质、颜色、透明度、文字</small></span><i data-lucide="chevron-down" class="summary-chevron"></i></summary>
             <section class="ag" aria-label="待办框">
               <h3 class="ag-title">材质</h3>
               <div class="material-tiles material-options" role="group" aria-label="待办框材质">
@@ -237,13 +231,7 @@
               </div>
               <h3 class="ag-title">颜色</h3>
               <div class="color-row" role="group" aria-label="待办框颜色">
-                <button data-card-color="#1c1c1e" style="--preset:#1c1c1e" aria-label="墨黑" title="墨黑"></button>
-                <button data-card-color="#112b24" style="--preset:#112b24" aria-label="松绿" title="松绿"></button>
-                <button data-card-color="#202326" style="--preset:#202326" aria-label="石墨" title="石墨"></button>
-                <button data-card-color="#f5f7f3" style="--preset:#f5f7f3" aria-label="雾白" title="雾白"></button>
-                <button data-card-color="#563746" style="--preset:#563746" aria-label="梅紫" title="梅紫"></button>
-                <button data-card-color="#294c64" style="--preset:#294c64" aria-label="湖蓝" title="湖蓝"></button>
-                <label class="custom-color" title="自定义颜色"><input type="color" id="card-color" value="#112b24" aria-label="自定义待办框颜色"><span></span></label>
+                <label class="custom-color" title="选一个颜色"><input type="color" id="card-color" value="#112b24" aria-label="自定义待办框颜色"><span></span></label>
                 <output id="card-color-value">#112B24</output>
               </div>
               <div class="ag-row"><h3 class="ag-title">透明度</h3><output id="card-transparency-value">15%</output></div>
@@ -256,6 +244,14 @@
             </section>
             <button class="reset-row" id="reset-settings"><i data-lucide="rotate-ccw"></i>恢复默认外观</button>
             </details>
+            </fieldset>
+            <fieldset id="wallpaper-fieldset"><legend id="wallpaper-legend">预览壁纸</legend><p class="setting-note" id="wallpaper-note"></p>
+              <div class="wallpaper-library" id="wallpaper-library" role="group" aria-label="壁纸库"></div>
+              <label class="wallpaper-upload" for="wallpaper-file"><i data-lucide="image-plus"></i><span>用自己的照片</span><input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp"></label>
+              <p class="form-error" id="wallpaper-error" role="alert"></p></fieldset>
+            <fieldset><legend>锁屏显示条数</legend><p class="section-hint">卡片里一眼看到几条，其余的上下滑动。</p><div class="segmented" role="group" aria-label="锁屏清单密度">
+              <button data-density="comfortable"><span class="density-demo" aria-hidden="true"><i></i><i></i><i></i></span>舒适 · 3 条</button><button data-density="compact"><span class="density-demo compact" aria-hidden="true"><i></i><i></i><i></i><i></i></span>紧凑 · 4 条</button>
+            </div></fieldset>
             </div>
             </div>
             <div class="settings-page" data-page="lock" hidden>
@@ -377,7 +373,7 @@
   </dialog>
   <dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
     <span class="sheet-grip" aria-hidden="true"></span>
-    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.18.0</span></div></div>
+    <div class="about-hero"><img src="icons/icon-192.png" alt="" width="64" height="64"><div><strong>碎碎清单</strong><span>亮屏就能看到、能勾选的待办 · 1.19.0</span></div></div>
     <div class="dialog-heading"><h2 id="about-title" class="sr-only">关于碎碎清单</h2><button class="icon-button" id="close-about" aria-label="关闭说明"><i data-lucide="x"></i></button></div>
     <div class="pwa-status-row"><p id="offline-status" role="status">正在检查离线可用状态</p><button id="pwa-update" class="secondary-button" hidden><i data-lucide="refresh-cw"></i>更新应用</button></div>
     <h3>亮屏就能看到今天的待办</h3>
@@ -386,7 +382,7 @@
     <p>没有账号，没有服务器，待办只保存在你的手机里。可以在“设置”里开启“锁屏隐藏待办内容”。换手机前请导出备份。<a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
     <h3>意见反馈</h3>
     <p>遇到问题或有想法，欢迎<a href="https://github.com/lieen-111/suisui/issues" target="_blank" rel="noopener">在这里留言</a>。</p>
-    <p class="dialog-meta">碎碎清单 1.18.0 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
+    <p class="dialog-meta">碎碎清单 1.19.0 · 湖畔照片来自 Unsplash，其余壁纸为碎碎清单原创</p>
   </dialog>
   <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
     <span class="sheet-grip" aria-hidden="true"></span>

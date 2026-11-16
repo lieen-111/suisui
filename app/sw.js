@@ -1,7 +1,7 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-11-16-pro-test-28';
+const VERSION = '2026-11-16-pro-test-29';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
@@ -9,6 +9,7 @@ const SHELL = [
   './', './index.html', './privacy.html', './iphone.html', './styles.css', './night.css', './looks.css', './i18n.js', './pro-i18n.js', './pro-config.js', './app.js', './pro-skins.js', './pro.js', './pro.css', './fonts-pro.css', './settings.css', './vendor/fonts/suisui-sans/noto-sans-sc-Medium.woff2', './vendor/fonts/suisui-sans/noto-sans-sc-Bold.woff2', './vendor/fonts/bodoni-moda/bodoni-moda-latin-400-normal.woff2', './vendor/fonts/bodoni-moda/bodoni-moda-latin-400-italic.woff2', './pwa.js', './vendor/fonts/Geist-Variable.woff2',
   './manifest.webmanifest', './vendor/anime.umd.min.js', './vendor/lucide.min.js', './vendor/icons.js',
   './assets/lake.jpg',
+  ...['ui-glass', 'ui-paper', 'ui-night', 'auto', 'dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff'].map(n => `./assets/themes/${n}.jpg`),
   ...['mist', 'dusk', 'forest', 'sea', 'night', 'aurora', 'dunes', 'pine'].flatMap(n => [`./assets/wallpapers/${n}.jpg`, `./assets/wallpapers/${n}-thumb.jpg`]),
   './icons/apple-touch-icon.png', './icons/icon-192.png',
   './icons/icon-512.png', './icons/icon-maskable-512.png'

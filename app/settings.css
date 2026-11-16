@@ -36,9 +36,9 @@ body:not([data-settings-page=index]) #settings-panel .settings-top h1,#review-pa
 #settings-panel .settings-page .look-tabs+.look-section>fieldset:first-of-type,#settings-panel .settings-page .look-tabs+.look-section>.look-group+fieldset{margin-top:34px}
 /* the tabs already say which half you are in */
 #settings-panel .settings-page[data-tab] .look-group{display:none}
-#settings-panel .settings-page .setting-note{font-size:12.5px;line-height:1.55;color:var(--s-muted)!important}
+#settings-panel .settings-page .setting-note{font-size:13px;line-height:1.55;color:var(--s-muted)!important}
 /* rows inside a card: one line each, hairline between */
-#settings-panel .settings-page .setting-row{min-height:50px;font-size:15.5px;font-weight:400!important}
+#settings-panel .settings-page .setting-row{min-height:50px;font-size:17px;font-weight:400!important}
 #settings-panel .settings-page .setting-row>span:first-child{font-weight:500}
 
 /* ---------- tiles: equal size, no box around the tile, the picture carries the choice ---------- */
@@ -57,8 +57,8 @@ body:not([data-settings-page=index]) #settings-panel .settings-top h1,#review-pa
 #settings-panel :is(.font-chip.active .font-sample,.segmented>button.active .density-demo){background:color-mix(in srgb,var(--s-ink) 12%,transparent)!important}
 /* labels */
 #settings-panel :is(.style-chip strong,.pro-theme-chip strong,.mat-name){display:block;margin:0!important;padding:0!important;font-size:13px!important;font-weight:500!important;color:var(--s-ink)!important;line-height:1.3}
-#settings-panel :is(.style-chip small,.pro-theme-chip small,.material-tiles small){display:block;margin:1px 0 0!important;padding:0!important;font-size:11px!important;color:var(--s-muted)!important;line-height:1.35}
-#settings-panel :is(.font-chip,.theme-chip,.segmented>button){font-size:12.5px!important;font-weight:500!important;color:var(--s-muted)!important;text-align:center}
+#settings-panel :is(.style-chip small,.pro-theme-chip small,.material-tiles small){display:block;margin:1px 0 0!important;padding:0!important;font-size:13px!important;color:var(--s-muted)!important;line-height:1.35}
+#settings-panel :is(.font-chip,.theme-chip,.segmented>button){font-size:13px!important;font-weight:500!important;color:var(--s-muted)!important;text-align:center}
 #settings-panel :is(.font-chip.active,.theme-chip.active,.segmented>button.active){color:var(--s-ink)!important;font-weight:600!important}
 #settings-panel :is(.style-chip.active strong,.pro-theme-chip.active strong){font-weight:650!important}
 
@@ -97,20 +97,20 @@ html:is([data-style=night],[data-pro-skin=night]) #settings-panel :is(.style-chi
 #settings-panel .wallpaper-choice::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px transparent;pointer-events:none;transition:box-shadow .18s ease;display:block!important;background:none!important;opacity:1!important;transform:none!important;width:auto!important;height:auto!important}
 #settings-panel .wallpaper-choice.active{box-shadow:none!important;outline:0!important;border:0!important}
 #settings-panel .wallpaper-choice.active::after{box-shadow:inset 0 0 0 2px var(--s-sel)}
-#settings-panel .wallpaper-choice>span{font-size:12px!important;font-weight:600!important}
+#settings-panel .wallpaper-choice>span{font-size:13px!important;font-weight:600!important}
 #settings-panel .wallpaper-choice.system{background:var(--s-tint)!important}
 
 /* swatches: the ring sits inside the dot, the label never moves */
 #settings-panel .swatches .swatch{transform:none!important;scale:1!important;animation:none!important}
-#settings-panel .swatches .swatch span{font-size:11.5px!important;color:var(--s-muted)!important;font-weight:500!important}
+#settings-panel .swatches .swatch span{font-size:13px!important;color:var(--s-muted)!important;font-weight:500!important}
 #settings-panel .swatches .swatch:has(input:checked) span{color:var(--s-ink)!important;font-weight:600!important}
 
 /* ---------- 动效: three clear rows ---------- */
 #settings-panel .motion-settings .ag-switch{display:flex!important;align-items:center;justify-content:space-between;gap:14px;padding:14px 0!important;margin:0!important;border-bottom:1px solid var(--s-hair)}
-#settings-panel .motion-settings .ag-switch strong{display:block;font-size:15.5px;font-weight:500;color:var(--s-ink)}
-#settings-panel .motion-settings .ag-switch small{display:block;margin-top:3px;font-size:12.5px;color:var(--s-muted);line-height:1.45}
+#settings-panel .motion-settings .ag-switch strong{display:block;font-size:17px;font-weight:500;color:var(--s-ink)}
+#settings-panel .motion-settings .ag-switch small{display:block;margin-top:3px;font-size:13px;color:var(--s-muted);line-height:1.45}
 #settings-panel .motion-settings .ag-row{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 4px!important}
-#settings-panel .motion-settings .ag-row .ag-title{margin:0!important;font-size:15.5px!important;font-weight:500!important;color:var(--s-ink)!important}
+#settings-panel .motion-settings .ag-row .ag-title{margin:0!important;font-size:17px!important;font-weight:500!important;color:var(--s-ink)!important}
 #settings-panel .motion-settings .ag-row output{font-size:13px;color:var(--s-muted)}
 #settings-panel .motion-settings .slider-row{padding:4px 0 16px;border-bottom:1px solid var(--s-hair)}
 #settings-panel #pro-effects-inline{padding:0 0 14px}
@@ -129,7 +129,7 @@ html:is([data-style=night],[data-pro-skin=night]) #settings-panel :is(.style-chi
 }
 
 /* ---------- buttons inside a card read as rows (icon + text in the theme ink), not boxed buttons ---------- */
-#settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]){display:flex!important;align-items:center;gap:10px;width:calc(100% + 32px);margin:4px -16px 0!important;padding:0 16px!important;min-height:50px;border:0!important;border-top:1px solid var(--s-hair)!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--s-act)!important;font-size:15.5px!important;font-weight:500!important;justify-content:flex-start}
+#settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]){display:flex!important;align-items:center;gap:10px;width:calc(100% + 32px);margin:4px -16px 0!important;padding:0 16px!important;min-height:50px;border:0!important;border-top:1px solid var(--s-hair)!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--s-act)!important;font-size:17px!important;font-weight:500!important;justify-content:flex-start}
 #settings-panel .settings-page fieldset .secondary-button.inline svg{width:18px;height:18px}
 
 /* ---------- 外观 tabs ---------- */
@@ -143,7 +143,7 @@ html:not([data-pro-skin]) #settings-panel #tile-lock.is-on .row-ico{color:var(--
 
 /* ---------- 完成动效: a little stage that plays the chosen effect ---------- */
 #settings-panel #pro-effects-inline .ag-row{align-items:baseline}
-#settings-panel .fx-hint{font-size:12px;color:var(--s-muted)}
+#settings-panel .fx-hint{font-size:13px;color:var(--s-muted)}
 #settings-panel .fx-stage{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 4px;padding:14px 14px 14px 16px;border-radius:14px;background:var(--s-tint);box-shadow:inset 0 0 0 1px var(--s-hair)}
 #settings-panel .fx-sample{display:flex;align-items:center;gap:12px;min-width:0;font-size:16px;font-weight:500;color:var(--s-ink)}
 #settings-panel .fx-sample-check{position:relative;flex:none;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.6px color-mix(in srgb,var(--s-ink) 45%,transparent);transition:background .2s ease,box-shadow .2s ease}
@@ -160,8 +160,8 @@ html:is([data-style=night],[data-pro-skin=night]) #settings-panel .fx-sample-che
 /* ---------- settings home: every row says what is inside ---------- */
 #settings-panel .settings-home :is(.settings-tiles,.settings-list)>button{min-height:62px!important}
 #settings-panel .settings-home .row-label{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}
-#settings-panel .settings-home .row-sub{font-size:12px;font-weight:400;color:var(--s-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
-#settings-panel .section-hint{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--s-muted)}
+#settings-panel .settings-home .row-sub{font-size:13px;font-weight:400;color:var(--s-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
+#settings-panel .section-hint{margin:0 0 12px;font-size:13px;line-height:1.5;color:var(--s-muted)}
 
 /* ================= 1.18 icons: Phosphor, filled outlines — strokes off ================= */
 svg.ph{stroke:none!important;stroke-width:0!important}
@@ -196,7 +196,7 @@ html:is([data-style=night],[data-pro-skin=night]) .add-pill.is-set{background:#f
   #filter-tabs{gap:20px!important;border:0!important;margin:2px 0 14px!important;padding:0 2px!important;overflow-x:auto;scrollbar-width:none;background:none!important;box-shadow:none!important}
   #filter-tabs::-webkit-scrollbar{display:none}
   #filter-tabs button{flex:none;position:relative;height:34px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--muted,#6e6e73)!important;font:500 15px/1 var(--ui-face)!important;gap:5px!important}
-  #filter-tabs button>span:last-child{font-size:11.5px!important;opacity:.7;font-weight:500!important;background:none!important;padding:0!important;color:inherit!important}
+  #filter-tabs button>span:last-child{font-size:13px!important;opacity:.7;font-weight:500!important;background:none!important;padding:0!important;color:inherit!important}
   #filter-tabs button .dot{width:6px!important;height:6px!important}
   #filter-tabs button.active{color:var(--ink,#1d1d1f)!important;font-weight:650!important}
   #filter-tabs button.active::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:2px;border-radius:2px;background:currentColor}
@@ -205,7 +205,7 @@ html:is([data-style=night],[data-pro-skin=night]) .add-pill.is-set{background:#f
 
   /* the round + becomes a bar along the bottom that reads as “write here” */
   body[data-view=tasks]:not(.adding) #fab-add#fab-add{left:16px!important;right:16px!important;width:auto!important;height:54px!important;border-radius:18px!important;display:flex!important;align-items:center;justify-content:flex-end;padding:0 7px 0 18px!important;background:color-mix(in srgb,var(--surface,#fff) 82%,transparent)!important;-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 0 0 .5px color-mix(in srgb,var(--ink,#1d1d1f) 12%,transparent),0 14px 30px -14px #0004!important;color:var(--ink,#1d1d1f)!important;transform:none}
-  body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{content:attr(data-hint);flex:1;text-align:left;font:400 15.5px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{content:attr(data-hint);flex:1;text-align:left;font:400 15px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{width:40px!important;height:40px!important;padding:11px;border-radius:13px;background:var(--accent-fill,var(--accent,#1d1d1f));color:var(--on-accent,#fff)!important;box-sizing:border-box}
   html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add{background:#ffffff14!important;box-shadow:0 0 0 .5px #ffffff26!important}
   html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#0b0b0c!important}
@@ -231,7 +231,7 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
 @media(max-width:760px){
   html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add{rotate:0deg!important;border-radius:18px!important;width:auto!important;height:54px!important;overflow:visible!important}
   html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add::after{display:none!important}
-  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{-webkit-mask:none!important;mask:none!important;content:attr(data-hint)!important;position:static!important;inset:auto!important;rotate:0deg!important;width:auto!important;height:auto!important;border-radius:0!important;background:none!important;box-shadow:none!important;animation:none!important;opacity:1!important;flex:1;text-align:left;font:400 15.5px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;filter:none!important;transform:none!important}
+  html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{-webkit-mask:none!important;mask:none!important;content:attr(data-hint)!important;position:static!important;inset:auto!important;rotate:0deg!important;width:auto!important;height:auto!important;border-radius:0!important;background:none!important;box-shadow:none!important;animation:none!important;opacity:1!important;flex:1;text-align:left;font:400 15px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;filter:none!important;transform:none!important}
   html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{opacity:1!important;margin:0!important;position:static!important;color:#fff!important;transform:none!important;translate:none!important}
   html[data-pro-skin] body[data-view=tasks]:not(.adding) #fab-add#fab-add{z-index:70!important}
   html[data-pro-skin=dawn] body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:linear-gradient(140deg,#a99fff,#86dcc6 70%,#ffb99b)}
@@ -257,22 +257,22 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
   #settings-panel .settings-page legend{position:absolute!important;top:-27px!important;left:20px!important;margin:0!important;line-height:1!important}
   /* rows */
   #settings-panel .settings-page .setting-row{min-height:58px!important;padding:14px 0!important;gap:16px!important;align-items:center!important}
-  #settings-panel .settings-page .setting-row>span:first-child{flex:1;min-width:0;font-size:16px!important;line-height:1.4!important}
+  #settings-panel .settings-page .setting-row>span:first-child{flex:1;min-width:0;font-size:17px!important;line-height:1.4!important}
   #settings-panel .settings-page .setting-row .switch{flex:none;margin:0!important}
   #settings-panel .settings-page .setting-row+.setting-row,#settings-panel .settings-page .setting-note+.setting-row{border-top:1px solid var(--s-hair)}
   #settings-panel .settings-page .setting-note{margin:-6px 0 0!important;padding:0 64px 16px 0!important;font-size:13px!important;line-height:1.6!important}
   #settings-panel .settings-page .setting-note:empty{display:none}
   #settings-panel .settings-page .section-hint{margin:16px 0 14px!important;font-size:13px!important;line-height:1.6!important}
   /* buttons that live in a card: a row with an inset divider, text on the card's inner margin */
-  #settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]){width:calc(100% + 40px)!important;margin:0 -20px!important;padding:0 20px!important;min-height:56px!important;gap:12px!important;border-top:1px solid var(--s-hair)!important;font-size:16px!important}
+  #settings-panel .settings-page fieldset .secondary-button.inline:not([hidden]){width:calc(100% + 40px)!important;margin:0 -20px!important;padding:0 20px!important;min-height:56px!important;gap:12px!important;border-top:1px solid var(--s-hair)!important;font-size:17px!important}
   /* grids get the same inner margin as rows */
   #settings-panel :is(.style-presets,.pro-theme-row,.font-presets,.theme-presets,.segmented,.wallpaper-library){padding-top:16px!important;padding-bottom:18px!important}
   #settings-panel .section-hint+:is(.style-presets,.pro-theme-row,.font-presets,.theme-presets,.segmented,.wallpaper-library){padding-top:2px!important}
   /* settings home */
   #settings-panel .settings-home :is(.settings-tiles,.settings-list){border-radius:22px!important}
   #settings-panel .settings-home :is(.settings-tiles,.settings-list)>button{padding:12px 18px 12px 16px!important;min-height:66px!important;gap:14px!important}
-  #settings-panel .settings-home .row-label{font-size:16px!important}
-  #settings-panel .settings-home .row-sub{font-size:12.5px!important;margin-top:1px}
+  #settings-panel .settings-home .row-label{font-size:17px!important}
+  #settings-panel .settings-home .row-sub{font-size:13px!important;margin-top:1px}
   #settings-panel .settings-home .pro-banner{border-radius:20px!important;padding:10px 12px 10px 16px!important;min-height:58px!important;margin:16px 0 0!important}
   #settings-panel .settings-home .settings-list{margin-top:24px!important}
   #settings-panel .settings-home .settings-tiles{margin-top:16px!important}
@@ -319,7 +319,7 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
   #settings-panel .style-chip .style-demo{position:relative;display:flex!important;flex-direction:column;justify-content:flex-end;gap:6px;height:84px!important;padding:12px!important;overflow:hidden;background-size:cover}
   #settings-panel .style-chip .style-demo>*{position:static!important;transform:none!important;margin:0!important}
   #settings-panel .style-chip .style-demo b{display:block;margin-bottom:auto!important;font:300 26px/1 Geist,sans-serif!important;letter-spacing:-.5px;width:auto!important;height:auto!important;background:none!important}
-  #settings-panel .style-chip .style-demo b em{font-style:normal;font-size:12px;opacity:.55;margin-left:2px}
+  #settings-panel .style-chip .style-demo b em{font-style:normal;font-size:13px;opacity:.55;margin-left:2px}
   #settings-panel .style-chip .style-demo i{display:block;width:100%!important;height:9px!important;border-radius:5px!important;flex:none}
   #settings-panel .style-chip .style-demo i:last-child{width:68%!important}
   #settings-panel .style-demo.glass{background:linear-gradient(150deg,#cfe3ef,#e9e4f3 55%,#f3e2d8)!important}
@@ -365,3 +365,90 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
 }
 /* dark looks: dark colour choices keep a quiet edge so they don't sink into the card */
 :is(html[data-style=night],html[data-pro-skin=night]) #settings-panel :is(.theme-chip>span,.color-row>button,.swatch:not(:has(input:checked))):not(:focus-visible){outline:1px solid #ffffff2e;outline-offset:-1px}
+
+/* ===================================================================================================
+   1.19 — 外观 = pick a theme, then fine-tune. Type scale: 13 / 15 / 17 / 30.
+   =================================================================================================== */
+#settings-panel{--t-cap:13px;--t-sec:15px;--t-body:17px;--t-big:30px}
+@media(max-width:760px){
+  /* the preview is the lock card, so it shows where the lock card is set: not above the theme gallery */
+  .settings-panel:has(.settings-page[data-page=look]:not([hidden])[data-tab=app]) .settings-preview{display:none!important}
+  .settings-panel:has(.settings-page[data-page=look]:not([hidden])[data-tab=app]) .settings-scroll{-webkit-mask-image:none!important;mask-image:none!important}
+
+  /* 主题: a full-width gallery of real home screens */
+  #settings-panel .settings-page fieldset.ui-styles{background:none!important;box-shadow:none!important;border:0!important;padding:0!important;margin-left:-16px!important;margin-right:-16px!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  #settings-panel .settings-page fieldset.ui-styles>legend{left:36px!important;right:auto!important;width:auto!important;max-width:calc(100% - 72px)!important}
+  #settings-panel .theme-rail{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:6px 36px 4px;scroll-padding-inline:36px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  #settings-panel .theme-rail::-webkit-scrollbar{display:none}
+  #settings-panel .theme-card{all:unset;position:relative;flex:none;width:96px;display:flex;flex-direction:column;align-items:flex-start;gap:0;scroll-snap-align:start;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  #settings-panel .theme-card .theme-shot{display:block;width:96px;height:208px;border-radius:17px;overflow:hidden;background:var(--s-tint);box-shadow:0 0 0 .5px color-mix(in srgb,var(--s-ink) 16%,transparent),0 12px 24px -16px #0007;transition:box-shadow .2s ease,transform .2s ease}
+  #settings-panel .theme-card .theme-shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+  #settings-panel .theme-card strong{display:block;margin-top:12px;font:600 var(--t-sec)/1.25 var(--ui-face)!important;color:var(--s-ink)!important;letter-spacing:0}
+  #settings-panel .theme-card small{display:block;margin-top:3px;font:400 var(--t-cap)/1.3 var(--ui-face)!important;color:var(--s-muted)!important}
+  #settings-panel .theme-card.active .theme-shot{box-shadow:0 0 0 2.5px var(--s-page,#f2f2f4),0 0 0 4.5px var(--s-ink),0 14px 26px -16px #0008}
+  #settings-panel .theme-card.active small{color:var(--s-ink)!important;font-weight:500!important}
+  #settings-panel .theme-card::before,#settings-panel .theme-card::after{display:none!important}
+  #settings-panel .theme-card .pro-lock-badge{position:absolute!important;top:8px!important;right:8px!important;left:auto!important;bottom:auto!important;width:24px!important;height:24px!important;border-radius:50%!important;display:grid!important;place-items:center;background:#0000004d!important;color:#fff!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #settings-panel .theme-card .pro-lock-badge svg{width:13px!important;height:13px!important}
+  #settings-panel .theme-about{margin:16px 36px 0;font:400 var(--t-sec)/1.55 var(--ui-face);color:var(--s-muted);text-wrap:pretty}
+  #settings-panel .theme-about b{color:var(--s-ink);font-weight:600;margin-right:8px}
+  #settings-panel .theme-about:empty{display:none}
+  #settings-panel .settings-page fieldset#pro-look{margin-top:22px!important}
+  #settings-panel .settings-page fieldset#pro-look>legend{display:none}
+  /* a Pro theme brings its own colours, so 配色 steps aside instead of explaining itself */
+  html[data-pro-skin] #settings-panel .accent-settings{display:none!important}
+
+  /* 锁屏卡片: one card — presets, and 自己调 folded underneath */
+  #settings-panel .card-styles .more-appearance{margin:6px 0 0!important;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;border-top:1px solid var(--s-hair)!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow:visible!important}
+  #settings-panel .card-styles .more-appearance>summary{min-height:64px!important;display:flex!important;align-items:center;gap:14px;padding:0!important;border:0!important}
+  #settings-panel .card-styles .more-appearance[open]>summary{border-bottom:1px solid var(--s-hair)!important}
+  #settings-panel .custom-dot{flex:none;width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 1px #0000001f;position:relative}
+  #settings-panel .custom-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--s-hair);background:conic-gradient(from 0deg,#ff6b6b,#ffd166,#06d6a0,#4cc9f0,#7b61ff,#ff6b6b);-webkit-mask:radial-gradient(circle,transparent 18.5px,#000 19px);mask:radial-gradient(circle,transparent 18.5px,#000 19px);opacity:.9}
+  #settings-panel .more-appearance.is-custom .custom-dot::after{background:var(--s-ink);opacity:1}
+  #settings-panel .summary-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+  #settings-panel .summary-text b{font:500 var(--t-body)/1.25 var(--ui-face);color:var(--s-ink)}
+  #settings-panel .summary-text small{font:400 var(--t-cap)/1.3 var(--ui-face);color:var(--s-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #settings-panel .card-styles .more-appearance>summary .summary-chevron{margin-left:auto!important}
+  #settings-panel .card-styles .more-appearance .ag{padding:0 0 6px!important;border:0!important}
+  #settings-panel .card-styles .more-appearance .ag-title{margin:22px 0 12px!important}
+  #settings-panel .card-styles .color-row{display:flex;align-items:center;gap:14px}
+  #settings-panel .card-styles .color-row output{font:500 var(--t-sec)/1 Geist,var(--ui-face)!important;color:var(--s-ink)!important;letter-spacing:.02em;margin:0!important}
+  #settings-panel .card-styles .reset-row{margin:18px 0 10px!important}
+  #settings-panel .card-styles .theme-presets{padding-top:16px!important;padding-bottom:12px!important}
+
+  /* type scale: captions 13, secondary 15, body 17, large titles 30 — nothing smaller than 13 in settings */
+  #settings-panel :is(.section-hint,.setting-note,.row-sub,.fx-hint,.ag-switch small,.font-chip,.wallpaper-choice span,.theme-chip,.swatch span,.mat-demo+.mat-name+small,[data-material] small,.segmented button,.pill-segment button,.pro-wall-row small){font-size:var(--t-cap)!important}
+  #settings-panel .settings-page legend{font-size:var(--t-cap)!important;font-weight:500!important}
+  #settings-panel :is(.row-value,.look-tabs button,.secondary-button,.mat-name,.ag-title,.ag-row output,.setting-row output,.chip,.reset-row,.wallpaper-upload span){font-size:var(--t-sec)!important}
+  #settings-panel :is(.row-label,.ag-switch strong,.setting-row>span,.settings-top h1:not(#settings-title)){font-size:var(--t-body)!important}
+  #settings-panel .row-label{font-weight:500!important}
+  #settings-panel .row-label>.row-sub{font-size:var(--t-cap)!important;font-weight:400!important}
+  #settings-panel .font-chip .font-sample{font-size:var(--t-body)!important}
+}
+@media(max-width:760px){
+  #settings-panel #pro-look .pro-wall-row{margin-top:0!important;padding:16px 0!important;border-top:0!important}
+}
+@media(max-width:760px){
+  #settings-panel :is(.pro-banner-state,.pro-banner-text small,.links-row a,.links-row,#backup-state small,.home-card-note,.hero-note){font-size:var(--t-cap)!important}
+  #settings-panel .pro-banner-text b{font-size:var(--t-body)!important;font-weight:600!important}
+  #settings-panel .ag-row .ag-title,#settings-panel .motion-settings .ag-title{font-size:var(--t-body)!important;font-weight:500!important}
+  #settings-panel .secondary-button.inline{font-size:var(--t-body)!important}
+  #settings-panel #backup-state b{font-size:var(--t-body)!important;font-weight:600!important}
+  #settings-panel :is(.group-name,.group-head strong,.group-head .group-title){font-size:var(--t-body)!important}
+  /* home chrome follows the same scale */
+  .app-header .header-date,.app-header #header-date{font-size:var(--t-sec,15px)}
+  #header-actions#header-actions>:is(#open-review,.nav-button[data-view=settings]),#header-actions#header-actions>.nav-button[data-view=settings] span{font-size:15px!important}
+}
+@media(max-width:760px){
+  #settings-panel .backup-head small{font-size:var(--t-cap)!important;line-height:1.5}
+  #settings-panel .backup-head b{font-size:var(--t-body)!important}
+  .app-header .header-date{font-size:15px!important}
+  .first-run p{font-size:15px!important;line-height:1.55!important}
+  #filter-tabs button{font-size:15px!important}
+}
+@media(max-width:760px){
+  /* Android draws the lock list as separate group cards on the wallpaper: no box around them in the preview, and the list simply fades out */
+  #settings-panel .settings-preview .mini-card.grouped{background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:0!important;padding:6px 2px 0!important;-webkit-mask-image:linear-gradient(#000 78%,transparent)!important;mask-image:linear-gradient(#000 78%,transparent)!important}
+  #settings-panel .settings-preview .mini-card.grouped::before,#settings-panel .settings-preview .mini-card.grouped::after{display:none!important}
+  #settings-panel .settings-preview .mini-card.grouped .mini-footer{display:none!important}
+}

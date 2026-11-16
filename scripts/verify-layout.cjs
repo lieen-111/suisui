@@ -43,7 +43,11 @@ const iosStub = () => {
           const out = [], vis = el => { const r = el.getBoundingClientRect(), cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity !== 0; };
           const pageEl = document.querySelector('.settings-page:not([hidden])');
           if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`sideways scroll ${document.documentElement.scrollWidth}`);
-          const cards = [...pageEl.querySelectorAll('fieldset')].filter(vis);
+          // 1.19: the theme gallery runs edge to edge on purpose; its text keeps the page margin
+          for (const g of pageEl.querySelectorAll('fieldset.ui-styles')) { if (!vis(g)) continue;
+            for (const el of g.querySelectorAll('legend, .theme-about')) { if (!vis(el)) continue; const r = el.getBoundingClientRect(); if (r.left < 28 || r.right > innerWidth - 28) out.push(`主题: ${el.className || el.tagName} at ${Math.round(r.left)}…${Math.round(innerWidth - r.right)} from the screen edges`); }
+            const first = g.querySelector('.theme-card'); if (first && vis(first) && g.querySelector('.theme-rail').scrollLeft === 0 && first.getBoundingClientRect().left < 28) out.push('主题: first theme starts at the screen edge'); }
+          const cards = [...pageEl.querySelectorAll('fieldset')].filter(vis).filter(c => !c.matches('.ui-styles'));
           const lefts = new Set(cards.map(c => Math.round(c.getBoundingClientRect().left))), rights = new Set(cards.map(c => Math.round(c.getBoundingClientRect().right)));
           if (lefts.size > 1 || rights.size > 1) out.push(`cards not aligned: left ${[...lefts]} right ${[...rights]}`);
           for (const c of cards) {

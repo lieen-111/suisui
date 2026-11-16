@@ -97,7 +97,7 @@
   function data() {
     const st = API.state, todo = API.pending(), done = st.tasks.filter(t => t.done).sort((a, b) => (a.completedAt || 0) - (b.completedAt || 0)), d = new Date();
     const cds = (Array.isArray(st.settings.countdowns) ? st.settings.countdowns : []).map(c => { const [y, m, dd] = String(c.date).split('-').map(Number); return { title: c.title, n: Math.round((new Date(y, m - 1, dd) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5) }; }).filter(c => c.n >= 0).sort((a, b) => a.n - b.n);
-    const lunar = (() => { try { return (API.lunar(d) || '').replace(/^.+?年/, ''); } catch { return ''; } })();
+    const lunar = (() => { try { return API.state.settings.lang === 'en' ? '' : (API.lunar(d) || '').replace(/^.+?年/, ''); } catch { return ''; } })();
     // the list's own order, so a cell or a star never moves when its task gets done
     const today = new Set([...todo, ...done].map(t => t.id)), items = st.tasks.filter(t => today.has(t.id)).map(t => ({ id: t.id, title: t.title, done: !!t.done, at: t.completedAt || 0 }));
     return { left: todo.length, done: done.length, total: todo.length + done.length, d, lunar, cds, items };
@@ -109,7 +109,8 @@
   const first = s => esc(Array.from(String(s).trim())[0] || '·');
   const f1 = v => Math.round(v * 10) / 10;
   const SANS_UI = "Geist,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
-  const dateLine = D => `${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}`;
+  const EN = () => API?.state?.settings?.lang === 'en';
+  const dateLine = D => EN() ? new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(D.d) : `${D.d.getMonth() + 1}月${D.d.getDate()}日 · 星期${WEEK[D.d.getDay()]}`;
   // A = the task that just landed in the picture: { id, from: how many were done before it }. Only that one animates.
 
   /* 晨 · 玻璃 — a measuring glass: it fills as the day's things get done */
@@ -121,7 +122,7 @@
     for (let i = 1; i <= n; i++) { const y = f1(lv(i / n)), on = i <= D.done, fresh = A && i === D.done; ticks += `<line class="${fresh ? 'ph-new ph-grow' : ''}" style="transform-origin:${W - 16}px ${y}px" x1="${W - 16}" x2="${on ? W - 30 : W - 23}" y1="${y}" y2="${y}" stroke="#1b1d24" stroke-opacity="${on ? .5 : .18}" stroke-width="1.1" stroke-linecap="round"/>`; }
     const r = rng(9); let bubbles = '';
     if (D.done) for (let i = 0; i < 9; i++) { const x = f1(30 + r() * 250), s = f1(1.2 + r() * 2.2); bubbles += `<circle class="ph-bubble" cx="${x}" cy="${H - 4}" r="${s}" fill="#fff" fill-opacity=".75" style="--b:${f1(level - H + 10)}px;animation-delay:${f1(r() * 6)}s;animation-duration:${f1(4 + r() * 4)}s"/>`; }
-    const state = D.total ? (D.left ? `满了 ${Math.round(pct * 100)}%，还差 ${D.left} 件` : '满了。今天的都做完了') : '今天是一只空杯子';
+    const state = D.total ? (D.left ? (D.done ? `满了 ${Math.round(pct * 100)}%，还差 ${D.left} 件` : `空杯子，${D.total} 件倒满它`) : '满了。今天的都做完了') : '今天是一只空杯子';
     return { H, land: { x: 200, y: level }, svg: `<defs><linearGradient id="pd-liq" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#a99fff"/><stop offset=".5" stop-color="#86dcc6"/><stop offset="1" stop-color="#ffb99b"/></linearGradient><linearGradient id="pd-deep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#3c3a8a" stop-opacity=".12"/></linearGradient><clipPath id="pd-clip"><rect width="${W}" height="${H}" rx="30"/></clipPath></defs>
       <g clip-path="url(#pd-clip)"><g class="${A ? 'ph-rise' : ''}" style="--rise:${rise}px">
         <g class="ph-wave ph-wave-b"><path d="${wave(level - 4, 4, 1.4)}" fill="url(#pd-liq)" opacity=".42"/></g>
@@ -196,7 +197,7 @@
     return { H, pts, land: { x: 230, y: 70 }, svg: `<defs><radialGradient id="pn-glow"><stop offset="0" stop-color="#a9bcff" stop-opacity=".6"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient></defs>${bg}${lines}${stars}
       <text x="2" y="26" font-family="${SANS_UI}" font-size="12" fill="#959cb0" letter-spacing=".3">${dateLine(D)}</text>
       <text class="${A ? 'ph-pop' : ''}" x="0" y="98" font-family="${SANS_UI}" fill="#eef1fa"><tspan font-size="58" font-weight="200" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
-      <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? `今天亮了 ${D.done} 颗星` : '今天的星座连好了') : '今晚还没有星星'}</text>${taps}` };
+      <text x="2" y="126" font-family="${SANS_UI}" font-size="12.5" fill="#aab2c6">${D.total ? (D.left ? (D.done ? `今天亮了 ${D.done} 颗星` : `今晚 ${D.total} 颗星，等你点亮`) : '今天的星座连好了') : '今晚还没有星星'}</text>${taps}` };
   }
   /* 晕 · 彩墨 — clear water: each finished task drops one colour (花青, 胭脂, 藤黄, 石青, 赭石, 墨) that slowly
      blooms; overlapping drops mix. The day dries into its own little abstract painting. */
@@ -217,7 +218,7 @@
     let waiting = ''; // drops still to come: a faint pencil ring where each will land
     D.items.filter(i => !i.done).forEach(it => { const b = drop(it.id, bx, by, bw, bh, 22, 40, idx[it.id]); pts[it.id] = { x: b.x, y: b.y }; waiting += `<circle cx="${f1(b.x)}" cy="${f1(b.y)}" r="${f1(b.R * .55)}" fill="none" stroke="${b.c}" stroke-opacity=".45" stroke-width=".8" stroke-dasharray="2 2.4"/>`; });
     const basin = `<ellipse cx="${bx + bw / 2}" cy="${by + bh / 2}" rx="${bw / 2 + 6}" ry="${bh / 2 - 2}" fill="#dfe8ec" fill-opacity="${D.total ? .32 : .55}"/>`;
-    const state = D.total ? (D.left ? `晕开了 ${D.done} 滴，还有 ${D.left} 滴` : '今天这幅，晕好了') : '一盆清水，等第一滴墨';
+    const state = D.total ? (D.left ? (D.done ? `晕开了 ${D.done} 滴，还有 ${D.left} 滴` : `${D.total} 滴颜色，等着晕开`) : '今天这幅，晕好了') : '一盆清水，等第一滴墨';
     return { H, pts, land, svg: `<defs>${bloomDefs('')}</defs>
       <g filter="url(#pb-wet)">${basin}${blooms}</g>${waiting}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="70" font-family='${SONG}' fill="#2b2b2e"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
@@ -371,7 +372,7 @@
   }
   function roomArt(D, A) {
     const W = 340, H = 172, P = isoP(254, 70, 15);
-    const state = D.total ? (D.left ? `布置了 ${D.done} 件，还差 ${D.left} 件` : '房间布置好了，开灯') : '一间空房间';
+    const state = D.total ? (D.left ? (D.done ? `布置了 ${D.done} 件，还差 ${D.left} 件` : `${D.total} 件家具，等你摆进来`) : '房间布置好了，开灯') : '一间空房间';
     return { H, land: { x: 254, y: 120 }, svg: `<defs><radialGradient id="pi-glow"><stop offset="0" stop-color="#fff2a8" stop-opacity=".85"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></radialGradient></defs>
       ${roomScene(P, D, A, 15)}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="66" font-family="${SANS_UI}" fill="${ROOM.line}"><tspan font-size="54" font-weight="300" letter-spacing="-2">${D.done}</tspan><tspan font-size="21" fill-opacity=".45" dx="4">/ ${D.total}</tspan></text>
@@ -487,7 +488,7 @@
   function fluffArt(D, A) {
     const W = 340, H = 172, p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left, p0 = A && D.total ? A.from / D.total : p;
     const img = (q, o, cls = '') => `<image class="${cls}" href="${furImage(q, o)}" x="${W - 186}" y="-2" width="180" height="172"/>`;
-    const state = D.total ? (D.left ? `毛长了 ${Math.round(p * 100)}%，还差 ${D.left} 件` : '画好了，它醒了') : '还是一个铅笔圈';
+    const state = D.total ? (D.left ? (D.done ? `毛长了 ${Math.round(p * 100)}%，还差 ${D.left} 件` : `还差 ${D.left} 件，它就睁眼`) : '画好了，它醒了') : '还是一个铅笔圈';
     return { H, land: { x: W - 96, y: 92 }, svg: `${A ? img(p0, false) : ''}${img(p, open, A ? 'ph-ink-in' : '')}
       <text class="${A ? 'ph-pop' : ''}" x="0" y="66" font-family='${SONG}' fill="#141416"><tspan font-size="56">${D.done}</tspan><tspan font-size="21" fill-opacity=".38" dx="5">/ ${D.total}</tspan></text>
       <text x="2" y="92" font-family='${SONG}' font-size="12.5" fill="#626266" letter-spacing="1">${D.d.getMonth() + 1}月${D.d.getDate()}日　星期${WEEK[D.d.getDay()]}</text>

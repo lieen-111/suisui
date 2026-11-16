@@ -216,7 +216,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleW
     assert.equal(await page.locator('.mini-row').count(), 3);
     await page.locator('#card-transparency').evaluate(el => { el.value = '60'; el.dispatchEvent(new Event('input', { bubbles: true })); });
     await page.locator('[data-material=flat]').click();
-    await page.locator('[data-card-color="#f5f7f3"]').click();
+    await page.locator('#card-color').evaluate(i => { i.value = '#f5f7f3'; i.dispatchEvent(new Event('input', { bubbles: true })); });
     const same = await page.evaluate(() => ['--card-bg', '--card-blur', '--card-ink'].every(k => document.getElementById('mini-card').style.getPropertyValue(k) === document.getElementById('activity').style.getPropertyValue(k)));
     assert(same, 'Mini preview uses the same card appearance');
     const before = await mini.boundingBox();

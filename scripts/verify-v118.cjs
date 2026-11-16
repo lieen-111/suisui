@@ -230,7 +230,10 @@ let browser;
     assert.equal(await page.locator('#fx-sample-text').evaluate(e => e.style.visibility), '', 'The sample comes back for the next try');
     await page.locator('#fx-replay').click(); await page.waitForTimeout(60);
     assert.equal(await page.locator('#fx-sample').evaluate(e => e.classList.contains('is-done')), true, '再看一次 plays it again');
-    assert.ok(await page.locator('#settings-panel .section-hint').count() >= 4, 'Look sections explain themselves');
+    assert.ok(await page.locator('#settings-panel .section-hint').count() >= 2, 'Look sections explain themselves');
+    assert.match(await page.locator('#theme-about').textContent(), /\S{6,}/, 'The chosen theme says what it is');
+    assert.equal(await page.locator('#theme-rail .theme-card').count(), 11, '1.19: one gallery holds the three free looks, 随光 and the seven Pro themes');
+    assert.equal(await page.locator('#theme-rail img').evaluateAll(async imgs => { await Promise.all(imgs.map(i => i.decode().catch(() => {}))); return imgs.filter(i => !i.naturalWidth).length; }), 0, 'Every theme is pictured');
     await context.close();
   }
 

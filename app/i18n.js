@@ -7,7 +7,7 @@
   const D = {
     // 1.16
     '外观分类': 'Appearance sections', '动效': 'Motion', '开启动效': 'Motion on', '按下回弹、图标动画、完成时文字碎开': 'Press springs, icon animations, text shatter on finish',
-    '清单和锁屏一起变；可爱字体第一次显示稍慢。': 'List and lock screen change together; playful fonts load once.',
+    '清单和锁屏卡片一起变大或变小。': 'The list and the lock card grow or shrink together.', '清单和锁屏一起变；可爱字体第一次显示稍慢。': 'List and lock screen change together; playful fonts load once.',
     '默认用手机自己的壁纸，也可以单独换一张。': 'Uses your phone wallpaper by default; you can pick another.', '网页读不到手机壁纸，这里只影响预览。': "A web page can't read your phone wallpaper; this only changes the preview.",
     '还没有备份过': 'Never backed up', '今天已备份': 'Backed up today', '待办只存在这台设备上，不会上传。换手机前先导出备份。': 'Your to-dos stay on this device only. Export a backup before switching phones.',
     '待办只存在这台手机上，建议备份一份': 'Your to-dos live only on this phone — make a backup', '备份': 'Back up', '新建分组': 'New group', '名称': 'Name', '分组名称': 'Group name', '图标': 'Icon', '颜色': 'Color', '删除分组': 'Delete group',
@@ -39,7 +39,7 @@
     '切换后界面、提示、日期和锁屏卡片一起换。你写下的待办内容不会被翻译。': "The interface, tips, dates and lock card switch together. Your own to-dos are not translated.", '简体中文': '简体中文',
     '锁屏与隐私': 'Lock screen & privacy', '分组与每日整理': 'Groups & daily tidy', '数据与备份': 'Data & backup',
     // look page
-    'App 界面': 'App', '界面风格': 'Style', '玻璃': 'Glass', '纸墨': 'Paper', '夜光': 'Night', '壁纸铺底，通透': 'Your wallpaper, frosted', '米白纸，大号日期': 'Warm paper, big date', '深色，荧光色': 'Dark with neon', '配色': 'Colour', 'App 配色': 'App colour',
+    'App 界面': 'App', '主题': 'Theme', '免费': 'Free', '卡片': 'Card', '自己调': 'Fine-tune', '材质、颜色、透明度、文字': 'Material, colour, transparency, text', '选一个颜色': 'Pick a colour', '界面风格': 'Style', '玻璃': 'Glass', '纸墨': 'Paper', '夜光': 'Night', '壁纸铺底，通透': 'Your wallpaper, frosted', '米白纸，大号日期': 'Warm paper, big date', '深色，荧光色': 'Dark with neon', '配色': 'Colour', 'App 配色': 'App colour',
     '墨黑': 'Ink', '暖橙': 'Orange', '靛蓝': 'Indigo', '莓果': 'Berry', '松绿': 'Pine', '荧光': 'Neon', '雾白': 'Mist', '湖蓝': 'Lake', '梅紫': 'Plum', '松林': 'Forest', '石墨': 'Graphite', '自定义': 'Custom',
     '字体与字号': 'Font & size', '字体': 'Font', '字号': 'Text size', '默认': 'Default', '宋体': 'Serif', '楷体': 'Kai', '圆体': 'Rounded', '小': 'Small', '标准': 'Standard', '大': 'Large', '特大': 'Extra large', 'Aa 碎碎': 'Aa Sui',
     '清单、锁屏卡片和预览一起变化。字体用的是手机自带的，没有的会自动换成最接近的。': "The list, lock card and preview change together. Fonts come with your phone; missing ones fall back to the closest.",
@@ -99,8 +99,10 @@
   const word = s => D[s] ?? s;
   const R = [
     [/^(.*) · 还有 (\d+) 件，完成 (\d+) 件$/, (_, a, b, c) => `${a} · ${b} left, ${c} done`],
+    [/^(.*) · 今天 (\d+) 件$/, (_, a, b) => `${a} · ${b} for today`],
     [/^(.*) · (\d+) 件都完成了$/, (_, a, b) => `${a} · all ${b} done`],
     [/^(.*) · 给今天留一件想做的事$/, (_, a) => `${a} · add one thing for today`],
+    [/^(磨砂|玻璃|平面) · (#[0-9A-F]{6}) · 透明 (\d+)%$/, (_, a, b, c) => `${({ 磨砂: 'Frosted', 玻璃: 'Glass', 平面: 'Flat' })[a]} · ${b} · ${c}% clear`],
     [/^今天 · (\d+)\/(\d+)$/, (_, a, b) => `Today · ${a}/${b}`],
     [/^(\d+) 件$/, (_, a) => `${a} open`],
     [/^上次备份：(\d+) 天前$/, (_, a) => `Last backup: ${a} days ago`],

@@ -80,6 +80,7 @@
   const LOG_LIMIT = 3000;
   let state = { schema: SCHEMA, rev: 0, tasks: DEMO ? examples() : [], archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey(), log: [], timer: null };
   if (SHOWCASE) Object.assign(state.settings, { tipsSeen: true, installDismissed: true, androidSetupSeen: true, iosSetupSeen: true, motion: true, lockScreen: true });
+  if (SHOWCASE && UI_STYLES[SHOWCASE.replace(/^ui-/, '')]) state.settings.uiStyle = SHOWCASE.replace(/^ui-/, ''); // the free styles get pictured the same way
   let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
   const completing = new Set();
@@ -696,7 +697,7 @@
     const inFilter = t => filter === 'all' || (filter === 'repeat' ? t.repeat !== 'none' : groupOf(t.group).id === filter);
     const visible = todo.filter(inFilter);
     const fmt = new Intl.DateTimeFormat(LOC(), { month: 'long', day: 'numeric', weekday: 'short' });
-    $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
+    $('progress-copy').textContent = `${fmt.format(new Date())} · ${todo.length ? (done.length ? `还有 ${todo.length} 件，完成 ${done.length} 件` : `今天 ${todo.length} 件`) : (done.length ? `${done.length} 件都完成了` : '给今天留一件想做的事')}`;
     const total = todo.length + done.length;
     $('progress-number').textContent = total ? `${done.length}/${total}` : '0';
     $('header-title').textContent = total ? `今天 · ${done.length}/${total}` : '今天';
@@ -882,6 +883,11 @@
       const on = ['cardColor', 'cardMaterial', 'cardTransparency', 'cardText'].every(k => String(t[k]).toLowerCase() === String(s[k]).toLowerCase());
       b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
     });
+    // 自己调 shows the card's own colour, and says so when the card no longer matches a preset
+    const custom = !document.querySelector('[data-theme-preset].active');
+    $('custom-dot').style.background = s.cardColor;
+    $('custom-state').textContent = custom ? `${({ frosted: '磨砂', glass: '玻璃', flat: '平面' })[s.cardMaterial] || ''} · ${s.cardColor.toUpperCase()} · 透明 ${s.cardTransparency}%` : '材质、颜色、透明度、文字';
+    $('more-appearance').classList.toggle('is-custom', custom);
     $('motion-toggle').checked = !!s.motion;
     $('intensity').value = s.intensity;
     $('intensity-value').textContent = ['轻柔', '适中', '强烈'][s.intensity - 1];
@@ -2283,7 +2289,7 @@
     reader.readAsDataURL(file);
     event.target.value = '';
   });
-  $('reset-button').hidden = !DEMO; // sample list only in demo/test builds
+  $('reset-button').hidden = !DEMO || !!SHOWCASE; // sample list only in demo/test builds
   $('reset-button').addEventListener('click', () => {
     const previous = structuredClone({ tasks: state.tasks, groups: state.groups });
     state.tasks = examples(); state.groups = structuredClone(DEFAULT_GROUPS); closeEdit(); filter = 'all'; save(); render();
