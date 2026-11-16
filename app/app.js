@@ -80,6 +80,7 @@
   const LOG_LIMIT = 3000;
   let state = { schema: SCHEMA, rev: 0, tasks: DEMO ? examples() : [], archive: [], groups: structuredClone(DEFAULT_GROUPS), settings: { ...defaults }, day: dayKey(), log: [], timer: null };
   if (SHOWCASE) Object.assign(state.settings, { tipsSeen: true, installDismissed: true, androidSetupSeen: true, iosSetupSeen: true, motion: true, lockScreen: true });
+  if (SHOWCASE && new URLSearchParams(location.search).get('lang') === 'en') state.settings.lang = 'en';
   if (SHOWCASE && UI_STYLES[SHOWCASE.replace(/^ui-/, '')]) state.settings.uiStyle = SHOWCASE.replace(/^ui-/, ''); // the free styles get pictured the same way
   let filter = 'all', editing = null, settingsPage = 'index', toastTimer, undoAction = null, storageOK = true, persisted = false, pendingImport = null, installPrompt = null;
   // Tasks whose shatter animation is still playing. Other tasks stay tappable meanwhile.
@@ -1291,8 +1292,9 @@
         const t = x / (cols - 1), r = Math.random();
         const dx = (14 + t * 46 + r * 26) * strength, dy = (-(10 + r * 26) - (rows - 1 - y) * 8) * strength;
         const delay = 50 + t * 150 + r * 30;
-        window.anime.animate(p, { x: [0, dx], y: [0, dy], rotate: [0, (r - .5) * 50], scale: [1, .55 + r * .2], duration: 460, delay, ease: 'outQuart' });
-        window.anime.animate(p, { opacity: [1, 0], delay: delay + 80, duration: 300, ease: 'inQuad', onComplete: () => p.remove() });
+        // Web Animations, not anime.js: anime reads each sliver's computed style when it starts, which made the browser restyle 40 times in one frame
+        p.animate([{ transform: 'translate(0,0) rotate(0) scale(1)' }, { transform: `translate(${dx}px,${dy}px) rotate(${(r - .5) * 50}deg) scale(${.55 + r * .2})` }], { duration: 460, delay, easing: 'cubic-bezier(.165,.84,.44,1)', fill: 'both' });
+        p.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: delay + 80, easing: 'cubic-bezier(.55,.085,.68,.53)', fill: 'both' }).onfinish = () => p.remove();
       }
     }
     source.style.visibility = 'hidden';
@@ -1316,8 +1318,6 @@
     if (completing.has(id)) return;
     const task = state.tasks.find(t => t.id === id);
     if (!task || task.done) return;
-    const positions = new Map();
-    const positionKey = el => `${el.classList.contains('lock-task') ? 'preview' : 'editor'}:${el.dataset.taskId || el.dataset.id}`;
     const source = button.classList.contains('lock-task') ? button : button.closest('.task-row');
     completing.add(id);
     button.disabled = true;
@@ -1326,7 +1326,6 @@
     window.dispatchEvent(new CustomEvent('suisui:completing', { detail: { id, rect: sourceRect } }));
     let animationError = false;
     try { await shatter(source); } catch { animationError = true; }
-    document.querySelectorAll('.task-row, .lock-task').forEach(el => positions.set(positionKey(el), el.getBoundingClientRect().top));
     completing.delete(id);
     if (!state.tasks.includes(task) || task.done) { render(); return; }
     markDone(task);
@@ -1334,25 +1333,22 @@
     save(); render();
     $('completed-section').open = true;
     if (state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.querySelectorAll('.task-row, .lock-task').forEach(el => {
-        const oldTop = positions.get(positionKey(el));
-        if (oldTop !== undefined && !completing.has(el.dataset.taskId || el.dataset.id)) {
-          const dy = oldTop - el.getBoundingClientRect().top;
-          if (Math.abs(dy) > 1) window.anime.animate(el, { y: [dy, 0], duration: 370, ease: 'outExpo' });
-        }
-      });
+      // the rows below slide up through render(): motion.js measures before and after (FLIP); sliding them here as well moved them twice
       document.querySelectorAll('.done-row, .lock-task.is-done').forEach(el => {
         if ((el.dataset.completedId || el.dataset.id) !== id) return;
         el.classList.add('completion-arrival');
         const target = el.classList.contains('lock-task') ? el : el.querySelector('.done-text');
-        window.anime.animate(el, { '--strike-progress': [0, 1], duration: 420, ease: 'outCubic', onComplete: () => { el.classList.remove('completion-arrival'); el.style.removeProperty('--strike-progress'); } });
-        window.anime.animate(target, { opacity: [1, .5], duration: 460, ease: 'outQuad' });
+        // CSS draws the line (styles.css .completion-arrival) and Web Animations fades the text: no anime.js setup in this frame
+        setTimeout(() => el.classList.remove('completion-arrival'), 460);
+        target.animate([{ opacity: 1 }, { opacity: getComputedStyle(target).opacity }], { duration: 460, easing: 'cubic-bezier(.25,.46,.45,.94)' });
       });
     }
     $('completion-note').textContent = pending().length ? '又完成一件。' : '今天的事，圆满完成。';
     setTimeout(() => { $('completion-note').textContent = ''; }, 2400);
     showToast('已完成一项待办', () => { unmarkDone(task); save(); render(); });
-    window.dispatchEvent(new CustomEvent('suisui:done', { detail: { id, rect: sourceRect, allDone: !pending().length } }));
+    // the theme's flight and picture start on the next frame, so the list's re-render and the flight don't land in the same one
+    const allDone = !pending().length;
+    requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('suisui:done', { detail: { id, rect: sourceRect, allDone } })));
     if (!isBusy()) {
       const next = button.classList.contains('lock-task') ? $('activity-list').querySelector('[data-action="complete"]') || $('activity-list').querySelector('button') : $('task-list').querySelector('[data-action="complete"]');
       if (next) next.focus({ preventScroll: true });

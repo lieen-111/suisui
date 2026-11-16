@@ -452,3 +452,38 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
   #settings-panel .settings-preview .mini-card.grouped::before,#settings-panel .settings-preview .mini-card.grouped::after{display:none!important}
   #settings-panel .settings-preview .mini-card.grouped .mini-footer{display:none!important}
 }
+
+/* 1.19 add sheet: five settings in one even row — nothing runs off the edge */
+@media(max-width:760px){
+  .add-form .add-pills{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px!important;overflow:visible!important;margin:12px 0 2px!important;padding:0!important}
+  .add-form .add-pill{min-width:0;width:100%;height:40px!important;padding:0 6px!important;justify-content:center;gap:5px!important;border-radius:12px!important;font-size:13px!important}
+  .add-form .add-pill>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .add-form .add-pill svg{flex:none;width:15px!important;height:15px!important}
+  /* option chips wrap onto a second line instead of hiding off-screen */
+  :is(.add-form,#edit-form) .chip-row{flex-wrap:wrap!important;overflow:visible!important;row-gap:8px!important}
+}
+@media(max-width:760px){
+  /* once a pill holds a value, the value is the label: drop the icon so 15:00 and ● 工作 fit */
+  .add-form .add-pill.is-set svg{display:none!important}
+  .add-form .add-pill.is-set{padding:0 4px!important}
+}
+@media(max-width:760px){ .add-form .add-pill[data-add-panel=group] svg{display:none!important} }
+
+/* 1.19 accessibility pass: every tap target at least 40px, every caption at least 4.5:1 */
+@media(max-width:760px){
+  #filter-tabs button{height:40px!important}
+  #filter-tabs button>span:last-child{opacity:1!important;color:color-mix(in srgb,currentColor 72%,transparent)!important}
+  #settings-panel .look-tabs button,.review-period button{min-height:40px!important}
+  #tips-close{width:44px!important;height:44px!important}
+  .add-form .add-submit{width:40px!important;height:40px!important}
+  #open-search{width:40px!important;height:40px!important}
+  .review-groups .chip{min-height:38px!important}
+  .review-stats b small{opacity:.72!important}
+}
+#backup-state.is-old{color:#a95500}
+@media(prefers-color-scheme:dark){#backup-state.is-old{color:#ffb35c}}
+html[data-style=night] #backup-state.is-old{color:#ffb35c}
+@media(max-width:760px){
+  #edit-sheet .sheet-head .primary-button,#edit-form .primary-button{min-height:40px!important;padding-left:18px!important;padding-right:18px!important}
+  .review-groups .chip{min-height:40px!important}
+}

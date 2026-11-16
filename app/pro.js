@@ -173,7 +173,8 @@
   const groupColor = id => API.groupOf(id)?.color || '#9aa0a6';
   function hex(c, a) { const n = parseInt(c.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
   function shardColor(e, i, L = look()) { return L === PLAIN ? groupColor(e.group) : L.shards[(hash(`${e.id}${e.at}`) + i) % L.shards.length]; }
-  function canvasFor(el, w, h) { const dpr = Math.min(2, devicePixelRatio || 1); el.width = Math.round(w * dpr); el.height = Math.round(h * dpr); el.style.width = `${w}px`; el.style.height = `${h}px`; const c = el.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); return c; }
+  const SHOT = () => (S().lang === 'en' ? '-en' : ''); // theme pictures are screenshots, one set per language
+  function canvasFor(el, w, h, max = 2) { const dpr = Math.min(max, devicePixelRatio || 1); el.width = Math.round(w * dpr); el.height = Math.round(h * dpr); el.style.width = `${w}px`; el.style.height = `${h}px`; const c = el.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); return c; }
 
   /* ---------- Sound: each theme has its own completion sound, synthesised (no audio files) ---------- */
   let ac = null;
@@ -236,7 +237,7 @@
   function overlay(duration, draw, resolveAt = 280) {
     return new Promise(resolve => {
       const c = document.createElement('canvas'); c.className = 'pro-fx';
-      const ctx = canvasFor(c, innerWidth, innerHeight); document.body.append(c);
+      const ctx = canvasFor(c, innerWidth, innerHeight, 1.5); document.body.append(c); // full-screen and redrawn every frame: 1.5x keeps the upload light on phones
       const t0 = performance.now();
       const tick = now => { const ms = now - t0; ctx.clearRect(0, 0, innerWidth, innerHeight); draw(ctx, ms); if (ms < duration) requestAnimationFrame(tick); else c.remove(); };
       requestAnimationFrame(tick); setTimeout(resolve, resolveAt);
@@ -752,13 +753,14 @@
     rail.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.remove());
     rail.insertAdjacentHTML('beforeend', ['auto', ...ORDER].map(id => {
       const on = cur === id, name = id === 'auto' ? '随光' : THEMES[id].full;
-      return `<button type="button" class="theme-card pro-theme-chip${on ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${on}"><span class="theme-shot"><img src="assets/themes/${id}.jpg" alt="" decoding="async"></span><strong>${name}</strong><small>${on ? '使用中' : 'Pro'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`;
+      return `<button type="button" class="theme-card pro-theme-chip${on ? ' active' : ''}" data-pro-theme-pick="${id}" aria-pressed="${on}"><span class="theme-shot"><img src="assets/themes/${id}${SHOT()}.jpg" alt="" decoding="async"></span><strong>${name}</strong><small>${on ? '使用中' : 'Pro'}</small>${pro ? '' : `<span class="pro-lock-badge">${icon('lock')}</span>`}</button>`;
     }).join(''));
     rail.querySelectorAll('[data-pro-theme-pick]').forEach(b => b.addEventListener('click', () => {
       const id = b.dataset.proThemePick;
       if (isPro() && S().proTheme === id) return; // the gallery picks; it never switches a theme off
       setTheme(id);
     }));
+    rail.querySelectorAll('[data-ui-style] img').forEach(i => { const want = `assets/themes/ui-${i.closest('[data-ui-style]').dataset.uiStyle}${SHOT()}.jpg`; if (!i.src.endsWith(want)) i.src = want; });
     rail.querySelectorAll('[data-ui-style]').forEach(b => { b.querySelector('small').textContent = !cur && b.classList.contains('active') ? '使用中' : '免费'; });
     const ABOUT = { glass: '手机壁纸铺在底下，半透明的玻璃质感', paper: '米白纸面，大号日期，像一本手账', night: '纯黑底，荧光色点缀，夜里看不刺眼' };
     const about = $('theme-about');
@@ -820,9 +822,9 @@
         <h2>七套主题</h2>
         <p class="pro-lead">每套主题换掉整个 App、锁屏卡片和完成动效，全部做完时画出不同的画。左右滑动看看。</p>
         <div class="pro-themes pro-showcase" id="pro-showcase">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id;
-          if (id === 'auto') return `<article class="pro-theme pro-tcard is-auto${on ? ' active' : ''}" data-theme-card="auto"><div class="pro-tcard-shots">${themeMock('auto')}</div><div class="pro-tcard-body"><h3>随光</h3><p>早上 5 点用琉璃，10 点用素笺，晚上 6 点用星河。</p><small>现在是${THEMES[byTime()].full}</small></div><div class="pro-tcard-actions"><button type="button" data-pro-theme="auto">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`;
+          if (id === 'auto') return `<article class="pro-theme pro-tcard is-auto${on ? ' active' : ''}" data-theme-card="auto"><div class="pro-tcard-shots"><figure class="pro-tcard-shot"><img src="assets/themes/auto-wide${SHOT()}.jpg" alt="" decoding="async"></figure></div><div class="pro-tcard-body"><h3>随光</h3><p>早上 5 点用琉璃，10 点用素笺，晚上 6 点用星河。</p><small>现在是${THEMES[byTime()].full}</small></div><div class="pro-tcard-actions"><button type="button" data-pro-theme="auto">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`;
           return `<article class="pro-theme pro-tcard${on ? ' active' : ''}" data-theme-card="${id}">
-            <div class="pro-tcard-shots" data-pro-stage="${id}" role="button" tabindex="0" aria-label="查看${t.full}的界面"><figure>${themeMock(id)}<figcaption>界面</figcaption></figure><figure><canvas class="pro-tcard-fin" data-fin="${id}" aria-label="${t.full}：全部做完的画面"></canvas><figcaption>全部做完</figcaption></figure></div>
+            <div class="pro-tcard-shots" data-pro-stage="${id}" role="button" tabindex="0" aria-label="查看${t.full}的界面"><figure class="pro-tcard-shot"><img src="assets/themes/${id}${SHOT()}.jpg" alt="" decoding="async"><figcaption>界面</figcaption></figure><figure><canvas class="pro-tcard-fin" data-fin="${id}" aria-label="${t.full}：全部做完的画面"></canvas><figcaption>全部做完</figcaption></figure></div>
             <div class="pro-tcard-body"><h3>${t.full}</h3><p>${t.line}</p>
               <div class="pro-tcard-fx"><span class="pro-tcard-fx-check" aria-hidden="true"></span><span class="pro-tcard-fx-text" data-fx-text="${id}">完成时：${FX_LINE[id] || EFFECTS[t.effect]}</span></div></div>
             <div class="pro-tcard-actions"><button type="button" class="pro-tcard-play" data-pro-stage="${id}">${icon('play')}查看界面</button><button type="button" data-pro-theme="${id}">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`; }).join('')}</div>

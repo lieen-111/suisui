@@ -167,11 +167,11 @@ def day():
         td.text((i * cell + cell / 2, 8 * cell + cell / 2 + 6), ch, font=f, fill=red + (52,), anchor='mm')
     img = over(img, trace)
     # the seal: 碎碎 on the right column, 清单 on the left, cinnabar with worn edges
-    s = 250
+    s = 205  # 1.19: smaller, and low in the corner so the lock screen's footer row never sits on it
     seal = Image.new('RGBA', (s, s), (0, 0, 0, 0))
     sd = ImageDraw.Draw(seal)
     sd.rounded_rectangle([6, 6, s - 6, s - 6], radius=14, fill=red + (235,))
-    f = serif(92)
+    f = serif(76)
     for ch, (cx, cy) in zip('碎碎清单', [(.72, .3), (.72, .72), (.28, .3), (.28, .72)]):
         sd.text((cx * s, cy * s), ch, font=f, fill=(247, 242, 236, 255), anchor='mm')
     wear = (np.random.default_rng(9).random((s, s)) > .93).astype(np.uint8) * 255
@@ -179,7 +179,7 @@ def day():
     a[..., 3] = np.where(wear > 0, a[..., 3] * .25, a[..., 3]).astype(np.uint8)
     seal = Image.fromarray(a).rotate(-4, resample=Image.BICUBIC, expand=True)
     layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    layer.paste(seal, (W - seal.width - 80, int(H * .925) - seal.height // 2), seal)
+    layer.paste(seal, (W - seal.width - 64, int(H * .958) - seal.height // 2), seal)
     img = over(img, layer)
     return grain(img, 5, 12)
 

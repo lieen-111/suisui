@@ -142,13 +142,13 @@
     1: ['成', '好'], 2: ['加油', '很棒'], 3: ['你真棒', '稳稳的'],
     4: ['天天向上', '好好生活', '心想事成'], 5: ['日日是好日', '今天也很棒', '慢慢就会好'],
     6: ['今日事今日毕', '一步一个脚印', '慢慢来比较快'], // the header always uses the first for 6 7: ['星光不问赶路人', '积跬步以至千里'],
-    8: ['千里之行|始于足下', '日拱一卒|功不唐捐', '行而不辍|未来可期'], 9: ['慢慢来|一切都来得及'],
+    7: ['一件一件|慢慢来', '认真过好|每一天', '今天也要|好好的'], 8: ['千里之行|始于足下', '日拱一卒|功不唐捐', '行而不辍|未来可期'], 9: ['慢慢来|一切都来得及'],
     10: ['所有的努力|都不会白费'], 11: ['今天的你|比昨天更好一点'], 12: ['你今天做的|每一件事都算数'],
     13: ['认真生活的人|运气都不会太差'], 14: ['长风破浪会有时|直挂云帆济沧海', '宝剑锋从磨砺出|梅花香自苦寒来']
   };
   /** The line for n tasks (more than 14 share a 14-character line). Stays the same all day for the same n. */
   function phrase(n, seed = '', step = 0) {
-    const k = Math.max(1, Math.min(14, n)), list = PHRASES[k], line = list[seed === '' ? step % list.length : (hash(`${seed}:${k}`) + step) % list.length];
+    const k = Math.max(1, Math.min(14, n)), list = PHRASES[k], line = list[(((seed === '' ? 0 : hash(`${seed}:${k}`)) + step) % list.length + list.length) % list.length]; // hash can be negative
     return { text: line.replace('|', ''), rows: line.split('|').map(r => Array.from(r)) };
   }
   const dayKeyOf = d => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;

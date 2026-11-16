@@ -158,9 +158,10 @@
       const rows = [...document.querySelectorAll(ROWS)];
       if (rows.length > 80) return;
       let fresh = 0;
-      rows.forEach(r => {
+      const tops = rows.map(r => r.dataset.swipe ? 0 : r.getBoundingClientRect().top); // all reads before any animation starts
+      rows.forEach((r, i) => {
         if (r.dataset.swipe) return;
-        const old = before.get(r.dataset.taskId), now = r.getBoundingClientRect().top;
+        const old = before.get(r.dataset.taskId), now = tops[i];
         if (old === undefined) {
           if (firstRender) return;
           r.animate([{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.min(fresh++, 6) * 30, easing: out, fill: 'backwards' });

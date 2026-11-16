@@ -542,3 +542,5 @@ html[data-motion=on] :is(.view-enter,.page-back) .settings-home .settings-pro-ro
 /* bottom sheets glide up and settle (no bounce that opens a gap under them); dim fades with them */
 @media(max-width:760px){html[data-motion=on] dialog.sheet[open]{animation:sheet-up .5s cubic-bezier(.32,.72,0,1)}html[data-motion=on] dialog.sheet[open]::backdrop{animation:fade-in .4s ease both}}
 html[data-motion=on] dialog[open]:not(.sheet){animation:sheet-in .42s cubic-bezier(.32,1.12,.6,1)}
+/* 1.19: a light phone wallpaper must not wash out the white clock and labels — a little shade all the way down, more at the edges */
+html.system-wallpaper body.lock-mode .wallpaper-shade{background:linear-gradient(180deg,#0000005c 0%,#00000033 30%,#0000001f 60%,#00000066 100%)!important}

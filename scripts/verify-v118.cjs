@@ -269,6 +269,16 @@ let browser;
   }
 
   assert.deepEqual(errors, []);
+  {
+    // 1.19: every theme draws its home picture for any number of tasks (素笺 had no line for 7 and broke)
+    const page = await browser.newPage({ proFree: true }); const errors = []; page.on('pageerror', e => errors.push(e.message));
+    await page.goto(url, { waitUntil: 'networkidle' });
+    const bad = await page.evaluate(() => { const out = []; for (const id of ['dawn', 'day', 'night', 'bloom', 'riso', 'room', 'fluff']) for (let n = 0; n <= 22; n++) for (const done of [0, Math.floor(n / 2), n]) {
+      try { const html = window.SuiSuiSkins.art(id, { left: n - done, done, total: n, d: new Date(2026, 10, 16, 9), lunar: '', cds: [], items: Array.from({ length: n }, (_, i) => ({ id: 'x' + i, title: '事' + i, done: i < done, at: i })) }); if (!html || html.includes('undefined')) out.push(`${id} ${done}/${n}`); } catch (e) { out.push(`${id} ${done}/${n}: ${e.message}`); } }
+      return out; });
+    assert.deepEqual(bad, [], 'Theme pictures draw for 0–22 tasks'); assert.deepEqual(errors, []);
+    await page.close();
+  }
   console.log('PASS: yearly review (12 months, previous year, back to week), time on a task is silent by default, 响铃提醒 per task (add/edit, only those remind), no sound when finishing, quick finishing moment cleans up, calm settings home with slim Pro bar in glass/paper/night.');
   await browser.close();
 })().catch(async error => { console.error(error); if (browser) await browser.close(); process.exit(1); });

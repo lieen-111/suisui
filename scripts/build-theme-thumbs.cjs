@@ -10,14 +10,14 @@ const ids = ['ui-glass', 'ui-paper', 'ui-night', 'dawn', 'day', 'night', 'bloom'
   const b = await chromium.launch();
   const c = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   const p = await c.newPage();
-  for (const id of ids) {
-    await p.goto(`${url}/?showcase=${id}&view=home`, { waitUntil: 'networkidle' });
+  for (const lang of ['zh', 'en']) for (const id of ids) {
+    await p.goto(`${url}/?showcase=${id}&view=home${lang === 'en' ? '&lang=en' : ''}`, { waitUntil: 'networkidle' });
     await p.waitForTimeout(600);
     for (const n of [2, 1]) { await p.locator('#task-list [data-action=complete]').nth(n).click(); await p.waitForTimeout(900); }
     await p.evaluate(() => document.querySelector('.toast')?.remove());
     await p.waitForTimeout(400);
-    await p.screenshot({ path: path.join(out, `${id.replace(/^ui-/, 'ui-')}.png`) });
-    console.log(id);
+    await p.screenshot({ path: path.join(out, `${id}${lang === 'en' ? '-en' : ''}.png`) });
+    console.log(id, lang);
   }
   await b.close();
 })();
