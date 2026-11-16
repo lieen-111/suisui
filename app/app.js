@@ -899,8 +899,8 @@
     const s = state.settings, list = $('wallpaper-library');
     const tile = (id, name, inner, extra = '') => `<button class="wallpaper-choice${extra}${s.wallpaper === id ? ' active' : ''}" data-wallpaper="${id}" aria-pressed="${s.wallpaper === id}" aria-label="${name}壁纸">${inner}<span>${name}</span></button>`;
     list.innerHTML = (SYSTEM_WALLPAPER ? tile('system', '手机壁纸', `<i data-lucide="smartphone"></i>`, ' system') : '') +
-      (s.photo ? tile('custom', '我的照片', `<img src="${esc(s.photo)}" alt="" loading="lazy">`) : '') +
-      WALLPAPERS.map(w => tile(w.id, w.name, `<img src="${w.thumb}" alt="" loading="lazy" style="object-position:${w.pos}">`, w.mono ? ' mono' : '')).join('');
+      (s.photo ? tile('custom', '我的照片', `<img src="${esc(s.photo)}" alt="" decoding="async">`) : '') +
+      WALLPAPERS.map(w => tile(w.id, w.name, `<img src="${w.thumb}" alt="" decoding="async" style="object-position:${w.pos}">`, w.mono ? ' mono' : '')).join('');
     $('wallpaper-legend').textContent = SYSTEM_WALLPAPER ? '锁屏壁纸' : '预览壁纸';
     $('wallpaper-note').textContent = SYSTEM_WALLPAPER ? '默认用手机自己的壁纸，也可以单独换一张。' : '网页读不到手机壁纸，这里只影响预览。';
   }
