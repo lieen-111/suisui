@@ -208,7 +208,7 @@ html:is([data-style=night],[data-pro-skin=night]) .add-pill.is-set{background:#f
   body[data-view=tasks]:not(.adding) #fab-add#fab-add::before{content:attr(data-hint);flex:1;text-align:left;font:400 15.5px/1 var(--ui-face);color:var(--muted,#8b8b92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{width:40px!important;height:40px!important;padding:11px;border-radius:13px;background:var(--accent-fill,var(--accent,#1d1d1f));color:var(--on-accent,#fff)!important;box-sizing:border-box}
   html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add{background:#ffffff14!important;box-shadow:0 0 0 .5px #ffffff26!important}
-  html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#0b0b0c}
+  html:is([data-style=night],[data-pro-skin=night]) body[data-view=tasks]:not(.adding) #fab-add#fab-add svg{background:#f2f2f4;color:#0b0b0c!important}
 }
 
 /* ================= 1.18 corner buttons: no words — a glass circle with ‹ to go back, a filled circle with ✓ for 完成 ================= */
@@ -359,3 +359,9 @@ body[data-settings-page=index] #settings-panel .settings-top .settings-back{disp
   /* both tabs open the same way: the first label sits 36px under the tab bar */
   #settings-panel .settings-page .look-tabs~.look-section>fieldset:first-of-type{margin-top:63px!important}
 }
+@media(max-width:760px){
+  /* 配色: one even row whether there are five or six colours (夜光 adds 荧光) */
+  #settings-panel .accent-settings .swatches{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(36px,1fr));justify-items:center;gap:0 6px!important;padding:4px 0 24px!important}
+}
+/* dark looks: dark colour choices keep a quiet edge so they don't sink into the card */
+:is(html[data-style=night],html[data-pro-skin=night]) #settings-panel :is(.theme-chip>span,.color-row>button,.swatch:not(:has(input:checked))):not(:focus-visible){outline:1px solid #ffffff2e;outline-offset:-1px}

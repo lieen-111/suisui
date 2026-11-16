@@ -1,7 +1,7 @@
 'use strict';
 
 // Bump VERSION whenever a cached file changes. Keep each installed shell coherent.
-const VERSION = '2026-11-16-pro-test-27';
+const VERSION = '2026-11-16-pro-test-28';
 const PREFIX = `suisui-pwa-${encodeURIComponent(self.registration.scope)}-`;
 const CACHE = PREFIX + VERSION;
 const SHELL = [
