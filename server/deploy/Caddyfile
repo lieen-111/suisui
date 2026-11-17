@@ -1,6 +1,20 @@
-# Caddy gets and renews the HTTPS certificate by itself. Replace pay.example.com with your own domain
-# (its DNS A record must point at this server), then: sudo systemctl reload caddy
+# Caddy gets and renews the HTTPS certificate by itself. install.sh replaces pay.example.com with your domain
+# (its DNS A record must point at this server). Manual setup: edit the domain, then sudo systemctl reload caddy.
+#   https://domain/admin/ and /api/  → Pro backend (Node, port 8787)
+#   everything else                  → the 碎碎清单 web app from /opt/suisui/app
 pay.example.com {
 	encode gzip
-	reverse_proxy 127.0.0.1:8787
+
+	@backend path /api/* /admin /admin/*
+	handle @backend {
+		reverse_proxy 127.0.0.1:8787
+	}
+
+	handle {
+		root * /opt/suisui/app
+		header /sw.js Cache-Control "no-cache"
+		header /index.html Cache-Control "no-cache"
+		header /manifest.webmanifest Content-Type "application/manifest+json"
+		file_server
+	}
 }

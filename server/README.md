@@ -85,31 +85,36 @@ Windows 可以直接双击 `server/START-SERVER-WINDOWS.cmd`。
 - **域名**：在腾讯云、阿里云等平台买一个，添加一条 A 记录，比如 `pay.你的域名.com`，指向服务器的公网 IP。
 - **防火墙 / 安全组**：只放行 22（SSH）、80、443 三个端口。8787 不要对外开放。
 
-### 2. 安装（在服务器上逐行执行）
+### 2. 安装（一条命令）
+
+用云服务器控制台的「远程登录 / 终端」登录服务器，粘贴下面这一行（把 `pay.你的域名.com` 换成你的域名）：
 
 ```bash
-# Node.js 22
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs git
-
-# 代码和数据目录（数据和代码分开放，更新代码时不会碰到数据）
-sudo useradd --system --home /opt/suisui-data suisui
-sudo mkdir -p /opt/suisui-data && sudo chown suisui /opt/suisui-data
-sudo git clone https://github.com/lieen-111/suisui.git /opt/suisui
-
-# 开机自启、崩溃自动重启
-sudo cp /opt/suisui/server/deploy/suisui-pro.service /etc/systemd/system/
-sudo systemctl enable --now suisui-pro
-journalctl -u suisui-pro -n 20      # 这里能看到「设置口令」
-
-# HTTPS：Caddy 会自动申请并续期证书
-sudo apt-get install -y caddy
-sudo cp /opt/suisui/server/deploy/Caddyfile /etc/caddy/Caddyfile
-sudo nano /etc/caddy/Caddyfile      # 把 pay.example.com 改成你的域名
-sudo systemctl reload caddy
+curl -fsSL https://raw.githubusercontent.com/lieen-111/suisui/premium/server/deploy/install.sh | sudo bash -s -- pay.你的域名.com
 ```
 
-打开 `https://pay.你的域名.com/admin/`，用日志里的设置口令设好密码。
+脚本会装好 Node.js 22 和 Caddy，下载代码，设成开机自启，并自动申请 HTTPS 证书，大约 3 分钟。最后屏幕上会打印：
+
+- 网页版：`https://pay.你的域名.com/`，碎碎清单网页版，可以替代 Netlify。
+- 管理后台：`https://pay.你的域名.com/admin/`
+- 设置口令：第一次打开后台时填。
+
+还没买域名的话，可以不写域名：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lieen-111/suisui/premium/server/deploy/install.sh | sudo bash
+```
+
+脚本会用服务器 IP 生成一个 `suisui-1-2-3-4.sslip.io` 的地址，同样带 HTTPS，适合先试用。以后买了域名，带上域名再执行一次就能换过去。不过 App 里写死的是后台地址，所以**正式打包前要先定好域名**。
+
+以后更新代码也是再执行一次这条命令，数据不受影响。
+
+打不开时检查两件事：
+
+1. 云服务器控制台的「防火墙 / 安全组」有没有放行 80 和 443 端口。
+2. 域名的 A 记录有没有指向这台服务器的 IP。
+
+不用脚本、想手动安装的话，按 `deploy/install.sh` 里的步骤执行即可。
 
 也可以用 Docker 部署：
 
