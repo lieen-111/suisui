@@ -121,13 +121,16 @@
   // Buttons that mark a choice with .active / aria-pressed pop when they turn on.
   new MutationObserver(list => {
     if (!on()) return;
+    const pop = [];
     for (const m of list) {
       const el = m.target;
-      if (!(el instanceof HTMLElement) || el.closest('.task-row, .lock-group, #activity-list, #settings-panel')) continue;
+      if (!(el instanceof HTMLElement) || el.closest('.task-row, .lock-group, #activity-list, #settings-panel, .nav-button')) continue;
       const nowOn = m.attributeName === 'aria-pressed' ? el.getAttribute('aria-pressed') === 'true' : el.classList.contains('active');
       const wasOn = m.attributeName === 'aria-pressed' ? m.oldValue === 'true' : /(^|\s)active(\s|$)/.test(m.oldValue || '');
-      if (nowOn && !wasOn && el.offsetParent) el.animate([{ scale: .92 }, { scale: 1.05 }, { scale: 1 }], { duration: 360, easing: out });
+      if (nowOn && !wasOn) pop.push(el);
     }
+    // check visibility in the next frame, when layout happens anyway: asking now forced an extra layout on every view switch
+    if (pop.length) requestAnimationFrame(() => pop.forEach(el => { if (el.isConnected && el.offsetParent) el.animate([{ scale: .92 }, { scale: 1.05 }, { scale: 1 }], { duration: 360, easing: out }); }));
   }).observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['aria-pressed', 'class'] });
 
   /* ---------- lock screen: the circle you tick pops, the card breathes ---------- */

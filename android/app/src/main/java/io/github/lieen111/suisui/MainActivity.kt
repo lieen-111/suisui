@@ -157,6 +157,17 @@ open class WebHostActivity : ComponentActivity() {
         super.onPause()
     }
 
+    // The lock view now waits in the background between screen-offs: let its page rest while it is out of sight.
+    override fun onStop() {
+        super.onStop()
+        if (lockMode && ::web.isInitialized) web.onPause()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (lockMode && ::web.isInitialized) web.onResume()
+    }
+
     private fun isNight() = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
     protected fun js(code: String) {
@@ -173,14 +184,16 @@ open class WebHostActivity : ComponentActivity() {
     protected fun leaveLock(openApp: Boolean) {
         val done = {
             if (openApp) startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            finish()
+            // Keep the lock view alive in the background instead of finishing it: the next screen-off brings the same,
+            // already-loaded page back (onNewIntent) instead of starting a new WebView, which is what made it slow to appear.
+            if (!moveTaskToBack(true)) finish()
         }
         val km = getSystemService(KeyguardManager::class.java)
         if (km != null && km.isKeyguardLocked) {
             km.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
                 override fun onDismissSucceeded() { done() }
                 override fun onDismissCancelled() { /* stay on the lock view */ }
-                override fun onDismissError() { finish() }
+                override fun onDismissError() { if (!moveTaskToBack(true)) finish() }
             })
         } else done()
     }

@@ -1030,3 +1030,34 @@ html.showcase :is(#toast,.toast,#install-banner,.install-banner,#gesture-tips,.u
 .pro-tcard-shots .pro-tcard-shot img{display:block;width:100%;height:168px;object-fit:cover;object-position:top;border-radius:14px;box-shadow:0 0 0 .5px #ffffff26}
 .pro-tcard.is-auto .pro-tcard-shot img{object-position:center top}
 .pro-tcard-shots figcaption{font-size:13px!important}
+
+/* ================= Checkout 1.21: 扫码付款 · 爱发电 · 兑换码 ================= */
+.pro-pay-card{max-height:min(86svh,680px)}
+a.pro-pay-main{text-decoration:none}
+.pro-pay-or{display:flex;align-items:center;gap:12px;margin:18px 2px 0;font-size:12.5px;color:#8a8a90}
+.pro-pay-or::before,.pro-pay-or::after{content:"";flex:1;height:1px;background:#0000001a}
+.pro-pay-lead{margin:2px 2px 0;font-size:14px;line-height:1.6;color:#3a3a40}
+.pro-pay-redeem.is-trade input{font-family:Geist,ui-monospace,monospace;letter-spacing:.02em}
+.pro-qr{display:grid;justify-items:center;gap:8px;margin:2px 0 0}
+.pro-qr img{width:min(220px,62vw);aspect-ratio:1;object-fit:contain;border-radius:16px;background:#fff;padding:10px;box-shadow:0 0 0 1px #0000001a,0 16px 34px -22px #0006}
+.pro-qr>span{display:grid;place-items:center;width:200px;aspect-ratio:1;border-radius:16px;background:#0000000a;color:#6b6b72;font-size:13.5px}
+.pro-qr figcaption{font-size:13px;color:#6b6b72}
+.pro-pay-second{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:10px;border-radius:14px;background:#0000000d;color:#111114;font-size:14.5px;font-weight:600}
+.pro-pay-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pro-pay-howto{margin:14px 0 0;padding:0;list-style:none;counter-reset:step;display:grid;gap:10px}
+.pro-pay-howto li{counter-increment:step;display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:13.5px;line-height:1.6;color:#3a3a40}
+.pro-pay-howto li::before{content:counter(step);display:grid;place-items:center;width:22px;height:22px;margin-top:1px;border-radius:50%;background:#111114;color:#fff;font:600 12px Geist,system-ui,sans-serif}
+.pro-pay-howto b{color:#111114}
+.pro-order-id{display:flex;width:max-content;align-items:center;gap:8px;margin:6px 0 0;padding:3px 4px 3px 10px;border-radius:10px;background:#0000000d;vertical-align:middle}
+.pro-order-id b{font:650 15px Geist,ui-monospace,monospace;letter-spacing:.06em}
+.pro-order-id button{white-space:nowrap;min-height:30px;padding:0 12px;border-radius:8px;background:#111114;color:#fff;font-size:12.5px;font-weight:600}
+.pro-pay-wait{display:grid;justify-items:center;gap:12px;padding:18px 0 4px;text-align:center}
+.pro-pay-wait p{margin:0;font-size:13.5px;color:#6b6b72;line-height:1.6}
+.pro-pay-wait p b{display:block;font-size:16px;color:#111114;font-weight:650}
+.pro-pay-badge.is-bad{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fdecec}
+.pro-pay-badge.is-bad svg{margin:0;color:#9b1c1c}
+.pro-pay-code-box{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;padding:12px 14px;border-radius:14px;background:#0000000a}
+.pro-pay-code-box small{grid-column:1/-1;font-size:12px;color:#6b6b72}
+.pro-pay-code-box b{font:650 15px Geist,ui-monospace,monospace;letter-spacing:.04em;color:#111114}
+.pro-pay-code-box .pro-pay-link{margin:0;padding:6px 4px}
+.pro-legal a{color:inherit;text-decoration:underline;text-underline-offset:3px}

@@ -487,3 +487,5 @@ html[data-style=night] #backup-state.is-old{color:#ffb35c}
   #edit-sheet .sheet-head .primary-button,#edit-form .primary-button{min-height:40px!important;padding-left:18px!important;padding-right:18px!important}
   .review-groups .chip{min-height:40px!important}
 }
+/* 1.20: the 外观 page is long; parts below the screen are laid out and painted only when they scroll into view */
+#settings-panel .settings-page[data-page=look] fieldset:not(.ui-styles)>:not(legend):not(.more-appearance){content-visibility:auto;contain-intrinsic-size:auto 96px}

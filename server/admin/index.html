@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f4f6">
+  <title>碎碎清单 · 管理后台</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- first run / sign in -->
+  <main class="gate" id="gate" hidden>
+    <div class="gate-card">
+      <img class="gate-logo" src="favicon.svg" alt="">
+      <h1>碎碎清单 · 管理后台</h1>
+      <form id="setup-form" hidden>
+        <p class="gate-lead">第一次使用，先设一个管理密码。设置口令在服务器启动时打印的那一行里。</p>
+        <label>设置口令<input name="token" autocomplete="off" required></label>
+        <label>管理密码<input name="password" type="password" autocomplete="new-password" minlength="10" required placeholder="至少 10 位"></label>
+        <button class="btn primary" type="submit">设定并进入</button>
+      </form>
+      <form id="login-form" hidden>
+        <label>管理密码<input name="password" type="password" autocomplete="current-password" required autofocus></label>
+        <button class="btn primary" type="submit">登录</button>
+      </form>
+      <p class="gate-error" id="gate-error" role="alert"></p>
+    </div>
+  </main>
+
+  <div class="shell" id="shell" hidden>
+    <nav class="side" aria-label="后台导航">
+      <div class="brand"><img src="favicon.svg" alt=""><span>碎碎清单<small>Pro 后台</small></span></div>
+      <a href="#overview" data-nav="overview"><svg viewBox="0 0 24 24"><path d="M4 13h4v7H4zM10 4h4v16h-4zM16 9h4v11h-4z"/></svg><span>概览</span></a>
+      <a href="#orders" data-nav="orders"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg><span>订单</span><b class="dot" id="pending-dot" hidden></b></a>
+      <a href="#codes" data-nav="codes"><svg viewBox="0 0 24 24"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4zM14 7v12"/></svg><span>兑换码</span></a>
+      <a href="#devices" data-nav="devices"><svg viewBox="0 0 24 24"><path d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2"/></svg><span>设备</span></a>
+      <a href="#settings" data-nav="settings"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5.3z"/></svg><span>设置</span></a>
+      <button class="side-out" id="logout" type="button">退出登录</button>
+    </nav>
+
+    <main class="main">
+      <!-- 概览 -->
+      <section class="page" data-page="overview">
+        <header class="page-head"><h1>概览</h1><div class="seg" id="range" role="group" aria-label="时间范围"><button data-days="7">7 天</button><button data-days="30" aria-pressed="true">30 天</button><button data-days="90">90 天</button></div></header>
+        <div class="kpis" id="kpis"></div>
+        <div class="card chart-card">
+          <div class="card-head"><h2>每天收入</h2><span class="muted" id="chart-sum"></span></div>
+          <div class="chart" id="chart" role="img" aria-label="每天收入柱状图"></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><div class="card-head"><h2>兑换码</h2><a href="#codes" class="link">管理</a></div><div id="code-stats"></div></div>
+          <div class="card"><div class="card-head"><h2>最近动态</h2></div><ol class="feed" id="feed"></ol></div>
+        </div>
+      </section>
+
+      <!-- 订单 -->
+      <section class="page" data-page="orders" hidden>
+        <header class="page-head"><h1>订单</h1>
+          <div class="tools"><div class="seg" id="order-filter" role="group" aria-label="订单状态"><button data-status="pending">待确认</button><button data-status="paid">已付款</button><button data-status="" aria-pressed="true">全部</button><button data-status="refunded">已退款</button></div>
+          <input class="search" id="order-q" type="search" placeholder="订单号、备注、兑换码"></div></header>
+        <p class="hint" id="order-hint">扫码付款的订单：在微信或支付宝的收款记录里找到备注里的订单号，金额对得上就点「确认收款」，买家的手机会自动解锁。</p>
+        <div class="card flush"><div class="table" id="orders"></div></div>
+      </section>
+
+      <!-- 兑换码 -->
+      <section class="page" data-page="codes" hidden>
+        <header class="page-head"><h1>兑换码</h1>
+          <div class="tools"><div class="seg" id="code-filter" role="group" aria-label="兑换码状态"><button data-state="" aria-pressed="true">全部</button><button data-state="unused">未使用</button><button data-state="used">已使用</button><button data-state="disabled">已停用</button></div>
+          <input class="search" id="code-q" type="search" placeholder="搜兑换码"></div></header>
+        <form class="card make" id="make-codes">
+          <div class="card-head"><h2>生成兑换码</h2><span class="muted">用来送人、做活动，或在别的平台卖</span></div>
+          <div class="make-row">
+            <label>数量<input name="count" type="number" min="1" max="500" value="10" required></label>
+            <label>每个码可用设备<input name="maxDevices" type="number" min="1" max="10" value="3" required></label>
+            <label>有效期<select name="expiresDays"><option value="0">永久</option><option value="30">30 天</option><option value="90">90 天</option><option value="365">1 年</option></select></label>
+            <label class="grow">批次名<input name="batch" maxlength="30" placeholder="比如：小红书活动 11 月"></label>
+            <label class="grow">备注<input name="note" maxlength="80" placeholder="可不填"></label>
+            <button class="btn primary" type="submit">生成</button>
+          </div>
+          <div class="made" id="made" hidden></div>
+        </form>
+        <div class="card flush"><div class="card-head pad"><h2>全部兑换码</h2><div class="tools"><select id="batch-pick" aria-label="批次"><option value="">全部批次</option></select><a class="btn" id="export-csv" href="api/codes.csv" download>导出 CSV</a></div></div><div class="table" id="codes"></div></div>
+      </section>
+
+      <!-- 设备 -->
+      <section class="page" data-page="devices" hidden>
+        <header class="page-head"><h1>已解锁的设备</h1><input class="search" id="dev-q" type="search" placeholder="设备号、订单号、兑换码"></header>
+        <p class="hint">每次有人用兑换码或订单解锁，这里就多一台。撤销后，那台设备下次联网时会退回免费版。</p>
+        <div class="card flush"><div class="table" id="devices"></div></div>
+      </section>
+
+      <!-- 设置 -->
+      <section class="page" data-page="settings" hidden>
+        <header class="page-head"><h1>设置</h1></header>
+        <form class="card form" id="shop-form">
+          <div class="card-head"><h2>价格</h2></div>
+          <div class="row3">
+            <label>售价（元）<input name="price" type="number" step="0.01" min="0" required></label>
+            <label>划线原价（元）<input name="listPrice" type="number" step="0.01" min="0"></label>
+            <label>价格旁的说明<input name="priceNote" maxlength="20" placeholder="首发价"></label>
+          </div>
+          <label>每个码可用设备数<input name="maxDevices" type="number" min="1" max="10" required><small>买家换手机、有平板时用得上。默认 3。</small></label>
+
+          <div class="card-head sub"><h2>付款方式</h2></div>
+          <div class="pay-modes" role="radiogroup">
+            <label class="mode"><input type="radio" name="payMode" value="qr"><span><b>扫码付款</b><small>用你自己的微信 / 支付宝收款码。买家付款时备注订单号，你在「订单」里确认后自动解锁。</small></span></label>
+            <label class="mode"><input type="radio" name="payMode" value="afdian"><span><b>爱发电</b><small>买家在爱发电付款，回 App 粘贴订单号，系统向爱发电核对后立即解锁，不用你手动确认。</small></span></label>
+            <label class="mode"><input type="radio" name="payMode" value="off"><span><b>只用兑换码</b><small>App 里只显示兑换码入口，码由你在别处卖或送。</small></span></label>
+          </div>
+          <div class="mode-qr">
+            <div class="qr-box"><img id="qr-img" alt="收款码"><span id="qr-empty">还没上传收款码</span></div>
+            <div class="qr-side">
+              <label class="btn file">上传收款码图片<input id="qr-file" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>
+              <button class="btn ghost" type="button" id="qr-remove">移除</button>
+              <label>收款码说明<input name="qrLabel" maxlength="40" placeholder="微信或支付宝扫码"></label>
+              <label>付款提示<input name="instructions" maxlength="200"></label>
+            </div>
+          </div>
+          <div class="mode-afdian">
+            <label>爱发电商品页链接<input name="afdianUrl" type="url" placeholder="https://afdian.com/item/…"></label>
+            <div class="row2"><label>user_id<input name="afdianUserId" autocomplete="off"></label><label>API Token<input name="afdianToken" type="password" autocomplete="off" placeholder="不改就留着"></label></div>
+            <label>只认这个方案（plan_id，可不填）<input name="afdianPlanId" autocomplete="off"></label>
+            <p class="hint small">在爱发电「开发者」页面把 Webhook 地址填成：<code id="webhook-url"></code></p>
+            <button class="btn" type="button" id="afdian-test">测试连接</button> <span class="muted" id="afdian-result"></span>
+          </div>
+
+          <div class="card-head sub"><h2>联系方式</h2></div>
+          <label>买家遇到问题找谁<input name="contact" maxlength="80" placeholder="比如：小红书 @碎碎清单 或邮箱"><small>显示在 App 的付款页底部。</small></label>
+          <label>后台的公网地址<input name="publicUrl" type="url" placeholder="https://pay.你的域名.com"><small>App 和爱发电都通过这个地址找到后台。</small></label>
+          <div class="form-foot"><button class="btn primary" type="submit">保存</button><span class="muted" id="shop-saved"></span></div>
+        </form>
+
+        <div class="card">
+          <div class="card-head"><h2>接到 App 上</h2><span class="muted">只需要做一次</span></div>
+          <p class="hint">把下面这段整个替换掉 App 里 <code>app/pro-config.js</code> 的内容，重新打包。App 用这把公钥验证解锁，离线也能用；服务器私钥只在服务器上。</p>
+          <pre class="code" id="app-config"></pre>
+          <button class="btn" type="button" id="copy-config">复制</button>
+        </div>
+
+        <div class="grid2">
+          <form class="card form" id="pw-form">
+            <div class="card-head"><h2>管理密码</h2></div>
+            <label>原密码<input name="old" type="password" autocomplete="current-password" required></label>
+            <label>新密码<input name="password" type="password" autocomplete="new-password" minlength="10" required placeholder="至少 10 位"></label>
+            <div class="form-foot"><button class="btn" type="submit">修改</button><span class="muted" id="pw-saved"></span></div>
+          </form>
+          <div class="card">
+            <div class="card-head"><h2>备份</h2></div>
+            <p class="hint">服务器每天自动备份一次，保留 14 天（在 data/backups）。也可以现在下载一份完整的数据库。</p>
+            <a class="btn" href="api/backup" download>下载备份</a>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>操作记录</h2></div><ol class="feed" id="audit"></ol></div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <dialog class="confirm" id="confirm"><form method="dialog"><p id="confirm-text"></p><div class="confirm-actions"><button class="btn" value="no">取消</button><button class="btn danger" value="yes" id="confirm-yes">确定</button></div></form></dialog>
+  <script src="admin.js"></script>
+</body>
+</html>

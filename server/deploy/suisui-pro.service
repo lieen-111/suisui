@@ -1,0 +1,20 @@
+# systemd: keeps the backend running and restarts it after a crash or reboot.
+# sudo cp suisui-pro.service /etc/systemd/system/ && sudo systemctl enable --now suisui-pro
+# Logs (including the first-run setup token): journalctl -u suisui-pro -n 50
+[Unit]
+Description=碎碎清单 Pro 后台
+After=network.target
+
+[Service]
+User=suisui
+WorkingDirectory=/opt/suisui/server
+Environment=PORT=8787 HOST=127.0.0.1 DATA_DIR=/opt/suisui-data TRUST_PROXY=1 NODE_NO_WARNINGS=1
+ExecStart=/usr/bin/node /opt/suisui/server/index.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/suisui-data
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ef2ff"/><stop offset=".45" stop-color="#5b6cff"/><stop offset="1" stop-color="#9b4dff"/></linearGradient>
+<radialGradient id="b1" cx=".2" cy=".85" r=".6"><stop offset="0" stop-color="#ff7ad9" stop-opacity=".7"/><stop offset="1" stop-color="#ff7ad9" stop-opacity="0"/></radialGradient>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".55" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity=".35"/></linearGradient>
+<linearGradient id="ed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".8"/></linearGradient>
+<filter id="s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="30" stdDeviation="34" flood-color="#1b1660" flood-opacity=".45"/></filter><clipPath id="r"><rect width="1024" height="1024" rx="232"/></clipPath></defs><g clip-path="url(#r)"><rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#b1)"/>
+
+<g filter="url(#s)"><rect x="262" y="262" width="500" height="500" rx="150" fill="url(#g)" stroke="url(#ed)" stroke-width="7"/></g>
+<path d="M398 520 l84 84 l150 -168" fill="none" stroke="#fff" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+</g></svg>

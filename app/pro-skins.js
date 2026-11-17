@@ -397,7 +397,9 @@
      adds another layer of fur, so it gets fluffier through the day; when everything is done it opens its eyes. */
   const furCache = new Map();
   /** All the strokes of the finished drawing, in the order they get drawn (random, so the fur fills in evenly). */
-  const FUR = (() => {
+  // built on first use: about 60ms of work that the lock screen and the other themes never need
+  let furData = null;
+  const FUR_BUILD = () => {
     const r = rng(77), list = [], cx = 90, cy = 98, rx = 62, ry = 52, E = 2.4;
     const se = (x, y) => Math.pow(Math.abs((x - cx) / rx), E) + Math.pow(Math.abs((y - cy) / (y > cy ? ry * .94 : ry)), E);
     const ears = [[cx - 38, cy - 40, -1], [cx + 38, cy - 40, 1]];
@@ -433,10 +435,11 @@
     }
     for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
     return { list, cx, cy, rx, ry, E, ears, face };
-  })();
+  };
+  const FURP = { get list() { return (furData ||= FUR_BUILD()).list; } };
   /** The pencil sketch the fur grows over: the round body and two ears. */
   function furOutline(ctx) {
-    const { cx, cy, rx, ry, E, ears } = FUR; ctx.beginPath();
+    const { cx, cy, rx, ry, E, ears } = (furData ||= FUR_BUILD()); ctx.beginPath();
     for (let i = 0; i <= 120; i++) { const t = i / 120 * Math.PI * 2, c = Math.cos(t), s = Math.sin(t), k = Math.pow(Math.pow(Math.abs(c), E) + Math.pow(Math.abs(s * (s > 0 ? 1 / .94 : 1)), E), -1 / E), x = cx + rx * c * k, y = cy + ry * s * k; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
     ears.forEach(([ex, ey, s]) => { ctx.moveTo(ex - 17, ey + 4); ctx.lineTo(ex + s * 7, ey - 28); ctx.lineTo(ex + 17, ey + 4); });
   }
@@ -449,7 +452,7 @@
   }
   /** Fur strokes from..to (indexes into the shuffled list) onto a context already scaled to the 180 × 172 drawing. */
   function furStrokes(ctx, from, to) {
-    const { list } = FUR; ctx.lineCap = 'round';
+    const { list } = (furData ||= FUR_BUILD()); ctx.lineCap = 'round';
     for (const pass of [0, 1]) for (let i = from; i < to; i++) { const [x, y, a, L, al, bend, light] = list[i]; if (light !== pass) continue;
       const ex = x + Math.cos(a) * L, ey = y + Math.sin(a) * L, mx = (x + ex) / 2 - Math.sin(a) * bend * L / 8, my = (y + ey) / 2 + Math.cos(a) * bend * L / 8;
       ctx.strokeStyle = pass ? `rgba(248,247,244,${al * .8})` : `rgba(20,20,22,${al})`; ctx.lineWidth = pass ? .45 : .5;
@@ -457,7 +460,7 @@
   }
   /** Eyes (open = 0 asleep … 1 wide open, for blinking) and the nose. */
   function furFace(ctx, p, open) {
-    const { cx, cy } = FUR, ey = cy - 6;
+    const { cx, cy } = (furData ||= FUR_BUILD()), ey = cy - 6;
     [cx - 21, cx + 21].forEach(ex => {
       if (open > 0) {
         ctx.save(); ctx.translate(ex, ey); ctx.scale(1, Math.max(.08, open));
@@ -473,7 +476,7 @@
     const key = `${Math.round(p * 60)}:${open}`;
     if (furCanvases.has(key)) return furCanvases.get(key);
     const k = 2, c = document.createElement('canvas'); c.width = w * k; c.height = h * k; const ctx = c.getContext('2d'); ctx.scale(k, k);
-    const { list, cx, cy } = FUR, n = furCount(p);
+    const { list, cx, cy } = (furData ||= FUR_BUILD()), n = furCount(p);
     // the pencil sketch shows through until the fur covers it
     furOutlineDraw(ctx, .6 * (1 - p * .9));
     if (p <= 0) { // the pencil sketch still has a face: two closed eyes
@@ -483,7 +486,7 @@
     furStrokes(ctx, 0, n); furFace(ctx, p, open ? 1 : 0);
     furCanvases.set(key, c); return c;
   }
-  const furCount = p => p <= 0 ? 0 : Math.round(FUR.list.length * (.06 + .94 * Math.pow(p, .85)));
+  const furCount = p => p <= 0 ? 0 : Math.round(FURP.list.length * (.06 + .94 * Math.pow(p, .85)));
   const furOutlineDraw = (ctx, a) => { ctx.strokeStyle = `rgba(40,40,44,${a})`; ctx.lineWidth = .85; ctx.setLineDash([3, 2.2]); furOutline(ctx); ctx.stroke(); ctx.setLineDash([]); };
   function fluffArt(D, A) {
     const W = 340, H = 172, p = D.total ? D.done / D.total : 0, open = D.total > 0 && !D.left, p0 = A && D.total ? A.from / D.total : p;
@@ -709,5 +712,5 @@
     if (lid) { const neck = w * .44, nx = x + (w - neck) / 2, lh = h * .06; ctx.fillStyle = mat === 'gold' ? GOLD : mat === 'paper' ? '#1d1a16' : mat === 'light' ? 'rgba(223,230,255,.8)' : onDark ? 'rgba(235,245,255,.82)' : 'rgba(30,34,44,.55)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(nx - w * .04, y, neck + w * .08, lh, lh / 2.4); else ctx.rect(nx - w * .04, y, neck + w * .08, lh); ctx.fill(); }
   }
 
-  window.SuiSuiSkins = { furImage, furCanvas, furStrokes, furFace, furCount, furOutlineDraw, furTotal: () => FUR.list.length, roomImg, roomReady, ROOM_ORDER, mount, unmount, head, arrive, lockStrip, playTune, drop, PIGMENTS, MOTIFS, motifOf, pitchOf, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
+  window.SuiSuiSkins = { furImage, furCanvas, furStrokes, furFace, furCount, furOutlineDraw, furTotal: () => FURP.list.length, roomImg, roomReady, ROOM_ORDER, mount, unmount, head, arrive, lockStrip, playTune, drop, PIGMENTS, MOTIFS, motifOf, pitchOf, phrase, phraseChars: Object.values(PHRASES).flat().join('').replace(/\|/g, ''), target, arriving: id => arriving.has(id), jar, mock, art: (id, D) => artSvg(id, D || DEMO).html, data };
 })();

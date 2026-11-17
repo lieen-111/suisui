@@ -23,7 +23,10 @@
     "test:v118": "node scripts/verify-v118.cjs",
     "test:layout": "node scripts/verify-layout.cjs",
     "build:night": "python3 scripts/build-night-css.py",
-    "test:pro": "node scripts/verify-pro.cjs"
+    "test:pro": "node scripts/verify-pro.cjs",
+    "server": "node --no-warnings server/index.mjs",
+    "test:server": "node scripts/verify-server.cjs",
+    "test:pay": "node scripts/verify-pay.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

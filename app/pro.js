@@ -9,7 +9,7 @@
   const S = () => API.state.settings;
   const reduce = () => !S().motion || matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 39.9 to keep, 28 for the first month after launch
-  const PRICE = '¥28', LIST_PRICE = '¥39.9', PRICE_NOTE = '首发价，上架后第一个月', TRIAL_DAYS = 3;
+  const PRICE = '¥28', LIST_PRICE = '¥39.9', PRICE_NOTE = '首发价', TRIAL_DAYS = 3;
 
   /* ---------- Themes: each one is a whole world (colours, type, shard material, completion effect, sound) ---------- */
   const SANS = 'Geist,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif', SONG = '"Noto Serif SC","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
@@ -51,7 +51,12 @@
   const SHOW = (() => { try { return new URLSearchParams(location.search).get('showcase') || ''; } catch { return ''; } })();
   const SHOW_VIEW = (() => { try { return new URLSearchParams(location.search).get('view') || 'home'; } catch { return 'home'; } })();
   const FREE = !!(window.SUISUI_PRO_CONFIG || {}).freeForTesters || !!SHOW;
-  const isPro = () => FREE || !!info().owned || (info().trialEnds || 0) > Date.now();
+  /* A release build talks to the 碎碎清单 Pro server (server/, set in app/pro-config.js); test builds simulate payment. */
+  const CFG = window.SUISUI_PRO_CONFIG || {};
+  const LIVE = !FREE && !!CFG.server && !!CFG.publicKey;
+  const SERVER = String(CFG.server || '').replace(/\/$/, '');
+  // with a server, owning Pro means holding a licence it signed (checked again on every start)
+  const isPro = () => FREE || (!!info().owned && (!LIVE || !!info().licence)) || (info().trialEnds || 0) > Date.now();
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
   const status = () => info().owned ? '已解锁' : FREE ? '测试版 · 全部免费' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
@@ -83,6 +88,81 @@
     if (!codeOk(value)) { API.showToast('兑换码不对，检查一下有没有输错'); return false; }
     info().via = 'code'; info().code = normCode(value); buy(); return true;
   }
+  /* ---------- Live purchase (Android and web, release builds) ----------
+     The server signs a licence (ECDSA P-256) for this device; the app checks the signature with the public key in
+     pro-config.js, so Pro keeps working offline. Three ways in, as set in the admin page:
+       扫码付款 — the app opens an order; the buyer pays your QR code with the order number in the note; you confirm
+                  it in the admin page; the app (polling while the sheet is open, and on every start) gets the licence.
+       爱发电   — the buyer pays on afdian and pastes the order number; the server checks it with afdian.
+       兑换码   — any code you made; one code works on up to N devices (set in the admin page). */
+  const deviceId = () => { try { let d = localStorage.getItem('suisui-device'); if (!d) { d = (crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`).replace(/[^\w-]/g, ''); localStorage.setItem('suisui-device', d); } return d; } catch { return 'nostore'; } };
+  /* Test builds have no server: the same checkout runs against this stand-in, so it can be tried without paying. */
+  let simMode = 'qr', simPaidAt = 0;
+  function simCall(path, body = {}) {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), no = (code, message) => Promise.reject(Object.assign(new Error(message), { code }));
+    if (path === '/api/config') return wait(250).then(() => ({ price: 2800, listPrice: 3990, priceNote: '首发价', maxDevices: 3, contact: '小红书 @碎碎清单（示例）', pay: { mode: simMode, qrLabel: '微信或支付宝扫码', instructions: '我们核对到账后为你开通，通常需要几分钟。', hasQr: true, afdianUrl: 'https://afdian.com/' } }));
+    if (path === '/api/orders') return wait(400).then(() => ({ id: 'SDEMO27', amount: 2800, status: 'pending' }));
+    if (/^\/api\/orders\/.+\/status$/.test(path)) return wait(300).then(() => (simPaidAt && Date.now() - simPaidAt > 4000 ? { status: 'paid', licence: 'preview', code: 'SUISUI-DEMO-PAID-0001' } : { status: 'pending' }));
+    if (path === '/api/redeem') return wait(700).then(() => (codeOk(body.code) ? { licence: 'preview', code: `SUISUI-${normCode(body.code).match(/.{4}/g).join('-')}` } : no('bad', '兑换码不存在。请检查是否输入有误。')));
+    if (path === '/api/afdian/claim') return wait(900).then(() => (String(body.tradeNo).length >= 18 ? { licence: 'preview', code: 'SUISUI-DEMO-AFDN-0001' } : no('not-found', '没有找到这个订单号。请确认已付款，并复制完整的订单号。')));
+    if (path === '/api/check') return Promise.resolve({ ok: true });
+    return no('http', '示例');
+  }
+  async function shopCall(path, body) {
+    if (!LIVE) return simCall(path, body);
+    let r;
+    try { r = await fetch(SERVER + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ device: deviceId(), platform: API.platform, version: document.querySelector('meta[name=app-version]')?.content || '', ...body }) } : {}); }
+    catch { throw Object.assign(new Error('连不上服务器。检查网络后再试一次。'), { code: 'offline' }); }
+    let j = {}; try { j = await r.json(); } catch {}
+    if (!r.ok) throw Object.assign(new Error(j.message || '服务器暂时不可用，请稍后再试。'), { code: j.error || 'http' });
+    return j;
+  }
+  let pubKey = null;
+  const unb64 = v => Uint8Array.from(atob(v.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(v.length / 4) * 4, '=')), c => c.charCodeAt(0));
+  /** The licence's contents when the signature is ours and it belongs to this device; otherwise null. */
+  async function readLicence(lic) {
+    try {
+      const [body, sig] = String(lic || '').split('.'); if (!body || !sig) return null;
+      pubKey ||= await crypto.subtle.importKey('jwk', { ...CFG.publicKey, ext: true }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+      if (!(await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pubKey, unb64(sig), new TextEncoder().encode(body)))) return null;
+      const p = JSON.parse(new TextDecoder().decode(unb64(body)));
+      return p.dev === deviceId() ? p : null;
+    } catch { return null; }
+  }
+  async function takeLicence(res, via) {
+    if (!LIVE) { const i = info(); Object.assign(i, { owned: true, via, code: res.code || '' }); delete i.order; buy(); return; }
+    const p = await readLicence(res.licence);
+    if (!p) throw Object.assign(new Error('开通凭证没有通过校验。请联系我们处理。'), { code: 'licence' });
+    const i = info(); Object.assign(i, { owned: true, via, licence: res.licence, lid: p.lid, code: res.code || i.code || '', checkedAt: Date.now() }); delete i.order;
+    buy();
+  }
+  let shop = null, shopAt = 0;
+  async function loadShop() { if (!shop || Date.now() - shopAt > 3e5) { shop = await shopCall('/api/config'); shopAt = Date.now(); } return shop; }
+  const yuan = fen => `¥${(fen / 100).toFixed(fen % 100 ? 2 : 0)}`;
+  const priceText = () => (LIVE && shop ? yuan(shop.price) : PRICE);
+  const listText = () => (LIVE && shop ? (shop.listPrice > shop.price ? yuan(shop.listPrice) : '') : LIST_PRICE);
+  /** Ask whether the open QR order was confirmed; returns its status. */
+  async function pollOrder() {
+    const o = info().order; if (!o) return '';
+    try {
+      const r = await shopCall(`/api/orders/${o.id}/status`, {});
+      if (r.status === 'paid' && r.licence) { await takeLicence(r, 'order'); return 'paid'; }
+      if (r.status === 'rejected') { o.status = 'rejected'; persist(); }
+      return r.status;
+    } catch (e) { if (e.code === 'not-found') { delete info().order; persist(); } return 'error'; }
+  }
+  /** On start: check the licence; finish an order confirmed while the app was closed; now and then ask about refunds. */
+  async function liveBoot() {
+    if (!LIVE) return;
+    const i = info();
+    if (i.owned && i.licence && !(await readLicence(i.licence))) { Object.assign(i, { owned: false }); delete i.licence; persist(); endTry(false); applyTheme(); refreshAll(); }
+    if (i.order && !i.owned) { const st = await pollOrder(); if (st === 'paid') API.showToast('付款已确认，Pro 已开通。谢谢支持！'); }
+    if (i.owned && i.lid && Date.now() - (i.checkedAt || 0) > 3 * 864e5) {
+      try { const r = await shopCall('/api/check', { lid: i.lid }); i.checkedAt = Date.now();
+        if (r.ok === false) { i.owned = false; delete i.licence; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('这台设备的 Pro 已被撤销（订单退款或设备解绑）'); } else persist();
+      } catch {}
+    }
+  }
   /* ---------- Checkout ----------
      One sheet, by platform.
      iPhone: what you get → 「用 App Store 购买」 → Apple's own sheet (simulated here) → 已解锁 / 已取消 / 失败 / 等家长同意;
@@ -102,13 +182,15 @@
       el.addEventListener('pointermove', e => { if (y0 == null) return; const d = Math.max(0, e.clientY - y0); el.querySelector('.pro-pay-card').style.transform = `translateY(${d}px)`; });
       const end = e => { if (y0 == null) return; const card = el.querySelector('.pro-pay-card'), d = e.clientY - y0; y0 = null; card.style.transition = ''; card.style.transform = ''; if (d > 70) closePay(); };
       el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
-    payStep = step; payNote = ''; el.hidden = false; renderPay(); document.body.classList.add('pro-paying');
+    payStep = LIVE && step === 'start' && info().order && !info().owned ? 'waiting' : step; payNote = ''; el.hidden = false; renderPay(); document.body.classList.add('pro-paying');
     requestAnimationFrame(() => el.querySelector('.pro-pay-card')?.focus());
   }
-  function closePay() { const el = $('pro-pay'); if (el) el.hidden = true; document.body.classList.remove('pro-paying'); }
+  function closePay() { const el = $('pro-pay'); if (el) el.hidden = true; document.body.classList.remove('pro-paying'); clearTimeout(pollTimer); }
+  let pollTimer = 0;
   const ios = () => payPlatform() === 'ios';
   function renderPay() {
     const el = $('pro-pay'); if (!el) return;
+    if (!ios()) return renderLive(el); // Android and web: the real checkout (simulated in test builds); iPhone: App Store
     const kind = ios() ? 'ios' : 'code', working = payStep === 'working';
     const head = `<span class="pro-pay-grab" aria-hidden="true"></span><header class="pro-pay-head"><h2 id="pro-pay-title">${payStep === 'done' ? 'Pro 已解锁' : '碎碎清单 Pro'}</h2>${working ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
     let body = '';
@@ -155,6 +237,124 @@
     el.querySelectorAll('[data-pay-theme]').forEach(b => b.addEventListener('click', () => { S().proTheme = b.dataset.payTheme; persist(); applyTheme(); refreshAll(); closePay(); closeSheet(); API.showToast(`已换上「${THEMES[b.dataset.payTheme].full}」`); }));
     $('pro-pay-finish')?.addEventListener('click', () => { closePay(); $('pro-sheet')?.querySelector('[data-pro-section=themes]')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
   }
+
+  /** The real checkout (release builds, Android and web). Steps: start → qr → waiting, or start → afdian, then done. */
+  function renderLive(el) {
+    const st = payStep, cfg = shop, o = info().order;
+    const titles = { start: '开通 Pro', qr: '扫码付款', waiting: '等待确认', afdian: '填写爱发电订单号', working: '开通 Pro', done: 'Pro 已开通' };
+    const head = `<span class="pro-pay-grab" aria-hidden="true"></span><header class="pro-pay-head"><h2 id="pro-pay-title">${titles[st] || '开通 Pro'}</h2>${st === 'working' ? '' : '<button type="button" class="pro-pay-x" id="pro-pay-close" aria-label="关闭">' + icon('x') + '</button>'}</header>`;
+    const note = payNote ? `<p class="pro-pay-note${payNoteBad ? ' is-error' : ''}" role="alert">${esc(payNote)}</p>` : '';
+    const contact = cfg?.contact ? `<p class="pro-pay-fine">遇到问题请联系：${esc(cfg.contact)}</p>` : '';
+    const redeemForm = `<div class="pro-pay-or"><span>使用兑换码</span></div>
+      <form class="pro-pay-redeem" id="pro-pay-redeem"><input id="pro-pay-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SUISUI-XXXX-XXXX-XXXX" aria-label="兑换码"><button type="button" class="pro-pay-paste" id="pro-pay-paste">粘贴</button><button type="submit">兑换</button></form>`;
+    let body = '';
+    if (st === 'done') {
+      const i = info();
+      body = `<div class="pro-pay-done"><p><span class="pro-pay-badge">${icon('badge-check')}</span>感谢支持。Pro 的全部功能已在这台设备上开通。</p>
+        ${i.code ? `<div class="pro-pay-code-box"><small>你的兑换码 · 可在其他设备上开通（共 ${cfg?.maxDevices || 3} 台）</small><b>${esc(i.code)}</b><button type="button" class="pro-pay-link" id="pro-pay-copy-code">复制</button></div>` : ''}
+        <p class="pro-pay-fine">挑一套主题开始用：</p>
+        <div class="pro-pay-themes">${ORDER.map(id => `<button type="button" data-pay-theme="${id}" aria-label="使用「${THEMES[id].full}」">${themeMock(id)}<small>${THEMES[id].full}</small></button>`).join('')}</div>
+        <button type="button" class="pro-pay-link" id="pro-pay-finish">稍后再选</button></div>`;
+    } else if (st === 'working') {
+      body = `<div class="pro-pay-working" role="status"><span class="pro-spin" aria-hidden="true"></span><p>${esc(payWorking || '正在开通…')}</p></div>`;
+    } else if (!cfg) {
+      body = payNote ? `${note}<button type="button" class="pro-pay-main" id="pro-pay-retry">重新加载</button>${redeemForm}` : `<div class="pro-pay-working" role="status"><span class="pro-spin" aria-hidden="true"></span><p>正在读取价格…</p></div>`;
+    } else if (st === 'qr' && o) {
+      body = `<figure class="pro-qr">${cfg.pay.hasQr ? `<img id="pro-qr-img" src="${LIVE ? `${SERVER}/api/qr` : simQr()}" alt="付款二维码" crossorigin="anonymous">` : '<span>暂时不能扫码付款</span>'}<figcaption>${esc(cfg.pay.qrLabel || '微信或支付宝扫码')}</figcaption></figure>
+        ${cfg.pay.hasQr ? '<button type="button" class="pro-pay-second" id="pro-qr-save">保存二维码到相册</button>' : ''}
+        <ol class="pro-pay-howto">
+          <li><span>打开微信或支付宝「扫一扫」，从相册选取这张二维码。</span></li>
+          <li><span>付款 <b>${yuan(o.amount || cfg.price)}</b>，并在付款备注中填写订单号：<span class="pro-order-id"><b>${esc(o.id)}</b><button type="button" id="pro-order-copy">复制</button></span></span></li>
+          <li><span>付款完成后，点击下方「我已付款」。</span></li>
+        </ol>${note}
+        <button type="button" class="pro-pay-main" id="pro-paid">我已付款</button>
+        <p class="pro-pay-fine">${esc(cfg.pay.instructions || '我们核对到账后为你开通，通常需要几分钟。')}</p>${contact}`;
+    } else if (st === 'waiting' && o) {
+      const rejected = o.status === 'rejected';
+      body = `<div class="pro-pay-wait"><span class="${rejected ? 'pro-pay-badge is-bad' : 'pro-spin'}" aria-hidden="true">${rejected ? icon('x') : ''}</span>
+        <p><b>${rejected ? '没有核对到这笔付款' : '正在等待确认'}</b>订单 ${esc(o.id)} · ${yuan(o.amount || cfg.price)}</p></div>
+        <p class="pro-pay-fine">${rejected ? `如果你已经付款，请联系我们并提供订单号${cfg.contact ? `：${esc(cfg.contact)}` : '。'}` : '我们核对到账后会立即为你开通，通常需要几分钟。可以先关闭此页面，开通后自动生效。'}</p>${note}
+        <div class="pro-pay-row"><button type="button" class="pro-pay-second" id="pro-refresh">刷新状态</button><button type="button" class="pro-pay-second" id="pro-show-qr">查看付款码</button></div>${contact}`;
+    } else if (st === 'afdian') {
+      body = `<p class="pro-pay-lead">在爱发电完成付款后，打开订单详情，复制「订单号」粘贴到这里。</p>
+        <form class="pro-pay-redeem is-trade" id="pro-afdian-form"><input id="pro-afdian-no" inputmode="numeric" autocomplete="off" placeholder="爱发电订单号" aria-label="爱发电订单号"><button type="button" class="pro-pay-paste" id="pro-afdian-paste">粘贴</button><button type="submit">验证</button></form>${note}
+        ${cfg.pay.afdianUrl ? `<a class="pro-pay-link" href="${esc(cfg.pay.afdianUrl)}" target="_blank" rel="noopener">还没付款？前往爱发电</a>` : ''}${contact}`;
+    } else {
+      const mode = cfg.pay.mode, price = `<div class="pro-pay-sum"><span class="pro-pay-amt"><b>${yuan(cfg.price)}</b>${cfg.listPrice > cfg.price ? `<s>${yuan(cfg.listPrice)}</s>` : ''}</span><span class="pro-pay-what">一次购买，永久使用<small>${esc(cfg.priceNote || '')}</small></span></div>`;
+      const main = mode === 'qr' ? `<button type="button" class="pro-pay-main" id="pro-start-qr">扫码付款 · ${yuan(cfg.price)}</button>`
+        : mode === 'afdian' && cfg.pay.afdianUrl ? `<a class="pro-pay-main" id="pro-go-afdian" href="${esc(cfg.pay.afdianUrl)}" target="_blank" rel="noopener">前往爱发电付款 · ${yuan(cfg.price)}</a><button type="button" class="pro-pay-link" id="pro-afdian-have">已在爱发电付款？填写订单号</button>` : '';
+      body = `${price}${main}${redeemForm}${note}
+        <p class="pro-pay-fine">${mode === 'qr' ? '扫码付款经人工核对后开通，通常需要几分钟' : mode === 'afdian' ? '爱发电付款后填写订单号，立即开通' : '兑换码由官方渠道发放'} · 每个兑换码可用于 ${cfg.maxDevices} 台设备</p>${contact}`;
+    }
+    const sim = LIVE || !['start', 'afdian'].includes(st) ? '' : `<div class="pro-pay-sim" role="group" aria-label="预览付款方式"><span>测试版预览 · 付款方式</span>${[['qr', '扫码'], ['afdian', '爱发电'], ['off', '只用兑换码']].map(([id, n]) => `<button type="button" data-sim-mode="${id}" aria-pressed="${simMode === id}">${n}</button>`).join('')}</div>`;
+    el.innerHTML = `<div class="pro-pay-card" tabindex="-1">${head}${body}${sim}</div>`;
+    API.icons(el);
+    el.querySelectorAll('[data-sim-mode]').forEach(b => b.addEventListener('click', () => { simMode = b.dataset.simMode; shop = null; payStep = 'start'; payNote = ''; renderLive(el); }));
+    const bad = (e, keep) => { payNote = e.message; payNoteBad = true; payStep = keep; renderLive(el); };
+    $('pro-pay-close')?.addEventListener('click', closePay);
+    $('pro-pay-retry')?.addEventListener('click', () => { payNote = ''; shop = null; renderLive(el); loadShop().then(() => renderLive(el), e => bad(e, 'start')); });
+    $('pro-start-qr')?.addEventListener('click', async () => {
+      payStep = 'working'; payWorking = '正在生成订单…'; payNote = ''; renderLive(el);
+      try { const r = await shopCall('/api/orders', {}); info().order = { id: r.id, amount: r.amount, at: Date.now() }; persist(); payStep = 'qr'; renderLive(el); } catch (e) { bad(e, 'start'); }
+    });
+    $('pro-order-copy')?.addEventListener('click', () => copyText(o.id, '订单号已复制，付款时粘贴到备注里'));
+    $('pro-qr-save')?.addEventListener('click', () => {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); API.saveImage(c, '碎碎清单-付款码.png'); };
+      img.onerror = () => API.showToast('二维码没能保存，可以截屏后再扫');
+      img.src = LIVE ? `${SERVER}/api/qr` : simQr();
+    });
+    const check = async manual => {
+      if (manual) { payStep = 'working'; payWorking = '正在查询…'; renderLive(el); }
+      const r = await pollOrder();
+      if (r === 'paid') { payStep = 'done'; payNote = ''; renderLive(el); return; }
+      payStep = 'waiting'; if (manual) { payNote = r === 'error' ? '暂时查询不到，稍后再试。' : r === 'pending' ? '还在等待确认，确认后会自动开通。' : ''; payNoteBad = r === 'error'; }
+      if (!info().order) { payStep = 'start'; payNote = '订单已失效，请重新下单。'; payNoteBad = true; }
+      renderLive(el);
+    };
+    $('pro-paid')?.addEventListener('click', () => { if (!LIVE) simPaidAt = Date.now(); payStep = 'waiting'; payNote = ''; renderLive(el); });
+    $('pro-refresh')?.addEventListener('click', () => check(true));
+    $('pro-show-qr')?.addEventListener('click', () => { payStep = 'qr'; payNote = ''; renderLive(el); });
+    $('pro-afdian-have')?.addEventListener('click', () => { payStep = 'afdian'; payNote = ''; renderLive(el); });
+    $('pro-go-afdian')?.addEventListener('click', () => setTimeout(() => { payStep = 'afdian'; payNote = ''; renderLive(el); }, 400));
+    $('pro-afdian-paste')?.addEventListener('click', async () => { try { const t = await navigator.clipboard.readText(); if (t) $('pro-afdian-no').value = t.replace(/\D/g, ''); } catch { API.showToast('没能读取剪贴板，请长按输入框粘贴'); } });
+    $('pro-afdian-form')?.addEventListener('submit', async e => {
+      e.preventDefault(); const no = $('pro-afdian-no').value.replace(/\D/g, '');
+      if (no.length < 12) { payNote = '订单号是一长串数字，在爱发电的订单详情里可以找到。'; payNoteBad = true; return renderLive(el); }
+      payStep = 'working'; payWorking = '正在向爱发电核对订单…'; payNote = ''; renderLive(el);
+      try { await takeLicence(await shopCall('/api/afdian/claim', { tradeNo: no }), 'afdian'); payStep = 'done'; renderLive(el); } catch (err) { bad(err, 'afdian'); if ($('pro-afdian-no')) $('pro-afdian-no').value = no; }
+    });
+    $('pro-pay-paste')?.addEventListener('click', async () => { try { const t = await navigator.clipboard.readText(); if (t) { $('pro-pay-code').value = t.trim(); $('pro-pay-code').dispatchEvent(new Event('input')); } } catch { API.showToast('没能读取剪贴板，请长按输入框粘贴'); } });
+    $('pro-pay-code')?.addEventListener('input', e => { const v = normCode(e.target.value).slice(0, 12); e.target.value = v ? `SUISUI-${v.match(/.{1,4}/g).join('-')}` : ''; });
+    $('pro-pay-redeem')?.addEventListener('submit', async e => {
+      e.preventDefault(); const v = $('pro-pay-code').value;
+      if (normCode(v).length !== 12) { payNote = '兑换码是 12 位字母和数字，形如 SUISUI-XXXX-XXXX-XXXX。'; payNoteBad = true; renderLive(el); $('pro-pay-code').value = v; return; }
+      const back = payStep; payStep = 'working'; payWorking = '正在验证兑换码…'; payNote = ''; renderLive(el);
+      try { await takeLicence(await shopCall('/api/redeem', { code: v }), 'code'); payStep = 'done'; renderLive(el); } catch (err) { bad(err, back === 'working' ? 'start' : back); if ($('pro-pay-code')) $('pro-pay-code').value = v; }
+    });
+    $('pro-pay-copy-code')?.addEventListener('click', () => copyText(info().code, '兑换码已复制，请妥善保存'));
+    el.querySelectorAll('[data-pay-theme]').forEach(b => b.addEventListener('click', () => { S().proTheme = b.dataset.payTheme; persist(); applyTheme(); refreshAll(); closePay(); closeSheet(); API.showToast(`已换上「${THEMES[b.dataset.payTheme].full}」`); }));
+    $('pro-pay-finish')?.addEventListener('click', () => { closePay(); $('pro-sheet')?.querySelector('[data-pro-section=themes]')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+    // while waiting, ask every 5 seconds; first load the shop
+    clearTimeout(pollTimer);
+    if (st === 'waiting' && o && o.status !== 'rejected') pollTimer = setTimeout(() => { if (!$('pro-pay').hidden && payStep === 'waiting') check(false); }, 5000);
+    if (!cfg && !payNote) loadShop().then(() => renderLive(el), e => bad(e, 'start'));
+  }
+  let payNoteBad = false, payWorking = '';
+  /** A stand-in QR picture for test builds (not scannable: it says 示例 in the middle). */
+  let simQrUrl = '';
+  function simQr() {
+    if (simQrUrl) return simQrUrl;
+    const n = 29, c = document.createElement('canvas'), k = 10; c.width = c.height = (n + 4) * k; const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#111';
+    let seed = 7; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (r() > .52) g.fillRect((x + 2) * k, (y + 2) * k, k, k);
+    for (const [x, y] of [[0, 0], [n - 7, 0], [0, n - 7]]) { g.fillStyle = '#fff'; g.fillRect((x + 2) * k, (y + 2) * k, 7 * k, 7 * k); g.fillStyle = '#111'; g.fillRect((x + 2) * k, (y + 2) * k, 7 * k, 7 * k); g.fillStyle = '#fff'; g.fillRect((x + 3) * k, (y + 3) * k, 5 * k, 5 * k); g.fillStyle = '#111'; g.fillRect((x + 4) * k, (y + 4) * k, 3 * k, 3 * k); }
+    g.fillStyle = '#fff'; g.fillRect(c.width / 2 - 46, c.height / 2 - 22, 92, 44); g.fillStyle = '#111'; g.font = '600 26px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('示例', c.width / 2, c.height / 2 + 1);
+    return (simQrUrl = c.toDataURL('image/png'));
+  }
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  async function copyText(t, done) { try { await navigator.clipboard.writeText(t); API.showToast(done); } catch { API.showToast('没能复制，请长按选择'); } }
 
   function resetLocal() { S().pro = { owned: false, trialEnds: 0, trialUsed: false }; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('已重置为未购买（本地预览）'); }
 
@@ -801,6 +1001,7 @@
 
   /* ---------- The Pro page ---------- */
   function openSheet(section = '') {
+    if (LIVE && !shop) loadShop().then(() => { if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); } }).catch(() => {});
     loadThumbFonts();
     const s = $('pro-sheet'); renderSheet(); s.hidden = false; document.body.classList.add('pro-open');
     s.scrollTop = 0; startHero();
@@ -814,13 +1015,13 @@
         <button type="button" class="pro-close" id="pro-close" aria-label="关闭">${icon('x')}</button>
         <canvas id="pro-hero-jar" aria-hidden="true"></canvas>
         <h1>碎碎清单 Pro</h1>
-        <p>七套主题、七种完成动效，做完一天还有一幅画。<br>一次买断，以后的新主题也包含在内。</p>
+        <p>七套完整主题、七种完成动效与每周碎片画。<br>一次购买，永久使用；此后上线的新主题同样包含在内。</p>
         ${pro ? `<span class="pro-state">${status()}</span>` : ''}
       </header>
 
       <section class="pro-part" data-pro-section="themes">
         <h2>七套主题</h2>
-        <p class="pro-lead">每套主题换掉整个 App、锁屏卡片和完成动效，全部做完时画出不同的画。左右滑动看看。</p>
+        <p class="pro-lead">每套主题同时改变 App 界面、锁屏卡片与完成动效，当天全部完成时生成专属画面。左右滑动查看，点击「查看界面」预览。</p>
         <div class="pro-themes pro-showcase" id="pro-showcase">${['auto', ...ORDER].map(id => { const t = THEMES[id], on = (pro ? savedTheme() : tryOn) === id;
           if (id === 'auto') return `<article class="pro-theme pro-tcard is-auto${on ? ' active' : ''}" data-theme-card="auto"><div class="pro-tcard-shots"><figure class="pro-tcard-shot"><img src="assets/themes/auto-wide${SHOT()}.jpg" alt="" decoding="async"></figure></div><div class="pro-tcard-body"><h3>随光</h3><p>早上 5 点用琉璃，10 点用素笺，晚上 6 点用星河。</p><small>现在是${THEMES[byTime()].full}</small></div><div class="pro-tcard-actions"><button type="button" data-pro-theme="auto">${pro ? (on ? '使用中' : '使用') : '试穿'}</button></div></article>`;
           return `<article class="pro-theme pro-tcard${on ? ' active' : ''}" data-theme-card="${id}">
@@ -831,26 +1032,26 @@
       </section>
 
       <section class="pro-part" data-pro-section="effects">
-        <h2>完成的那一下</h2>
-        <p class="pro-lead">完成一件事时的样子。点圆圈试一下；选「跟随主题」就由每套主题自己决定。</p>
+        <h2>完成动效</h2>
+        <p class="pro-lead">完成一件事时的反馈。点击圆圈即可预览；选择「跟随主题」时，由当前主题决定。</p>
         <div class="pro-demo-row"><button type="button" class="pro-demo-check" id="pro-demo-check" aria-label="试一下完成动效"><span class="check-circle"></span></button><span class="pro-demo-title" id="pro-demo-title">把锁屏待办的想法做出来</span></div>
         <div class="pro-effect-grid">${Object.keys(EFFECTS).filter(id => id !== 'auto').map(id => `<button type="button" class="pro-effect${(pro ? curE === id : id === (demoPick || 'shards')) ? ' active' : ''}" data-pro-effect="${id}"><b>${EFFECTS[id]}</b><small>${EFFECT_LINE[id]}</small></button>`).join('')}
         ${pro ? `<button type="button" class="pro-effect${curE === 'auto' ? ' active' : ''}" data-pro-effect="auto"><b>跟随主题</b><small>每个主题用自己的动效</small></button>` : ''}</div>
       </section>
 
       <section class="pro-part" data-pro-section="jar">
-        <h2>碎片罐和每周碎片画</h2>
-        <p class="pro-lead">每天做完的事收进罐子；一周结束，按做事的时间和分组画成一幅画，可以存成图片。</p>
+        <h2>碎片罐与每周碎片画</h2>
+        <p class="pro-lead">每天完成的事项收进碎片罐；每周结束时，按完成时间与分组生成一幅画，可保存为图片。</p>
         <div class="pro-jar-demo"><canvas id="pro-demo-jar" aria-hidden="true"></canvas><img id="pro-demo-art" alt="每周碎片画示例"></div>
-        <p class="pro-fine">${pro ? '在“今天”页右上角点罐子就能打开。' : '示例来自演示数据。'}</p>
+        <p class="pro-fine">${pro ? '在「今天」页点击碎片罐即可查看。' : '图示为演示数据。'}</p>
       </section>
 
       <section class="pro-part">
-        <h2>还有</h2>
+        <h2>同样包含</h2>
         <ul class="pro-more">
-          <li>${icon('calendar-clock')}<span><b>倒数日</b>考试、生日、出发的日子，挂在清单和锁屏上</span></li>
-          <li>${icon('party-popper')}<span><b>清空时刻</b>当天全部做完，有一段专门的庆祝</span></li>
-          <li>${icon('gift')}<span><b>以后的新主题</b>一次买断，之后上线的主题都免费</span></li>
+          <li>${icon('calendar-clock')}<span><b>倒数日</b>考试、生日、出发等重要日子，显示在清单与锁屏上</span></li>
+          <li>${icon('party-popper')}<span><b>清空时刻</b>当天事项全部完成时，播放专属庆祝动画</span></li>
+          <li>${icon('gift')}<span><b>后续新主题</b>此后上线的主题，无需再次付费</span></li>
         </ul>
       </section>
 
@@ -866,12 +1067,13 @@
       <footer class="pro-buy${FREE && !owned ? ' is-free' : ''}" data-pay="${payPlatform()}">
         ${FREE && !owned ? `<div class="pro-free-bar">${icon('badge-check')}<div><b>测试版 · 全部已解锁</b><small>正式版 ${PRICE}，一次买断</small></div><button type="button" class="pro-free-demo" id="pro-buy">看付款页</button></div>
              <p class="pro-free-note">测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。</p>`
-          : owned ? `<p class="pro-owned">${icon('badge-check')}已解锁 Pro，谢谢你。${info().via === 'code' ? '<small>兑换码解锁</small>' : info().via === 'appstore' ? '<small>App Store 购买</small>' : ''}</p>`
-          : `<div class="pro-price"><b>${PRICE}</b><s>${LIST_PRICE}</s><span>${PRICE_NOTE}，一次买断，永久使用</span></div>
+          : owned ? `<p class="pro-owned">${icon('badge-check')}Pro 已开通，感谢支持。${info().code ? `<small>兑换码 ${esc(info().code)} · 可在其他设备上开通</small>` : info().via === 'appstore' ? '<small>通过 App Store 购买</small>' : info().via ? '<small>兑换码开通</small>' : ''}</p>`
+          : `<div class="pro-price"><b>${priceText()}</b>${listText() ? `<s>${listText()}</s>` : ''}<span>${LIVE && shop ? esc(shop.priceNote || '') + (shop.priceNote ? ' · ' : '') : PRICE_NOTE + ' · '}一次购买 · 永久使用 · 无订阅</span></div>
              ${FREE ? '<p class="pro-free-note">测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。</p>' : ''}
-             <div class="pro-actions">${info().trialUsed || FREE ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `购买兑换码 · ${PRICE}`}</button></div>`}
-        <p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>${FREE ? '测试版：付款是模拟的' : '本地预览：付款是模拟的'}</span><button type="button" id="pro-reset">重置</button></p>
-        <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>
+             <div class="pro-actions">${info().trialUsed || FREE ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `开通 Pro · ${priceText()}`}</button></div>`}
+        ${LIVE ? `<p class="pro-legal">${owned ? '<span></span>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<a href="terms.html" target="_blank" rel="noopener">购买须知</a><a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>`
+          : `<p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>${FREE ? '测试版：付款是模拟的' : '本地预览：付款是模拟的'}</span><button type="button" id="pro-reset">重置</button></p>
+        <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>`}
       </footer>`;
     API.icons(s);
     $('pro-close').addEventListener('click', closeSheet);
@@ -890,7 +1092,7 @@
     s.querySelectorAll('[data-pay-preview]').forEach(b => b.addEventListener('click', () => { payPreview = b.dataset.payPreview; renderSheet(); s.querySelector('.pro-buy')?.scrollIntoView({ block: 'end' }); }));
     $('pro-trial')?.addEventListener('click', startTrial);
     $('pro-restore')?.addEventListener('click', () => { openPay(); $('pro-pay-restore')?.click(); });
-    $('pro-reset').addEventListener('click', resetLocal);
+    $('pro-reset')?.addEventListener('click', resetLocal);
     $('pro-lock')?.addEventListener('change', e => { S().proLock = e.target.checked; persist(); applyTheme(); });
     $('pro-wall')?.addEventListener('change', e => { S().proWall = e.target.checked; persist(); applyTheme(); });
     $('pro-cd-add')?.addEventListener('submit', addCountdown);
@@ -1424,6 +1626,7 @@
 
   /* ---------- Wiring ---------- */
   function refreshAll() {
+    if (API.lockMode) { renderCountdowns(); return; } // the lock view has no settings, banner or Pro sheet to fill
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
     const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : FREE ? '免费测试' : `试用 ${trialLeft()} 天`) : PRICE;
     const sub = document.querySelector('#pro-banner .pro-banner-text small'); if (sub) sub.textContent = isPro() && themeLabel() ? `正在用「${themeLabel()}」` : isPro() ? '主题、碎片罐、动效都已打开' : '主题、碎片罐、完成动效';
@@ -1447,6 +1650,8 @@
   if (SHOW && THEMES[SHOW]) Object.assign(S(), { proTheme: SHOW, proLock: true, proWall: true, proEffect: 'auto' });
   mount();
   applyTheme(); refreshAll();
+  // release builds: check the licence, finish an order confirmed while the app was closed
+  if (LIVE && !API.lockMode) { liveBoot(); document.addEventListener('visibilitychange', () => { if (!document.hidden && info().order && !info().owned) pollOrder().then(st => { if (st === 'paid') API.showToast('付款已确认，Pro 已开通。谢谢支持！'); }); }); }
   // In the effect frame, the first thing gets done and comes back, over and over, so the theme's finishing can be watched
   if (SHOW && SHOW_VIEW === 'fx') {
     const cycle = () => {

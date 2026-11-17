@@ -324,7 +324,9 @@
   // Small entrance motion for views and settings pages (skipped with reduced motion).
   function enter(el, cls) {
     if (!el || !state.settings.motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    el.classList.remove('view-enter', 'page-enter', 'page-back'); void el.offsetWidth; el.classList.add(cls);
+    // restarting a running entrance needs a reflow; starting a fresh one does not (that reflow cost a whole frame on phones)
+    if (el.classList.contains('view-enter') || el.classList.contains('page-enter') || el.classList.contains('page-back')) { el.classList.remove('view-enter', 'page-enter', 'page-back'); void el.offsetWidth; }
+    el.classList.add(cls);
     // Children animate inside the page (rows cascade); only the page's own animation ends the entrance, with a timer as backstop.
     const token = el._enter = {};
     const done = e => { if (e && e.target !== el) return; el.removeEventListener('animationend', done); if (el._enter === token) el.classList.remove(cls); };
@@ -334,6 +336,8 @@
   window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 72); }, { passive: true });
   function setView(view) {
     if (!['tasks', 'settings', 'review'].includes(view)) view = 'tasks';
+    // back to the top first, while layout is clean; scrollY is cached, so checking it costs nothing
+    if (isPhone() && window.scrollY) window.scrollTo({ top: 0, behavior: 'instant' });
     closeAdd(); closeSearch();
     document.body.dataset.view = view;
     document.querySelectorAll('.nav-button[data-view]').forEach(b => { b.classList.toggle('selected', b.dataset.view === view); b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
@@ -345,22 +349,21 @@
     $('tasks-panel').hidden = view !== 'tasks';
     if (changed) enter({ tasks: $('tasks-panel'), settings: $('settings-panel'), review: $('review-panel') }[view], 'view-enter');
     if (view === 'review') renderReview();
-    if (settings) openSettingsPage('index');
+    if (settings) openSettingsPage('index', changed);
     else updateWallpaperHole();
-    if (isPhone()) window.scrollTo({ top: 0, behavior: 'instant' });
   }
   /* Settings: an index of four pages instead of one long scroll. */
   const SETTINGS_TITLES = { index: '设置', look: '外观', lock: '锁屏与隐私', list: '分组与每日整理', data: '数据与备份', language: '语言' };
-  function openSettingsPage(page) {
+  function openSettingsPage(page, fresh = false) {
     if (!SETTINGS_TITLES[page]) page = 'index';
     const deeper = page !== 'index' && settingsPage === 'index', back = page === 'index' && settingsPage !== 'index';
     settingsPage = page;
+    if (!fresh) $('settings-scroll').scrollTop = 0; // before the pages change, while layout is still clean (a panel that was hidden starts at the top anyway)
     document.body.dataset.settingsPage = page;
     $('settings-index').hidden = page !== 'index';
     document.querySelectorAll('.settings-page').forEach(p => { p.hidden = p.dataset.page !== page; });
     $('settings-title').textContent = SETTINGS_TITLES[page];
     $('settings-back').hidden = page === 'index';
-    $('settings-scroll').scrollTop = 0;
     if (deeper) enter(document.querySelector(`.settings-page[data-page="${page}"]`), 'page-enter');
     if (back) enter($('settings-index'), 'page-back');
     if (page === 'index') renderSettingsSummary();
@@ -693,6 +696,8 @@
     document.querySelectorAll('[data-filter]').forEach(b => { b.classList.toggle('active', b.dataset.filter === filter); b.setAttribute('aria-pressed', String(b.dataset.filter === filter)); });
   }
   function render() {
+    // the lock view (opened every time the screen wakes) only shows the lock card: skip the list, filters and settings
+    if (LOCK_MODE) { renderPreview(); renderFocusBar(); icons($('lockscreen') || document); window.dispatchEvent(new Event('suisui:render')); return; }
     const glide = window.SuiSuiMotion?.capture?.();
     const todo = pending(), done = doneList(), upcoming = later();
     const inFilter = t => filter === 'all' || (filter === 'repeat' ? t.repeat !== 'none' : groupOf(t.group).id === filter);
@@ -823,6 +828,9 @@
   let wallFor = '';
   function glassWall(src) {
     if (wallFor === src) return; wallFor = src;
+    // the shrunken picture is kept, so the lock view (opened every time the screen wakes) does not redo it
+    const key = src.length + ':' + src.slice(-80);
+    try { const hit = JSON.parse(localStorage.getItem('suisui-wall-cache') || 'null'); if (hit && hit.key === key) { document.documentElement.style.setProperty('--wall', `url("${hit.url}")`); return; } } catch {}
     const img = new Image();
     img.onload = () => {
       if (wallFor !== src) return;
@@ -836,7 +844,9 @@
           for (let k = 0; k < 3; k++) d[i + k] = Math.max(0, Math.min(255, g + (d[i + k] - g) * 1.45 + 8));
         }
         ctx.putImageData(px, 0, 0);
-        document.documentElement.style.setProperty('--wall', `url("${c.toDataURL('image/jpeg', .9)}")`);
+        const url = c.toDataURL('image/jpeg', .9);
+        document.documentElement.style.setProperty('--wall', `url("${url}")`);
+        try { localStorage.setItem('suisui-wall-cache', JSON.stringify({ key, url })); } catch {}
       } catch { document.documentElement.style.setProperty('--wall', `url("${src}")`); }
     };
     img.onerror = () => { if (wallFor === src) document.documentElement.style.setProperty('--wall', `url("${src}")`); };
@@ -2355,7 +2365,8 @@
     let startY = null;
     $('lockscreen').addEventListener('touchstart', event => { startY = event.target.closest('#activity') ? null : event.touches[0].clientY; }, { passive: true });
     $('lockscreen').addEventListener('touchend', event => { if (startY !== null && startY - event.changedTouches[0].clientY > 90) leave(false); startY = null; });
-    window.suisuiLockShown = () => { $('activity-list').scrollTop = 0; clock(); };
+    // the lock view stays loaded between screen-offs (Android keeps it in the background): catch up on a new day too
+    window.suisuiLockShown = () => { rollover({ announce: false }); $('activity-list').scrollTop = 0; clock(); };
   }
   let booted = false;
   rollover({ announce: false });

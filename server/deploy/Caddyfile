@@ -1,0 +1,6 @@
+# Caddy gets and renews the HTTPS certificate by itself. Replace pay.example.com with your own domain
+# (its DNS A record must point at this server), then: sudo systemctl reload caddy
+pay.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8787
+}
