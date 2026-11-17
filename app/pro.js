@@ -58,7 +58,7 @@
   // with a server, owning Pro means holding a licence it signed (checked again on every start)
   const isPro = () => FREE || (!!info().owned && (!LIVE || !!info().licence)) || (info().trialEnds || 0) > Date.now();
   const trialLeft = () => Math.max(0, Math.ceil(((info().trialEnds || 0) - Date.now()) / 864e5));
-  const status = () => info().owned ? '已解锁' : FREE ? '测试版 · 全部免费' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
+  const status = () => info().owned ? '已开通' : FREE ? '' : isPro() ? `试用中 · 剩 ${trialLeft()} 天` : '';
   let tryOn = '';
   const savedTheme = () => ['dusk', 'tape'].includes(S().proTheme) ? 'night' : S().proTheme;
   const activeTheme = () => tryOn || (!isPro() ? '' : savedTheme() === 'auto' ? byTime() : THEMES[savedTheme()] ? savedTheme() : '');
@@ -70,7 +70,7 @@
   function persist() { API.save(); }
   function buy() { info().owned = true; if (!info().via) info().via = payPlatform() === 'ios' ? 'appstore' : 'code'; persist(); endTry(false); applyTheme(); refreshAll(); }
   function startTrial() { const p = info(); if (p.trialUsed) return; p.trialUsed = true; p.trialEnds = Date.now() + TRIAL_DAYS * 864e5; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast(`已开始 ${TRIAL_DAYS} 天免费试用，Pro 全部可用`); }
-  function restore() { API.showToast(info().owned ? '已恢复购买' : '没有找到购买记录（本地预览）'); }
+  function restore() { API.showToast(info().owned ? '已恢复购买' : '没有找到购买记录'); }
   /* ---------- How people pay, by platform ----------
      iPhone: App Store in-app purchase (a non-consumable), restored with the Apple account. Apple requires this for
        digital unlocks in an iOS app, and the app may not point to other ways to pay.
@@ -97,16 +97,18 @@
        兑换码   — any code you made; one code works on up to N devices (set in the admin page). */
   const deviceId = () => { try { let d = localStorage.getItem('suisui-device'); if (!d) { d = (crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`).replace(/[^\w-]/g, ''); localStorage.setItem('suisui-device', d); } return d; } catch { return 'nostore'; } };
   /* Test builds have no server: the same checkout runs against this stand-in, so it can be tried without paying. */
-  let simMode = 'qr', simPaidAt = 0;
+  let simMode = 'qr', simPaidAt = 0, simOrder = '';
+  const randAbc = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), x => CODE_ABC[x & 31]).join('');
+  const simCode = () => `SUISUI-${randAbc(4)}-${randAbc(4)}-${randAbc(4)}`;
   function simCall(path, body = {}) {
     const wait = ms => new Promise(r => setTimeout(r, ms)), no = (code, message) => Promise.reject(Object.assign(new Error(message), { code }));
-    if (path === '/api/config') return wait(250).then(() => ({ price: 2800, listPrice: 3990, priceNote: '首发价', maxDevices: 3, contact: '小红书 @碎碎清单（示例）', pay: { mode: simMode, qrLabel: '微信或支付宝扫码', instructions: '我们核对到账后为你开通，通常需要几分钟。', hasQr: true, afdianUrl: 'https://afdian.com/' } }));
-    if (path === '/api/orders') return wait(400).then(() => ({ id: 'SDEMO27', amount: 2800, status: 'pending' }));
-    if (/^\/api\/orders\/.+\/status$/.test(path)) return wait(300).then(() => (simPaidAt && Date.now() - simPaidAt > 4000 ? { status: 'paid', licence: 'preview', code: 'SUISUI-DEMO-PAID-0001' } : { status: 'pending' }));
+    if (path === '/api/config') return wait(250).then(() => ({ price: 2800, listPrice: 3990, priceNote: '首发价', maxDevices: 3, contact: '', pay: { mode: simMode, qrLabel: '支付宝扫码付款', instructions: '我们核对到账后为你开通，通常需要几分钟。', hasQr: true, afdianUrl: 'https://afdian.com/' } }));
+    if (path === '/api/orders') return wait(400).then(() => ({ id: simOrder ||= 'S' + randAbc(6), amount: 2800, status: 'pending' }));
+    if (/^\/api\/orders\/.+\/status$/.test(path)) return wait(300).then(() => (simPaidAt && Date.now() - simPaidAt > 4000 ? { status: 'paid', licence: 'preview', code: simCode() } : { status: 'pending' }));
     if (path === '/api/redeem') return wait(700).then(() => (codeOk(body.code) ? { licence: 'preview', code: `SUISUI-${normCode(body.code).match(/.{4}/g).join('-')}` } : no('bad', '兑换码不存在。请检查是否输入有误。')));
-    if (path === '/api/afdian/claim') return wait(900).then(() => (String(body.tradeNo).length >= 18 ? { licence: 'preview', code: 'SUISUI-DEMO-AFDN-0001' } : no('not-found', '没有找到这个订单号。请确认已付款，并复制完整的订单号。')));
+    if (path === '/api/afdian/claim') return wait(900).then(() => (String(body.tradeNo).length >= 18 ? { licence: 'preview', code: simCode() } : no('not-found', '没有找到这个订单号。请确认已付款，并复制完整的订单号。')));
     if (path === '/api/check') return Promise.resolve({ ok: true });
-    return no('http', '示例');
+    return no('http', '服务器暂时不可用，请稍后再试。');
   }
   async function shopCall(path, body) {
     if (!LIVE) return simCall(path, body);
@@ -211,7 +213,7 @@
            <form class="pro-pay-redeem" id="pro-pay-redeem"><input id="pro-pay-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="已有兑换码？SUISUI-…" aria-label="兑换码"><button type="button" class="pro-pay-paste" id="pro-pay-paste">粘贴</button><button type="submit">兑换</button></form>${note}
            <p class="pro-pay-fine">支付宝、微信都能付 · 一个码最多用在 3 台设备上</p>`;
     }
-    const sim = payStep === 'done' || working ? '' : `<div class="pro-pay-sim" role="group" aria-label="模拟结果"><span>本地预览 · 模拟结果</span>${OUTCOMES[kind].map(([id, n]) => `<button type="button" data-pay-outcome="${id}" aria-pressed="${payOutcome === id}">${n}</button>`).join('')}</div>`;
+    const sim = '';
     el.innerHTML = `<div class="pro-pay-card" tabindex="-1">${head}${body}${sim}</div>`;
     API.icons(el);
     $('pro-pay-close')?.addEventListener('click', closePay);
@@ -263,7 +265,7 @@
       body = `<figure class="pro-qr">${cfg.pay.hasQr ? `<img id="pro-qr-img" src="${LIVE ? `${SERVER}/api/qr` : simQr()}" alt="付款二维码" crossorigin="anonymous">` : '<span>暂时不能扫码付款</span>'}<figcaption>${esc(cfg.pay.qrLabel || '微信或支付宝扫码')}</figcaption></figure>
         ${cfg.pay.hasQr ? '<button type="button" class="pro-pay-second" id="pro-qr-save">保存二维码到相册</button>' : ''}
         <ol class="pro-pay-howto">
-          <li><span>打开微信或支付宝「扫一扫」，从相册选取这张二维码。</span></li>
+          <li><span>${esc(/支付宝/.test(cfg.pay.qrLabel || '') && !/微信/.test(cfg.pay.qrLabel || '') ? '打开支付宝「扫一扫」，从相册选取这张二维码。' : /微信/.test(cfg.pay.qrLabel || '') && !/支付宝/.test(cfg.pay.qrLabel || '') ? '打开微信「扫一扫」，从相册选取这张二维码。' : '打开微信或支付宝「扫一扫」，从相册选取这张二维码。')}</span></li>
           <li><span>付款 <b>${yuan(o.amount || cfg.price)}</b>，并在付款备注中填写订单号：<span class="pro-order-id"><b>${esc(o.id)}</b><button type="button" id="pro-order-copy">复制</button></span></span></li>
           <li><span>付款完成后，点击下方「我已付款」。</span></li>
         </ol>${note}
@@ -286,7 +288,7 @@
       body = `${price}${main}${redeemForm}${note}
         <p class="pro-pay-fine">${mode === 'qr' ? '扫码付款经人工核对后开通，通常需要几分钟' : mode === 'afdian' ? '爱发电付款后填写订单号，立即开通' : '兑换码由官方渠道发放'} · 每个兑换码可用于 ${cfg.maxDevices} 台设备</p>${contact}`;
     }
-    const sim = LIVE || !['start', 'afdian'].includes(st) ? '' : `<div class="pro-pay-sim" role="group" aria-label="预览付款方式"><span>测试版预览 · 付款方式</span>${[['qr', '扫码'], ['afdian', '爱发电'], ['off', '只用兑换码']].map(([id, n]) => `<button type="button" data-sim-mode="${id}" aria-pressed="${simMode === id}">${n}</button>`).join('')}</div>`;
+    const sim = ''; // the checkout looks the same in every build: no preview controls
     el.innerHTML = `<div class="pro-pay-card" tabindex="-1">${head}${body}${sim}</div>`;
     API.icons(el);
     el.querySelectorAll('[data-sim-mode]').forEach(b => b.addEventListener('click', () => { simMode = b.dataset.simMode; shop = null; payStep = 'start'; payNote = ''; renderLive(el); }));
@@ -341,9 +343,11 @@
     if (!cfg && !payNote) loadShop().then(() => renderLive(el), e => bad(e, 'start'));
   }
   let payNoteBad = false, payWorking = '';
-  /** A stand-in QR picture for test builds (not scannable: it says 示例 in the middle). */
+  /** The collection QR in builds without a server: your own 支付宝 code (app/assets/pay-qr.jpg). Release builds show the
+     one uploaded in the admin page instead. simQrDemo() below is the old unscannable stand-in, kept for reference. */
+  function simQr() { return 'assets/pay-qr.jpg'; }
   let simQrUrl = '';
-  function simQr() {
+  function simQrDemo() {
     if (simQrUrl) return simQrUrl;
     const n = 29, c = document.createElement('canvas'), k = 10; c.width = c.height = (n + 4) * k; const g = c.getContext('2d');
     g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#111';
@@ -356,7 +360,7 @@
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   async function copyText(t, done) { try { await navigator.clipboard.writeText(t); API.showToast(done); } catch { API.showToast('没能复制，请长按选择'); } }
 
-  function resetLocal() { S().pro = { owned: false, trialEnds: 0, trialUsed: false }; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('已重置为未购买（本地预览）'); }
+  function resetLocal() { S().pro = { owned: false, trialEnds: 0, trialUsed: false }; persist(); endTry(false); applyTheme(); refreshAll(); API.showToast('已重置为未购买'); }
 
   /* ---------- Small helpers ---------- */
   const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return h >>> 0; };
@@ -1016,7 +1020,7 @@
         <canvas id="pro-hero-jar" aria-hidden="true"></canvas>
         <h1>碎碎清单 Pro</h1>
         <p>七套完整主题、七种完成动效与每周碎片画。<br>一次购买，永久使用；此后上线的新主题同样包含在内。</p>
-        ${pro ? `<span class="pro-state">${status()}</span>` : ''}
+        ${pro && status() ? `<span class="pro-state">${status()}</span>` : ''}
       </header>
 
       <section class="pro-part" data-pro-section="themes">
@@ -1064,16 +1068,11 @@
         <form class="pro-cd-add" id="pro-cd-add"><input id="pro-cd-title" maxlength="12" placeholder="比如：考试" aria-label="倒数日名称" required><input type="date" id="pro-cd-date" aria-label="日期" required><button type="submit" class="primary-button">添加</button></form>
       </section>` : ''}
 
-      <footer class="pro-buy${FREE && !owned ? ' is-free' : ''}" data-pay="${payPlatform()}">
-        ${FREE && !owned ? `<div class="pro-free-bar">${icon('badge-check')}<div><b>测试版 · 全部已解锁</b><small>正式版 ${PRICE}，一次买断</small></div><button type="button" class="pro-free-demo" id="pro-buy">看付款页</button></div>
-             <p class="pro-free-note">测试版：Pro 全部免费，已经都能用。付款页只是演示，不会扣钱。</p>`
-          : owned ? `<p class="pro-owned">${icon('badge-check')}Pro 已开通，感谢支持。${info().code ? `<small>兑换码 ${esc(info().code)} · 可在其他设备上开通</small>` : info().via === 'appstore' ? '<small>通过 App Store 购买</small>' : info().via ? '<small>兑换码开通</small>' : ''}</p>`
+      <footer class="pro-buy" data-pay="${payPlatform()}">
+        ${owned ? `<p class="pro-owned">${icon('badge-check')}Pro 已开通，感谢支持。${info().code ? `<small>兑换码 ${esc(info().code)} · 可在其他设备上开通</small>` : info().via === 'appstore' ? '<small>通过 App Store 购买</small>' : info().via ? '<small>兑换码开通</small>' : ''}</p>`
           : `<div class="pro-price"><b>${priceText()}</b>${listText() ? `<s>${listText()}</s>` : ''}<span>${LIVE && shop ? esc(shop.priceNote || '') + (shop.priceNote ? ' · ' : '') : PRICE_NOTE + ' · '}一次购买 · 永久使用 · 无订阅</span></div>
-             ${FREE ? '<p class="pro-free-note">测试版：Pro 全部免费，已经都能用。下面的购买只是演示，不会扣钱。</p>' : ''}
              <div class="pro-actions">${info().trialUsed || FREE ? '' : `<button type="button" class="pro-trial" id="pro-trial">免费试用 ${TRIAL_DAYS} 天</button>`}<button type="button" class="pro-cta" id="pro-buy">${payPlatform() === 'ios' ? `购买 · ${PRICE}` : `开通 Pro · ${priceText()}`}</button></div>`}
-        ${LIVE ? `<p class="pro-legal">${owned ? '<span></span>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<a href="terms.html" target="_blank" rel="noopener">购买须知</a><a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>`
-          : `<p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<span>${FREE ? '测试版：付款是模拟的' : '本地预览：付款是模拟的'}</span><button type="button" id="pro-reset">重置</button></p>
-        <div class="pro-paypreview" role="group" aria-label="预览付款方式"><span>预览付款方式</span>${[['ios', 'iPhone'], ['android', '安卓'], ['web', '网页']].map(([id, n]) => `<button type="button" data-pay-preview="${id}" aria-pressed="${payPlatform() === id}">${n}</button>`).join('')}</div>`}
+        <p class="pro-legal">${owned ? '<span></span>' : payPlatform() === 'ios' ? '<button type="button" id="pro-restore">恢复购买</button>' : '<button type="button" id="pro-have-code">已有兑换码</button>'}<a href="terms.html" target="_blank" rel="noopener">购买须知</a><a href="privacy.html" target="_blank" rel="noopener">隐私政策</a></p>
       </footer>`;
     API.icons(s);
     $('pro-close').addEventListener('click', closeSheet);
@@ -1628,12 +1627,12 @@
   function refreshAll() {
     if (API.lockMode) { renderCountdowns(); return; } // the lock view has no settings, banner or Pro sheet to fill
     renderLookInline(); renderCountdowns(); drawMiniJar(false);
-    const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned ? '已解锁' : FREE ? '免费测试' : `试用 ${trialLeft()} 天`) : PRICE;
+    const st = $('pro-banner-state'); if (st) st.textContent = isPro() ? (info().owned || FREE ? '已开通' : `试用 ${trialLeft()} 天`) : PRICE;
     const sub = document.querySelector('#pro-banner .pro-banner-text small'); if (sub) sub.textContent = isPro() && themeLabel() ? `正在用「${themeLabel()}」` : isPro() ? '主题、碎片罐、动效都已打开' : '主题、碎片罐、完成动效';
     const bj = $('pro-banner-jar'); if (bj) { const ctx = canvasFor(bj, 24, 30); drawJarWith(BRAND, ctx, 2, 1, 20, 28, demoEntries(startOfDay(), 6), 0); }
     if (!$('pro-sheet').hidden) { const top = $('pro-sheet').scrollTop; renderSheet(); $('pro-sheet').scrollTop = top; startHero(); }
   }
-  window.SuiSuiPro = { effect, isPro, themeLabel, freeForTesters: FREE, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
+  window.SuiSuiPro = { simOutcome: v => { payOutcome = v; }, effect, isPro, themeLabel, freeForTesters: FREE, redeem, demoCode, payPlatform, openPay, closePay, wallpaper, saveWallpaper, open: openSheet, openJar, drawArt, THEMES, EFFECTS, buy, startTrial, reset: resetLocal, tryTheme: startTry, endTry };
   // Back (Android back button, iPhone edge swipe): close the Pro layers first, top-most first
   const baseBack = window.suisuiBack;
   window.suisuiBack = () => {
