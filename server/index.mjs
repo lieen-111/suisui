@@ -11,6 +11,8 @@
    Run:  node server/index.mjs          (data goes to server/data; see server/README.md for a real server)
    Env:  PORT=8787  DATA_DIR=./data  TRUST_PROXY=1 (behind Caddy/Nginx) */
 import http from 'node:http';
+import os from 'node:os';
+import { exec } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -21,6 +23,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DATA = path.resolve(process.env.DATA_DIR || path.join(HERE, 'data'));
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
+/* Optional: also serve the 碎碎清单 web app (the app/ folder) at / — used by the one-click Windows package. */
+const APP_DIR = process.env.APP_DIR ? path.resolve(process.env.APP_DIR) : '';
 const VERSION = '1.0.0';
 fs.mkdirSync(path.join(DATA, 'backups'), { recursive: true });
 
@@ -190,7 +194,7 @@ setInterval(() => { const t = now(); for (const [k, v] of hits) if (!v.some(x =>
 const ipOf = req => (TRUST_PROXY && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || '';
 
 /* ---------------- http helpers ---------------- */
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav' };
 function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...extra });
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
@@ -444,6 +448,15 @@ async function adminApi(req, res, url) {
   return fail(res, 404, 'not-found');
 }
 
+function appFile(res, pathname) {
+  let rel;
+  try { rel = decodeURIComponent(pathname); } catch { return send(res, 400, 'bad path', 'text/plain'); }
+  if (rel.endsWith('/')) rel += 'index.html';
+  const f = path.join(APP_DIR, path.normalize(rel).replace(/^([/\\])+/, ''));
+  if (!(f === APP_DIR || f.startsWith(APP_DIR + path.sep)) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return send(res, 404, 'not found', 'text/plain');
+  send(res, 200, fs.readFileSync(f), MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', { 'Cache-Control': 'no-cache' });
+}
+
 function staticFile(res, file) {
   const f = path.join(HERE, 'admin', file);
   if (!f.startsWith(path.join(HERE, 'admin')) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return send(res, 404, 'not found', 'text/plain');
@@ -457,15 +470,35 @@ const server = http.createServer(async (req, res) => {
   try {
     if (url.pathname.startsWith('/api/')) return await publicApi(req, res, url);
     if (url.pathname.startsWith('/admin/api/')) return await adminApi(req, res, url);
-    if (url.pathname === '/' || url.pathname === '/admin') { res.writeHead(302, { Location: '/admin/' }); return res.end(); }
+    if ((url.pathname === '/' && !APP_DIR) || url.pathname === '/admin') { res.writeHead(302, { Location: '/admin/' }); return res.end(); }
     if (url.pathname.startsWith('/admin/')) return staticFile(res, url.pathname.slice(7) || 'index.html');
+    if (APP_DIR && (req.method === 'GET' || req.method === 'HEAD')) return appFile(res, url.pathname);
     send(res, 404, 'not found', 'text/plain');
   } catch (e) {
     if (!res.headersSent) send(res, e.status || 500, { error: e.status ? e.message : 'server', ...(e.status ? {} : { message: '服务器出错了' }) }, 'application/json; charset=utf-8', url.pathname.startsWith('/api/') ? PUBLIC_CORS : {});
     if (!e.status) console.error(e);
   }
 });
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') console.error(`端口 ${PORT} 已被占用：后台可能已经在另一个窗口里运行了。直接打开 http://localhost:${PORT}/admin/ 即可。`);
+  else console.error(e);
+  process.exit(1);
+});
 server.listen(PORT, process.env.HOST || '0.0.0.0', () => {
+  if (process.env.LOCAL_PACKAGE === '1') {
+    const lan = Object.values(os.networkInterfaces()).flat().filter((n) => n && n.family === 'IPv4' && !n.internal).map((n) => n.address);
+    console.log('');
+    console.log('  碎碎清单已在这台电脑上运行。这个窗口不要关，关掉就停了。');
+    console.log('');
+    console.log(`  电脑上：  网页版 http://localhost:${PORT}/      管理后台 http://localhost:${PORT}/admin/`);
+    for (const ip of lan) console.log(`  手机上（连同一个 Wi-Fi）：  网页版 http://${ip}:${PORT}/      管理后台 http://${ip}:${PORT}/admin/`);
+    if (!lan.length) console.log('  没有检测到局域网地址：手机要和电脑连同一个 Wi-Fi 才能打开。');
+    console.log(`  数据保存在：${DATA}`);
+    if (setupToken) console.log(`\n  第一次打开管理后台时，设置口令是：  ${setupToken}  （用一次就失效）`);
+    console.log('');
+    if (process.platform === 'win32' && process.env.OPEN_BROWSER === '1') exec(`start "" "http://localhost:${PORT}/"`);
+    return;
+  }
   console.log(`碎碎清单后台 ${VERSION} · http://localhost:${PORT}/admin/ · 数据在 ${DATA}`);
   if (setupToken) console.log(`第一次使用：打开 http://localhost:${PORT}/admin/ ，设置口令是  ${setupToken}  （用一次就失效）`);
 });
