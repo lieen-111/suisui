@@ -194,7 +194,7 @@ setInterval(() => { const t = now(); for (const [k, v] of hits) if (!v.some(x =>
 const ipOf = req => (TRUST_PROXY && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || '';
 
 /* ---------------- http helpers ---------------- */
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.apk': 'application/vnd.android.package-archive' };
 function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...extra });
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
@@ -493,6 +493,7 @@ server.listen(PORT, process.env.HOST || '0.0.0.0', () => {
     console.log(`  电脑上：  网页版 http://localhost:${PORT}/      管理后台 http://localhost:${PORT}/admin/`);
     for (const ip of lan) console.log(`  手机上（连同一个 Wi-Fi）：  网页版 http://${ip}:${PORT}/      管理后台 http://${ip}:${PORT}/admin/`);
     if (!lan.length) console.log('  没有检测到局域网地址：手机要和电脑连同一个 Wi-Fi 才能打开。');
+    if (APP_DIR && fs.existsSync(path.join(APP_DIR, 'suisui.apk'))) for (const ip of lan) console.log(`  安卓手机下载安装包（同一个 Wi-Fi）：  http://${ip}:${PORT}/suisui.apk`);
     console.log(`  数据保存在：${DATA}`);
     if (setupToken) console.log(`\n  第一次打开管理后台时，设置口令是：  ${setupToken}  （用一次就失效）`);
     console.log('');
