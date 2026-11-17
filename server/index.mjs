@@ -165,6 +165,14 @@ const hashPw = (pw, salt = crypto.randomBytes(16).toString('hex')) => `${salt}:$
 const checkPw = (pw, stored) => { const [salt, h] = String(stored).split(':'); if (!salt || !h) return false; const a = Buffer.from(h, 'hex'), b = crypto.scryptSync(pw, salt, 32); return a.length === b.length && crypto.timingSafeEqual(a, b); };
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 let setupToken = '';
+/* Forgotten password: start once with RESET_ADMIN=1. Only the admin password and sign-ins are cleared;
+   orders, codes, licences and the signing key stay. A new setup token is printed as on first use. */
+if (process.env.RESET_ADMIN === '1' && getSetting('admin.password')) {
+  q("DELETE FROM settings WHERE key = 'admin.password'").run();
+  q('DELETE FROM sessions').run();
+  audit('admin.reset');
+  console.log('\n  管理密码已清除（订单、兑换码和其他数据都还在）。请用下面的设置口令重新设一个密码。');
+}
 if (!getSetting('admin.password')) {
   setupToken = crypto.randomBytes(18).toString('base64url');
 }
