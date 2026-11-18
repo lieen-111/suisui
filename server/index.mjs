@@ -338,7 +338,13 @@ async function publicApi(req, res, url) {
 async function adminApi(req, res, url) {
   const p = url.pathname.replace(/^\/admin\/api/, ''), ip = ipOf(req);
   if (req.method !== 'GET' && req.headers['x-suisui-admin'] !== '1') return fail(res, 403, 'csrf');
-  if (p === '/state') return ok(res, { setup: !getSetting('admin.password'), signedIn: sessionOk(req), version: VERSION });
+  if (p === '/state') {
+    const setup = !getSetting('admin.password');
+    /* One-click local package only: a browser on this same computer gets the setup token filled in for it
+       (anyone at this computer can already read it in the console window). Never on a server behind a proxy. */
+    const local = process.env.LOCAL_PACKAGE === '1' && !TRUST_PROXY && /^(127\.|::1$|::ffff:127\.)/.test(req.socket.remoteAddress || '');
+    return ok(res, { setup, signedIn: sessionOk(req), version: VERSION, ...(setup && local && setupToken ? { token: setupToken } : {}) });
+  }
   if (p === '/setup' && req.method === 'POST') {
     if (getSetting('admin.password')) return fail(res, 400, 'done');
     const b = await json(req);
@@ -348,6 +354,7 @@ async function adminApi(req, res, url) {
   }
   if (p === '/login' && req.method === 'POST') {
     if (limited('login:' + ip, 8, 15 * 60e3)) return fail(res, 429, 'rate', { message: '登录尝试太多，15 分钟后再试' });
+    if (!getSetting('admin.password')) return fail(res, 409, 'setup', { message: '还没有设置管理密码，请先设置' });
     const b = await json(req);
     if (!checkPw(String(b.password || ''), getSetting('admin.password'))) { audit('admin.login.fail', ip); return fail(res, 401, 'wrong', { message: '密码不对' }); }
     newSession(res, req); audit('admin.login', ip); return ok(res, { ok: true });

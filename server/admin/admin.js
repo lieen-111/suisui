@@ -10,7 +10,7 @@
   async function api(path, opts = {}) {
     const r = await fetch('api' + path, { credentials: 'same-origin', ...opts, headers: { 'x-suisui-admin': '1', ...(opts.body && !(opts.body instanceof Blob) ? { 'content-type': 'application/json' } : {}), ...(opts.headers || {}) } });
     const j = r.headers.get('content-type')?.includes('json') ? await r.json() : {};
-    if (r.status === 401 && j.error === 'signin') { showGate(); throw new Error('signin'); }
+    if (r.status === 401 && j.error === 'signin') { boot().catch(offline); throw new Error('signin'); }
     if (!r.ok) throw Object.assign(new Error(j.message || j.error || '出错了'), { data: j });
     return j;
   }
@@ -25,19 +25,30 @@
 
   /* ---------- gate ---------- */
   async function boot() {
-    const s = await fetch('api/state').then(r => r.json());
+    let s;
+    for (let i = 0; ; i++) {
+      try { const r = await fetch('api/state', { cache: 'no-store', credentials: 'same-origin' }); s = await r.json(); break; }
+      catch (err) { if (i >= 4) throw err; await new Promise(res => setTimeout(res, 800)); }
+    }
     if (s.signedIn) return enter();
-    showGate(s.setup);
+    showGate(s.setup, s.token);
   }
-  function showGate(setup = false) {
+  function showGate(setup = false, token = '') {
     $('shell').hidden = true; $('gate').hidden = false;
     $('setup-form').hidden = !setup; $('login-form').hidden = setup;
-    (setup ? $('setup-form') : $('login-form')).querySelector('input').focus();
+    const tokenInput = $('setup-form').querySelector('[name=token]');
+    if (setup && token) { tokenInput.value = token; tokenInput.closest('label').hidden = true; $('setup-lead').textContent = '第一次使用，设一个管理密码（至少 10 位）。以后用它登录，请记下来。'; }
+    (setup ? $('setup-form').querySelector(token ? '[name=password]' : 'input') : $('login-form').querySelector('input')).focus();
+  }
+  function offline() {
+    $('shell').hidden = true; $('gate').hidden = false; $('setup-form').hidden = true; $('login-form').hidden = true;
+    $('gate-error').textContent = '连不上后台。请确认电脑上的黑色窗口还开着，然后刷新这个页面。';
   }
   $('setup-form').addEventListener('submit', async e => { e.preventDefault(); const f = new FormData(e.target);
     try { await post('/setup', { token: f.get('token').trim(), password: f.get('password') }); enter(); } catch (err) { $('gate-error').textContent = err.message; } });
   $('login-form').addEventListener('submit', async e => { e.preventDefault(); const f = new FormData(e.target);
-    try { await post('/login', { password: f.get('password') }); $('gate-error').textContent = ''; e.target.reset(); enter(); } catch (err) { $('gate-error').textContent = err.message; } });
+    try { await post('/login', { password: f.get('password') }); $('gate-error').textContent = ''; e.target.reset(); enter(); }
+    catch (err) { if (err.data?.error === 'setup') { $('gate-error').textContent = ''; return boot().catch(offline); } $('gate-error').textContent = err.message === 'Failed to fetch' ? '连不上后台，请确认电脑上的黑色窗口还开着' : err.message; } });
   $('logout').addEventListener('click', async () => { await post('/logout'); showGate(false); });
 
   /* ---------- pages ---------- */
@@ -215,5 +226,5 @@
   $('pw-form').addEventListener('submit', async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
     try { await post('/password', f); e.target.reset(); $('pw-saved').textContent = '已修改'; toast('密码已修改，其他地方的登录已退出'); } catch (err) { toast(err.message); } });
 
-  boot().catch(() => showGate(false));
+  boot().catch(offline);
 })();
